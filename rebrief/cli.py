@@ -6,6 +6,7 @@
     python -m rebrief doctor       RSS 피드가 살아있는지 점검
     python -m rebrief notify       실행 결과를 텔레그램으로 보내기 (토큰이 있을 때)
     python -m rebrief weekly       지난 7일치를 묶은 주간 결산 글
+    python -m rebrief titles       제목 후보 보기 / 실제로 고른 것과 조회수 기록
 """
 
 from __future__ import annotations
@@ -56,6 +57,17 @@ def build_parser() -> argparse.ArgumentParser:
     p_weekly.add_argument("--end", help="결산 마지막 날짜 (기본: 오늘, YYYY-MM-DD)")
     p_weekly.add_argument("--no-llm", action="store_true", help="글 생성을 건너뛰고 프롬프트 팩만")
 
+    p_titles = sub.add_parser("titles", help="제목 후보 보기 / 고른 것과 조회수 기록")
+    t_sub = p_titles.add_subparsers(dest="titles_cmd", required=True)
+    t_show = t_sub.add_parser("show", help="그날 후보 보기")
+    t_show.add_argument("--date", help="날짜 (기본: 오늘)")
+    t_log = t_sub.add_parser("log", help="고른 제목과 조회수 기록")
+    t_log.add_argument("--date", required=True)
+    t_log.add_argument("--kind", required=True, choices=["blog", "longform", "shorts"])
+    t_log.add_argument("--pick", required=True, type=int, help="후보 번호 (1부터)")
+    t_log.add_argument("--views", type=int, help="조회수")
+    t_log.add_argument("--title", help="후보에 없는 제목을 썼다면")
+
     return parser
 
 
@@ -83,6 +95,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_notify(cfg, args)
     if args.command == "weekly":
         return _cmd_weekly(cfg, args)
+    if args.command == "titles":
+        return _cmd_titles(cfg, args)
     return 1
 
 
@@ -214,6 +228,36 @@ def _cmd_weekly(cfg, args) -> int:
             print(f"  · {w}")
     print()
     return 0 if result.files else 1
+
+
+def _cmd_titles(cfg, args) -> int:
+    from .render import update_index
+    from .store import TitleLog
+
+    log_ = TitleLog(cfg.state_dir / "titles.json")
+    if args.titles_cmd == "show":
+        date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
+        day = log_.days.get(date_str)
+        if not day:
+            print(f"{date_str} 에 기록된 제목 후보가 없습니다.")
+            return 1
+        for kind, entry in day.items():
+            mark = f"  → 고름: {entry['pick']}번" + (f", 조회수 {entry['views']:,}" if entry.get("views") is not None else "") if entry.get("pick") else ""
+            print(f"\n[{kind}]{mark}")
+            for i, t in enumerate(entry.get("candidates", []), start=1):
+                print(f"  {i}. {t}")
+        print()
+        return 0
+    try:
+        entry = log_.log_pick(args.date, args.kind, args.pick, args.views, args.title)
+    except ValueError as exc:
+        print(f"오류: {exc}", file=sys.stderr)
+        return 1
+    log_.save()
+    update_index(cfg)
+    print(f"기록했습니다 — {args.date} {args.kind}: \"{entry['title']}\" ({entry['type']})"
+          + (f", 조회수 {entry['views']:,}" if entry.get("views") is not None else ""))
+    return 0
 
 
 def _cmd_site(cfg) -> int:

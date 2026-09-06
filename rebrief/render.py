@@ -43,11 +43,14 @@ class Renderer:
         self.date = date_str
         self.env = make_env()
         self.written: list[Path] = []
+        self.last_link_status: dict = {}
         out_dir.mkdir(parents=True, exist_ok=True)
 
     # ── 개별 산출물 ──────────────────────────────────────────
 
-    def brief(self, brief: DailyBrief, stats: RenderStats) -> Path:
+    def brief(self, brief: DailyBrief, stats: RenderStats, checks: list | None = None,
+              diff: dict | None = None) -> Path:
+        checks = checks or []
         return self._write(
             "brief.md",
             "brief.md.j2",
@@ -55,6 +58,10 @@ class Renderer:
             stats=stats,
             date=self.date,
             generated_at=_now(),
+            diff=diff or {},
+            checks=checks,
+            unverified=[c for c in checks if c.status == "미확인"],
+            unchecked=[c for c in checks if c.status == "대조 불가"],
         )
 
     def brief_fallback(self, clusters: list[Cluster], stats: RenderStats) -> Path:
@@ -86,13 +93,18 @@ class Renderer:
                    filename: str = "blog-naver.html") -> Path:
         """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
         blog_cfg = self.cfg.get("blog", {}) or {}
+        photo_links = {
+            i: photo_search_links(slot.search_keywords or slot.description)
+            for i, slot in enumerate(post.image_slots, start=1)
+            if i not in (slot_files or {})
+        }
         return self._write(
             filename,
             "blog_naver.html.j2",
             post=post,
             date=self.date,
             category=blog_cfg.get("category", "부동산"),
-            body_html=to_naver_html(post.body_markdown, slot_files or {}),
+            body_html=to_naver_html(post.body_markdown, slot_files or {}, photo_links),
             hashtags=format_hashtags(post.tags),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
                 "write_url", "https://blog.naver.com/"
@@ -152,6 +164,7 @@ class Renderer:
         link_status: dict | None = None,
     ) -> Path:
         link_status = link_status or {}
+        self.last_link_status = link_status
         dead = {url: st.note for url, st in link_status.items() if not st.ok}
         return self._write(
             "sources.md",
@@ -217,12 +230,14 @@ class Renderer:
         if not cfg.get("enabled", True) or not cfg.get("thumbnails", True):
             return []
         channel = str((self.cfg.get("video", {}) or {}).get("channel_name", "") or "")
+        variants = max(1, int(cfg.get("thumbnail_variants", 2)))
         jobs = []
-        if pack.longform.thumbnail_texts:
-            jobs.append(("thumb-longform", pack.longform.thumbnail_texts[0],
+        # 1안·2안 — 문구 후보 순서대로. 제목 기록장과 같은 번호를 쓴다.
+        for n, text in enumerate(pack.longform.thumbnail_texts[:variants], start=1):
+            jobs.append((f"thumb-longform{'' if n == 1 else f'-{n}'}", text,
                          (pack.longform.title_candidates or [""])[0], (1280, 720)))
-        if pack.shorts.title_candidates:
-            jobs.append(("thumb-shorts", pack.shorts.title_candidates[0], pack.shorts.hook, (1080, 1920)))
+        for n, text in enumerate(pack.shorts.title_candidates[:variants], start=1):
+            jobs.append((f"thumb-shorts{'' if n == 1 else f'-{n}'}", text, pack.shorts.hook, (1080, 1920)))
         paths: list[Path] = []
         for slug, text, sub, size in jobs:
             img = images_mod.thumbnail(text, sub=sub, channel=channel, date=self.date, size=size)
@@ -261,6 +276,25 @@ class Renderer:
     def prompt_pack(self, text: str) -> Path:
         return self._write_raw("prompt-pack.md", text)
 
+    def checklist(self, result, artifacts: dict, link_status: dict | None = None) -> Path:
+        """발행 전 점검표. md 는 사람이, json 은 사이트 카드가 읽는다."""
+        from . import checklist as cl
+
+        items = cl.build(
+            self.cfg,
+            brief=artifacts.get("brief"), post=artifacts.get("post"), pack=artifacts.get("pack"),
+            checks=artifacts.get("checks"), link_status=link_status or {},
+            warnings=result.warnings, llm_used=result.llm_used,
+            empty_photo_slots=int(artifacts.get("empty_photo_slots", 0) or 0),
+        )
+        summary = cl.summarize(items)
+        self._write_raw("checklist.json", json.dumps({
+            "date": self.date, "summary": summary,
+            "items": [{"key": i.key, "level": i.level, "title": i.title, "detail": i.detail, "lines": i.lines}
+                      for i in items],
+        }, ensure_ascii=False, indent=2) + "\n")
+        return self._write("checklist.md", "checklist.md.j2", date=self.date, items=items, summary=summary)
+
     # ── 내부 ─────────────────────────────────────────────────
 
     def _write(self, filename: str, template: str, **context) -> Path:
@@ -282,7 +316,8 @@ _IMAGE_SLOT = re.compile(r"<p>\s*\[이미지\s*:\s*(.*?)\]\s*</p>", re.DOTALL)
 _IMAGE_SLOT_INLINE = re.compile(r"\[이미지\s*:\s*(.*?)\]", re.DOTALL)
 
 
-def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None) -> str:
+def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
+                  photo_links: dict[int, list[tuple[str, str]]] | None = None) -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -298,6 +333,7 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None) 
         output_format="html",
     )
     slot_files = slot_files or {}
+    photo_links = photo_links or {}
     counter = {"n": 0}
 
     def slot(match: re.Match) -> str:
@@ -305,7 +341,12 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None) 
         caption = " ".join(match.group(1).split())
         filename = slot_files.get(counter["n"])
         if not filename:
-            return f'<div class="imgslot">📷 이미지 — {caption}</div>'
+            links = photo_links.get(counter["n"]) or []
+            box = f'<div class="imgslot">📷 이미지 — {caption}</div>'
+            if links:
+                anchors = " · ".join(f'<a href="{url}" target="_blank" rel="noopener">{name}</a>' for name, url in links)
+                box += f'<div class="photo-links nocopy">사진 찾기: {anchors}</div>'
+            return box
         return (
             f'<div class="imgslot has-file">📷 이미지 — {caption}'
             f'<br><small>→ 파일 <b>{filename}</b> 을 이 자리에 올리고 상자는 지웁니다</small></div>'
@@ -315,6 +356,22 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None) 
     html = _IMAGE_SLOT.sub(slot, html)
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
     return html
+
+
+def photo_search_links(query: str) -> list[tuple[str, str]]:
+    """사진 자리용 스톡 검색 링크. 키 없이 링크만 만든다. 한글이면 픽사베이(한국어)가 먼저."""
+    from urllib.parse import quote
+
+    q = " ".join((query or "").split())
+    if not q:
+        return []
+    is_korean = any("가" <= ch <= "힣" for ch in q)
+    links = [
+        ("픽사베이", f"https://pixabay.com/ko/images/search/{quote(q)}/"),
+        ("언스플래시", f"https://unsplash.com/s/photos/{quote(q.replace(' ', '-'))}"),
+        ("펙셀스", f"https://www.pexels.com/ko-kr/search/{quote(q)}/"),
+    ]
+    return links if is_korean else links[1:] + links[:1]
 
 
 def place_images_markdown(body_markdown: str, slot_files: dict[int, str]) -> str:
@@ -456,6 +513,7 @@ def update_index(cfg: Config) -> Path | None:
         )
 
     lines += _weekly_section(out_dir)
+    lines += _titles_section(cfg)
     lines += _cost_section(cfg)
 
     path = out_dir / "INDEX.md"
@@ -475,6 +533,25 @@ def _weekly_section(out_dir: Path) -> list[str]:
         def cell(filename: str, label: str) -> str:
             return f"[{label}](weekly/{wk.name}/{filename})" if (wk / filename).exists() else "—"
         lines.append(f"| **{wk.name}** | {cell('weekly.md', '결산')} | {cell('weekly-naver.html', 'HTML')} | {cell('data.json', 'JSON')} |")
+    return lines
+
+
+def _titles_section(cfg: Config) -> list[str]:
+    from .store import TitleLog
+
+    log_ = TitleLog(cfg.state_dir / "titles.json")
+    picked = log_.picked()
+    if not picked:
+        return []
+    lines = ["", "## 제목 기록", "", "| 유형 | 건수 | 평균 조회수 |", "| --- | --- | --- |"]
+    for kind, v in log_.by_type().items():
+        avg = f"{v['avg_views']:,}" if v["avg_views"] is not None else "—"
+        lines.append(f"| {kind} | {v['count']} | {avg} |")
+    lines += ["", "<details><summary>날짜별</summary>", "", "| 날짜 | 어디 | 고른 제목 | 유형 | 조회수 |", "| --- | --- | --- | --- | --- |"]
+    for r in picked[:60]:
+        views = f"{r['views']:,}" if r.get("views") is not None else "—"
+        lines.append(f"| {r['date']} | {r['kind']} | {r.get('title', '')} | {r.get('type', '')} | {views} |")
+    lines += ["", "</details>"]
     return lines
 
 

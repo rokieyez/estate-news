@@ -43,6 +43,9 @@ llm:
   max_tokens: 16000
   timeout_seconds: 600
   krw_per_usd: 1400         # INDEX.md 비용 표시에 쓰는 환율 (대략값)
+  fallback_model: claude-sonnet-5   # 한도·장애로 실패하면 이 모델로 한 번 더 (비우면 안 함)
+  monthly_budget_usd: 0     # 월 예산(달러). 0 이면 제한 없음. 80% 넘으면 fallback_model 로, 넘으면 건너뜀
+  budget_soft_ratio: 0.8
 
 images:
   enabled: true             # 수치를 인포그래픽 SVG 로 자동 생성
@@ -50,6 +53,10 @@ images:
   png: true                 # 네이버에 올리려면 PNG 가 필요합니다 (크롬이 있을 때만 변환)
   png_scale: 2              # 2배 해상도
   thumbnails: true          # 롱폼(1280×720)·쇼츠(1080×1920) 표지 이미지
+  thumbnail_variants: 2     # 썸네일 문구 후보 몇 개까지 그릴지 (1안·2안)
+
+verify:
+  numbers: true             # 브리핑 수치가 기사 제목·본문에 실제로 있는지 대조 (LLM 호출 없음)
 
 site:
   url: "https://www.rokiz.net/estate-news/"   # 알림 메시지에 붙는 사이트 주소

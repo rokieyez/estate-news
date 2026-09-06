@@ -61,7 +61,45 @@ def collect_week(cfg: Config, end: date, days: int = 7) -> list[dict]:
             continue
         payload.setdefault("date", day.isoformat())
         rows.append(payload)
+    mark_streaks(rows)
     return rows
+
+
+STREAK_SIMILARITY = 0.35   # 데일리 클러스터링과 같은 임계값
+
+
+def mark_streaks(days: list[dict]) -> list[dict]:
+    """여러 날 반복된 이슈를 찾아 각 이슈에 days_seen 을, 첫날 항목에 streaks 를 단다.
+
+    데일리는 seen.json 으로 3일 재탕을 막지만, 주간 결산은 7일치를 그대로 세면
+    같은 사건을 두세 번 세게 된다. 제목 유사도로 묶어 '흐름' 으로 넘겨준다.
+    """
+    from .cluster import similarity
+
+    groups: list[dict] = []          # {"title": 대표 제목, "dates": [...], "members": [(day_idx, issue)]}
+    for di, day in enumerate(days):
+        for issue in day.get("issues", []):
+            title = issue.get("title") or ""
+            if not title:
+                continue
+            for g in groups:
+                if similarity(title, g["title"]) >= STREAK_SIMILARITY:
+                    if day["date"] not in g["dates"]:
+                        g["dates"].append(day["date"])
+                    g["members"].append(issue)
+                    break
+            else:
+                groups.append({"title": title, "dates": [day["date"]], "members": [issue]})
+    streaks = []
+    for g in groups:
+        if len(g["dates"]) < 2:
+            continue
+        for issue in g["members"]:
+            issue["days_seen"] = list(g["dates"])
+        streaks.append({"title": g["title"], "dates": list(g["dates"])})
+    if days:
+        days[0]["streaks"] = streaks
+    return streaks
 
 
 def run_weekly(cfg: Config, *, end_date: str | None = None, use_llm: bool | None = None,

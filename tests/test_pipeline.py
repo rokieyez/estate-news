@@ -378,10 +378,11 @@ def test_naver_html_copy_area_excludes_guide(cfg, tmp_path):
 class FakeGenerator:
     """Claude 호출을 대신하는 가짜. 파이프라인 배선만 검증한다."""
 
-    def __init__(self, cfg):
+    def __init__(self, cfg, model=None):
         from rebrief.llm import Usage
 
         self.cfg = cfg
+        self.model = model
         self.usage = Usage(model="fake-model")
         self.calls: list[str] = []
 

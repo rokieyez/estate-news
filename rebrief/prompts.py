@@ -138,6 +138,7 @@ def _blog_user_naver(cfg: Config, blog: dict) -> str:
   datapoint_label 에 그 수치의 label 을 **글자 그대로** 적습니다(프로그램이 그 수치로 그림을
   자동 생성해 자리에 넣습니다). 현장 사진·화면 캡처처럼 수치가 아닌 자리는 빈 문자열로 둡니다.
   {image_slots}곳 중 적어도 한 곳은 수치 자리로 잡으세요.
+  사진 자리에는 search_keywords 에 스톡 사진 사이트용 **영어 검색어** 2~4단어를 적습니다.
 - 각 이슈 끝에 근거 기사 링크를 붙입니다.
 - 마지막 소제목은 '오늘의 체크포인트'로 하고 3줄 요약을 넣습니다.
 - 독자를 '여러분'으로 부르고 존댓말로 씁니다. 딱딱한 보고서 문체는 피합니다.
@@ -287,12 +288,21 @@ def build_weekly_messages(cfg: Config, days: list[dict], week_label: str) -> tup
             "market_temperature": d.get("market_temperature", ""),
             "issues": [
                 {"title": i.get("title"), "category": i.get("category"),
-                 "one_liner": i.get("one_liner"), "numbers": i.get("numbers", [])}
+                 "one_liner": i.get("one_liner"), "numbers": i.get("numbers", []),
+                 **({"days_seen": i["days_seen"]} if i.get("days_seen") else {})}
                 for i in d.get("issues", [])
             ],
         }
         for d in days
     ]
+    streaks = [s for d in days for s in d.get("streaks", [])]
+    streak_note = ""
+    if streaks:
+        lines_ = "\n".join(f"- {s['title']} — {len(s['dates'])}일 ({', '.join(s['dates'])})" for s in streaks)
+        streak_note = f"""
+
+여러 날 반복된 이슈 (같은 사건이 날짜만 바뀌어 다시 나온 것입니다. 각각 세지 말고 흐름으로 묶으세요):
+{lines_}"""
     system = f"""당신은 부동산 콘텐츠를 만드는 프로듀서입니다.
 채널명은 "{video.get('channel_name', '부동산 브리핑')}" 입니다.
 
@@ -307,7 +317,7 @@ def build_weekly_messages(cfg: Config, days: list[dict], week_label: str) -> tup
 
 ────────── {week_label} 브리핑 모음 (JSON, 날짜순) ──────────
 {json.dumps(compact, ensure_ascii=False, indent=1)}
-──────────────────────────────────────"""
+──────────────────────────────────────{streak_note}"""
 
     user = f"""위 일주일치 브리핑으로 **주간 결산 글** 한 편을 완성하세요. 네이버 블로그에 올립니다.
 

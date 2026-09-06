@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>지난 글 검색</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0 16px 60px; background: #f2f4f6; color: #1a1a1a;
+         font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; line-height: 1.6; }
+  .bar { position: sticky; top: 0; z-index: 5; margin: 0 -16px 18px; padding: 12px 16px; background: #fff;
+         border-bottom: 1px solid #e4e7ea; display: flex; gap: 12px; align-items: center; }
+  .bar a { color: #0068c3; text-decoration: none; font-size: 15px; font-weight: 600; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  input { width: 100%; font: inherit; font-size: 17px; padding: 14px 16px; border: 1px solid #d5d9de; border-radius: 12px; background: #fff; }
+  .meta { color: #6b7178; font-size: 13px; margin: 8px 2px 16px; }
+  .hit { background: #fff; border-radius: 12px; padding: 14px 16px; margin-bottom: 10px; }
+  .hit .d { font-size: 13px; color: #6b7178; }
+  .hit .d a { color: #0068c3; text-decoration: none; font-weight: 600; }
+  .hit .t { font-weight: 700; margin: 2px 0 4px; }
+  .hit .n { font-size: 13px; color: #4a4f55; }
+  mark { background: #fff3a8; padding: 0 2px; }
+  .empty { color: #8b9096; text-align: center; padding: 30px 0; }
+</style>
+</head>
+<body>
+<div class="bar"><a href="index.html">← 목록</a><span style="color:#6b7178;font-size:14px">지난 글 검색 · {{ days }}일치</span></div>
+<div class="wrap">
+  <input id="q" type="search" placeholder="예: 종부세, 재건축, 금리" autocomplete="off" autofocus>
+  <div class="meta" id="meta">검색어를 입력하세요. 이슈 제목·한 줄 요약·수치 이름에서 찾습니다.</div>
+  <div id="out"></div>
+</div>
+<script>
+// 서버 없이 브라우저에서만 찾는다. 색인은 빌드 때 만든 search-index.json 하나.
+var INDEX = {{ index_json }};
+var q = document.getElementById("q"), out = document.getElementById("out"), meta = document.getElementById("meta");
+function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+function mark(s, term) {
+  if (!term) return esc(s);
+  var i = s.toLowerCase().indexOf(term.toLowerCase());
+  if (i < 0) return esc(s);
+  return esc(s.slice(0, i)) + "<mark>" + esc(s.slice(i, i + term.length)) + "</mark>" + esc(s.slice(i + term.length));
+}
+function search() {
+  var term = q.value.trim();
+  out.innerHTML = "";
+  if (term.length < 1) { meta.textContent = "검색어를 입력하세요. 이슈 제목·한 줄 요약·수치 이름에서 찾습니다."; return; }
+  var t = term.toLowerCase(), hits = [];
+  INDEX.forEach(function (day) {
+    day.issues.forEach(function (is) {
+      var hay = [is.title, is.one_liner, is.category].concat(is.numbers.map(function (n) { return n.label; })).join(" ").toLowerCase();
+      if (hay.indexOf(t) >= 0) hits.push({ day: day, issue: is });
+    });
+  });
+  meta.textContent = hits.length ? hits.length + "건" : "";
+  if (!hits.length) { out.innerHTML = '<div class="empty">결과가 없습니다.</div>'; return; }
+  hits.slice(0, 100).forEach(function (h) {
+    var nums = h.issue.numbers.map(function (n) { return mark(n.label, term) + " <b>" + esc(n.value) + esc(n.unit || "") + "</b>"; }).join(" · ");
+    out.insertAdjacentHTML("beforeend",
+      '<div class="hit"><div class="d"><a href="' + h.day.date + '/' + h.day.href + '">' + h.day.date + '</a> · ' + esc(h.issue.category || "") + '</div>' +
+      '<div class="t">' + mark(h.issue.title, term) + '</div>' +
+      '<div>' + mark(h.issue.one_liner || "", term) + '</div>' +
+      (nums ? '<div class="n">' + nums + '</div>' : '') + '</div>');
+  });
+}
+q.addEventListener("input", search);
+if (location.hash.length > 1) { q.value = decodeURIComponent(location.hash.slice(1)); search(); }
+</script>
+</body>
+</html>

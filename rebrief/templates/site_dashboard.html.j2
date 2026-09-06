@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>운영 현황</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 0 16px 60px; background: #f2f4f6; color: #1a1a1a;
+         font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; line-height: 1.6; }
+  .bar { position: sticky; top: 0; z-index: 5; margin: 0 -16px 18px; padding: 12px 16px; background: #fff;
+         border-bottom: 1px solid #e4e7ea; display: flex; gap: 12px; }
+  .bar a { color: #0068c3; text-decoration: none; font-size: 15px; font-weight: 600; }
+  .bar span { color: #6b7178; font-size: 14px; }
+  .wrap { max-width: 760px; margin: 0 auto; }
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 18px; }
+  .tile { background: #fff; border-radius: 12px; padding: 14px 16px; }
+  .tile .k { font-size: 13px; color: #6b7178; }
+  .tile .v { font-size: 26px; font-weight: 700; margin-top: 2px; }
+  .tile .s { font-size: 12px; color: #8b9096; }
+  .card { background: #fff; border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+  h2 { font-size: 16px; margin: 0 0 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 13px; }
+  th, td { border-bottom: 1px solid #eceef0; padding: 7px 8px; text-align: left; white-space: nowrap; }
+  th { color: #6b7178; font-weight: 600; }
+  td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .ok { color: #006300; } .bad { color: #d03b3b; } .muted { color: #8b9096; }
+  .scroll { overflow-x: auto; }
+  svg text { font-family: inherit; }
+</style>
+</head>
+<body>
+<div class="bar"><a href="index.html">← 목록</a><span>운영 현황 · 최근 {{ rows|length }}일</span></div>
+<div class="wrap">
+
+<div class="tiles">
+  <div class="tile"><div class="k">최근 7일 비용</div><div class="v">${{ '%.2f'|format(week_usd) }}</div><div class="s">약 {{ '{:,.0f}'.format(week_usd * krw) }}원 · {{ week_days }}일 실행</div></div>
+  <div class="tile"><div class="k">최근 30일 비용</div><div class="v">${{ '%.2f'|format(month_usd) }}</div><div class="s">약 {{ '{:,.0f}'.format(month_usd * krw) }}원 · {{ month_days }}일 실행</div></div>
+  <div class="tile"><div class="k">하루 평균 기사</div><div class="v">{{ avg_articles }}</div><div class="s">수집 건수</div></div>
+  <div class="tile"><div class="k">피드 성공률</div><div class="v">{{ feed_rate }}%</div><div class="s">{{ feed_ok }}/{{ feed_total }} 피드·일</div></div>
+  <div class="tile"><div class="k">요약 실패일</div><div class="v {% if fail_days %}bad{% else %}ok{% endif %}">{{ fail_days }}</div><div class="s">data.json 없는 날</div></div>
+</div>
+
+{% if cost_bars %}
+<div class="card">
+  <h2>날짜별 비용</h2>
+  <div class="scroll">
+  <svg viewBox="0 0 {{ 40 + cost_bars|length * 26 }} 150" width="{{ 40 + cost_bars|length * 26 }}" height="150" role="img" aria-label="날짜별 비용 막대">
+    <line x1="34" y1="120" x2="{{ 36 + cost_bars|length * 26 }}" y2="120" stroke="#c3c2b7" stroke-width="1"/>
+    <text x="30" y="14" font-size="10" text-anchor="end" fill="#898781">${{ '%.1f'|format(cost_max) }}</text>
+    {% for b in cost_bars %}
+    <rect x="{{ 38 + loop.index0 * 26 }}" y="{{ 120 - b.h }}" width="16" height="{{ b.h }}" rx="3" fill="#2a78d6"><title>{{ b.date }} ${{ '%.3f'|format(b.usd) }}</title></rect>
+    {% if loop.index0 % 5 == 0 or loop.last %}<text x="{{ 46 + loop.index0 * 26 }}" y="136" font-size="9" text-anchor="middle" fill="#898781">{{ b.date[5:] }}</text>{% endif %}
+    {% endfor %}
+  </svg>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+  <h2>날짜별 실행</h2>
+  <div class="scroll">
+  <table>
+    <tr><th>날짜</th><th class="num">기사</th><th>피드</th><th>요약</th><th class="num">그림</th><th class="num">비용</th><th>경고</th></tr>
+    {% for r in rows %}
+    <tr>
+      <td><a href="{{ r.date }}/{{ r.first or 'brief.html' }}">{{ r.date }}</a></td>
+      <td class="num">{{ r.articles if r.articles is not none else '—' }}</td>
+      <td class="{% if r.feeds_total and r.feeds_ok < r.feeds_total %}bad{% else %}muted{% endif %}">{{ r.feeds_ok }}/{{ r.feeds_total }}</td>
+      <td class="{% if r.llm %}ok{% else %}bad{% endif %}">{{ '생성' if r.llm else '없음' }}</td>
+      <td class="num">{{ r.images }}</td>
+      <td class="num">{% if r.usd is not none %}${{ '%.3f'|format(r.usd) }}{% else %}<span class="muted">—</span>{% endif %}</td>
+      <td class="muted">{{ r.note }}</td>
+    </tr>
+    {% endfor %}
+  </table>
+  </div>
+</div>
+
+{% if title_types %}
+<div class="card">
+  <h2>제목 유형별 조회수 (기록된 것만)</h2>
+  <table>
+    <tr><th>유형</th><th class="num">건수</th><th class="num">평균 조회수</th></tr>
+    {% for t, v in title_types.items() %}
+    <tr><td>{{ t }}</td><td class="num">{{ v.count }}</td><td class="num">{{ '{:,}'.format(v.avg_views) if v.avg_views is not none else '—' }}</td></tr>
+    {% endfor %}
+  </table>
+  <p class="muted" style="font-size:13px">기록은 깃허브 Actions → <b>제목 기록</b> → Run workflow 에서 합니다.</p>
+</div>
+{% endif %}
+
+</div>
+</body>
+</html>

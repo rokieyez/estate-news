@@ -141,6 +141,10 @@ class ImageSlot(BaseModel):
             "그 label 을 글자 그대로. 현장 사진·캡처 같은 자리면 빈 문자열"
         ),
     )
+    search_keywords: str = Field(
+        default="",
+        description="사진 자리라면 스톡 사진 사이트에서 찾을 영어 검색어 2~4단어. 예: 'seoul apartment skyline'. 수치 자리면 빈 문자열",
+    )
 
 
 class BlogPost(BaseModel):

@@ -24,6 +24,14 @@ from .prompts import (
 log = logging.getLogger(__name__)
 
 
+class _Retryable(Exception):
+    """한도·과부하·연결 오류처럼 다른 모델로 다시 시도해 볼 만한 실패."""
+
+    def __init__(self, message: str):
+        super().__init__(message)
+        self.message = message
+
+
 class LLMError(RuntimeError):
     """호출 자체가 실패했거나 모델이 응답을 거부한 경우."""
 
@@ -53,19 +61,36 @@ class Usage:
     cache_write_tokens: int = 0
     calls: int = 0
     notes: list[str] = field(default_factory=list)
+    models_used: list[str] = field(default_factory=list)
+    _usd: float = 0.0
 
-    def add(self, response) -> None:
+    def add(self, response, model: str | None = None) -> None:
         usage = getattr(response, "usage", None)
         if usage is None:
             return
+        model = model or self.model
+        inp = getattr(usage, "input_tokens", 0) or 0
+        out = getattr(usage, "output_tokens", 0) or 0
+        cr = getattr(usage, "cache_read_input_tokens", 0) or 0
+        cw = getattr(usage, "cache_creation_input_tokens", 0) or 0
         self.calls += 1
-        self.input_tokens += getattr(usage, "input_tokens", 0) or 0
-        self.output_tokens += getattr(usage, "output_tokens", 0) or 0
-        self.cache_read_tokens += getattr(usage, "cache_read_input_tokens", 0) or 0
-        self.cache_write_tokens += getattr(usage, "cache_creation_input_tokens", 0) or 0
+        self.input_tokens += inp
+        self.output_tokens += out
+        self.cache_read_tokens += cr
+        self.cache_write_tokens += cw
+        if model not in self.models_used:
+            self.models_used.append(model)
+        # 강등되면 호출마다 모델이 다를 수 있으므로 그 호출의 모델 단가로 더한다
+        rate_in, rate_out = PRICING.get(model, (5.00, 25.00))
+        million = 1_000_000
+        self._usd += (inp / million * rate_in + cw / million * rate_in * 1.25
+                      + cr / million * rate_in * 0.10 + out / million * rate_out)
 
     @property
     def estimated_usd(self) -> float:
+        if self.calls and self._usd:
+            return self._usd
+        # add() 를 거치지 않고 필드만 채운 경우(테스트 등)를 위한 계산
         rate_in, rate_out = PRICING.get(self.model, (5.00, 25.00))
         million = 1_000_000
         return (
@@ -76,8 +101,9 @@ class Usage:
         )
 
     def summary(self) -> str:
+        shown = "+".join(self.models_used) if len(self.models_used) > 1 else self.model
         return (
-            f"{self.model} · {self.calls}회 호출 · "
+            f"{shown} · {self.calls}회 호출 · "
             f"입력 {self.input_tokens:,} (캐시읽기 {self.cache_read_tokens:,}) / "
             f"출력 {self.output_tokens:,} 토큰 · 약 ${self.estimated_usd:.3f}"
         )
@@ -86,11 +112,12 @@ class Usage:
 class ContentGenerator:
     """설정에 맞춰 Claude 를 세 번 호출한다."""
 
-    def __init__(self, cfg: Config):
+    def __init__(self, cfg: Config, model: str | None = None):
         self.cfg = cfg
-        self.model = str(cfg.get("llm.model", "claude-opus-5"))
+        self.model = model or str(cfg.get("llm.model", "claude-opus-5"))
         self.max_tokens = int(cfg.get("llm.max_tokens", 16000))
         self.effort = str(cfg.get("llm.effort", "high"))
+        self.fallback_model = str(cfg.get("llm.fallback_model", "") or "").strip()
         timeout = float(cfg.get("llm.timeout_seconds", 600))
         self.client = anthropic.Anthropic(api_key=cfg.api_key, timeout=timeout)
         self.usage = Usage(model=self.model)
@@ -145,35 +172,22 @@ class ContentGenerator:
     # ── 공통 호출 ────────────────────────────────────────────
 
     def _parse(self, *, system: str, user: str, output_format, cache_system: bool):
-        system_blocks = [{"type": "text", "text": system}]
-        if cache_system:
-            # 접두사 캐싱: blog/video 호출이 같은 system 을 공유하므로
-            # 두 번째 호출부터 입력 토큰이 1/10 가격으로 처리된다.
-            system_blocks[0]["cache_control"] = {"type": "ephemeral"}
-
-        kwargs = {
-            "model": self.model,
-            "max_tokens": self.max_tokens,
-            "system": system_blocks,
-            "messages": [{"role": "user", "content": user}],
-            "output_format": output_format,
-        }
-        kwargs.update(self._reasoning_kwargs())
-
+        """기본 모델로 부르고, 한도·장애면 대체 모델로 한 번 더 시도한다."""
         try:
-            response = self.client.messages.parse(**kwargs)
-        except anthropic.AuthenticationError as exc:
-            raise LLMError("ANTHROPIC_API_KEY 가 유효하지 않습니다.") from exc
-        except anthropic.RateLimitError as exc:
-            raise LLMError("API 사용량 한도에 걸렸습니다. 잠시 후 다시 실행하세요.") from exc
-        except anthropic.BadRequestError as exc:
-            raise LLMError(f"요청이 거부됐습니다: {exc}") from exc
-        except anthropic.APIConnectionError as exc:
-            raise LLMError(f"API 서버에 연결하지 못했습니다: {exc}") from exc
-        except anthropic.APIStatusError as exc:
-            raise LLMError(f"API 오류 {exc.status_code}: {exc}") from exc
+            response, model = self._call(system, user, output_format, cache_system, self.model)
+        except _Retryable as exc:
+            if not self.fallback_model or self.fallback_model == self.model:
+                raise LLMError(exc.message) from exc
+            log.warning("%s — %s 로 다시 시도합니다.", exc.message, self.fallback_model)
+            try:
+                response, model = self._call(system, user, output_format, cache_system, self.fallback_model)
+            except _Retryable as exc2:
+                raise LLMError(f"{exc.message} (대체 모델 {self.fallback_model} 도 실패: {exc2.message})") from exc2
+            self.usage.notes.append(
+                f"{output_format.__name__} 은 기본 모델이 실패해 {self.fallback_model} 로 생성했습니다."
+            )
 
-        self.usage.add(response)
+        self.usage.add(response, model)
 
         if response.stop_reason == "refusal":
             detail = getattr(response, "stop_details", None)
@@ -188,9 +202,39 @@ class ContentGenerator:
             raise LLMError(f"{output_format.__name__} 형식으로 응답을 해석하지 못했습니다.")
         return parsed
 
-    def _reasoning_kwargs(self) -> dict:
+    def _call(self, system: str, user: str, output_format, cache_system: bool, model: str):
+        system_blocks = [{"type": "text", "text": system}]
+        if cache_system:
+            # 접두사 캐싱: blog/video 호출이 같은 system 을 공유하므로
+            # 두 번째 호출부터 입력 토큰이 1/10 가격으로 처리된다.
+            system_blocks[0]["cache_control"] = {"type": "ephemeral"}
+        kwargs = {
+            "model": model,
+            "max_tokens": self.max_tokens,
+            "system": system_blocks,
+            "messages": [{"role": "user", "content": user}],
+            "output_format": output_format,
+        }
+        kwargs.update(self._reasoning_kwargs(model))
+        try:
+            return self.client.messages.parse(**kwargs), model
+        except anthropic.AuthenticationError as exc:
+            raise LLMError("ANTHROPIC_API_KEY 가 유효하지 않습니다.") from exc
+        except anthropic.RateLimitError as exc:
+            raise _Retryable("API 사용량 한도에 걸렸습니다. 잠시 후 다시 실행하세요.") from exc
+        except anthropic.BadRequestError as exc:
+            raise LLMError(f"요청이 거부됐습니다: {exc}") from exc
+        except anthropic.APIConnectionError as exc:
+            raise _Retryable(f"API 서버에 연결하지 못했습니다: {exc}") from exc
+        except anthropic.APIStatusError as exc:
+            if exc.status_code >= 500 or exc.status_code == 529:
+                raise _Retryable(f"API 오류 {exc.status_code}: {exc}") from exc
+            raise LLMError(f"API 오류 {exc.status_code}: {exc}") from exc
+
+    def _reasoning_kwargs(self, model: str | None = None) -> dict:
         """모델별로 지원하는 추론 옵션이 달라 여기서 갈라 준다."""
-        if self.model.startswith("claude-haiku"):
+        model = model or self.model
+        if model.startswith("claude-haiku"):
             # Haiku 4.5 는 adaptive thinking 과 effort 를 지원하지 않는다.
             return {}
         return {

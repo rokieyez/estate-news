@@ -140,6 +140,12 @@ class CostLog:
                 if (parsed := _parse_date(d)) and cutoff < parsed <= today}
         return round(sum(hits.values()), 4), len(hits)
 
+    def this_month(self, today: date | None = None) -> float:
+        """이번 달(1일부터 오늘까지) 합계 USD."""
+        today = today or date.today()
+        prefix = today.strftime("%Y-%m")
+        return round(sum(v for d, v in self.by_date().items() if d.startswith(prefix)), 4)
+
     def prune(self, keep_days: int = 400) -> None:
         cutoff = date.today() - timedelta(days=keep_days)
         self.entries = [e for e in self.entries
@@ -208,4 +214,86 @@ class SeriesStore:
             "count": len(self.rows),
             "rows": self.rows,
         }
+        self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+# ── 제목 기록장 ──────────────────────────────────────────────
+
+TITLES_FILE = "titles.json"
+TITLE_KINDS = ("blog", "longform", "shorts")
+
+
+def title_type(title: str) -> str:
+    """제목 유형을 거칠게 나눈다. 어떤 유형이 먹히는지 볼 때 쓴다."""
+    t = title.strip()
+    if "?" in t or t.endswith(("까", "까요", "일까", "나요")):
+        return "질문형"
+    if any(w in t for w in (" vs ", "VS", "보다", "비교")):
+        return "비교형"
+    if any(ch.isdigit() for ch in t):
+        return "수치형"
+    return "서술형"
+
+
+class TitleLog:
+    """날짜별 제목 후보와, 실제로 고른 것·조회수를 적는 장부."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.days: dict[str, dict] = {}
+        if path.exists():
+            try:
+                self.days = json.loads(path.read_text(encoding="utf-8")).get("days", {}) or {}
+            except (json.JSONDecodeError, OSError):
+                self.days = {}
+
+    def record_candidates(self, run_date: str, kind: str, candidates: list[str]) -> None:
+        """그날 후보를 저장한다. 이미 고른 값이 있으면 건드리지 않는다."""
+        day = self.days.setdefault(run_date, {})
+        entry = day.setdefault(kind, {"candidates": [], "pick": None, "views": None})
+        entry["candidates"] = [c for c in candidates if c]
+
+    def log_pick(self, run_date: str, kind: str, pick: int, views: int | None = None,
+                 title: str | None = None) -> dict:
+        """고른 번호(1부터)와 조회수를 적는다. 후보 밖 번호면 title 을 같이 줘야 한다."""
+        day = self.days.setdefault(run_date, {})
+        entry = day.setdefault(kind, {"candidates": [], "pick": None, "views": None})
+        cands = entry["candidates"]
+        if 1 <= pick <= len(cands):
+            entry["title"] = cands[pick - 1]
+        elif title:
+            entry["title"] = title
+        else:
+            raise ValueError(f"{run_date} {kind} 후보는 {len(cands)}개입니다. 번호를 확인하세요.")
+        entry["pick"] = pick
+        if views is not None:
+            entry["views"] = int(views)
+        entry["type"] = title_type(entry["title"])
+        return entry
+
+    def picked(self) -> list[dict]:
+        rows = []
+        for d, kinds in sorted(self.days.items(), reverse=True):
+            for kind, e in kinds.items():
+                if e.get("pick"):
+                    rows.append({"date": d, "kind": kind, **e})
+        return rows
+
+    def by_type(self) -> dict[str, dict]:
+        """유형별 개수·평균 조회수 (조회수가 있는 것만 평균에 넣는다)."""
+        out: dict[str, dict] = {}
+        for r in self.picked():
+            t = r.get("type") or title_type(r.get("title", ""))
+            slot = out.setdefault(t, {"count": 0, "views": [], "avg_views": None})
+            slot["count"] += 1
+            if r.get("views") is not None:
+                slot["views"].append(r["views"])
+        for slot in out.values():
+            slot["avg_views"] = round(sum(slot["views"]) / len(slot["views"])) if slot["views"] else None
+            del slot["views"]
+        return out
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"updated_at": datetime.now().isoformat(timespec="seconds"), "days": self.days}
         self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

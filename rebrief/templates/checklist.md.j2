@@ -1,0 +1,22 @@
+# 발행 전 점검 — {{ date }}
+
+{% set s = summary %}
+{% if s.fail %}**❌ 막힘 {{ s.fail }}** · {% endif %}⚠️ 확인 {{ s.warn }} · ✅ 통과 {{ s.ok }}
+
+{% for i in items %}
+- {{ i.icon }} **{{ i.title }}**{% if i.detail %} — {{ i.detail }}{% endif %}
+
+{% for line in i.lines %}
+    - {{ line }}
+{% endfor %}
+{% endfor %}
+
+---
+
+{% if s.fail %}
+❌ 항목을 고치기 전에는 발행하지 마세요.
+{% elif s.warn %}
+⚠️ 항목만 한 번 훑고 발행하면 됩니다.
+{% else %}
+막히는 것이 없습니다. 발행하세요.
+{% endif %}

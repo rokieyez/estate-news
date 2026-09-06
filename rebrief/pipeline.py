@@ -116,9 +116,14 @@ def run(
         link_status=_check_issue_links(cfg, issues, result),
     )
 
+    link_status = renderer.last_link_status
     want_llm = cfg.llm_enabled if use_llm is None else (use_llm and bool(cfg.api_key))
+    model = _budget_guard(cfg, result) if want_llm else None
+    if want_llm and model == "":
+        want_llm = False                      # 월 예산 초과
+    artifacts: dict = {}
     if want_llm and issues:
-        _generate_with_llm(cfg, renderer, issues, date_str, result)
+        artifacts = _generate_with_llm(cfg, renderer, issues, date_str, result, model=model)
     else:
         if use_llm is not False and not cfg.api_key:
             result.warnings.append(
@@ -126,6 +131,7 @@ def run(
             )
         renderer.brief_fallback(issues, stats)
         renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
+    renderer.checklist(result, artifacts, link_status)
 
     # 6) 이력 저장
     seen.mark(articles, date_cls.fromisoformat(date_str))
@@ -170,12 +176,18 @@ def rerender(cfg: Config, run_date: str, *, use_llm: bool | None = None) -> RunR
         link_status=_check_issue_links(cfg, issues, result),
     )
 
+    link_status = renderer.last_link_status
     want_llm = cfg.llm_enabled if use_llm is None else (use_llm and bool(cfg.api_key))
+    model = _budget_guard(cfg, result) if want_llm else None
+    if want_llm and model == "":
+        want_llm = False
+    artifacts: dict = {}
     if want_llm and issues:
-        _generate_with_llm(cfg, renderer, issues, run_date, result)
+        artifacts = _generate_with_llm(cfg, renderer, issues, run_date, result, model=model)
     else:
         renderer.brief_fallback(issues, stats)
         renderer.prompt_pack(build_prompt_pack(cfg, issues, run_date))
+    renderer.checklist(result, artifacts, link_status)
 
     _record_cost(cfg, result)
     index = update_index(cfg)
@@ -192,10 +204,15 @@ def _generate_with_llm(
     issues: list[Cluster],
     date_str: str,
     result: RunResult,
-) -> None:
-    """LLM 3단계 생성. 중간에 실패해도 거기까지 만든 건 남긴다."""
-    generator = ContentGenerator(cfg)
+    model: str | None = None,
+) -> dict:
+    """LLM 3단계 생성. 중간에 실패해도 거기까지 만든 건 남긴다.
+
+    점검표가 쓸 수 있게 만든 것들(brief/post/pack/checks)을 dict 로 돌려준다.
+    """
+    generator = ContentGenerator(cfg, model=model)
     result.usage = generator.usage
+    made: dict = {}
 
     try:
         brief = generator.generate_brief(issues, date_str)
@@ -204,10 +221,12 @@ def _generate_with_llm(
         result.warnings.append(f"브리핑 생성 실패 — {exc}")
         renderer.brief_fallback(issues, _stats_from_clusters(issues))
         renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
-        return
+        return made
 
     result.llm_used = True
-    renderer.brief(brief, _stats_from_clusters(issues))
+    checks = _verify_numbers(cfg, brief, issues, result)
+    made.update(brief=brief, checks=checks)
+    renderer.brief(brief, _stats_from_clusters(issues), checks, diff=_diff_yesterday(cfg, brief, date_str))
     renderer.data_json(brief)
     history = _record_series(cfg, brief, date_str)
 
@@ -222,23 +241,30 @@ def _generate_with_llm(
 
     slot_files = renderer.images(brief, history=history, post=post)
     if post is not None:
+        made.update(post=post, empty_photo_slots=sum(
+            1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
         renderer.blog(post, issues, slot_files)
         if str(cfg.get("blog.platform", "naver")).lower() == "naver":
             renderer.blog_naver(post, slot_files)
+        _record_titles(cfg, date_str, blog=[post.title])
 
     try:
         pack = generator.generate_video(brief)
     except LLMError as exc:
         log.error("영상 대본 생성 실패: %s", exc)
         result.warnings.append(f"영상 대본 생성 실패 — {exc}")
-        return
+        return made
 
+    made["pack"] = pack
     renderer.shorts(pack)
     renderer.longform(pack)
     renderer.production_notes(brief, pack)
     renderer.thumbnails(pack)
     renderer.shorts_draft(pack)
+    _record_titles(cfg, date_str, longform=pack.longform.title_candidates,
+                   shorts=pack.shorts.title_candidates)
     result.warnings.extend(generator.usage.notes)
+    return made
 
 
 def _stats(articles: list[Article], feed_results: list[FeedResult]) -> RenderStats:
@@ -312,4 +338,83 @@ def _record_series(cfg: Config, brief, date_str: str) -> list[dict]:
     except OSError as exc:
         log.warning("수치 이력 기록 실패: %s", exc)
     return store.rows
+
+
+def _verify_numbers(cfg: Config, brief, issues: list[Cluster], result: RunResult) -> list:
+    """브리핑 수치를 기사 원문과 대조한다. 미확인이 있으면 경고에 올린다."""
+    if not cfg.get("verify.numbers", True):
+        return []
+    from .verify import NOT_FOUND, check_numbers
+
+    checks = check_numbers(brief, issues)
+    missing = [c for c in checks if c.status == NOT_FOUND]
+    if missing:
+        result.warnings.append(
+            f"수치 {len(missing)}건이 기사 원문에서 확인되지 않았습니다 (brief.md '숫자 검산' 참고)"
+        )
+    return checks
+
+
+def _record_titles(cfg: Config, date_str: str, **kinds: list[str]) -> None:
+    """그날 제목 후보를 장부에 남긴다. 나중에 무엇을 골랐는지 적을 수 있게."""
+    from .store import TitleLog
+
+    try:
+        log_ = TitleLog(cfg.state_dir / "titles.json")
+        for kind, candidates in kinds.items():
+            if candidates:
+                log_.record_candidates(date_str, kind, list(candidates))
+        log_.save()
+    except OSError as exc:
+        log.warning("제목 기록 실패: %s", exc)
+
+
+def _budget_guard(cfg: Config, result: RunResult) -> str | None:
+    """월 예산에 따라 쓸 모델을 정한다. None = 기본, 대체 모델명 = 절약, "" = 이번 실행 건너뜀."""
+    budget = float(cfg.get("llm.monthly_budget_usd", 0) or 0)
+    if budget <= 0:
+        return None
+    spent = CostLog(cfg.state_dir / "costs.json").this_month()
+    fallback = str(cfg.get("llm.fallback_model", "") or "").strip()
+    if spent >= budget:
+        result.warnings.append(
+            f"이번 달 비용 ${spent:.2f} 이 예산 ${budget:.2f} 을 넘어 요약을 건너뛰었습니다 (settings.yaml llm.monthly_budget_usd)."
+        )
+        return ""
+    ratio = float(cfg.get("llm.budget_soft_ratio", 0.8) or 0.8)
+    if fallback and spent >= budget * ratio and fallback != cfg.get("llm.model"):
+        result.warnings.append(
+            f"이번 달 비용 ${spent:.2f} 이 예산의 {ratio:.0%} 를 넘어 {fallback} 로 생성했습니다."
+        )
+        return fallback
+    return None
+
+
+def _diff_yesterday(cfg: Config, brief, date_str: str) -> dict:
+    """가장 최근 이전 날짜의 data.json 과 이슈 제목을 견줘 새것/이어지는 것/사라진 것을 나눈다."""
+    import json
+
+    from .cluster import similarity
+
+    out_dir = cfg.output_dir
+    prev = None
+    if out_dir.exists():
+        for p in sorted((d for d in out_dir.iterdir() if d.is_dir() and d.name < date_str
+                         and len(d.name) == 10), reverse=True):
+            if (p / "data.json").exists():
+                prev = p
+                break
+    if prev is None:
+        return {}
+    try:
+        yesterday = json.loads((prev / "data.json").read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return {}
+    old_titles = [i.get("title", "") for i in yesterday.get("issues", [])]
+    new, cont = [], []
+    for issue in brief.issues:
+        match = next((t for t in old_titles if similarity(issue.title, t) >= 0.35), None)
+        (cont if match else new).append(issue.title)
+    gone = [t for t in old_titles if not any(similarity(t, i.title) >= 0.35 for i in brief.issues)]
+    return {"date": prev.name, "new": new, "continuing": cont, "gone": gone}
 
