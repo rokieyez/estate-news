@@ -49,6 +49,22 @@ def _value_forms(value: str) -> list[str]:
     return [f for f in forms if f and re.search(r"\d", f)]
 
 
+def _present(forms: list[str], unit: str, text: str) -> bool:
+    """값이 본문에 '숫자로서' 있는지 본다.
+
+    '5' 가 '15%' 나 '2025' 안에 들어 있다고 확인으로 치면 안 되므로 앞뒤에 숫자가
+    없어야 한다. 두 자리 이하 짧은 값은 어디에나 있으므로 단위 첫 글자까지 붙어
+    있어야 한다 ('22개구', '5%', '20년'). 단위가 없으면 경계 검사만 한다.
+    """
+    unit_head = _norm(unit)[:1]
+    for f in forms:
+        short = len(re.sub(r"\D", "", f)) <= 2
+        pat = r"(?<![\d.])" + re.escape(f) + (re.escape(unit_head) if short and unit_head else r"(?!\d)")
+        if re.search(pat, text):
+            return True
+    return False
+
+
 def _article_texts(clusters: list[Cluster]) -> tuple[dict[str, str], str]:
     """url → 정규화된 제목+본문. 전체 합본도 같이 돌려준다."""
     by_url: dict[str, str] = {}
@@ -69,9 +85,9 @@ def check_numbers(brief: DailyBrief, clusters: list[Cluster]) -> list[NumberChec
             forms = _value_forms(dp.value)
             if not forms:
                 continue
-            if any(f in own_text for f in forms):
+            if _present(forms, dp.unit, own_text):
                 status, hint = VERIFIED, ""
-            elif any(f in everything for f in forms):
+            elif _present(forms, dp.unit, everything):
                 status, hint = VERIFIED, "다른 이슈의 기사에서 확인"
             elif not has_body:
                 status, hint = NO_TEXT, "본문을 수집하지 못한 기사"

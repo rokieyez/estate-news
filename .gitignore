@@ -14,3 +14,6 @@ site/
 
 # 쇼츠 초안 영상은 용량이 커서 커밋하지 않는다 (Actions 아티팩트로만 보관)
 output/**/shorts-draft.mp4
+
+# Claude Code 플러그인(oh-my-claudecode) 작업 폴더
+.omc/

@@ -126,8 +126,7 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
     for w in (warnings or []):
         if "확인되지 않았습니다" in w or "열리지 않습니다" in w:
             continue                          # 위에서 이미 항목으로 다뤘다
-        level = WARN if ("대체" in w or "생성했습니다" in w) else WARN
-        items.append(Item("warn", level, w))
+        items.append(Item("warn", WARN, w))
 
     return items
 

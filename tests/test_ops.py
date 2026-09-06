@@ -81,6 +81,18 @@ def test_검산_결과가_brief_와_경고에_들어간다(cfg, monkeypatch):
     assert "## 숫자 검산" in text
 
 
+def test_다른_숫자의_일부는_확인으로_치지_않는다():
+    body = "상승률은 15%였고 2025년 기준이다. 세 곳이 제외된다. " * 20
+    clusters = [_cluster("https://a/1", "t", body)]
+    brief = _brief(_issue("i", [DataPoint(label="a", value="5", unit="%"),      # '15%' 의 5
+                                DataPoint(label="b", value="25", unit="년"),    # '2025년' 의 25
+                                DataPoint(label="c", value="15", unit="%"),     # 진짜 있음
+                                DataPoint(label="d", value="3", unit="개구")],  # '세 곳' — 숫자로 없음
+                       ["https://a/1"]))
+    assert [c.status for c in verify.check_numbers(brief, clusters)] == [
+        verify.NOT_FOUND, verify.NOT_FOUND, verify.VERIFIED, verify.NOT_FOUND]
+
+
 # ── 모델 강등 ────────────────────────────────────────────────
 
 
