@@ -23,6 +23,8 @@ class NumberCheck:
     unit: str
     status: str
     hint: str = ""
+    url: str = ""          # 값을 찾은 기사
+    snippet: str = ""      # 그 값이 든 문장 (원문 대조용)
 
 
 def _norm(text: str) -> str:
@@ -49,8 +51,8 @@ def _value_forms(value: str) -> list[str]:
     return [f for f in forms if f and re.search(r"\d", f)]
 
 
-def _present(forms: list[str], unit: str, text: str) -> bool:
-    """값이 본문에 '숫자로서' 있는지 본다.
+def _find(forms: list[str], unit: str, text: str) -> int:
+    """값이 본문에 '숫자로서' 있는 위치. 없으면 -1.
 
     '5' 가 '15%' 나 '2025' 안에 들어 있다고 확인으로 치면 안 되므로 앞뒤에 숫자가
     없어야 한다. 두 자리 이하 짧은 값은 어디에나 있으므로 단위 첫 글자까지 붙어
@@ -60,40 +62,64 @@ def _present(forms: list[str], unit: str, text: str) -> bool:
     for f in forms:
         short = len(re.sub(r"\D", "", f)) <= 2
         pat = r"(?<![\d.])" + re.escape(f) + (re.escape(unit_head) if short and unit_head else r"(?!\d)")
-        if re.search(pat, text):
-            return True
-    return False
+        m = re.search(pat, text)
+        if m:
+            return m.start()
+    return -1
 
 
-def _article_texts(clusters: list[Cluster]) -> tuple[dict[str, str], str]:
-    """url → 정규화된 제목+본문. 전체 합본도 같이 돌려준다."""
+def _snippet(text: str, pos: int, width: int = 60) -> str:
+    """찾은 위치를 가운데 둔 한 문장 안팎. 정규화된 본문이라 띄어쓰기는 없다."""
+    start = max(text.rfind(".", 0, pos), text.rfind("\n", 0, pos)) + 1
+    end_candidates = [i for i in (text.find(".", pos), text.find("\n", pos)) if i != -1]
+    end = min(end_candidates) + 1 if end_candidates else len(text)
+    piece = text[start:end].strip()
+    if len(piece) > width * 2:
+        piece = "…" + text[max(pos - width, start):pos + width] + "…"
+    return piece
+
+
+def _article_texts(clusters: list[Cluster]) -> dict[str, str]:
+    """url → 정규화된 제목+본문."""
     by_url: dict[str, str] = {}
     for c in clusters:
         for a in c.articles:
             by_url[a.url] = _norm(f"{a.title}\n{a.body or ''}")
-    return by_url, "\n".join(by_url.values())
+    return by_url
+
+
+def _locate(forms: list[str], unit: str, texts: dict[str, str]) -> tuple[str, str] | None:
+    """여러 기사 중 값이 처음 발견되는 (url, 문장). 없으면 None."""
+    for url, text in texts.items():
+        pos = _find(forms, unit, text)
+        if pos >= 0:
+            return url, _snippet(text, pos)
+    return None
 
 
 def check_numbers(brief: DailyBrief, clusters: list[Cluster]) -> list[NumberCheck]:
-    by_url, everything = _article_texts(clusters)
+    by_url = _article_texts(clusters)
     results: list[NumberCheck] = []
     for issue in brief.issues:
-        own = [by_url[u] for u in issue.source_urls if u in by_url]
-        own_text = "\n".join(own)
-        has_body = any(len(t) > 300 for t in own)       # 제목만 있으면 300자를 넘기 어렵다
+        own = {u: by_url[u] for u in issue.source_urls if u in by_url}
+        has_body = any(len(t) > 300 for t in own.values())   # 제목만 있으면 300자를 넘기 어렵다
         for dp in issue.numbers:
             forms = _value_forms(dp.value)
             if not forms:
                 continue
-            if _present(forms, dp.unit, own_text):
+            url, snippet = "", ""
+            hit = _locate(forms, dp.unit, own)
+            if hit:
                 status, hint = VERIFIED, ""
-            elif _present(forms, dp.unit, everything):
+                url, snippet = hit
+            elif (hit := _locate(forms, dp.unit, {u: t for u, t in by_url.items() if u not in own})):
                 status, hint = VERIFIED, "다른 이슈의 기사에서 확인"
+                url, snippet = hit
             elif not has_body:
                 status, hint = NO_TEXT, "본문을 수집하지 못한 기사"
             else:
                 status, hint = NOT_FOUND, "기사 제목·본문에 이 값이 없습니다"
-            results.append(NumberCheck(issue.title, dp.label, dp.value, dp.unit, status, hint))
+            results.append(NumberCheck(issue.title, dp.label, dp.value, dp.unit, status, hint, url, snippet))
     return results
 
 

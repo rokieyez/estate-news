@@ -159,7 +159,13 @@ def _cmd_notify(cfg, args) -> int:
     date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
     site_url = str(cfg.get("site.url", "") or "")
     if args.failed:
-        ok = send_telegram(build_failure_message(date=date_str, site_url=site_url, run_url=args.run_url))
+        from datetime import date as _date
+
+        from .store import failure_streak
+
+        streak = failure_streak(cfg.output_dir, _date.fromisoformat(date_str))
+        ok = send_telegram(build_failure_message(date=date_str, site_url=site_url,
+                                                 run_url=args.run_url, streak=max(streak, 1)))
     else:
         ok = send_telegram(_message_from_output(cfg, date_str))
     print("알림을 보냈습니다." if ok else "알림 전송에 실패했습니다.")

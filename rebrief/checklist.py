@@ -136,3 +136,36 @@ def summarize(items: list[Item]) -> dict[str, int]:
     for i in items:
         out[i.level] += 1
     return out
+
+
+# ── ❌ 금지 표현 자동 수정 ─────────────────────────────────
+
+_SENT = re.compile(r"[^.!?\n]*[.!?]?")
+
+
+def sentences_with(text: str, phrases: list[str]) -> list[str]:
+    """금지 표현이 든 문장들 (원문 그대로, 중복 없이)."""
+    out: list[str] = []
+    for m in _SENT.finditer(text or ""):
+        s = m.group(0)
+        if s.strip() and any(p in s for p in phrases) and s not in out:
+            out.append(s)
+    return out
+
+
+def autofix(text: str, phrases: list[str], rewrite) -> tuple[str, list[tuple[str, str]]]:
+    """금지 표현이 든 문장을 rewrite(문장, 표현들) 로 바꾼다. (새 본문, [(전, 후), ...])"""
+    changes: list[tuple[str, str]] = []
+    for s in sentences_with(text, phrases):
+        hits = [p for p in phrases if p in s]
+        try:
+            new = rewrite(s.strip(), hits)
+        except Exception as exc:                  # 고치기 실패는 점검표 ❌ 로 남기면 된다
+            import logging
+            logging.getLogger(__name__).warning("문장 고쳐 쓰기 실패: %s", exc)
+            continue
+        if new and not any(p in new for p in phrases):
+            text = text.replace(s.strip(), new, 1)
+            changes.append((s.strip(), new))
+    return text, changes
+

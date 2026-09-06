@@ -12,7 +12,7 @@ from dataclasses import dataclass, field
 import anthropic
 
 from .config import Config
-from .models import BlogPost, Cluster, DailyBrief, VideoPack, WeeklyReview
+from .models import BlogPost, Cluster, DailyBrief, Rewrite, VideoPack, WeeklyReview
 from .prompts import (
     build_blog_user,
     build_brief_messages,
@@ -163,6 +163,15 @@ class ContentGenerator:
         system, user = build_weekly_messages(self.cfg, days, week_label)
         log.info("주간 결산 생성 중… (%d일치)", len(days))
         return self._parse(system=system, user=user, output_format=WeeklyReview, cache_system=False)
+
+    # ── 문장 고쳐 쓰기 (점검표 ❌ 자동 수정) ─────────────────
+
+    def rewrite(self, sentence: str, phrases: list[str], tone: str = "") -> str:
+        system = ("당신은 부동산 콘텐츠 편집자입니다. 주어진 문장에서 금지 표현을 빼고 같은 뜻으로 "
+                  "다시 씁니다. 사실·숫자는 바꾸지 않습니다. 단정적 예측이나 투자 권유로 읽히지 않게 합니다."
+                  + (f" 톤: {tone}" if tone else ""))
+        user = f"금지 표현: {', '.join(phrases)}\n\n문장:\n{sentence}"
+        return self._parse(system=system, user=user, output_format=Rewrite, cache_system=False).text.strip()
 
     def _shared(self, brief: DailyBrief) -> str:
         if self._shared_context is None:

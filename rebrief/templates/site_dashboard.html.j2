@@ -3,6 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="브리핑">
+<meta name="theme-color" content="#256abf">
 <title>운영 현황</title>
 <style>
   :root { color-scheme: light; }
@@ -33,6 +38,11 @@
 <body>
 <div class="bar"><a href="index.html">← 목록</a><span>운영 현황 · 최근 {{ rows|length }}일</span></div>
 <div class="wrap">
+{% if fail_streak >= 2 %}
+<div class="card" style="background:#fff2f2;border:1px solid #f0b4b4;color:#8a1f1f">
+  <b>🚨 {{ fail_streak }}일 연속 요약 실패</b> — 일시적 장애가 아닐 수 있습니다. API 키·한도와 피드 상태를 확인하세요.
+</div>
+{% endif %}
 
 <div class="tiles">
   <div class="tile"><div class="k">최근 7일 비용</div><div class="v">${{ '%.2f'|format(week_usd) }}</div><div class="s">약 {{ '{:,.0f}'.format(week_usd * krw) }}원 · {{ week_days }}일 실행</div></div>

@@ -263,6 +263,7 @@ def _generate_with_llm(
     renderer.shorts_draft(pack)
     _record_titles(cfg, date_str, longform=pack.longform.title_candidates,
                    shorts=pack.shorts.title_candidates)
+    _autofix_banned(cfg, renderer, made, issues, slot_files, result)
     result.warnings.extend(generator.usage.notes)
     return made
 
@@ -417,4 +418,63 @@ def _diff_yesterday(cfg: Config, brief, date_str: str) -> dict:
         (cont if match else new).append(issue.title)
     gone = [t for t in old_titles if not any(similarity(t, i.title) >= 0.35 for i in brief.issues)]
     return {"date": prev.name, "new": new, "continuing": cont, "gone": gone}
+
+
+def _autofix_banned(cfg: Config, renderer: Renderer, made: dict, issues: list[Cluster],
+                    slot_files: dict, result: RunResult) -> None:
+    """금지 표현이 든 문장만 저렴한 모델로 고쳐 쓰고 해당 산출물을 다시 쓴다."""
+    from . import checklist as cl
+
+    model = str(cfg.get("checklist.autofix_model", "") or "").strip()
+    phrases = [b for b in ((cfg.get("video", {}) or {}).get("banned_phrases", []) or []) if b]
+    if not model or not phrases:
+        return
+    post, pack = made.get("post"), made.get("pack")
+    targets = []
+    if post is not None:
+        targets.append(("블로그", post.body_markdown))
+    if pack is not None:
+        targets.append(("쇼츠", "\n".join(l.text for l in pack.shorts.lines)))
+        targets.append(("롱폼", "\n".join(s.script for s in pack.longform.sections)))
+    if not any(cl.sentences_with(t, phrases) for _, t in targets):
+        return
+
+    gen = ContentGenerator(cfg, model=model)
+    tone = str((cfg.get("video", {}) or {}).get("tone", "") or "")
+    fixed: list[str] = []
+    if post is not None:
+        post.body_markdown, ch = cl.autofix(post.body_markdown, phrases, lambda s, p: gen.rewrite(s, p, tone))
+        if ch:
+            fixed += [f"블로그: {a} → {b}" for a, b in ch]
+            renderer.blog(post, issues, slot_files)
+            if str(cfg.get("blog.platform", "naver")).lower() == "naver":
+                renderer.blog_naver(post, slot_files)
+    if pack is not None:
+        changed = False
+        for line in pack.shorts.lines:
+            line.text, ch = cl.autofix(line.text, phrases, lambda s, p: gen.rewrite(s, p, tone))
+            if ch:
+                changed = True
+                fixed += [f"쇼츠: {a} → {b}" for a, b in ch]
+        for sec in pack.longform.sections:
+            sec.script, ch = cl.autofix(sec.script, phrases, lambda s, p: gen.rewrite(s, p, tone))
+            if ch:
+                changed = True
+                fixed += [f"롱폼: {a} → {b}" for a, b in ch]
+        if changed:
+            renderer.shorts(pack)
+            renderer.longform(pack)
+    if fixed:
+        result.warnings.append(f"금지 표현이 든 문장 {len(fixed)}개를 {model} 로 고쳐 썼습니다 (checklist.md 에 전후 기록)")
+        made["autofixed"] = fixed
+    if result.usage is not None:
+        # 고쳐 쓰기 비용도 그날 장부에 합산한다
+        u = gen.usage
+        result.usage.calls += u.calls
+        result.usage.input_tokens += u.input_tokens
+        result.usage.output_tokens += u.output_tokens
+        result.usage._usd += u.estimated_usd
+        for m in u.models_used:
+            if m not in result.usage.models_used:
+                result.usage.models_used.append(m)
 

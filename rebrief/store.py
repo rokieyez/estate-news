@@ -297,3 +297,24 @@ class TitleLog:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = {"updated_at": datetime.now().isoformat(timespec="seconds"), "days": self.days}
         self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+# ── 연속 실패 ────────────────────────────────────────────────
+
+
+def failure_streak(output_dir: Path, today: date | None = None, lookback: int = 14) -> int:
+    """오늘부터 거꾸로, 요약(data.json)이 없는 날이 몇 일 연속인지. 폴더 자체가 없는 날도 실패로 센다."""
+    today = today or date.today()
+    # 프로젝트가 시작되기 전 날짜까지 실패로 세면 첫날부터 '14일 연속' 이 된다.
+    existing = [p.name for p in output_dir.iterdir() if p.is_dir() and _parse_date(p.name)] if output_dir.exists() else []
+    if not existing:
+        return 0
+    earliest = min(existing)
+    streak = 0
+    for i in range(lookback):
+        d = (today - timedelta(days=i)).isoformat()
+        if d < earliest or (output_dir / d / "data.json").exists():
+            break
+        streak += 1
+    return streak
+

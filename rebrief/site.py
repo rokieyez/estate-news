@@ -79,9 +79,37 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
     )
     (dest / "index.html").write_text(index, encoding="utf-8")
 
+    _write_pwa(dest, channel=(cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑"),
+               png=bool((cfg.get("images", {}) or {}).get("png", True)))
+
     # Jekyll 이 밑줄로 시작하는 폴더를 무시하는 걸 막는다.
     (dest / ".nojekyll").write_text("", encoding="utf-8")
     return dest
+
+
+def _write_pwa(dest: Path, channel: str, png: bool = True) -> None:
+    """홈 화면에 앱처럼 추가되게 manifest 와 아이콘을 둔다. 서비스워커는 두지 않는다 —
+    매일 바뀌는 페이지에 캐시가 남으면 어제 글을 보게 된다."""
+    import json
+
+    from . import images
+
+    icon_svg = (
+        '<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">'
+        '<rect width="512" height="512" rx="96" fill="#256abf"/>'
+        '<text x="256" y="318" font-size="220" font-weight="800" text-anchor="middle" fill="#fff" '
+        'font-family="Apple SD Gothic Neo, Noto Sans KR, sans-serif">부</text></svg>'
+    )
+    (dest / "icon.svg").write_text(icon_svg, encoding="utf-8")
+    icons = [{"src": "icon.svg", "sizes": "any", "type": "image/svg+xml"}]
+    # iOS 는 PNG 만 받는다. 크롬이 있을 때만 만들고, 없으면 SVG 로만 둔다.
+    if png and images.svg_to_png(dest / "icon.svg", dest / "icon-512.png", scale=1):
+        icons.insert(0, {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"})
+    (dest / "manifest.webmanifest").write_text(json.dumps({
+        "name": channel, "short_name": channel[:8], "start_url": "./index.html",
+        "display": "standalone", "background_color": "#f2f4f6", "theme_color": "#256abf",
+        "lang": "ko", "icons": icons,
+    }, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
 def _build_search(env, days: list[Path], built: list[dict], dest: Path) -> None:
@@ -163,8 +191,13 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
     cost_max = max((u for _, u in cost_rows), default=0.0) or 1.0
     cost_bars = [{"date": d, "usd": u, "h": round(100 * u / cost_max, 1)} for d, u in cost_rows]
 
+    from datetime import date as _date
+
+    from .store import failure_streak
+
     html = env.get_template("site_dashboard.html.j2").render(
         rows=rows, krw=krw,
+        fail_streak=failure_streak(cfg.output_dir, _date.fromisoformat(days[0].name)) if days else 0,
         week_usd=week_usd, week_days=week_days, month_usd=month_usd, month_days=month_days,
         avg_articles=round(sum(counted) / len(counted)) if counted else 0,
         feed_rate=round(100 * feed_ok / feed_total) if feed_total else 0,
@@ -192,6 +225,8 @@ def _build_weeks(env, source: Path, dest: Path) -> list[dict]:
         if naver.exists():
             shutil.copy2(naver, target / naver.name)
             entry["pages"].append({"href": naver.name, "label": "네이버 블로그 글"})
+        for png in sorted(week_dir.glob("img-*.png")):
+            shutil.copy2(png, target / png.name)
         if md.exists():
             html = env.get_template("site_page.html.j2").render(
                 title="주간 결산", date=week_dir.name,

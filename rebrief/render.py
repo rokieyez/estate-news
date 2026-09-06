@@ -287,6 +287,9 @@ class Renderer:
             warnings=result.warnings, llm_used=result.llm_used,
             empty_photo_slots=int(artifacts.get("empty_photo_slots", 0) or 0),
         )
+        if artifacts.get("autofixed"):
+            items.insert(0, cl.Item("autofix", cl.WARN, f"금지 표현 문장 {len(artifacts['autofixed'])}개를 자동으로 고쳐 씀",
+                                    "고친 문장이 자연스러운지만 확인하세요.", list(artifacts["autofixed"])))
         summary = cl.summarize(items)
         self._write_raw("checklist.json", json.dumps({
             "date": self.date, "summary": summary,

@@ -61,8 +61,13 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
     return "\n".join(lines)
 
 
-def build_failure_message(*, date: str, site_url: str = "", run_url: str = "") -> str:
-    lines = [f"❌ {date} 부동산 브리핑 실패", "깃허브 Actions 로그를 확인하세요."]
+def build_failure_message(*, date: str, site_url: str = "", run_url: str = "", streak: int = 1) -> str:
+    lines = [f"❌ {date} 부동산 브리핑 실패"]
+    if streak >= 2:
+        lines.append(f"🚨 {streak}일 연속 실패입니다. 일시적 장애가 아닐 수 있어요 — API 키·한도, 피드 상태를 확인하세요.")
+        lines.append("Actions 탭 → 피드 점검 워크플로를 한 번 돌려 보세요.")
+    else:
+        lines.append("깃허브 Actions 로그를 확인하세요. 07:40 안전망 실행이 한 번 더 시도합니다.")
     if run_url:
         lines.append(run_url)
     return "\n".join(lines)

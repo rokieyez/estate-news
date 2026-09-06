@@ -58,6 +58,9 @@ images:
 verify:
   numbers: true             # 브리핑 수치가 기사 제목·본문에 실제로 있는지 대조 (LLM 호출 없음)
 
+checklist:
+  autofix_model: claude-haiku-4-5   # 금지 표현이 든 문장을 이 모델로 고쳐 씀 (비우면 안 함, 몇 원 수준)
+
 site:
   url: "https://www.rokiz.net/estate-news/"   # 알림 메시지에 붙는 사이트 주소
 

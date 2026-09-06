@@ -145,6 +145,7 @@ def run_weekly(cfg: Config, *, end_date: str | None = None, use_llm: bool | None
 
     result.llm_used = True
     _render_weekly(cfg, renderer, review, result)
+    _weekly_images(cfg, renderer, result)
     _record_cost(cfg, result)
     result.warnings.extend(generator.usage.notes)
     index = update_index(cfg)
@@ -180,3 +181,38 @@ def _record_cost(cfg: Config, result: WeeklyResult) -> None:
         log_.save()
     except OSError as exc:
         log.warning("비용 기록 실패: %s", exc)
+
+
+def _weekly_images(cfg: Config, renderer: Renderer, result: WeeklyResult, limit: int = 2) -> list[str]:
+    """이번 주에 사흘 이상 나온 지표의 추이 그림. 시계열 저장소(state/datapoints.json)를 쓴다."""
+    from . import images
+    from .store import SeriesStore
+
+    img_cfg = cfg.get("images", {}) or {}
+    if not img_cfg.get("enabled", True):
+        return []
+    rows = [r for r in SeriesStore(cfg.state_dir / "datapoints.json").rows
+            if result.start <= r.get("date", "") <= result.end]
+    if not rows:
+        return []
+    # 지표별로 묶어 점이 많은 순. 같은 지표는 한 번만.
+    made: list[str] = []
+    seen: list[dict] = []
+    for row in sorted(rows, key=lambda r: r["date"], reverse=True):
+        if any(images._same_metric(row, s) for s in seen):
+            continue
+        pts = images.series_for(row, rows)
+        if len(pts) < images.SERIES_MIN_POINTS:
+            continue
+        img = images.time_series(row, row["date"], {"history": rows})
+        if img is None:
+            continue
+        seen.append(row)
+        img.slug = f"time-series-{len(seen)}"
+        made.append(renderer._write_image(img, img_cfg))
+        if len(seen) >= limit:
+            break
+    if made:
+        result.warnings.append(f"이번 주 추이 그림 {len(made)}장을 만들었습니다: " + ", ".join(made))
+    return made
+

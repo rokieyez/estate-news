@@ -215,3 +215,9 @@ class WeeklyReview(BaseModel):
     next_week_watch: list[str] = Field(description="다음 주에 볼 일정·지표 2~4개")
     tags: list[str] = Field(description="태그 목록")
 
+
+class Rewrite(BaseModel):
+    """금지 표현이 든 문장 하나를 고쳐 쓴 결과."""
+
+    text: str = Field(description="같은 뜻을 유지하되 금지 표현을 뺀 문장. 길이는 원문과 비슷하게")
+

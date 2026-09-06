@@ -85,6 +85,19 @@
 {% else %}
 미확인 수치가 없습니다.
 {% endif %}
+{% set verified = checks|rejectattr('status', 'in', ['미확인', '대조 불가'])|list %}
+{% if verified %}
+
+<details><summary>확인된 수치 {{ verified|length }}건 — 원문 문장 보기</summary>
+
+{% for c in verified %}
+- **{{ c.value }}{{ c.unit }}** {{ c.label }}{% if c.url %} · [원문]({{ c.url }}){% endif %}{% if c.hint %} ({{ c.hint }}){% endif %}
+
+  > {{ c.snippet }}
+{% endfor %}
+
+</details>
+{% endif %}
 {% if unchecked %}
 
 <details><summary>대조 불가 {{ unchecked|length }}건 (본문을 수집하지 못한 기사)</summary>
