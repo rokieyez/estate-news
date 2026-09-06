@@ -38,7 +38,7 @@
 </div>
 <script>
 // 서버 없이 브라우저에서만 찾는다. 색인은 빌드 때 만든 search-index.json 하나.
-var INDEX = {{ index_json }};
+var INDEX = {{ index_json|safe }};
 var q = document.getElementById("q"), out = document.getElementById("out"), meta = document.getElementById("meta");
 function esc(s) { return String(s).replace(/[&<>"]/g, function (c) { return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 function mark(s, term) {

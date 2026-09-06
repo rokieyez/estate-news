@@ -20,6 +20,7 @@ import markdown as markdown_lib
 
 from .config import Config
 from .render import make_env
+from .sanitize import clean_html
 
 DATE_DIR = re.compile(r"\d{4}-\d{2}-\d{2}")
 
@@ -161,17 +162,24 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
 
     rows: list[dict] = []
     for day in days[:limit]:
-        raw = day / "raw" / "articles.json"
         articles, feeds_ok, feeds_total = None, 0, 0
-        if raw.exists():
-            try:
+        # 건수·피드 상태는 collect.json(커밋됨)에서. 옛 날짜는 raw/articles.json 밖에 없을 수 있다.
+        summary, raw = day / "collect.json", day / "raw" / "articles.json"
+        try:
+            if summary.exists():
+                payload = json.loads(summary.read_text(encoding="utf-8"))
+                articles = int(payload.get("articles", 0))
+                feeds = payload.get("feeds", []) or []
+            elif raw.exists():
                 payload = json.loads(raw.read_text(encoding="utf-8"))
                 articles = len(payload.get("articles", []))
                 feeds = payload.get("meta", {}).get("feeds", []) or []
-                feeds_total = len(feeds)
-                feeds_ok = sum(1 for f in feeds if f.get("ok"))
-            except (json.JSONDecodeError, OSError):
-                pass
+            else:
+                feeds = []
+            feeds_total = len(feeds)
+            feeds_ok = sum(1 for f in feeds if f.get("ok"))
+        except (json.JSONDecodeError, OSError, ValueError):
+            pass
         llm = (day / "data.json").exists()
         note = ""
         if (day / "prompt-pack.md").exists() and not llm:
@@ -331,7 +339,7 @@ _CHECKED = re.compile(r"<li>\[([ xX])\]\s*")
 
 def md_to_html(text: str) -> str:
     """마크다운을 HTML 로. 체크박스 목록은 눈에 보이는 기호로 바꾼다."""
-    html = markdown_lib.markdown(
+    html = clean_html(markdown_lib.markdown(
         text or "", extensions=["tables", "sane_lists"], output_format="html"
-    )
+    ))
     return _CHECKED.sub(lambda m: "<li>☑ " if m.group(1).lower() == "x" else "<li>☐ ", html)

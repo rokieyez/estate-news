@@ -66,7 +66,7 @@ site:
 
 output:
   dir: output
-  keep_raw: true            # 수집 원본 JSON 보관
+  keep_raw: true            # 수집 원본 JSON 을 내 컴퓨터에 보관 (커밋은 안 됨 — 기사 본문이 들어 있어서)
   write_index: true         # output/INDEX.md 갱신
 
 # ─────────────────────────────────────────────────────────────

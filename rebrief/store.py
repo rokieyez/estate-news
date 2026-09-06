@@ -74,13 +74,20 @@ def _parse_date(value: str) -> date | None:
 
 
 def save_raw(path: Path, articles: list[Article], meta: dict) -> None:
-    """수집 원본을 남겨 둔다. render 명령으로 언제든 재생성할 수 있다."""
+    """수집 원본을 남겨 둔다. render 명령으로 언제든 재생성할 수 있다.
+
+    raw/articles.json 은 기사 본문이 들어 있어 커밋하지 않는다(.gitignore). 대시보드가 쓰는
+    건수·피드 상태만 글자 없이 날짜 폴더의 collect.json 에 따로 적어 저장소에 남긴다.
+    """
     path.parent.mkdir(parents=True, exist_ok=True)
     payload = {
         "meta": meta,
         "articles": [json.loads(a.model_dump_json()) for a in articles],
     }
     path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    summary = {**meta, "articles": len(articles)}
+    (path.parent.parent / "collect.json").write_text(
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def load_raw(path: Path) -> tuple[list[Article], dict]:

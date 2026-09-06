@@ -255,3 +255,41 @@ def test_renderer_reads_highlight_threshold(cfg, tmp_path):
     on = Renderer(cfg, tmp_path / "on", "2026-09-06").blog_naver(post).read_text(encoding="utf-8")
     assert "7%</span>" not in off.split('id="post"')[1] and "<u>7%</u>" not in off
     assert on.count("7%</span>") == 1 and on.count("<u>7%</u>") == 2
+
+
+# ── HTML 안전장치 ──────────────────────────────────────────
+
+
+def test_clean_html_strips_scripts_but_keeps_formatting():
+    from rebrief.sanitize import clean_html
+
+    dirty = ('<h2>제목</h2><script>alert(1)</script><p onclick="x()">본문 <b>굵게</b></p>'
+             '<a href="javascript:alert(1)">링크</a><img src="x" onerror="alert(1)"><table><tr><td>1</td></tr></table>')
+    out = clean_html(dirty)
+    assert "<script" not in out and "onclick" not in out and "onerror" not in out and "javascript:" not in out
+    assert "<h2>제목</h2>" in out and "<b>굵게</b>" in out and "<td>1</td>" in out
+
+
+def test_html_templates_escape_model_text_but_not_body(cfg, tmp_path):
+    from rebrief.render import Renderer
+    from tests.test_pipeline import make_post
+
+    post = make_post()
+    post.title = '제목 <script>alert("x")</script>'
+    post.body_markdown = "## 소제목\n\n<script>alert(1)</script>본문 **굵게**"
+    html = Renderer(cfg, tmp_path, "2026-09-07").blog_naver(post).read_text(encoding="utf-8")
+    assert "<script>alert" not in html                 # 제목은 이스케이프, 본문은 정화
+    assert "&lt;script&gt;" in html                     # 제목의 태그가 글자로 보인다
+    assert "<h2>소제목</h2>" in html and "<strong>굵게</strong>" in html   # 본문 HTML 은 살아 있다
+
+
+def test_collect_summary_written_without_article_text(tmp_path):
+    import json
+    from rebrief.models import Article
+    from rebrief.store import save_raw
+
+    a = Article(id="a1", title="t", url="https://x.test/1", feed_id="f", feed_name="F", published="2026-09-07T00:00:00+00:00", summary="s", body="비밀 본문")
+    save_raw(tmp_path / "raw" / "articles.json", [a], {"feeds": [{"id": "f", "ok": True}]})
+    summary = json.loads((tmp_path / "collect.json").read_text(encoding="utf-8"))
+    assert summary["articles"] == 1 and summary["feeds"][0]["ok"] is True
+    assert "비밀 본문" not in (tmp_path / "collect.json").read_text(encoding="utf-8")

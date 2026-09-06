@@ -9,12 +9,13 @@ from datetime import datetime
 from pathlib import Path
 
 import markdown as markdown_lib
-from jinja2 import Environment, FileSystemLoader, StrictUndefined
+from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from . import images as images_mod
 from . import keynumbers as kn
 from .config import Config
 from .models import BlogPost, CaptionLine, Cluster, DailyBrief, VideoPack
+from .sanitize import clean_html
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -31,6 +32,9 @@ def make_env() -> Environment:
     return Environment(
         loader=FileSystemLoader(TEMPLATE_DIR),
         undefined=StrictUndefined,   # 오타 난 변수는 조용히 비는 대신 에러를 낸다
+        # HTML 템플릿은 변수를 자동 이스케이프한다(모델이 쓴 제목의 < > 가 태그가 되지 않게).
+        # 이미 HTML 인 값(body_html 등)은 템플릿에서 |safe 로 표시한다. 마크다운 템플릿은 그대로.
+        autoescape=select_autoescape(enabled_extensions=("html.j2",), default_for_string=False, default=False),
         trim_blocks=True,
         lstrip_blocks=True,
         keep_trailing_newline=True,
@@ -344,11 +348,11 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
     highlight_min 회 이상 되풀이되는 수치와 key_numbers(오늘의 핵심 수치)는 강조한다.
     key_numbers 가 있으면 맨 위에 '오늘의 숫자' 카드를 붙인다.
     """
-    html = markdown_lib.markdown(
+    html = clean_html(markdown_lib.markdown(
         body_markdown or "",
         extensions=["tables", "sane_lists"],
         output_format="html",
-    )
+    ))
     slot_files = slot_files or {}
     photo_links = photo_links or {}
     counter = {"n": 0}

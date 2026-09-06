@@ -12,6 +12,9 @@ env/
 state/*.tmp
 site/
 
+# 수집 원본(기사 본문 전문)은 공개 저장소에 올리지 않는다. 건수·피드 상태는 collect.json 으로 남는다
+output/**/raw/
+
 # 쇼츠 초안 영상은 용량이 커서 커밋하지 않는다 (Actions 아티팩트로만 보관)
 output/**/shorts-draft.mp4
 

@@ -95,7 +95,7 @@
     <div class="meta">{{ date }} · {{ category }}</div>
 
     <div id="post">
-{{ body_html }}
+{{ body_html|safe }}
 {% if hashtags %}
       <p class="tags" id="tags">{{ hashtags }}</p>
 {% endif %}
