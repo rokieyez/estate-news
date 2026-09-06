@@ -1,0 +1,69 @@
+{
+  "date": "2026-09-07",
+  "summary": {
+    "ok": 6,
+    "warn": 2,
+    "fail": 0
+  },
+  "items": [
+    {
+      "key": "numbers",
+      "level": "warn",
+      "title": "수치 2건이 기사 원문에서 확인되지 않음",
+      "detail": "brief.md '숫자 검산' 표를 보고 원문에서 직접 찾아보세요.",
+      "lines": [
+        "종부세 대상 확대 전망 · 종부세 대상에서 제외될 것으로 언급된 서울 자치구 3개구(강북·금천·도봉)",
+        "미성년 임대소득 3233명 · 연령별 0~5세 신고 인원 0~1세 9명, 2세 15명, 3세 33명, 4세 51명, 5세 71명명"
+      ]
+    },
+    {
+      "key": "links",
+      "level": "ok",
+      "title": "출처 링크 17개 모두 정상",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "banned",
+      "level": "ok",
+      "title": "금지 표현 없음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "blog_len",
+      "level": "ok",
+      "title": "블로그 본문 3,058자",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "tags",
+      "level": "ok",
+      "title": "태그 20개",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "photos",
+      "level": "warn",
+      "title": "직접 넣을 사진 자리 1곳",
+      "detail": "blog-naver.html 의 점선 상자 아래 '사진 찾기' 링크를 쓰세요.",
+      "lines": []
+    },
+    {
+      "key": "shorts_len",
+      "level": "ok",
+      "title": "쇼츠 발화 245자 (약 45초)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "long_len",
+      "level": "ok",
+      "title": "롱폼 발화 3,263자 (약 9.9분)",
+      "detail": "",
+      "lines": []
+    }
+  ]
+}
