@@ -34,7 +34,9 @@ BLUE = "#256abf"        # 파랑 step500 — 흰 글씨 대비 5.39:1
 BLUE_SOFT = "#cde2fb"   # 파랑 step100
 CRITICAL = "#d03b3b"
 GOOD = "#006300"
-FONT = "'Apple SD Gothic Neo','Noto Sans KR',system-ui,-apple-system,sans-serif"
+# 맥(Apple SD Gothic Neo) → 리눅스 러너(Noto Sans CJK KR, 워크플로에서 설치) → 그 외 순서.
+# 러너에 한글 글꼴이 없으면 PNG 의 한글이 전부 네모로 깨진다 (2026-09-07 실제로 그랬음).
+FONT = "'Apple SD Gothic Neo','Noto Sans CJK KR','Noto Sans KR','NanumGothic',system-ui,-apple-system,sans-serif"
 
 # 서울 25개 자치구의 상대 위치 도식. 실제 지형·면적과는 무관하다.
 SEOUL_LAYOUT: list[dict[int, str]] = [

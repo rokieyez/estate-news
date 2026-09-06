@@ -59,6 +59,13 @@ jobs:
         if: steps.guard.outputs.skip != 'true'
         run: pip install -r requirements.txt
 
+      - name: 한글 글꼴 설치 (PNG 의 한글이 깨지지 않게)
+        run: |
+          sudo apt-get update -qq >/dev/null
+          sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
+          fc-cache -f >/dev/null
+          fc-list | grep -qi "Noto Sans CJK" && echo "한글 글꼴 있음: Noto Sans CJK" || echo "::warning::한글 글꼴 설치 실패 — PNG 의 한글이 깨질 수 있습니다"
+
       - name: PNG 변환 도구 확인
         if: steps.guard.outputs.skip != 'true'
         # 그림은 SVG 로 먼저 만들고, 크롬이 있으면 PNG 로도 변환합니다.
