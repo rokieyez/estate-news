@@ -100,6 +100,7 @@ blog:
   frontmatter: true         # blog.md 에 YAML 머리말 포함 (Jekyll/Hugo/Obsidian 호환)
   category: "부동산"
   disclaimer: "본 글은 공개된 언론 보도를 정리한 것이며, 투자 판단의 책임은 이용자 본인에게 있습니다."
+  highlight_repeats: 3      # 같은 수치(10%, 3억원…)가 이 횟수 이상 나오면 네이버 글에서 형광펜. 0 이면 끔
 
   naver:
     tag_count: 20           # 본문 하단 해시태그 개수 (네이버 태그 상한은 30개)

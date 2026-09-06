@@ -175,3 +175,38 @@ def test_썸네일은_후보_두_개를_그린다(cfg, tmp_path):
     r.thumbnails(make_pack())
     names = sorted(p.name for p in (tmp_path / "out").glob("thumb-*.svg"))
     assert names == ["thumb-longform-2.svg", "thumb-longform.svg", "thumb-shorts-2.svg", "thumb-shorts.svg"]
+
+
+# ── 되풀이되는 수치 형광펜 ───────────────────────────────
+
+
+def test_repeated_numbers_get_highlighted_but_words_do_not():
+    from rebrief.render import to_naver_html
+
+    body = (
+        "집값 상승률이 10%를 넘었다. 상승률 10%인 집값. 집값 상승률 10%를 잡기 위해. "
+        "2026년, 2026년, 2026년 9월 6일. 거래가 3억 원·3억원·3억원. 5억원은 5억원 두 번.\n\n"
+        "[이미지: 10% 상승률 그래프]"
+    )
+    html = to_naver_html(body, {1: "img-1-stat-card.png"})
+    assert html.count(">10%</span>") == 3            # 수치는 세 번 모두 형광펜
+    assert "집값</span>" not in html                  # 주제어는 건드리지 않는다
+    assert "2026년</span>" not in html                # 연도는 수치가 아니다
+    assert html.count("억원</span>") + html.count("억 원</span>") == 3   # 띄어쓰기 달라도 같은 수치
+    assert "5억원</span>" not in html                 # 두 번은 아직 아니다
+    assert 'alt="10% 상승률 그래프"' in html          # 태그 속성·이미지 자리는 그대로
+    assert "<span" not in to_naver_html(body, highlight_min=0)
+
+
+def test_renderer_reads_highlight_threshold(cfg, tmp_path):
+    from rebrief.render import Renderer
+    from tests.test_pipeline import make_post
+
+    post = make_post()
+    post.body_markdown = "값 7%. 또 7%. 다시 7%."
+    cfg.settings["blog"]["highlight_repeats"] = 0
+    off = Renderer(cfg, tmp_path / "off", "2026-09-06").blog_naver(post).read_text(encoding="utf-8")
+    cfg.settings["blog"]["highlight_repeats"] = 3
+    on = Renderer(cfg, tmp_path / "on", "2026-09-06").blog_naver(post).read_text(encoding="utf-8")
+    assert "7%</span>" not in off.split('id="post"')[1]
+    assert on.count("7%</span>") == 3

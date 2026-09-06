@@ -104,7 +104,10 @@ class Renderer:
             post=post,
             date=self.date,
             category=blog_cfg.get("category", "부동산"),
-            body_html=to_naver_html(post.body_markdown, slot_files or {}, photo_links),
+            body_html=to_naver_html(
+                post.body_markdown, slot_files or {}, photo_links,
+                highlight_min=int(blog_cfg.get("highlight_repeats", 3) or 0),
+            ),
             hashtags=format_hashtags(post.tags),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
                 "write_url", "https://blog.naver.com/"
@@ -320,7 +323,8 @@ _IMAGE_SLOT_INLINE = re.compile(r"\[이미지\s*:\s*(.*?)\]", re.DOTALL)
 
 
 def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
-                  photo_links: dict[int, list[tuple[str, str]]] | None = None) -> str:
+                  photo_links: dict[int, list[tuple[str, str]]] | None = None,
+                  highlight_min: int = 3) -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -329,6 +333,7 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
 
     slot_files 가 있으면 해당 자리의 점선 상자에 파일명을 적고, 그 아래 미리보기
     이미지를 붙인다. 미리보기는 복사에 포함되지 않는다(class="nocopy").
+    highlight_min 회 이상 되풀이되는 수치는 형광펜으로 감싼다(0 이면 끔).
     """
     html = markdown_lib.markdown(
         body_markdown or "",
@@ -356,9 +361,72 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
             f'<img class="preview nocopy" src="{filename}" alt="{caption}">'
         )
 
+    html = highlight_repeated_numbers(html, highlight_min)
     html = _IMAGE_SLOT.sub(slot, html)
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
     return html
+
+
+# 수치 토큰: 숫자(천 단위 쉼표·소수 허용) + 단위. 긴 단위를 앞에 둬야 '개월' 이 '개' 로 잘리지 않는다.
+_NUM_UNITS = (
+    r"%p|%포인트|%|％|조\s?원|억\s?원|만\s?원|천\s?원|원|조|억|만|"
+    r"가구|세대|개구|개월|개|건|호|채|명|년|배|㎡|평|층|bp|p|포인트"
+)
+_NUM_TOKEN = re.compile(
+    r"(?<![\d,.\-A-Za-z%])(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(" + _NUM_UNITS + r")?"
+)
+# 글자가 아닌 조각: 태그, 엔티티(&#39; 처럼 숫자를 품는다), 아직 치환 전인 이미지 자리
+_OPAQUE = re.compile(r"(<[^>]+>|&#?\w+;|\[이미지\s*:[^\]]*\])")
+_HL_STYLE = "background-color:#fff59d"
+
+
+def _number_key(match: re.Match) -> str | None:
+    """같은 수치로 볼 정규화 키. 데이터가 아닌 숫자(연도·날짜·단위 없는 정수)는 None."""
+    whole, frac, unit = match.group(1), match.group(2) or "", match.group(3)
+    digits = whole.replace(",", "")
+    if unit is None:
+        # 단위가 없으면 쉼표나 소수점이 있는 것만 수치로 본다. '3' 같은 정수는 셈에서 뺀다.
+        if "," not in whole and not frac:
+            return None
+        following = match.string[match.end():match.end() + 1]
+        if following in "월일시분초":          # 9월 6일, 10시 — 날짜·시각
+            return None
+        return digits + frac
+    unit = unit.replace(" ", "").replace("％", "%")
+    if unit == "년" and len(digits) == 4:     # 2026년 — 연도는 수치가 아니다
+        return None
+    return digits + frac + unit
+
+
+def highlight_repeated_numbers(html: str, min_count: int = 3) -> str:
+    """본문에서 min_count 회 이상 되풀이되는 수치를 형광펜(<span>)으로 감싼다.
+
+    '집값' 처럼 주제어가 반복되는 건 당연하므로 글자는 세지 않고 숫자+단위만 센다.
+    '3억 원' 과 '3억원', '10%' 와 '10％' 는 같은 수치로 묶는다. 태그·엔티티·이미지 자리는
+    건드리지 않는다. 인라인 style 을 쓰는 이유: 네이버 에디터가 class 는 버려도
+    background-color 는 살리기 때문이다.
+    """
+    if min_count <= 0 or not html:
+        return html
+    parts = _OPAQUE.split(html)          # 짝수 칸이 글자, 홀수 칸이 태그류
+    counts: dict[str, int] = {}
+    for i in range(0, len(parts), 2):
+        for m in _NUM_TOKEN.finditer(parts[i]):
+            key = _number_key(m)
+            if key:
+                counts[key] = counts.get(key, 0) + 1
+    repeated = {k for k, n in counts.items() if n >= min_count}
+    if not repeated:
+        return html
+
+    def wrap(m: re.Match) -> str:
+        if _number_key(m) in repeated:
+            return f'<span class="hl" style="{_HL_STYLE}">{m.group(0)}</span>'
+        return m.group(0)
+
+    for i in range(0, len(parts), 2):
+        parts[i] = _NUM_TOKEN.sub(wrap, parts[i])
+    return "".join(parts)
 
 
 def photo_search_links(query: str) -> list[tuple[str, str]]:
