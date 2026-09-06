@@ -89,6 +89,20 @@
 </div>
 {% endif %}
 
+{% if weeks %}
+<details open>
+  <summary>주간 결산 ({{ weeks|length }}주)</summary>
+  <ul class="past">
+    {% for w in weeks %}
+    <li>
+      <a href="weekly/{{ w.week }}/{{ w.pages[0].href }}">{{ w.week }}</a>
+      <span class="files">· {% for pg in w.pages %}<a href="weekly/{{ w.week }}/{{ pg.href }}">{{ pg.label }}</a>{% if not loop.last %} / {% endif %}{% endfor %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+
 <footer>
   이 페이지는 발행 전 초안입니다. 숫자는 기사 원문과 대조해 주세요.
 </footer>

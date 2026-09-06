@@ -12,12 +12,13 @@ from dataclasses import dataclass, field
 import anthropic
 
 from .config import Config
-from .models import BlogPost, Cluster, DailyBrief, VideoPack
+from .models import BlogPost, Cluster, DailyBrief, VideoPack, WeeklyReview
 from .prompts import (
     build_blog_user,
     build_brief_messages,
     build_shared_context,
     build_video_user,
+    build_weekly_messages,
 )
 
 log = logging.getLogger(__name__)
@@ -128,6 +129,13 @@ class ContentGenerator:
             output_format=VideoPack,
             cache_system=True,
         )
+
+    # ── 주간 결산 (별도 system, 캐시 없음) ───────────────────
+
+    def generate_weekly(self, days: list[dict], week_label: str) -> WeeklyReview:
+        system, user = build_weekly_messages(self.cfg, days, week_label)
+        log.info("주간 결산 생성 중… (%d일치)", len(days))
+        return self._parse(system=system, user=user, output_format=WeeklyReview, cache_system=False)
 
     def _shared(self, brief: DailyBrief) -> str:
         if self._shared_context is None:

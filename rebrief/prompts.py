@@ -96,7 +96,7 @@ def _blog_user_markdown(blog: dict) -> str:
 - 마지막에 '오늘의 체크포인트' 3줄 요약을 붙입니다.
 - title 은 검색해서 들어올 만한 제목으로 짓되, 과장하거나 낚지 않습니다.
 - 글 안에서 독자를 '여러분'으로 부르고, 존댓말로 씁니다.
-- tags 는 5~8개. image_notes 는 빈 배열로 두세요."""
+- tags 는 5~8개. image_slots 는 빈 배열로 두세요."""
 
 
 def _blog_user_naver(cfg: Config, blog: dict) -> str:
@@ -134,7 +134,10 @@ def _blog_user_naver(cfg: Config, blog: dict) -> str:
 - 수치가 2개 이상인 이슈는 마크다운 표로 정리합니다.
 - 이미지 자리를 본문 흐름에 맞게 {image_slots}곳 넣습니다. 형식은 정확히 이렇게 씁니다:
   `[이미지: 어떤 이미지를 넣을지 설명]`
-  같은 설명을 image_notes 배열에 같은 순서로 담습니다.
+  같은 순서로 image_slots 배열에 담되, 그 자리가 **브리핑의 수치를 그림으로 보여주는 자리**라면
+  datapoint_label 에 그 수치의 label 을 **글자 그대로** 적습니다(프로그램이 그 수치로 그림을
+  자동 생성해 자리에 넣습니다). 현장 사진·화면 캡처처럼 수치가 아닌 자리는 빈 문자열로 둡니다.
+  {image_slots}곳 중 적어도 한 곳은 수치 자리로 잡으세요.
 - 각 이슈 끝에 근거 기사 링크를 붙입니다.
 - 마지막 소제목은 '오늘의 체크포인트'로 하고 3줄 요약을 넣습니다.
 - 독자를 '여러분'으로 부르고 존댓말로 씁니다. 딱딱한 보고서 문체는 피합니다.
@@ -262,3 +265,85 @@ def build_prompt_pack(cfg: Config, clusters: list[Cluster], run_date: str) -> st
 {build_video_user(cfg)}
 ```
 """
+
+
+# ── 주간 결산 ────────────────────────────────────────────────
+
+
+def build_weekly_messages(cfg: Config, days: list[dict], week_label: str) -> tuple[str, str]:
+    """일주일치 data.json 을 묶어 결산 글을 부탁한다. 하루치 브리핑보다 압축해서 넘긴다."""
+    video = cfg.get("video", {}) or {}
+    blog = cfg.get("blog", {}) or {}
+    banned = video.get("banned_phrases", []) or []
+    naver = blog.get("naver", {}) or {}
+    tag_count = int(naver.get("tag_count", 20))
+    min_chars = int(blog.get("weekly_min_chars", 1500))
+    max_chars = int(blog.get("weekly_max_chars", 3000))
+
+    compact = [
+        {
+            "date": d["date"],
+            "headline": d.get("headline", ""),
+            "market_temperature": d.get("market_temperature", ""),
+            "issues": [
+                {"title": i.get("title"), "category": i.get("category"),
+                 "one_liner": i.get("one_liner"), "numbers": i.get("numbers", [])}
+                for i in d.get("issues", [])
+            ],
+        }
+        for d in days
+    ]
+    system = f"""당신은 부동산 콘텐츠를 만드는 프로듀서입니다.
+채널명은 "{video.get('channel_name', '부동산 브리핑')}" 입니다.
+
+시청자: {video.get('audience', '부동산에 관심 있는 일반 시청자')}
+톤앤매너: {video.get('tone', '차분하고 정확한 정보 전달')}
+
+지켜야 할 것:
+- 아래 일주일치 브리핑에 있는 사실과 수치만 씁니다. 없는 내용을 채워 넣지 마세요.
+- 다음 표현은 쓰지 마세요: {', '.join(banned) if banned else '(없음)'}
+- 단정적 예측 대신 근거와 전망 주체를 밝힙니다.
+- 모든 출력은 한국어입니다.
+
+────────── {week_label} 브리핑 모음 (JSON, 날짜순) ──────────
+{json.dumps(compact, ensure_ascii=False, indent=1)}
+──────────────────────────────────────"""
+
+    user = f"""위 일주일치 브리핑으로 **주간 결산 글** 한 편을 완성하세요. 네이버 블로그에 올립니다.
+
+■ five_lines
+- 이번 주를 다섯 줄로 요약합니다. 각 줄 40자 이내, 가능하면 숫자를 넣습니다.
+- 요일 순이 아니라 **중요한 순**입니다.
+
+■ 본문 (body_markdown)
+- 분량 {min_chars}~{max_chars}자. 한 문단 2~3문장, 문단 사이 빈 줄.
+- 첫 문단에 결론(이번 주 시장을 한 문장으로)을 씁니다.
+- `##` 소제목 3~5개. **날짜별이 아니라 주제별**로 묶습니다. 같은 이슈가 여러 날 나왔으면
+  흐름(무엇이 바뀌었는지)을 짚습니다.
+- 수치가 2개 이상인 주제는 마크다운 표로 정리합니다. 표에는 날짜 열을 둡니다.
+- 마지막 소제목은 '다음 주 볼 것'으로 하고 next_week_watch 와 같은 내용을 넣습니다.
+- 독자를 '여러분'으로 부르고 존댓말로 씁니다.
+
+■ 태그 (tags)
+- {tag_count}개. 띄어쓰기 없이, # 기호 없이 단어만."""
+    return system, user
+
+
+def build_weekly_prompt_pack(cfg: Config, days: list[dict], week_label: str) -> str:
+    """API 키가 없을 때 챗봇에 붙여넣을 수 있게 두 메시지를 하나의 문서로 묶는다."""
+    system, user = build_weekly_messages(cfg, days, week_label)
+    return f"""# {week_label} 주간 결산 — 프롬프트 팩
+
+API 키가 없어 자동 생성을 건너뛰었습니다. 아래를 통째로 복사해 챗봇에 붙여넣으면 같은 결과를
+얻을 수 있습니다. (WeeklyReview 형식: title, slug, meta_description, five_lines, body_markdown,
+next_week_watch, tags)
+
+---
+
+{system}
+
+---
+
+{user}
+"""
+

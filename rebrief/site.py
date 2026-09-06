@@ -33,6 +33,8 @@ PAGES = [
     ("sources.md", "기사 원문", "근거가 된 기사 링크"),
 ]
 EXTRA_FILES = ["script-shorts.srt", "data.json"]
+# 그림·썸네일은 이름 패턴으로 통째로 복사한다. 영상 초안(mp4)은 용량 때문에 뺀다.
+ASSET_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg"]
 
 
 def build_site(cfg: Config, dest: Path | None = None) -> Path:
@@ -62,9 +64,12 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
         newest = dest / built[0]["date"]
         shutil.copytree(newest, dest / "latest")
 
+    weeks = _build_weeks(env, source / "weekly", dest / "weekly")
+
     index = env.get_template("site_index.html.j2").render(
         days=built,
         today=built[0] if built else None,
+        weeks=weeks,
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
         channel=(cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑"),
     )
@@ -73,6 +78,33 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
     # Jekyll 이 밑줄로 시작하는 폴더를 무시하는 걸 막는다.
     (dest / ".nojekyll").write_text("", encoding="utf-8")
     return dest
+
+
+def _build_weeks(env, source: Path, dest: Path) -> list[dict]:
+    """output/weekly/<주차>/ 를 사이트로 옮긴다. 최신 주가 앞."""
+    if not source.exists():
+        return []
+    weeks: list[dict] = []
+    for week_dir in sorted((p for p in source.iterdir() if p.is_dir()), reverse=True):
+        md = week_dir / "weekly.md"
+        naver = week_dir / "weekly-naver.html"
+        if not md.exists() and not naver.exists():
+            continue
+        target = dest / week_dir.name
+        target.mkdir(parents=True, exist_ok=True)
+        entry = {"week": week_dir.name, "pages": []}
+        if naver.exists():
+            shutil.copy2(naver, target / naver.name)
+            entry["pages"].append({"href": naver.name, "label": "네이버 블로그 글"})
+        if md.exists():
+            html = env.get_template("site_page.html.j2").render(
+                title="주간 결산", date=week_dir.name,
+                body_html=md_to_html(md.read_text(encoding="utf-8")),
+            )
+            (target / "weekly.html").write_text(html, encoding="utf-8")
+            entry["pages"].append({"href": "weekly.html", "label": "결산 읽기"})
+        weeks.append(entry)
+    return weeks
 
 
 def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
@@ -102,7 +134,48 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
         if (day / filename).exists():
             shutil.copy2(day / filename, dest / filename)
 
+    assets = _copy_assets(day, dest)
+    if assets:
+        # 그림 모아보기 페이지. 휴대폰에서 길게 눌러 저장하면 바로 블로그에 올릴 수 있다.
+        html = env.get_template("site_images.html.j2").render(
+            date=day.name, images=assets,
+        )
+        (dest / "images.html").write_text(html, encoding="utf-8")
+        pages.append({
+            "href": "images.html", "label": "그림·썸네일",
+            "description": f"{len(assets)}장. 길게 눌러 저장 → 블로그에 올리기",
+        })
+
     return {"date": day.name, "pages": pages}
+
+
+def _copy_assets(day: Path, dest: Path) -> list[dict]:
+    """img-*/thumb-* 파일을 복사하고 PNG 목록을 돌려준다 (SVG 는 복사만)."""
+    found: list[dict] = []
+    for pattern in ASSET_GLOBS:
+        for path in sorted(day.glob(pattern)):
+            shutil.copy2(path, dest / path.name)
+            if path.suffix == ".png":
+                found.append({"file": path.name, "label": _asset_label(path.name)})
+    return found
+
+
+_ASSET_LABELS = {
+    "district-map": "서울 자치구 도식",
+    "index-comparison": "지수 비교",
+    "stat-card": "수치 카드",
+    "time-series": "추이 그래프",
+    "thumb-longform": "롱폼 썸네일",
+    "thumb-shorts": "쇼츠 썸네일",
+}
+
+
+def _asset_label(filename: str) -> str:
+    stem = filename.rsplit(".", 1)[0]
+    for key, label in _ASSET_LABELS.items():
+        if key in stem:
+            return label
+    return stem
 
 
 _CHECKED = re.compile(r"<li>\[([ xX])\]\s*")

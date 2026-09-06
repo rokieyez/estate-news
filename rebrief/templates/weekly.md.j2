@@ -1,0 +1,29 @@
+---
+title: "{{ review.title }}"
+slug: "{{ review.slug }}"
+week: {{ week }}
+period: {{ start }} ~ {{ end }}
+category: "{{ category }}"
+tags: [{% for t in review.tags %}"{{ t }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+description: "{{ review.meta_description }}"
+---
+
+**이번 주 다섯 줄**
+
+{% for line in review.five_lines %}
+{{ loop.index }}. {{ line }}
+{% endfor %}
+
+{{ review.body_markdown }}
+
+---
+
+### 다음 주 볼 것
+
+{% for w in review.next_week_watch %}
+- {{ w }}
+{% endfor %}
+
+---
+
+*{{ disclaimer }}*

@@ -41,9 +41,24 @@ jobs:
       - name: 의존성 설치
         run: pip install -r requirements.txt
 
+      - name: PNG 변환 도구 확인
+        # 그림은 SVG 로 먼저 만들고, 크롬이 있으면 PNG 로도 변환합니다.
+        # 깃허브 우분투 러너에는 크롬이 기본 설치돼 있지만, 없어도 실행은 성공합니다.
+        run: |
+          if command -v google-chrome >/dev/null 2>&1; then
+            echo "크롬 있음: $(google-chrome --version)"
+          elif command -v chromium-browser >/dev/null 2>&1; then
+            echo "크로미엄 있음: $(chromium-browser --version)"
+          else
+            echo "::warning::크롬이 없어 PNG 변환을 건너뜁니다 (SVG 만 생성)"
+          fi
+          command -v ffmpeg >/dev/null 2>&1 && echo "ffmpeg 있음: $(ffmpeg -version | head -1)" || echo "ffmpeg 없음 — 쇼츠 초안 영상은 건너뜁니다"
+
       - name: 브리핑 생성
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
         run: |
           ARGS="-v run"
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi
@@ -70,6 +85,15 @@ jobs:
             echo '```'
             ls -1 "output/$DATE" 2>/dev/null || echo "(없음)"
             echo '```'
+            echo
+            PNG=$(ls "output/$DATE"/img-*.png 2>/dev/null | wc -l | tr -d ' ')
+            SVG=$(ls "output/$DATE"/img-*.svg 2>/dev/null | wc -l | tr -d ' ')
+            THUMB=$(ls "output/$DATE"/thumb-*.png 2>/dev/null | wc -l | tr -d ' ')
+            echo "그림: PNG ${PNG}장 / SVG ${SVG}장 · 썸네일 ${THUMB}장"
+            if [ "$SVG" -gt 0 ] && [ "$PNG" -eq 0 ]; then
+              echo "::warning::SVG 는 생성됐지만 PNG 변환이 되지 않았습니다. 크롬 설치 여부를 확인하세요."
+            fi
+            [ -f "output/$DATE/shorts-draft.mp4" ] && echo "쇼츠 초안 영상: 있음 (아티팩트에서 내려받기)" || true
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 결과 커밋
@@ -100,3 +124,14 @@ jobs:
           path: output/
           retention-days: 14
           if-no-files-found: warn
+
+      - name: 실패 알림
+        if: failure()
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          DATE="${{ inputs.date }}"
+          [ -z "$DATE" ] && DATE=$(TZ=Asia/Seoul date +%F)
+          python -m rebrief notify --failed --date "$DATE" \
+            --run-url "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}" || true

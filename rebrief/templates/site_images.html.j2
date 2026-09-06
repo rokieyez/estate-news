@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>그림·썸네일 — {{ date }}</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 16px 60px; background: #f2f4f6; color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.6; -webkit-text-size-adjust: 100%;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 5; margin: 0 -16px 18px; padding: 12px 16px;
+    background: #fff; border-bottom: 1px solid #e4e7ea; display: flex; gap: 12px;
+  }
+  .bar a { color: #0068c3; text-decoration: none; font-size: 15px; font-weight: 600; }
+  .bar span { color: #6b7178; font-size: 14px; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .hint { background: #fff8e1; border: 1px solid #f3e2a3; border-radius: 10px; padding: 12px 14px; font-size: 14px; margin-bottom: 18px; }
+  figure { margin: 0 0 22px; background: #fff; border-radius: 12px; padding: 14px; }
+  figure img { display: block; width: 100%; height: auto; border-radius: 6px; }
+  figcaption { margin-top: 10px; font-size: 14px; color: #4a4f55; display: flex; justify-content: space-between; gap: 10px; }
+  figcaption code { font-size: 12px; color: #8b9096; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a href="../index.html">← 목록</a>
+  <span>{{ date }} · 그림·썸네일</span>
+</div>
+<div class="wrap">
+  <div class="hint">
+    기사 속 숫자로 자동 생성한 그림입니다. 휴대폰에서는 <b>그림을 길게 눌러 저장</b>한 뒤
+    블로그 글의 📷 자리에 올리세요. 각 그림 아래 파일명이 블로그 글의 안내와 같습니다.
+  </div>
+{% for img in images %}
+  <figure>
+    <img src="{{ img.file }}" alt="{{ img.label }}" loading="lazy">
+    <figcaption><span>{{ img.label }}</span><code>{{ img.file }}</code></figcaption>
+  </figure>
+{% endfor %}
+</div>
+</body>
+</html>

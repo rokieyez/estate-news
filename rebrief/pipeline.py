@@ -16,7 +16,8 @@ from .models import Article, Cluster
 from .prompts import build_prompt_pack
 from .rank import score_clusters, select_issues
 from .render import RenderStats, Renderer, update_index
-from .store import SeenStore, load_raw, save_raw
+from .linkcheck import check_links
+from .store import CostLog, SeenStore, SeriesStore, load_raw, save_raw
 
 log = logging.getLogger(__name__)
 
@@ -112,6 +113,7 @@ def run(
         stats,
         [{"id": r.feed.id, "error": r.error} for r in feed_results if not r.ok],
         leftovers,
+        link_status=_check_issue_links(cfg, issues, result),
     )
 
     want_llm = cfg.llm_enabled if use_llm is None else (use_llm and bool(cfg.api_key))
@@ -129,6 +131,7 @@ def run(
     seen.mark(articles, date_cls.fromisoformat(date_str))
     seen.prune(keep_days=30)
     seen.save()
+    _record_cost(cfg, result)
 
     index = update_index(cfg)
     result.files = list(renderer.written) + ([index] if index else [])
@@ -164,6 +167,7 @@ def rerender(cfg: Config, run_date: str, *, use_llm: bool | None = None) -> RunR
         stats,
         [{"id": f.get("id", "?"), "error": f.get("error")} for f in feed_meta if not f.get("ok")],
         [a for a in articles if a.id not in chosen_ids][:40],
+        link_status=_check_issue_links(cfg, issues, result),
     )
 
     want_llm = cfg.llm_enabled if use_llm is None else (use_llm and bool(cfg.api_key))
@@ -173,6 +177,7 @@ def rerender(cfg: Config, run_date: str, *, use_llm: bool | None = None) -> RunR
         renderer.brief_fallback(issues, stats)
         renderer.prompt_pack(build_prompt_pack(cfg, issues, run_date))
 
+    _record_cost(cfg, result)
     index = update_index(cfg)
     result.files = list(renderer.written) + ([index] if index else [])
     return result
@@ -204,15 +209,22 @@ def _generate_with_llm(
     result.llm_used = True
     renderer.brief(brief, _stats_from_clusters(issues))
     renderer.data_json(brief)
+    history = _record_series(cfg, brief, date_str)
 
+    # 그림은 블로그 글의 이미지 자리에 맞춰 만들어야 하므로 글을 먼저 받는다.
+    # 글 생성이 실패하면 자리 정보 없이 수치만 보고 만든다.
+    post = None
     try:
         post = generator.generate_blog(brief)
-        renderer.blog(post, issues)
-        if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-            renderer.blog_naver(post)
     except LLMError as exc:
         log.error("블로그 생성 실패: %s", exc)
         result.warnings.append(f"블로그 생성 실패 — {exc}")
+
+    slot_files = renderer.images(brief, history=history, post=post)
+    if post is not None:
+        renderer.blog(post, issues, slot_files)
+        if str(cfg.get("blog.platform", "naver")).lower() == "naver":
+            renderer.blog_naver(post, slot_files)
 
     try:
         pack = generator.generate_video(brief)
@@ -224,6 +236,8 @@ def _generate_with_llm(
     renderer.shorts(pack)
     renderer.longform(pack)
     renderer.production_notes(brief, pack)
+    renderer.thumbnails(pack)
+    renderer.shorts_draft(pack)
     result.warnings.extend(generator.usage.notes)
 
 
@@ -252,3 +266,50 @@ def _warn_about_feeds(result: RunResult, feed_results: list[FeedResult]) -> None
         return
     names = ", ".join(r.feed.id for r in failed)
     result.warnings.append(f"피드 {len(failed)}개 실패: {names}")
+
+
+# ── 부가 단계 ────────────────────────────────────────────────
+
+
+def _check_issue_links(cfg: Config, issues: list[Cluster], result: RunResult) -> dict:
+    """선정된 이슈의 기사 링크만 점검한다. 꺼져 있으면 빈 dict."""
+    if not cfg.get("collect.check_links", True):
+        return {}
+    cap = int(cfg.get("collect.check_links_max", 60))
+    urls = [a.url for c in issues for a in c.articles][:cap]
+    try:
+        status = check_links(cfg, urls)
+    except Exception as exc:                 # 링크 점검이 파이프라인을 세우면 안 된다
+        log.warning("링크 점검 실패: %s", exc)
+        return {}
+    dead = [u for u, st in status.items() if not st.ok]
+    if dead:
+        result.warnings.append(f"출처 링크 {len(dead)}개가 열리지 않습니다 (sources.md 에 표시)")
+    return status
+
+
+def _record_cost(cfg: Config, result: RunResult, *, kind: str = "daily") -> None:
+    if not (result.usage and result.usage.calls):
+        return
+    try:
+        log_ = CostLog(cfg.state_dir / "costs.json")
+        log_.record(result.date, result.usage, kind=kind)
+        log_.prune()
+        log_.save()
+    except OSError as exc:
+        log.warning("비용 기록 실패: %s", exc)
+
+
+def _record_series(cfg: Config, brief, date_str: str) -> list[dict]:
+    """오늘 수치를 시계열에 넣고, 이미지 단계가 쓸 전체 이력을 돌려준다."""
+    from .render import flatten_datapoints
+
+    store = SeriesStore(cfg.state_dir / "datapoints.json")
+    try:
+        store.record(date_str, flatten_datapoints(brief))
+        store.prune()
+        store.save()
+    except OSError as exc:
+        log.warning("수치 이력 기록 실패: %s", exc)
+    return store.rows
+

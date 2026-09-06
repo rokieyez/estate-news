@@ -1,7 +1,7 @@
 {
   "meta": {
     "date": "2026-09-06",
-    "collected_at": "2026-09-06T10:16:16+00:00",
+    "collected_at": "2026-09-06T11:14:14+00:00",
     "feeds": [
       {
         "id": "gnews_realestate",
@@ -12,25 +12,25 @@
       {
         "id": "gnews_apt_price",
         "ok": true,
-        "count": 34,
+        "count": 32,
         "error": null
       },
       {
         "id": "gnews_jeonse",
         "ok": true,
-        "count": 31,
+        "count": 27,
         "error": null
       },
       {
         "id": "gnews_policy",
         "ok": true,
-        "count": 16,
+        "count": 17,
         "error": null
       },
       {
         "id": "gnews_supply",
         "ok": true,
-        "count": 25,
+        "count": 26,
         "error": null
       },
       {
@@ -67,6 +67,153 @@
   },
   "articles": [
     {
+      "id": "117c655186f43972",
+      "title": "30년 거래없던 빌라 샀다가 취득세 8배 ‘날벼락’…사각지대 개선할까",
+      "url": "https://www.mk.co.kr/news/realestate/12145608",
+      "feed_id": "mk_realestate",
+      "feed_name": "매일경제·부동산",
+      "publisher": "",
+      "published": "2026-09-06T11:12:51Z",
+      "summary": "임대사업 등록시 중과배제 특례 첫 매매 이유로 구축 혜택 제외 취득세 660만→4984만원 껑충 행안부 “내년에 제도 개선 검토”서울에 거주하는 1주택자 A씨는 최근 영등포구 신길..",
+      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 서울에 거주하는 1주택자 A씨는 최근 영등포구 신길동의 전용면적 32㎡ 다세대주택을 6억원에 매수했다. 1992년 준공된 30년 넘은 빌라다. A씨는 취득세 중과를 피하기 위해 등기 전 장기일반 민간임대사업자 등록까지 마쳤다. 정부가 비아파트 임대 공급을 늘리기 위해 시행 중인 취득세 중과배제 특례를 적용받으면 취득세가 660만원 정도일 것으로 예상했다. 하지만 영등포구청이 통보한 취득세는 4984만원이었다. 예상액의 7배가 넘는다. 30년 넘은 구축 빌라인데도 준공 이후 한 번도 매매되지 않았다는 이유로 현행 세법상 신축·구축 어느 쪽의 특례도 적용받지 못했기 때문이다. 6일 부동산 업계에 따르면 정부는 2024년 비아파트 시장 정상화와 임대주택 공급 확대를 위해 소형 비아파트 등록임대에 취득세 중과배제 특례를 도입했다. 전용 60㎡ 이하에 취득가액이 3억원, 수도권은 6억원 이하인 빌라·오피스텔 등을 매입하고 60일 이내 임대등록을 하면 취득세를 계산할 때 해당 주택을 주택 수에서 제외해주는 제도다. 취득세는 무주택자가 주택을 살 때 가격에 따라 1~3%가 적용되지만 조정대상지역에서 2주택자는 8%, 3주택 이상은 12%가 매겨진다. 기존 주택을 한 채 보유한 A씨가 중과배제 특례를 받지 못하면서 두 번째 주택에 8%의 세율을 적용받은 이유다. 문제는 신축과 구축에 서로 다른 특례 기준을 적용하면서 그 사이에 사각지대가 생겼다는 점이다. 현행 지방세법 시행령 제28조의 4에 따르면 신축 비아파트가 특례를 받으려면 2024년 1월 10일 이후 준공돼야 한다. 구축 비아파트는 일정 기간 내 취득한 주택을 대상으로 하지만 신축 후 최초로 유상승계되는 주택은 대상에서 제외된다. A씨의 빌라는 1992년 준공돼 신축 특례 대상이 아니다. 그런데 준공 후 30년 넘게 소유자가 바뀐 적이 없어 이번 거래가 최초 유상승계에 해당하면서 구축 특례에서도 제외됐다. 집 자체는 30년 넘은 구축인데 세제상으로는 신축·구축 어느 쪽에도 끼지 못하는 셈이다. 부동산 업계에서는 비아파트 임대 공급을 늘리겠다는 제도 취지와 맞지 않는다는 지적이 나온다. 특례가 처음 시행된 2024년은 전국적인 전세사기 사태 이후 빌라 등 비아파트 거래와 임대시장이 크게 위축된 시기다. 정부도 비아파트 매입 수요와 등록임대 공급을 늘리기 위해 세제 특례를 도입했다. 행정안전부 관계자는 “당시 신축 비아파트 매입 활성화와 구축 빌라 시장 활성화라는 서로 다른 목표에 따라 특례 기준도 나눠 설계했다”며 “이번 8·13 대책에서는 신축 특례에 한해서만 기간을 연장했다”고 설명했다. 정부도 제도상 사각지대가 발생하고 있다는 점은 인지하고 있다. 이 관계자는 “A씨 사례와 같은 민원이 지속적으로 접수되고 있다”며 “내년에 구축 비아파트 특례 연장을 논의할 때 개선사항을 검토할 것”이라고 말했다. 박합수 건국대 부동산대학원 겸임교수는 “제도의 취지가 등록 임대사업자의 세 부담을 낮추는 것인데 신축 등기 이후 손바뀜 여부에 따라 중과 여부가 달라지는 것은 형평성에 맞지 않는다”며 “입법상 빠른 보완이 필요하고 중과된 세액도 환급할 필요가 있다”고 말했다. 공유 서울의 A씨는 영등포구 신길동의 30년 된 다세대주택을 6억원에 매수했지만, 취득세가 예상치의 7배가 넘어 4984만원이 청구됐다. 신축 및 구축 주택에 대한 세제 특례 기준이 상이하여 A씨의 거래가 어느 쪽에도 적용되지 않는 사각지대에 놓인 상황이다. 정부는 이러한 문제를 인지하고 있으며, 내년에 구축 비아파트 특례 연장 시 개선사항을 검토할 계획이라고 밝혔다.",
+      "source_weight": 1.2,
+      "tags": [
+        "단독"
+      ]
+    },
+    {
+      "id": "679a329d374f0ba9",
+      "title": "'기다리면 집 못 산다'...돌변한 20대 \"내집 마련\" 뛰어든 나라",
+      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5iMXBuclZRNC1TcGVKSjFJanZDYlR3dHdCNjJWbkNNQmFWTkV6REp3aGU5QkdUZFIxVkVlLTJxcHhxOWlWZFIxdXRtMVBmQlE?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "v.daum.net",
+      "published": "2026-09-06T11:00:52Z",
+      "summary": "'기다리면 집 못 산다'...돌변한 20대 \"내집 마련\" 뛰어든 나라 &nbsp;&nbsp; v.daum.net",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "861d646876b0842d",
+      "title": "\"재건축 얘기만 20년째, 이번엔 진짜?\"…격변 앞둔 동네 [이슬기의 새집다오]",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFB1MDdLVVNTNmRlYkN6MF8zMHdsTXBIczFydkpGSmRCcERNakxzVkxxQTJJM1ZyN3NSX3B1UVRwUlhXekZsSkp5NldZRzlaS2xLRnNNemFIT0VFZw?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "hankyung.com",
+      "published": "2026-09-06T11:00:01Z",
+      "summary": "\"재건축 얘기만 20년째, 이번엔 진짜?\"…격변 앞둔 동네 [이슬기의 새집다오] &nbsp;&nbsp; hankyung.com",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "c652237eabcb6ff7",
+      "title": "‘임대업 투잡’ 기초의원, 부동산 좌우할 정책 심의",
+      "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE1wSDRicDBmS3dFaGtCUkM0MHdsM2gxRzlOTGlVS2NOSlVNbF9uU1dQS1dTd1RWTWFGRUdzdjR5YWg4NWVmWVNiQ1pJWjcyd1BobGc?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "경인일보",
+      "published": "2026-09-06T10:55:19Z",
+      "summary": "‘임대업 투잡’ 기초의원, 부동산 좌우할 정책 심의 &nbsp;&nbsp; 경인일보",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "82603786ed1cfd1e",
+      "title": "전월세난 다급해진 정부…기업형 임대사업자 종부세부담 줄인다",
+      "url": "https://www.mk.co.kr/news/realestate/12145604",
+      "feed_id": "mk_realestate",
+      "feed_name": "매일경제·부동산",
+      "publisher": "",
+      "published": "2026-09-06T10:53:37Z",
+      "summary": "민간 임대 촉진 위해 세제 혜택 카드 꺼내 매입임대, 10·15 대책 후 합산배제 혜택 막혀 종부세 폭탄에 기업형 임대 수익률 1%대 ‘뚝’ 공급 절벽 해소 위해 법인 다주택 중과..",
+      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 정부가 법인형 임대사업자의 종합부동산세 부담을 낮추는 방안을 검토 중이다. 전월세난이 가중되자 세제 혜택 카드를 꺼내들어 민간 부문의 임대주택 공급을 촉진하려는 포석이다. 6일 정부 안팎에 따르면 정부는 지난 ‘8·13 공급 대책’에서 신설한 ‘20년 이상 장기 임대 모델’에 법인 사업자 참여를 유도할 인센티브를 설계하고 있다. 그중 하나로 법인형 임대사업자에게 종부세 합산 배제 혜택을 부여하는 방안이 유력하게 검토되고 있다. 종부세 부담을 줄여주는 규제 완화를 통해 민간 임대주택 공급을 늘리겠다는 취지다. 법인형 임대사업자는 △기존 주택을 사들여 임대주택으로 운영하는 매입 임대사업자 △공공임대사업을 목적으로 새로 주택을 짓는 건설 임대사업자로 나뉜다. 매입임대의 경우 10·15 대책 이후 조정대상지역에서 종부세 합산 배제 혜택을 받지 못하고 있다. 건설 임대사업자는 전용면적 149㎡ 이하이면서 공시지가 12억원 이하 주택인 경우 등 요건을 충족해야 종부세 합산 배제를 신청할 수 있다. 서울 주택 공급이 더딘 상황에서 전월세 시장 불안마저 커지자 정부가 법인형 임대사업자에 대한 세제 완화 카드를 꺼내든 것으로 풀이된다. 세제 혜택을 부여해서라도 민간을 통해 신속한 주택 공급을 유도해 공급 절벽을 해소하겠다는 판단이다. 국토교통부 관계자는 “공급 효과가 있는 부분에 대해서는 종부세 규제 완화가 필요하다는 입장”이라며 “관계기관과 논의할 계획”이라고 말했다. 종부세 합산 배제는 기업형 민간 임대 활성화를 가로막는 주요 걸림돌로 꼽혀왔다. 사업 특성상 수십에서 수백 채의 주택을 장기 보유해야 하지만, 현행 제도에서는 다주택자로 묶여 높은 중과세율을 적용받기 때문이다. 이러한 세 부담은 임대수익률에 직접적 타격을 입힌다. 한 기업형 임대사업 관계자는 “연 5% 수준의 임대수익률을 기대했던 자산도 종부세가 매년 부과되면 실질 수익률이 1~2%대로 떨어진다”며 “이는 시중금리와 비교해도 현저히 낮은 수준”이라고 설명했다. 정부가 법인형 임대주택 사업자 요구 중 하나를 전향적으로 수용할 가능성이 열렸다는 평가다. 정부는 민간 임대주택 공급 촉진을 위한 정책 패키지를 연내 발표할 계획인 것으로 알려졌다. 정부가 강조하는 ‘공급 생태계 복원’의 한 축으로 법인형 임대주택을 키우려는 의도다. 정부가 법인형 임대사업자의 종부세합산배제 혜택 부여를 검토하면서 SK디앤디의 민간 임대주택 사업 환경에 변화가 예상됩니다. SK디앤디는 주거 브랜드 에피소드를 중심으로 임대주택 개발과 운영 영역을 확장하고 있습니다. 다만 세제 혜택의 구체적 요건과 정책 확정 시점에 따른 불확실성이 상존합니다. 공유 정부가 법인형 임대사업자의 종합부동산세 부담을 낮추는 방안을 검토 중이다. 이는 민간 부문의 임대주택 공급을 촉진하기 위한 조치로, 법인형 임대사업자에게 종부세 합산 배제 혜택을 부여하는 방안이 유력히 논의되고 있다. 국토교통부는 공급 효과를 위한 규제 완화의 필요성을 강조하며, 연내 민간 임대주택 공급 촉진을 위한 정책 패키지를 발표할 계획이다. 정부의 이번 조치는 전월세난 해소를 위해 민간 임대주택 공급을 늘리는 데 초점을 맞추고 있어요. 🏠 법인형 임대사업자의 종합부동산세 부담을 완화하면, 더 많은 임대주택이 시장에 공급될 가능성이 높아지죠. 이는 장기적으로 임대료 안정화에 기여하여 세입자들의 주거비 부담을 줄여줄 수 있을 것으로 기대돼요. 💰 물론, 이러한 긍정적인 효과가 실제로 나타나기까지는 시간이 걸릴 수 있으며, 시장 상황에 따라 달라질 수 있다는 점도 염두에 두어야 해요. 🤔 또한, 임대사업자의 수익성이 개선되면 장기적인 관점에서 안정적인 임대 관리를 기대해 볼 수 있어요. 이는 임차인들이 보다 예측 가능한 주거 환경을 누리는 데 도움이 될 수 있답니다. 🤝 이번 정책 변화는 특히 기업형 임대사업자들에게 직접적인 영향을 미칠 것으로 보여요. 🏢 종합부동산세 부담 완화는 기업형 임대사업자들의 수익성을 개선시키는 중요한 요인이 될 수 있어요. 과거에는 높은 세금 부담으로 인해 임대 수익률이 1~2%대로 낮아져 사업성이 떨어지는 경우가 많았는데, 이번 조치로 이러한 부담이 줄어들면 기업들의 임대주택 시장 참여가 더욱 활발해질 것으로 예상돼요. 💪 뿐만 아니라, 이는 민간 임대주택 공급 확대라는 정부 목표 달성에도 기여할 수 있어요. 특히 20년 이상 장기 임대 모델에 참여하는 법인 사업자들에게 인센티브를 제공하려는 움직임은, 장기적인 관점에서 안정적인 임대 시장을 구축하는 데 긍정적인 역할을 할 수 있답니다. 📈 건설 임대사업자들에게도 혜택이 확대될 가능성이 있어, 주택 건설 및 공급 산업 전반에 활력을 불어넣을 것으로 기대돼요. 🏗️ 정부는 심화되는 전월세난과 공급 부족 문제를 해결하기 위해 기업형 임대사업자에 대한 규제 완화를 추진하고 있어요. 🚨 이번 종합부동산세 부담 완화 방안은 민간 임대주택 공급을 촉진하여 공급 절벽을 해소하려는 정부의 의지를 보여주는 것이죠. 🎯 이는 장기적으로 주택 시장의 안정화와 공급 확대를 통해 부동산 시장 전반에 긍정적인 영향을 미칠 것으로 기대하고 있어요. 정부는 연내에 민간 임대주택 공급 촉진을 위한 정책 패키지를 발표할 계획이며, 이는 시장 참여자들에게 새로운 기회를 제공할 수 있어요. 📊 또한, 이번 정책은 개인 다주택자 중심이었던 기존의 민간 임대주택 공급 구조를 기업 중심으로 전환하려는 시도로 해석될 수 있으며, 이는 주택 시장의 플레이어를 다변화하는 효과를 가져올 수 있답니다. 🔄",
+      "source_weight": 1.2,
+      "tags": [
+        "단독"
+      ]
+    },
+    {
+      "id": "8e0adbaf4825f2c2",
+      "title": "수도권에 묶인 양평 부동산 규제…‘1세대 1주택 특례’ 제도개선 요구",
+      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE4tTVlHOUVZUjV3UzRGLXM3S2dVaU5CdEVqcmg3N2FvWmFQNlNFSk9pTE5tVGxwZUZsYVZqdXBuVEw2cnhlQ19ldmJHaUJsX3E3ZEh4TUNKSFZTZGo3NjBibXVLeGZZbGF2c29B?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "팔당유역신문",
+      "published": "2026-09-06T10:44:14Z",
+      "summary": "수도권에 묶인 양평 부동산 규제…‘1세대 1주택 특례’ 제도개선 요구 &nbsp;&nbsp; 팔당유역신문",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "d8ce7ea82e2a229c",
+      "title": "강남구, 부동산 세제개편안 설명회 2회 추가 개최… 권역별 순회 > 뉴스",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE01Rm9ldm5GOVNVWWx1eDRJeU44eDZVWjI0dnhyeFl6NHRaZnp3VlBuVm8xTElLVkJfdWZidnJkYV9iRmRoOXBSOG84RHpmNWZkblZsNkl1T1pCYzF5d2dBdHVacTVmdENaVGU5ZmxYQ0w?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "더코리아",
+      "published": "2026-09-06T10:38:00Z",
+      "summary": "강남구, 부동산 세제개편안 설명회 2회 추가 개최… 권역별 순회 > 뉴스 &nbsp;&nbsp; 더코리아",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "5d22fda92de88044",
+      "title": "'부자아빠' 기요사키, 빚만 1조6000억원…\"따라하지 마라\" 경고",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9ZY3FPRDNGMWRQWjd0bkZrSXlVRVp4OHU4Wi1Yb3FwQllmczI3SWZlc0thbUR4aUNCUmFZcllTd3pONmVwZ3I3dkRadk1UeDNNd09teVo4TzZSQQ?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "hankyung.com",
+      "published": "2026-09-06T10:18:04Z",
+      "summary": "'부자아빠' 기요사키, 빚만 1조6000억원…\"따라하지 마라\" 경고 &nbsp;&nbsp; hankyung.com",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "4a7c2ffeddf3a146",
+      "title": "국회 후반기 초반부터 여야 충돌…부동산·장관 후보 검증 전운 고조",
+      "url": "https://news.google.com/rss/articles/CBMijgFBVV95cUxNanh3TE1rbjlMMUxEMGg0SXkxb0ZhUVF6NVd1dXhLdUFhaC1uVm92d3dUeXY5QXkzc3hyTkdUTTFoMjJQWXQydk9JS05ZUzFFYkFzNjZYcGtOcUlCTXJhVWdWcDM4TXg5d3R0dHBFRHhMZU5taGo0S19LQ1ZiYU15UjhCWlJQU25yV2Qxb2pn?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "국제신문",
+      "published": "2026-09-06T10:15:00Z",
+      "summary": "국회 후반기 초반부터 여야 충돌…부동산·장관 후보 검증 전운 고조 &nbsp;&nbsp; 국제신문",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "ee7b55e12796fea2",
+      "title": "양평군의회 지민희 의장, 지역 현안 간담회 가져",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE5NVUpNaFE4WmFBcFNoOTdueE8zVkFtQ19idFRlZEhwd2didERlSjdlT1VFVWVXRmF6S3JGMEljU1lXMkctRDRWREpHRnBBdS00MTczT3lWUlRzaWM4aEF5Rw?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "비전21뉴스",
+      "published": "2026-09-06T10:10:03Z",
+      "summary": "양평군의회 지민희 의장, 지역 현안 간담회 가져 &nbsp;&nbsp; 비전21뉴스",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "7ebdfa7965931dfe",
+      "title": "9월 계획표 feat.사당449 모아타운, 청파3구역, 사당17구역, 소액 불광동 442구역 445구역, 방이동 모아타운, 정책자금 대출",
+      "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxNd3JGc25XTmJyRUJiLXdnX183V2UzOVZ2dzRrdjRHYzdBWlFsUHdKYzdpbHJSRkpjNWlGSGs2R3N2S1FHWVQtQ3gzdkFuRXhYaU0wM3J5V2NUd2tyX0JGeTFXb1hUcHA3R1hOM1c1NTQ5REhnckZ4MTdLWERQRW83WHZ3?oc=5",
+      "feed_id": "gnews_supply",
+      "feed_name": "구글뉴스·재건축/재개발",
+      "publisher": "네이버 프리미엄콘텐츠",
+      "published": "2026-09-06T10:00:00Z",
+      "summary": "9월 계획표 feat.사당449 모아타운, 청파3구역, 사당17구역, 소액 불광동 442구역 445구역, 방이동 모아타운, 정책자금 대출 &nbsp;&nbsp; 네이버 프리미엄콘텐츠",
+      "body": "",
+      "source_weight": 1.1,
+      "tags": []
+    },
+    {
       "id": "5eac95ae0e861557",
       "title": "'청문회 전초전' 대정부질문...부동산·파병도 쟁점",
       "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTE1jS1A4azJpTjMwekVPcXRVREF5UW5tVmI5Q3FZVHBJY0JUR1hGQ3VXN0ZtSDVzUEx4OHpjVFVnaW5yNGVpZEowZ0FQZmYtRVhQU1U2YVBWZkstdTZibXc?oc=5",
@@ -75,6 +222,19 @@
       "publisher": "YTN",
       "published": "2026-09-06T09:50:00Z",
       "summary": "'청문회 전초전' 대정부질문...부동산·파병도 쟁점 &nbsp;&nbsp; YTN",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "cdb6b741639dd1f3",
+      "title": "한국부동산원, \" 금융기관 대상 환경·사회·투명 경영(ESG) 금융지원 서비스 설명회 \" 개최 !!",
+      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1Ra1NZck92TkRzTmxxbWNncUw4eFMwX1Jlb1BweVduOEpPbGtWUk5rMG5GYXZsV29NU1dfU2RlWVZhNHIyeEluTVNVQjRIdDhZSnNFTlFLRlI1NWU0c2xpbExUTWo2RkhtRG1JRnh6TQ?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "내외일보",
+      "published": "2026-09-06T09:43:26Z",
+      "summary": "한국부동산원, \" 금융기관 대상 환경·사회·투명 경영(ESG) 금융지원 서비스 설명회 \" 개최 !! &nbsp;&nbsp; 내외일보",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -93,6 +253,32 @@
       "tags": [
         "김인만 칼럼"
       ]
+    },
+    {
+      "id": "bc96263c51159bbf",
+      "title": "국회 대정부질문, 확장재정·부동산 정책 격돌 예고",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBZS0NmMzgyaTh5SUNZdi13R1JZeXJnZGtWaWJiSnJxWk5JMVpvZGxTTFNObER0SjRSNjEwNFh4alUwQnpnTFRxSjRkdHkxMlBjLU5lcWlXc0dOQQ?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "파이낸셜뉴스",
+      "published": "2026-09-06T09:31:10Z",
+      "summary": "국회 대정부질문, 확장재정·부동산 정책 격돌 예고 &nbsp;&nbsp; 파이낸셜뉴스",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "7fbcacc77e023583",
+      "title": "법령 339호에 따른 부동산 사업 관련 주요 처벌 사항",
+      "url": "https://news.google.com/rss/articles/CBMiogFBVV95cUxQX1EwTTJnUEUtTVJmTE1Od1lra3ZDNXFIenVVa0FhcXMzTFJnTVM2ck9zdWIwQXZNb1R1V2kzZXk4Q0xQOWV6VHFVSmhDMUg0eFBnTTJBVmJRS01PbDUwME1BTEtGMEVxN0hUSmRVTXlialpCejltU3A0M0NQOU56MUhiOTAwb052MEFtV2pfaTBMTU5qNjZDaE9fVG1SS0N0MlE?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "Vietnam.vn",
+      "published": "2026-09-06T09:28:06Z",
+      "summary": "법령 339호에 따른 부동산 사업 관련 주요 처벌 사항 &nbsp;&nbsp; Vietnam.vn",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
     },
     {
       "id": "9ead7ac3c57f2444",
@@ -121,6 +307,19 @@
       "tags": []
     },
     {
+      "id": "5e091b360404c461",
+      "title": "노량진·북아현에 은마·잠실까지 '이주 쓰나미’",
+      "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFB1MU9zaG95SHBvT2d3WG4xZVZMQzcySkNMNnl1eVEteEtyTXJsazJkTDVkSHZaMFNMUUYzak94eGhZel84bUM2VUNWWTM4amNyR0ZVMlVvVnVtUQ?oc=5",
+      "feed_id": "gnews_supply",
+      "feed_name": "구글뉴스·재건축/재개발",
+      "publisher": "파이낸셜뉴스",
+      "published": "2026-09-06T09:15:48Z",
+      "summary": "노량진·북아현에 은마·잠실까지 '이주 쓰나미’ &nbsp;&nbsp; 파이낸셜뉴스",
+      "body": "",
+      "source_weight": 1.1,
+      "tags": []
+    },
+    {
       "id": "580fc4be51b356aa",
       "title": "1만명 내려온다는데… 세종 집값 살아날까",
       "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE8teXZ5SHkwQXNzVk80OUZBWDRiR2pRU2lRdlNZaC1ndnU2R09VY3V4ZXdxWXNYUy14Si1aNUFiNkh2WXk1Q29nZEVaMm1vRUhQX3A4ZzJncjJBdw?oc=5",
@@ -139,9 +338,9 @@
       "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE1NQnl1U1FzdzNaYlBMTVNNVExwNVNBYWJ0TnNvYXNTalU4VlljRzNpcWNTeVVyQ0ZKYTc0M2NSUUJjNW1PNmRjMW8xZC1DZ19fYXZORi15VktRdw?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "한국경제",
+      "publisher": "hankyung.com",
       "published": "2026-09-06T09:10:17Z",
-      "summary": "삼성전자 '셔세권' 수원 영통 집값 상승률 1위 &nbsp;&nbsp; 한국경제",
+      "summary": "삼성전자 '셔세권' 수원 영통 집값 상승률 1위 &nbsp;&nbsp; hankyung.com",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -155,8 +354,21 @@
       "publisher": "",
       "published": "2026-09-06T08:59:31Z",
       "summary": "정부가 법인형 임대사업자의 종합부동산세 부담을 낮추는 방안을 검토 중이다. 전월세난이 가중되자 세제 혜택 카드를 꺼내들어 민간 부문의 임대주택 공급을 촉진하려는 포석이다. 6일 정..",
-      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 정부가 법인형 임대사업자를 대상으로 한 종부세합산배제 검토를 추진하며 민간 주택 공급 촉진에 나섰습니다. SK디앤디는 에피소드 브랜드로 개발형 임대주택과 주거 서비스를 운영하며 관련 제도 변화에 대응하고 있습니다. 관계기관 협의 단계여서 세제 혜택의 구체적인 적용 요건은 추가 논의가 이어지고 있습니다. 공유 정부가 법인형 임대사업자의 종합부동산세 부담을 줄이기 위한 방안을 검토하고 있다. 이는 전월세 시장의 어려움을 해소하고 민간 임대주택 공급을 촉진하기 위한 시도로, 법인 사업자에게 종부세 합산 배제 혜택을 부여하는 방안이 유력하게 논의되고 있다. 국토교통부는 공급 효과를 고려하여 종부세 규제 완화 필요성에 대해 관계기관과 논의할 계획임을 밝혔다. 이번 정책 검토는 전월세 시장의 불안정 해소와 민간 임대주택 공급 확대를 목표로 하고 있어요. 🏠 만약 법인형 임대사업자에 대한 종부세 부담이 줄어들면, 이는 장기적으로 임대주택 공급 증가로 이어져 임대 시장의 안정화에 기여할 수 있어요. 📈 하지만 단기적으로는 정책 시행 과정에서 시장 상황에 따라 임대료 변동성이 나타날 수도 있습니다. 🤔 정부의 법인형 임대사업자에 대한 종합부동산세(종부세) 부담 완화 검토는 해당 사업자들에게 매우 중요한 영향을 미칠 수 있어요. 🏢 특히 20년 이상 장기 임대 모델에 참여하는 법인에게 종부세 합산 배제 혜택을 부여하는 방안이 유력하게 검토되고 있는데, 이는 수십에서 수백 채의 주택을 장기 보유해야 하는 사업 특성상 상당한 세금 부담을 줄여줄 것으로 예상돼요. 💰 이를 통해 기업형 민간 임대사업의 수익성이 개선되면, 민간 부문의 임대주택 공급 확대에 긍정적인 영향을 줄 수 있습니다. 🏗️ 건설업계에서는 이러한 세제 혜택 외에도 택지 및 금융 지원이 병행되어야 사업성을 확보할 수 있다는 의견도 제시하고 있어요. 🏦 정부가 법인형 임대사업자의 종부세 부담을 낮추는 방안을 검토하는 것은 현재 심화되고 있는 전월세난에 대응하기 위한 다급한 조치로 보여요. 🚨 주택 공급이 더딘 상황에서 전월세 시장 불안이 커지자, 정부는 민간 부문의 임대주택 공급을 촉진하기 위해 세제 혜택이라는 카드를 꺼내든 것입니다. 🔑 이는 단순히 세금 부담을 줄여주는 것을 넘어, 개인 다주택자 중심의 민간 임대주택 공급 구조를 기업 중심으로 재편하려는 정책 전환으로 해석될 수 있어요. 🔄 정부는 이를 통해 공급 절벽을 해소하고 시장 안정을 도모하려는 목표를 가지고 있으며, 관계기관과의 논의를 통해 구체적인 방안을 마련해 나갈 계획입니다. 🤝",
+      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 정부가 법인형 임대사업자를 대상으로 한 종부세합산배제 검토를 추진하며 민간 주택 공급 촉진에 나섰습니다. SK디앤디는 에피소드 브랜드로 개발형 임대주택과 주거 서비스를 운영하며 관련 제도 변화에 대응하고 있습니다. 관계기관 협의 단계여서 세제 혜택의 구체적인 적용 요건은 추가 논의가 이어지고 있습니다. 공유 정부가 법인형 임대사업자의 종합부동산세 부담을 줄이기 위한 방안을 검토하고 있다. 이는 전월세 시장의 어려움을 해소하고 민간 임대주택 공급을 촉진하기 위한 시도로, 법인 사업자에게 종부세 합산 배제 혜택을 부여하는 방안이 유력하게 논의되고 있다. 국토교통부는 공급 효과를 고려하여 종부세 규제 완화 필요성에 대해 관계기관과 논의할 계획임을 밝혔다. 정부가 법인형 임대사업자의 종합부동산세(종부세) 부담을 낮추는 방안을 검토하면서, 임대주택 공급이 늘어나 전월세 시장의 안정에 긍정적인 영향을 줄 것으로 기대돼요. 🏠 이는 결국 개인 임차인들의 주거비 부담을 완화하는 데 기여할 수 있어요. 🏡 하지만, 이러한 정책 전환이 개인 다주택자들에게는 어떤 영향을 미칠지에 대한 구체적인 내용은 기사에서 명확히 드러나지 않아 추가적인 정보가 필요해요. 🧐 또한, 이번 정책은 20년 이상 장기 임대 모델에 참여하는 법인 사업자를 대상으로 하고 있어, 단기적인 전월세 시장의 큰 변동보다는 장기적인 공급 안정화에 초점을 맞추고 있어요. 🙏 법인형 임대사업자들은 이번 종부세 부담 완화 검토로 인해 사업 운영에 숨통이 트일 것으로 보여요. 💰 특히 수십 년간 장기 보유해야 하는 임대주택의 특성상, 높은 종부세 부담은 사업성 악화의 주요 원인이었는데요. 😓 이번 세제 혜택 검토는 이러한 부담을 줄여 민간 임대주택 공급에 더 적극적으로 나설 수 있는 환경을 조성해 줄 것으로 기대돼요. ✨ 이 정책은 기존 주택을 사들여 임대하는 매입 임대사업자와 새로 주택을 짓는 건설 임대사업자 모두에게 긍정적인 영향을 미칠 수 있어요. 🏗️ 다만, 건설업계에서는 세제 혜택만으로는 부족하며 택지 및 금융 관련 지원이 병행되어야 한다는 목소리도 나오고 있어, 기업들의 실질적인 사업성 확보를 위해서는 추가적인 지원책이 필요할 수 있어요. 🤝 정부는 심화되는 전월세난과 공급 부족 문제를 해소하기 위해 법인형 임대사업자에 대한 세제 혜택을 카드로 꺼내 들었어요. 🧐 이는 민간의 참여를 유도하여 주택 공급을 신속하게 늘리겠다는 의도로 풀이돼요. 🚀 시장에서는 이러한 정부의 정책 전환이 민간 임대주택 공급 구조를 개인 다주택자 중심에서 기업 중심으로 재편하는 계기가 될 것으로 보고 있어요. 📊 이번 정책은 주택 공급 확대라는 정부의 목표 달성에 기여할 수 있지만, 관련 정책들의 효과와 시장 반응을 면밀히 주시해야 할 필요가 있어요. 🧐 또한, '8·13 공급 대책'에서 신설된 '20년 이상 장기 임대 모델'에 법인 사업자가 얼마나 적극적으로 참여할지는 지켜봐야 할 부분이에요. ⚖️",
       "source_weight": 1.2,
+      "tags": []
+    },
+    {
+      "id": "0b74ddafcb20fba0",
+      "title": "\"강남은 떨어지고 강북은 오른다\"…서울 부동산 판도 바뀌나",
+      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFB6Yk1sZTF3MVJZN3hZTUVFVDBtUUhtVjM3R1BvcURqWGhrRU5RdlM3dVRnT3E3VDB4Y2x6YUQ2VU90UXZLVHkwUDFObDNoN1hYeEc1bTZlOVVjUk12QWZ0enFjbzdKNlk4MXlEQS01RjU0RzA2dmEzZtIBeEFVX3lxTFB6Yk1sZTF3MVJZN3hZTUVFVDBtUUhtVjM3R1BvcURqWGhrRU5RdlM3dVRnT3E3VDB4Y2x6YUQ2VU90UXZLVHkwUDFObDNoN1hYeEc1bTZlOVVjUk12QWZ0enFjbzdKNlk4MXlEQS01RjU0RzA2dmEzZg?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "뉴시스",
+      "published": "2026-09-06T08:56:25Z",
+      "summary": "\"강남은 떨어지고 강북은 오른다\"…서울 부동산 판도 바뀌나 &nbsp;&nbsp; 뉴시스",
+      "body": "",
+      "source_weight": 1.0,
       "tags": []
     },
     {
@@ -170,19 +382,6 @@
       "summary": "",
       "body": "",
       "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "6afc0f23e75cbee6",
-      "title": "\"강남은 떨어지고 강북은 오른다\"…서울 부동산 판도 바뀌나",
-      "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1UWG9NbFhfWVRSMF9ObVZEYUl3MngzYUtzSDNocVpvZmF6QmtuRWdYYk9KUlpXcXZrTjl6ck9keERNTzd3anVvUjRvZEpYc24zdF80?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "news.nate.com",
-      "published": "2026-09-06T08:50:00Z",
-      "summary": "\"강남은 떨어지고 강북은 오른다\"…서울 부동산 판도 바뀌나 &nbsp;&nbsp; news.nate.com",
-      "body": "",
-      "source_weight": 1.0,
       "tags": []
     },
     {
@@ -212,15 +411,15 @@
       "tags": []
     },
     {
-      "id": "1d6b1108b140804d",
-      "title": "전세 사라지고, 월세는 오르고 … 해외 큰손들, 韓임대시장 군침",
+      "id": "6db190e39b0863d5",
+      "title": "전세 사라지고, 월세는 오르고… 해외 큰손들, 韓임대시장 군침",
       "url": "https://www.mk.co.kr/news/realestate/12145495",
       "feed_id": "mk_realestate",
       "feed_name": "매일경제·부동산",
       "publisher": "",
       "published": "2026-09-06T08:31:13Z",
-      "summary": "임대차 시장에서 해외 투자자들의 국내 진출이 늘고 있다. 전세 중심이었던 한국 임대차 시장에 월세 비중이 가파르게 상승하며 투자 기회를 포착한 것이다. 6일 부동산 투자업계에 따르..",
-      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 공유 임대차 시장에서 해외 투자자들이 국내 진출을 늘리고 있으며, 특히 전세의 월세화가 가속화되면서 투자 기회를 포착하고 있다. 올 1~7월 월세 비중이 68.3%에 달하며, 서울과 지방에서 그 비중이 각각 78%와 87.5%로 높았다. 글로벌 기관투자자들이 한국 임대 시장에 진출하며, 코리빙과 같은 새로운 주거 트렌드가 이러한 변화의 배경이 되고 있다. 한국의 임대차 시장에서 월세 비중이 높아짐에 따라 개인 소비자들은 주거 비용 부담 증가를 경험할 수 있어요. 🏠 특히 전세 중심이었던 한국 주거 문화에서 월세로의 전환은 가계 재정 계획에 새로운 변수로 작용할 수 있습니다. 💰 또한, 1인 가구 증가와 높은 주거비 부담으로 인해 코리빙(공유주거)과 같은 새로운 형태의 주거 공간에 대한 수요가 늘어나면서, 개인들은 더욱 다양한 주거 옵션을 탐색하게 될 것으로 보여요. 🏡✨ 해외 투자 기관들의 국내 임대차 시장 진출 증가는 국내 부동산 시장에 새로운 자본 유입을 가져오고, 이는 관련 산업 전반에 영향을 미칠 수 있어요. 📈 특히 모건스탠리, KKR 등 대규모 기관들이 오피스텔 및 임대주택 사업에 투자하면서, 건설, 관리, 금융 등 부동산 관련 기업들은 새로운 사업 기회를 맞이할 수 있습니다. 🏢 또한, 코리빙과 같은 새로운 주거 형태의 확산은 관련 서비스 기업들의 성장 동력이 될 것으로 예상돼요. 🚀 전세에서 월세로의 시장 변화는 정부의 주거 정책 및 시장 안정화 노력에 새로운 과제를 제시하고 있어요. 📊 월세 비중 증가는 임대차 시장의 안정성을 확보하고, 해외 자본의 유입이 국내 주거 시장에 미치는 영향을 면밀히 관리할 필요성을 높입니다. ⚖️ 또한, 1인 가구 증가와 코리빙 시장의 성장은 정부가 주거 관련 규제나 지원 정책을 수립할 때 고려해야 할 중요한 변화 요소로 작용하고 있어요. 🧐",
+      "summary": "해외 투자자들의 국내 임대차 시장 진출이 늘고 있다. 전세 중심이었던 한국 임대차 시장에서 월세 비중이 가파르게 상승하며 투자 기회를 포착한 것이다. 6일 부동산 투자업계에 따르면..",
+      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 쿠시먼앤드웨이크필드는 첫 APAC주거투자자설문 을 실시해 한국을 아시아·태평양 지역 주거 선호 투자처 4위로 발표했습니다. 글로벌 기관투자자들의 한국 주거 부문 투자 확대 계획과 전세의 월세화 흐름을 조명하며 국내 임대차 시장 변화를 분석했습니다. 업계에서는 글로벌 자본의 국내 주거 및 임대 자산 유입 확대에 따른 시장 지형 변화를 주시하고 있습니다. 공유 해외 투자자들이 한국의 임대차 시장에 점차 많이 진출하고 있으며, 월세 비중이 급격히 증가하고 있는 상황이다. 쿠시먼앤드웨이크필드의 조사에 따르면 한국은 아시아·태평양 지역에서 주거 부문 선호 투자처 4위에 올라 있으며, 조사 대상 기관투자자의 85%가 향후 5년간 주거 부문 투자 비중을 늘릴 계획이라고 밝혔다. 서울을 중심으로 한 코리빙 열풍이 글로벌 자본 유입을 촉진하고 있으며, 여러 해외 투자사가 한국 임대차 시장에 적극 투자하고 있다. 한국의 임대차 시장에서 월세 비중이 높아짐에 따라 개인 소비자들은 주거 비용 부담 증가를 경험할 수 있어요. 🏠 특히 전세 중심이었던 한국 주거 문화에서 월세로의 전환은 가계 재정 계획에 새로운 변수로 작용할 수 있습니다. 💰 또한, 1인 가구 증가와 높은 주거비 부담으로 인해 코리빙(공유주거)과 같은 새로운 형태의 주거 공간에 대한 수요가 늘어나면서, 개인들은 더욱 다양한 주거 옵션을 탐색하게 될 것으로 보여요. 🏡✨ 해외 투자 기관들의 국내 임대차 시장 진출 증가는 국내 부동산 시장에 새로운 자본 유입을 가져오고, 이는 관련 산업 전반에 영향을 미칠 수 있어요. 📈 특히 모건스탠리, KKR 등 대규모 기관들이 오피스텔 및 임대주택 사업에 투자하면서, 건설, 관리, 금융 등 부동산 관련 기업들은 새로운 사업 기회를 맞이할 수 있습니다. 🏢 또한, 코리빙과 같은 새로운 주거 형태의 확산은 관련 서비스 기업들의 성장 동력이 될 것으로 예상돼요. 🚀 전세에서 월세로의 시장 변화는 정부의 주거 정책 및 시장 안정화 노력에 새로운 과제를 제시하고 있어요. 📊 월세 비중 증가는 임대차 시장의 안정성을 확보하고, 해외 자본의 유입이 국내 주거 시장에 미치는 영향을 면밀히 관리할 필요성을 높입니다. ⚖️ 또한, 1인 가구 증가와 코리빙 시장의 성장은 정부가 주거 관련 규제나 지원 정책을 수립할 때 고려해야 할 중요한 변화 요소로 작용하고 있어요. 🧐",
       "source_weight": 1.2,
       "tags": []
     },
@@ -264,14 +463,14 @@
       "tags": []
     },
     {
-      "id": "7e2c39c5f9618fca",
+      "id": "d03431addd91e8ea",
       "title": "세입자 전세금 내고, 주인은 월세 받고 … 전월세 안심신탁 출격",
-      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5KZDUzSUN6LW11d21BZnFfTWgxZ2pLVkdRalBVYVBnc0Izck9uX2FkelNrSmxrY2tmZDhuOHFNUjhBbXJkbFpjV2YzNVFoNnM?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE40SmRoQ2Q1X3JZLXNuaVpyUDBiOXRZdnJCZnRURWpaU081UmhsbWVTMGxvMzJPOTk4em90QUtiSmNGZ1dpdUVfMUVnamRoU1NlS3hESg?oc=5",
       "feed_id": "gnews_jeonse",
       "feed_name": "구글뉴스·전월세",
-      "publisher": "v.daum.net",
-      "published": "2026-09-06T08:30:12Z",
-      "summary": "[머니 이기자] 세입자 전세금 내고, 주인은 월세 받고 … 전월세 안심신탁 출격 &nbsp;&nbsp; v.daum.net",
+      "publisher": "매일경제",
+      "published": "2026-09-06T08:29:26Z",
+      "summary": "[머니 이기자] 세입자 전세금 내고, 주인은 월세 받고 … 전월세 안심신탁 출격 &nbsp;&nbsp; 매일경제",
       "body": "",
       "source_weight": 1.0,
       "tags": [
@@ -279,7 +478,7 @@
       ]
     },
     {
-      "id": "1d284743365d4811",
+      "id": "0f08b3dd3438b166",
       "title": "\"재개발 투자금만 봤다가 稅폭탄\"…장특공 세제변화 영향 주목해야",
       "url": "https://www.mk.co.kr/news/realestate/12145488",
       "feed_id": "mk_realestate",
@@ -287,7 +486,7 @@
       "publisher": "",
       "published": "2026-09-06T08:29:25Z",
       "summary": "재건축·재개발로 통하는 정비사업 시장에서 세금은 '무엇을 샀는지'가 아니라 '언제 샀는지, 언제 살았는지, 언제 파는지'가 정하는 시간의 함수다. 관리처분계획인가일, 멸실일, 준공..",
-      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 공유 정비사업 시장에서 세금은 매물의 구매 시점에 따라 달라지며, 이는 조합원 개인의 세금을 결정짓는 중요한 요소가 된다. 재건축·재개발의 양도소득세는 입주권이라는 특수 자산의 이중적 성격 때문에 계산이 복잡하며, 최근 세제 개편안은 장기보유특별공제를 '거주' 중심으로 재편할 예정이다. 조합원들은 공사 기간 동안 집에 살 수 없는 상황에서 이러한 변화가 구조적 문제를 야기할 수 있으므로, 세금 계산 시 주의가 필요하다. 정비사업 구역 내 매물을 매수하려는 개인 투자자들은 이제 매매가뿐만 아니라 세금까지 꼼꼼하게 따져봐야 해요. 특히 '언제 샀는지', '언제 살았는지', '언제 파는지'가 양도소득세에 큰 영향을 미치기 때문에, 관리처분계획인가일, 멸실일, 준공일 등 시간의 흐름에 따른 세금 계산 방식 변화를 정확히 이해하는 것이 중요해졌어요. ⏳🏠 또한, 장기보유특별공제가 '보유'에서 '거주' 중심으로 변경된다는 점은 주목해야 할 부분이에요. 공사 기간 동안 거주할 수 없어 불리함이 있지만, 관리처분계획인가일 현재 1년 이상 거주했다면 공사 기간의 절반을 거주한 것으로 인정해주는 보완 장치가 마련되었어요. 다만, 이 부분이 '1가구 1주택 비과세'의 2년 거주 요건을 충족시켜주는 것은 아니니 주의해야 해요. 🤔 재건축·재개발 사업을 추진하는 기업들은 이번 세제 변화로 인해 사업의 수익성에 영향을 받을 수 있어요. 조합원 입주권이 주택으로 간주되어 양도소득세가 부과됨에 따라, 투자 수요가 줄어들고 매물이 증가할 수 있으며, 이는 사업 추진 동력 약화로 이어질 수 있죠. 📈📉 특히, 정비사업 조합원들에게 가장 큰 변화 중 하나인 장기보유특별공제의 개편은 구조적인 문제로 작용할 수 있어요. 공사 기간 동안 실거주가 어렵다는 점 때문에, 이에 대한 세제 혜택 산정이 까다로워지면서 사업 계획 수립 및 수익성 예측에 더 많은 변수가 발생할 수 있습니다. 🏗️🏢 정부는 이번 세제 개편을 통해 재건축·재개발 시장의 투기 수요를 억제하고 과세 형평성을 제고하려는 목적을 가지고 있어요. 조합원 입주권을 주택으로 간주하여 양도소득세를 부과함으로써, 기존에 입주권이 주택 수에 포함되지 않아 유리했던 점이 사라지게 돼요. 이는 시장 내 투기적 거래를 줄이는 데 기여할 것으로 기대하고 있어요. 📊⚖️ 또한, 장기보유특별공제를 '거주' 중심으로 개편하려는 방향성은 주택 시장의 실수요자 중심 거래를 유도하고, 장기 보유에 대한 실질적인 거주 혜택을 강화하려는 의도로 볼 수 있어요. 하지만 정기 국회 심의가 남아 있어 세부 내용은 달라질 수 있으며, 이에 따른 시장의 반응과 추가적인 정책 보완 여부가 주목될 거예요. 🧐",
+      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 공유 정비사업 시장에서 세금은 매물의 구매 시기와 거주 기간에 따라 결정되며, 입주권의 이중적 성격이 양도소득세 계산을 복잡하게 만든다. 특히, 장기보유특별공제가 거주 중심으로 개편될 예정이지만, 이는 조합원들이 공사 기간 중 실제로 거주하지 못하는 구조적 문제를 야기할 수 있다. 매일경제신문은 이러한 세금 구조를 쉽게 이해할 수 있도록 '부동산 세금 100가지 사실' 시리즈를 PDF 책자로 제작하여 제공하고 있다. 정비사업 구역 내 매물을 매수하려는 개인 투자자들은 이제 매매가뿐만 아니라 세금까지 꼼꼼하게 따져봐야 해요. 특히 '언제 샀는지', '언제 살았는지', '언제 파는지'가 양도소득세에 큰 영향을 미치기 때문에, 관리처분계획인가일, 멸실일, 준공일 등 시간의 흐름에 따른 세금 계산 방식 변화를 정확히 이해하는 것이 중요해졌어요. ⏳🏠 또한, 장기보유특별공제가 '보유'에서 '거주' 중심으로 변경된다는 점은 주목해야 할 부분이에요. 공사 기간 동안 거주할 수 없어 불리함이 있지만, 관리처분계획인가일 현재 1년 이상 거주했다면 공사 기간의 절반을 거주한 것으로 인정해주는 보완 장치가 마련되었어요. 다만, 이 부분이 '1가구 1주택 비과세'의 2년 거주 요건을 충족시켜주는 것은 아니니 주의해야 해요. 🤔 재건축·재개발 사업을 추진하는 기업들은 이번 세제 변화로 인해 사업의 수익성에 영향을 받을 수 있어요. 조합원 입주권이 주택으로 간주되어 양도소득세가 부과됨에 따라, 투자 수요가 줄어들고 매물이 증가할 수 있으며, 이는 사업 추진 동력 약화로 이어질 수 있죠. 📈📉 특히, 정비사업 조합원들에게 가장 큰 변화 중 하나인 장기보유특별공제의 개편은 구조적인 문제로 작용할 수 있어요. 공사 기간 동안 실거주가 어렵다는 점 때문에, 이에 대한 세제 혜택 산정이 까다로워지면서 사업 계획 수립 및 수익성 예측에 더 많은 변수가 발생할 수 있습니다. 🏗️🏢 정부는 이번 세제 개편을 통해 재건축·재개발 시장의 투기 수요를 억제하고 과세 형평성을 제고하려는 목적을 가지고 있어요. 조합원 입주권을 주택으로 간주하여 양도소득세를 부과함으로써, 기존에 입주권이 주택 수에 포함되지 않아 유리했던 점이 사라지게 돼요. 이는 시장 내 투기적 거래를 줄이는 데 기여할 것으로 기대하고 있어요. 📊⚖️ 또한, 장기보유특별공제를 '거주' 중심으로 개편하려는 방향성은 주택 시장의 실수요자 중심 거래를 유도하고, 장기 보유에 대한 실질적인 거주 혜택을 강화하려는 의도로 볼 수 있어요. 하지만 정기 국회 심의가 남아 있어 세부 내용은 달라질 수 있으며, 이에 따른 시장의 반응과 추가적인 정책 보완 여부가 주목될 거예요. 🧐",
       "source_weight": 1.2,
       "tags": [
         "부동산 손품노트"
@@ -307,27 +506,14 @@
       "tags": []
     },
     {
-      "id": "30239124b2ced2ca",
+      "id": "fe719abbbe1662f0",
       "title": "강남·서초 아파트 가격 하락폭 커졌지만 '덜 똘똘한 아파트'는 달랐다 [주말 Q&A]",
-      "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFBkVzhYbDVxaW4yN0d5Yi1ySFpWa1k3SnRBTmppOGVGd2ZralJ5TXQtd041dVcyV0ZHZGNKWHBaMzduQU43N2NQdnpjUjU2b0twWkFCSkpJM211UmV1OWlCTFd2RWVpTVlOS2pXMTJLY1NfYkxPanQzeA?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9tbzcxU1VyUkhfVEtKTHNFZUV5UEpQWGNFeHNDcWFpSEY3cDRNMUZQQVNRUEdiOUJXOWZ1cVdWdzhEZVJCTkM4RXBnYzV3bkl3dktN?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "news.nate.com",
+      "publisher": "네이트",
       "published": "2026-09-06T08:23:00Z",
-      "summary": "강남·서초 아파트 가격 하락폭 커졌지만 '덜 똘똘한 아파트'는 달랐다 [주말 Q&amp;A] &nbsp;&nbsp; news.nate.com",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "7bdc9d1dec8b397d",
-      "title": "양평군의회 지민희 군의장, 지역 현안 간담회 가져",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBCZkEwNi1ycmxnY1pNZTMwMEo2OFZ1S0dWbWd6V1NLZUtRaUtxX2NQYm1fYzlULVZnbEhzbW1rSENKV3BtZHFkMW5VTDJhS3JKSDE0cktZSDJJTlVMYVpLYXVBQQ?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "우리투데이",
-      "published": "2026-09-06T08:14:06Z",
-      "summary": "양평군의회 지민희 군의장, 지역 현안 간담회 가져 &nbsp;&nbsp; 우리투데이",
+      "summary": "강남·서초 아파트 가격 하락폭 커졌지만 '덜 똘똘한 아파트'는 달랐다 [주말 Q&amp;A] &nbsp;&nbsp; 네이트",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -367,7 +553,7 @@
       "publisher": "",
       "published": "2026-09-06T08:12:17Z",
       "summary": "서울에 거주하는 1주택자 A씨는 최근 영등포구 신길동의 전용면적 32㎡ 다세대주택을 6억원에 매수했다. 1992년 준공된 30년 넘은 빌라다. A씨는 취득세 중과를 피하기 위해 등..",
-      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 공유 서울에서 1주택자 A씨가 영등포구 신길동의 30년 된 빌라를 6억원에 매수했지만, 취득세가 예상보다 8배 높은 4984만원으로 통보받았다. 이는 A씨의 빌라가 준공 후 30년 넘게 매매되지 않았기 때문에 신축 및 구축 특례 모두 적용받지 못했기 때문이다. 부동산 업계에서는 비아파트 임대 공급 확대를 위한 제도와 현실 사이의 괴리가 문제라고 지적하며, 정부가 내년에 해당 특례의 개선을 논의할 것이라고 밝혔다. 안녕하세요, 매일경제 AI 수석 경제 해설가입니다. 🙋‍♀️ 이번 분석에서는 30년 넘은 빌라를 구매하신 A씨 사례를 통해 취득세 관련 내용을 자세히 살펴보려 해요. A씨는 장기일반 민간임대사업자 등록을 통해 취득세 중과를 피하고 660만원 정도의 세금을 낼 것으로 예상했지만, 실제로는 무려 4984만원을 통보받았습니다. 이는 예상 금액의 8배에 달하는 금액인데요. 😱 A씨의 경우, 비록 30년이 넘은 오래된 빌라임에도 불구하고 준공 후 단 한 번도 거래된 적이 없어 '최초 유상승계'에 해당한다는 이유로 신축 및 구축 빌라에 적용되는 취득세 중과 배제 특례를 모두 받지 못했기 때문이에요. 😥 덕분에 2주택자에 대한 8%의 세율이 적용되어 예상보다 훨씬 많은 세금을 부담하게 되었답니다. 이러한 예상치 못한 세금 폭탄은 개인 투자자들에게 큰 부담과 혼란을 줄 수 있어요. 이번 사례는 비아파트 임대 공급 활성화를 목표로 도입된 정부의 세제 혜택 제도가 실제 현장에서는 예상치 못한 사각지대를 만들어내고 있음을 보여줘요. 🧐 부동산 업계에서는 정부가 비아파트 시장 정상화와 임대주택 공급 확대를 위해 시행하는 제도의 취지와 맞지 않는다는 지적이 나오고 있습니다. 특히 신축과 구축 빌라에 대해 서로 다른 특례 기준을 적용하면서, A씨와 같이 준공 후 첫 거래인 구축 빌라가 어느 쪽의 혜택도 받지 못하는 상황이 발생한 것이죠. 이는 임대사업 등록을 통해 세제 혜택을 기대했던 건설사나 분양 대행사 등 관련 기업들에게도 사업 계획에 차질을 빚게 할 수 있으며, 비아파트 시장 활성화라는 본래의 목적 달성을 어렵게 할 수도 있습니다. 📉 정부는 2024년 비아파트 시장 정상화와 임대주택 공급 확대를 위해 소형 비아파트에 대한 취득세 중과 배제 특례를 도입했습니다. 💡 하지만 A씨의 사례처럼 '준공 후 첫 거래'라는 조건 때문에 신축과 구축 특례 모두에서 배제되는 사각지대가 발생하고 있다는 점은 정부도 인지하고 있습니다. 행정안전부 관계자는 이러한 민원이 지속적으로 접수되고 있으며, 내년에 구축 비아파트 특례 연장 논의 시 개선 사항을 검토하겠다고 밝혔습니다. 📝 이번 사례는 세제 혜택 제도가 실제 시장 상황을 면밀히 반영하지 못할 경우, 의도치 않은 결과를 초래할 수 있음을 보여줍니다. 따라서 정부는 향후 유사한 민원이 발생하지 않도록 제도의 허점을 보완하고, 세제 혜택이 본래의 취지에 맞게 실효성을 거둘 수 있도록 적극적인 개선 노력이 필요해 보여요. 🤔",
+      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 공유 서울에서 1주택자 A씨가 영등포구 신길동의 30년 된 빌라를 6억원에 매수했지만, 취득세가 예상보다 8배 높은 4984만원으로 통보받았다. 이는 A씨의 빌라가 준공 후 30년 넘게 매매되지 않았기 때문에 신축 및 구축 특례 모두 적용받지 못했기 때문이다. 부동산 업계에서는 비아파트 임대 공급 확대를 위한 제도와 현실 사이의 괴리가 문제라고 지적하며, 정부가 내년에 해당 특례의 개선을 논의할 것이라고 밝혔다. 이번 사례는 30년 이상 된 구축 빌라를 취득한 1주택자 A씨가 예상했던 취득세보다 8배나 많은 세금을 부과받은 경우를 보여주고 있어요. 🏠 이는 정부가 비아파트 임대 공급 활성화를 위해 도입한 취득세 중과 배제 특례가 특정 조건(예: 준공 후 최초 매매)에서 제외되면서 발생하는 세금 부담 증가를 의미해요. 😓 이로 인해 부동산 매수자는 예상치 못한 큰 세금 부담을 떠안게 될 수 있으며, 특히 기존 주택을 한 채 보유한 1주택자의 경우 두 번째 주택 취득 시 더 높은 세율이 적용되는 상황을 경험할 수 있습니다. 💰 정부가 비아파트 임대 공급 확대를 위해 취득세 중과 배제 특례를 도입한 취지는 좋았으나, 이번 사례처럼 신축과 구축 주택에 서로 다른 기준을 적용하거나, 준공 후 최초 매매라는 조건 때문에 특례 대상에서 제외되는 '사각지대'가 발생하고 있어요. 🏗️ 이는 부동산 업계에서 제도 취지와 맞지 않는다는 지적이 나오는 이유입니다. 🏢 이러한 세제 혜택의 불분명함이나 예상치 못한 불이익은 비아파트 시장 활성화라는 정책 목표 달성에 어려움을 줄 수 있으며, 관련 기업들의 사업 계획이나 투자 결정에도 영향을 미칠 수 있습니다. 📊 이번 사례는 정부 정책의 세심한 설계와 운영이 얼마나 중요한지를 보여줍니다. 🏛️ 행정안전부 관계자도 이러한 민원이 지속적으로 접수되고 있으며, 내년에 구축 비아파트 특례 연장 논의 시 개선 사항을 검토하겠다고 밝혔어요. 🧐 이는 시장 참여자들이 예상치 못한 세금 부담을 겪지 않도록 제도의 허점을 파악하고 보완하려는 노력이 필요함을 시사합니다. 📈 또한, 입법상 빠른 보완과 더불어 중과된 세액에 대한 환급 필요성도 제기되고 있어, 정부는 정책의 형평성과 실효성을 높이기 위한 추가적인 조치를 검토해야 할 것입니다. ⚖️",
       "source_weight": 1.2,
       "tags": []
     },
@@ -413,14 +599,27 @@
       "tags": []
     },
     {
+      "id": "267ffa4a0f6b0c6c",
+      "title": "LA한인타운에 대형 아파트-리테일 건물 들어선다",
+      "url": "https://news.google.com/rss/articles/CBMi6gFBVV95cUxNZ0RmU3F1U3huelZrbXM4Xy1vUGxndkYzQjNUa0ZSRk9jS1lyQlg1bnFnN1Q2dzhKa0pFV29iMzNnYnkwQzdjdlNZLW9HT3UyMFpMV3REa0NleUUtSU03RlFBbDVhbVNTNGh2bVZDdkxuUUwtZWxuTEFXVnRzRWw4NEVISk5XSWt1OEdpQk93dTQ3MGxwUE9uaVpQYkRvenhzWGxxdGFqa3VGV3ViOTM3a3Atd3FTRFhIdmU2cDRLc0k1R25FS0ZMVEI3SERTbzZuS1k4WF9YbHhzYVFqSHIxR0F5MjRRTDFYVlE?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "미주조선일보",
+      "published": "2026-09-06T08:06:42Z",
+      "summary": "LA한인타운에 대형 아파트-리테일 건물 들어선다 &nbsp;&nbsp; 미주조선일보",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
       "id": "4cba4abbdbbe7a5e",
       "title": "GS건설, AI 데이터센터 모듈러 표준모델 공동 개발",
       "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9EaWFrMHkxWXllWmFOcURUY2tUQ2dZZ2pPeDYzV25CUFhzZVJfT3N5ZVNucW9yRWNTajc4cTkyVy1nYUwwNHp6eXJ2bnlyVGNHdzZxZXQ3QmV3eGxCckdBTzVDdXROTlpYRVozcA?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "스페셜경제",
+      "publisher": "speconomy.com",
       "published": "2026-09-06T07:47:40Z",
-      "summary": "GS건설, AI 데이터센터 모듈러 표준모델 공동 개발 &nbsp;&nbsp; 스페셜경제",
+      "summary": "GS건설, AI 데이터센터 모듈러 표준모델 공동 개발 &nbsp;&nbsp; speconomy.com",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -465,6 +664,19 @@
       "tags": []
     },
     {
+      "id": "e0884c830d2259bd",
+      "title": "부동산 빅데이터 블록체인 프롭테크 의 비밀을 풀다 - 2025년 최신판",
+      "url": "https://news.google.com/rss/articles/CBMi-AFBVV95cUxObzFJUEppRzFXbFQwYTRZZFBPdldELWJkY2g0a3hSWXZnRndHSVlTWFpmR280dGhHeVpxZ0o2dDI2LXRCTmdpZEtyOXJMUGh6Yk9yWmpseUhmbUtZSVUxdkFEbFFNZC1HWDZlcGc0Qi1tZTlOenk3UEFBc21BOGFBYlhLT1B6SXBKM0xsdmRZcGdINFFqdlJwM1UtaGMtT0JEZUJiYUJNNGRzZ01aSkFtYzQ2MXJTTnBINXFlYXF0QU1VU181bHRudlRGVW9kTEJVcmJWOXlyclZidDlXdWRhb2NCOWl3T2hPSGJfWU5xTlJObE5jMm1tNg?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "Histoire pour tous",
+      "published": "2026-09-06T07:41:51Z",
+      "summary": "부동산 빅데이터 블록체인 프롭테크 의 비밀을 풀다 - 2025년 최신판 &nbsp;&nbsp; Histoire pour tous",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
       "id": "69ca240120b1565d",
       "title": "'부자 아빠' 기요사키의 반전…재산 아닌 '빚'만 1조 6000억원",
       "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTE1OUnpJNFJPOGFRSHRxYkMzbzVENVFBVUtxbU5YRzFvV05PV1BXc0NZLXZpQWRVb1l4bzBSUng0ay1tMUZEX0pYNDNlQWgtLWpTQVE3UFlEQ213N1J0bE5VRnIyUTJqTEE5eWlrRmRPZVo2VFBCVEplWdIBeEFVX3lxTE1OUnpJNFJPOGFRSHRxYkMzbzVENVFBVUtxbU5YRzFvV05PV1BXc0NZLXZpQWRVb1l4bzBSUng0ay1tMUZEX0pYNDNlQWgtLWpTQVE3UFlEQ213N1J0bE5VRnIyUTJqTEE5eWlrRmRPZVo2VFBCVEplWQ?oc=5",
@@ -478,17 +690,32 @@
       "tags": []
     },
     {
-      "id": "06c5b6d3fd1d217d",
-      "title": "2026년부터 수도권 공공분양 연 3만가구 풀린다",
-      "url": "https://news.google.com/rss/articles/CBMi6wFBVV95cUxNdHV0UVlkTFAtYzhMa2cxTG80cVFyZklMN0t3Nm5iR1k1NWdCWXUxS2pQU2hTdmVuQlJwZ1o2c0tzaG40NWJTMllZZ0NEbHF2MzZQUEtmMy1Bc0ZTbEVMeDk0ZVJad1JDLWUwWDRXS1FJWEI0M0xUN0prZlY0NGhxQlBDR3VNZVVZWmZsZzZqeDNhdUwxUnZzRlBOWmk2dG5ULTBKOXBCWWM4WVl1ZE1nb2ZBVk5qd1Yxbm00SVFlUFI0MXNPbHFUSVJjUF8wYVhoVFR6NUJPOVNqa1JwTUI2cFQ5RjVYRFBfNy1j?oc=5",
+      "id": "04e8820ce13e92f2",
+      "title": "롯데건설, 도곡우성 재건축 수주…정비사업 수주액 4조원 돌파",
+      "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1uTUlFRkh6bm9sdW5UbkFndUU3NFJiSDZZbGc2ekJ0NlEtejlxLVE3RE4tMXdESG14bGVCVnlkeUpvQTU2LUlNUU00TXZNZkZqY2lB?oc=5",
+      "feed_id": "gnews_supply",
+      "feed_name": "구글뉴스·재건축/재개발",
+      "publisher": "네이트",
+      "published": "2026-09-06T07:28:00Z",
+      "summary": "롯데건설, 도곡우성 재건축 수주…정비사업 수주액 4조원 돌파 &nbsp;&nbsp; 네이트",
+      "body": "",
+      "source_weight": 1.1,
+      "tags": []
+    },
+    {
+      "id": "208ddb2c5e99b995",
+      "title": "인랜드 엠파이어 리테일 부동산 마켓 리포트",
+      "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxOYnFoejJ5elVYVkJEcW56Y1dOM2hZcnBkMC12Z3NDdkFnRnlEcm5URkd6UmNZbTE5bXVPQUFyaU1qbmhtUjU1RVR1WE9ldDZfbTF3VXVjUUQzN2VGbllnNDUyV1p4cWhqVmJtWTUxY2h2anVoclRSaEE3c0pveDZzZFNhTVpOeU83aUdsVlRFNlRWMEtnOUNJc2JiNkg3Y1BxVVZzZmdvYk13dkJqLW00bVF1czRpVTdUamtHSkxORFJnakk4NFpZVllpMjA4QQ?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
       "publisher": "미주조선일보",
-      "published": "2026-09-06T07:28:50Z",
-      "summary": "2026년부터 수도권 공공분양 연 3만가구 풀린다 &nbsp;&nbsp; 미주조선일보",
+      "published": "2026-09-06T07:26:55Z",
+      "summary": "[Newmark 칼럼]인랜드 엠파이어 리테일 부동산 마켓 리포트 &nbsp;&nbsp; 미주조선일보",
       "body": "",
       "source_weight": 1.0,
-      "tags": []
+      "tags": [
+        "Newmark 칼럼"
+      ]
     },
     {
       "id": "4e3b4b611ce3f5fb",
@@ -509,9 +736,9 @@
       "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE03YlNPTVUzLUtycGZublU0YjU1YTVjTGJYZlFFTlNEYW8zNjJ6ZHh6MWNtOVZuZU5vaHdoc09KNnYwNUFEQ1BSR2pSeGNEaklqZ0FmaVIzRndrZ2NvRTlBSWxyZTh6YW94VXdiMmJB0gFuQVVfeXFMTTdiU09NVTMtS3JwZm5uVTRiNTVhNWNMYlhmUUVOU0RhbzM2MnpkeHoxY205Vm5lTm9od2hzT0o2djA1QURDUFJHalJ4Y0RqSWpnQWZpUjNGd2tnY29FOUFJbHJlOHphb3hVd2IyYkE?oc=5",
       "feed_id": "gnews_apt_price",
       "feed_name": "구글뉴스·아파트값",
-      "publisher": "충청신문",
+      "publisher": "dailycc.net",
       "published": "2026-09-06T07:21:05Z",
-      "summary": "충청권 아파트시장 ‘안정세’…대전·충북 강세 지속 &nbsp;&nbsp; 충청신문",
+      "summary": "충청권 아파트시장 ‘안정세’…대전·충북 강세 지속 &nbsp;&nbsp; dailycc.net",
       "body": "",
       "source_weight": 1.1,
       "tags": []
@@ -522,9 +749,9 @@
       "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1TbzI5ZXpqQlFHRW0wMHlwWUI3anBjdGpRSFBzaUxRV19zSTVNeC01aWZJMjRselpuSlBwOERocnNrb0NWZ08yX0gwU1A5RVpWWHc2dHJMaHYxVDZoS2l5T2RkZ1o2bHlwblhLcFFsMA?oc=5",
       "feed_id": "gnews_apt_price",
       "feed_name": "구글뉴스·아파트값",
-      "publisher": "중부일보",
+      "publisher": "joongboo.com",
       "published": "2026-09-06T07:20:00Z",
-      "summary": "동탄 규제가 부른 병점 집값…매물 줄고 가격 뛰어 &nbsp;&nbsp; 중부일보",
+      "summary": "동탄 규제가 부른 병점 집값…매물 줄고 가격 뛰어 &nbsp;&nbsp; joongboo.com",
       "body": "",
       "source_weight": 1.1,
       "tags": []
@@ -533,13 +760,13 @@
       "id": "bb433866228c4e0a",
       "title": "강남 아파트값 4주째 하락…성북·중랑·노원·수원 영통은 고공행진ㅍ",
       "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE8tRGZ2NE9VUkRWTFpUajR5TmtIWjk4OXNZMlZidUFXTURFT05sWXVZSW5EYnVNZndJTjJEZDU3NGdfam9Cc3dHRHEwTWkyWWFydDdPSko2bmpJV2daSENtbWpnVHFWS0lNelg4?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
+      "feed_id": "gnews_apt_price",
+      "feed_name": "구글뉴스·아파트값",
       "publisher": "폴리스TV",
       "published": "2026-09-06T07:09:15Z",
       "summary": "강남 아파트값 4주째 하락…성북·중랑·노원·수원 영통은 고공행진ㅍ &nbsp;&nbsp; 폴리스TV",
       "body": "",
-      "source_weight": 1.0,
+      "source_weight": 1.1,
       "tags": []
     },
     {
@@ -556,19 +783,6 @@
       "tags": []
     },
     {
-      "id": "3abad754efe69ddc",
-      "title": "계속 벌어지는 서울 아파트 매매-전세 가격차",
-      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE5YNnpFZU91cE9GLTNpTFNmbHU0dXlTMDUtZUZ0SURiSFpFRUxfWVJaZnY1YU1sWGwya0QtZm82SmI4ZkJZSnBGeHdJRkpad0k?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "v.daum.net",
-      "published": "2026-09-06T07:01:28Z",
-      "summary": "계속 벌어지는 서울 아파트 매매-전세 가격차 &nbsp;&nbsp; v.daum.net",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
       "id": "7cc482ea813281a8",
       "title": "“영끌을 할 타이밍일까요, 특례 대출을 이용할 타이밍일까요?” [사이다 부동산]",
       "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE41ak8tTTNCYldsNVV3a1VUZjJocDlHU0I1VTJLRlpCYXQ1V1RYb0lVYnUwS3NPYUdTdFRodG1yUVQtZXZQYTJaOHBZZHBIX1k?oc=5",
@@ -582,14 +796,27 @@
       "tags": []
     },
     {
+      "id": "3abad754efe69ddc",
+      "title": "계속 벌어지는 서울 아파트 매매-전세 가격차",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTE5tTW82Y0JLV214Q3ZUQ1FhXzRyc0RhLXRCVloyX1duaXh1SkxZTk9FRmJweGxXZDF1WVhJeVpMOHpCZEtkN19ScjE5dHpqNGZmLW5zNmFTOGx4dUNENUNRTURYVjcxR0tjOTJRX1J0RmM?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "news.bizwatch.co.kr",
+      "published": "2026-09-06T07:00:03Z",
+      "summary": "계속 벌어지는 서울 아파트 매매-전세 가격차 &nbsp;&nbsp; news.bizwatch.co.kr",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
       "id": "fe0f158634200939",
       "title": "아파트가 ‘삶의 보루’가 된 사회",
       "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBtQ3A4bWs1ZTlROEJYeWk1cWJGSG5BY3ZRTXVmMUlObFFubWdmX0pzN2ZxYy1SN1p6dGltdzNHekZxZVlFM3pjV0lkS1psMFRDSHRUYzgwVnNLT3BwUUJQZl8wVm9PRWpQ?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "hapt.co.kr",
+      "publisher": "한국아파트신문",
       "published": "2026-09-06T07:00:00Z",
-      "summary": "아파트가 ‘삶의 보루’가 된 사회 &nbsp;&nbsp; hapt.co.kr",
+      "summary": "아파트가 ‘삶의 보루’가 된 사회 &nbsp;&nbsp; 한국아파트신문",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -634,22 +861,9 @@
       "tags": []
     },
     {
-      "id": "20b956cb616f8158",
-      "title": "“집 한 채 쥐고 버티다 빈곤층된다”…국민연금 빈자리 채울 ‘주택연금’의 모든 것 [유터뷰]",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5idkdiYlpLZV9ualdQc0xUeXU1bGNJSTJ1Y2pwcnc0R0pZMkpZOERSVTczaVlvbFN3aVh0YVhpUktwaWpiM0V5aGhMYW5LUmRSbmZXUC0xSzhSVjFQVlBVT1pEVUI4NkhqOGxtbEdB0gFyQVVfeXFMTkN4OWMtSU9IWmRLYkc2b0xRQWowLS1WYnUwNURoWk81UzQ4LXM0RHY1dmpCOE1OU1JSdzdHdEhKeG0zdG9IdHI0MjdObXRvWDNuNnVLWUZ4MGdMZjJuOXdKMjJJQm1sQ0YwRzlFdEs4Yzd3?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "citytimes.co.kr",
-      "published": "2026-09-06T06:36:28Z",
-      "summary": "“집 한 채 쥐고 버티다 빈곤층된다”…국민연금 빈자리 채울 ‘주택연금’의 모든 것 [유터뷰] &nbsp;&nbsp; citytimes.co.kr",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "c1a81b818db99a77",
+      "id": "b06d9e3924a5bcd0",
       "title": "60%가 공공주택 거주 '비엔나 모델'…\"국내선 은행 대출 규제 풀어야\"",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE1hUWFMLTNNSTZkTjhhX25XU3VGTzNFTS1TOE45Mno1SU1Tb1dBbW9QLTF6MFNGTzZURlA4RDFKeGtUTGlXbGluZW5OSV9DbnEwaG1vUnlRRnY0Y1NSZVJBU1RSSkdoRXfSAWdBVV95cUxNYVFhTC0zTUk2ZE44YV9uV1N1Rk8zRU0tUzhOOTJ6NUlNU29XQW1vUC0xejBTRk82VEZQOEQxSnhrVExpV2xpbmVuTklfQ25xMGhtb1J5UUZ2NGNTUmVSQVNUUkpHaEV3?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiYkFVX3lxTE5NODE1ZEpmOUZMbm1obW1kRkdKY2hTSzlGajhBSXJ0bG9rNjROSjRYTUZLWmVIWW5HNkc0MHZmWXMzZ2duNWNkSVEwSDl6a0w4eUZZQUY5OF9ZWWtNcU50SGJR0gFnQVVfeXFMTWFRYUwtM01JNmROOGFfbldTdUZPM0VNLVM4TjkyejVJTVNvV0Ftb1AtMXowU0ZPNlRGUDhEMUp4a1RMaVdsaW5lbk5JX0NucTBobW9SeVFGdjRjU1JlUkFTVFJKR2hFdw?oc=5",
       "feed_id": "gnews_apt_price",
       "feed_name": "구글뉴스·아파트값",
       "publisher": "뉴스1",
@@ -660,40 +874,14 @@
       "tags": []
     },
     {
-      "id": "1bcb8f41b05d47db",
-      "title": "바이 비트 24 시간 : 현황, 경향 및 미래 전망",
-      "url": "https://news.google.com/rss/articles/CBMid0FVX3lxTE55SnJqZGw2ZEVRRTlRdUpuYU1Wb2NfT01TTEpKNFlHbVZZblpMazlaWlFvck5JbktWTVhrbnQ3M3FsZDJJYjdTc0ZqZTYyYXU4RjBmZTVPSnBFckk5YWUyUmQtM3Y2SDR3QWhKakFfME5XOE1aaDdJ?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-06T06:30:47Z",
-      "summary": "바이 비트 24 시간 : 현황, 경향 및 미래 전망 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "176840b05bcd01f1",
-      "title": "서울 집값 상승 지속 시 종부세, 비강남까지 ‘서울시민세’로 확대",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5EMDdvTERDSk52cFZfc1o5UnROZ2FXUDhKYXFMVjJNby1mR2Z5UUUzX1NUV1NrUlk4Q1pLTnJFYjExUXdGYm1oTVdYZjRiQkc3MndGYnZVM1Zkdko5Q2JFU1pGeVB3WGRBb2g4c2h3?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "더리포트",
-      "published": "2026-09-06T06:30:01Z",
-      "summary": "서울 집값 상승 지속 시 종부세, 비강남까지 ‘서울시민세’로 확대 &nbsp;&nbsp; 더리포트",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
       "id": "abca614f3081fe83",
       "title": "삼성물산, 스웨덴 신규 SMR 사업에 전략적 파트너로 선정",
       "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE9GQldNcEx4SEdmRUZmWjFfV010aEZsbThub2JnNGpTNEs5YjVqY2VGUXdiMnhqd0FzNjFnS0FOR1dObUlUMUl0T0cyVFZIYVZwTFFGZjBBSmYyRkllZU9MWV9ZOUVUbVRl?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "renews.co.kr",
+      "publisher": "부동산신문",
       "published": "2026-09-06T06:28:24Z",
-      "summary": "삼성물산, 스웨덴 신규 SMR 사업에 전략적 파트너로 선정 &nbsp;&nbsp; renews.co.kr",
+      "summary": "삼성물산, 스웨덴 신규 SMR 사업에 전략적 파트너로 선정 &nbsp;&nbsp; 부동산신문",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -730,9 +918,9 @@
       "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1fY0phdDZRYkZ1d3gwc1U1T2ZXcTFXRm1xVlB1cG9Lc1BVdTJhRXFDajRiQUZHTUo2cDNWU2pyNGUwUlloOE5rd1FNZWY0VnJQLVhJ?oc=5",
       "feed_id": "gnews_apt_price",
       "feed_name": "구글뉴스·아파트값",
-      "publisher": "news.nate.com",
+      "publisher": "네이트",
       "published": "2026-09-06T06:12:09Z",
-      "summary": "\"수원 영통 아파트값 고공행진\"…서울 성북·중랑·노원 7주째 상승 &nbsp;&nbsp; news.nate.com",
+      "summary": "\"수원 영통 아파트값 고공행진\"…서울 성북·중랑·노원 7주째 상승 &nbsp;&nbsp; 네이트",
       "body": "",
       "source_weight": 1.1,
       "tags": []
@@ -748,6 +936,19 @@
       "summary": "강남 넘어 성동·광진으로…월 1000만원 초고가 월세 한강변 확산 &nbsp;&nbsp; 아주경제",
       "body": "",
       "source_weight": 1.0,
+      "tags": []
+    },
+    {
+      "id": "a8d5b140c670320f",
+      "title": "\"집값 매년 11% 오르면 2030년 서울 22개구 종부세권\"",
+      "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTFAyS2p2VXZrUWg2NzQ5M3A5OUNvMU5oX3VRZTh4OFg3dkFSLUJOQnpRakp4ZjloZkstdFZ6dHNKVG1MQ2k0aUVmbUJyTDNmT0pVVmREQXpwUUdOOU1sSXNUUA?oc=5",
+      "feed_id": "gnews_apt_price",
+      "feed_name": "구글뉴스·아파트값",
+      "publisher": "metroseoul.co.kr",
+      "published": "2026-09-06T06:07:52Z",
+      "summary": "\"집값 매년 11% 오르면 2030년 서울 22개구 종부세권\" &nbsp;&nbsp; metroseoul.co.kr",
+      "body": "",
+      "source_weight": 1.1,
       "tags": []
     },
     {
@@ -772,19 +973,6 @@
       "publisher": "edaily.co.kr",
       "published": "2026-09-06T06:04:32Z",
       "summary": "“부자 되는 법 알려주더니 빚만 1.6조”…‘부자아빠’의 반전 &nbsp;&nbsp; edaily.co.kr",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "e50f151ba82992d1",
-      "title": "日 20대도 ‘내 집 마련’ 급증…“더 늦으면 못 산다”",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE5nal9wdkxzcG9wSzBoUktmRUpFVDFZa3pNWnNPQ2g0UFVSOHFpNlZ1TGN2R052VmFNamRGWlR5cjB6SE5EWFNscXpkbzl6U0lYc1BqWGN1ejh0NVlHQnQzQ3hjV1FPVjBlX1plLUNn?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "아시아투데이",
-      "published": "2026-09-06T06:02:35Z",
-      "summary": "日 20대도 ‘내 집 마련’ 급증…“더 늦으면 못 산다” &nbsp;&nbsp; 아시아투데이",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -829,19 +1017,6 @@
       "tags": []
     },
     {
-      "id": "c0777b34ab002f1f",
-      "title": "전국 무주택자 누구나…'포레나더샵 인천시청역' 줍줍, 내일부터",
-      "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1BbEdQTmxPbURtQWtKNEFpSEhkaVIyQ2xYT3UtNlctQjFzcDUwQVFnZlJKTHJvRFhNWnVNMW45V0dnMmk2YXBPTEhmSllMdi1EZFFPMDlR?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "wikitree.co.kr",
-      "published": "2026-09-06T06:00:00Z",
-      "summary": "전국 무주택자 누구나…'포레나더샵 인천시청역' 줍줍, 내일부터 &nbsp;&nbsp; wikitree.co.kr",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
       "id": "4ef01dbf2ef19ad7",
       "title": "서울 동대문, 8월 상승률 1.53%",
       "url": "https://news.google.com/rss/articles/CBMif0FVX3lxTE9icEZHbGZra1AxZUdtam92RXBiR012ZktBUmQ3cUotYXVUTUxxZ1VtMHJ2ZDVxeEZmaUk0RDJFTDc5eEFoVzN5RVdtOWV0blZfcmMtSTVGcExTd0NVY2g2YWxYd0NseDRzSl84V3k1WDhqbTJOQjF1RG1ZdUZkbVE?oc=5",
@@ -877,9 +1052,9 @@
       "url": "https://news.google.com/rss/articles/CBMiQEFVX3lxTE1ZNk9ZbFVwS3IwSlpyVnJ1UlRpa1p3b0xDWjA3RGZaa2RSeVdVTGNqeGhsOU5CekdDZkZDTWJaOXA?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "homedubu.com",
+      "publisher": "홈두부",
       "published": "2026-09-06T05:55:16Z",
-      "summary": "더샵 여주역더퍼스트 청약 (’26, 9/14~16) &nbsp;&nbsp; homedubu.com",
+      "summary": "더샵 여주역더퍼스트 청약 (’26, 9/14~16) &nbsp;&nbsp; 홈두부",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -911,27 +1086,14 @@
       "tags": []
     },
     {
-      "id": "669da06dc3f78a45",
-      "title": "강남구, 세제개편안 설명회 2회 추가 개최… 500석 하루 만에 마감",
-      "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE4yLU02SlJ0MFNGaXlfeXViYzZiWEdYbzl1UldSOHJGVmYwc2UxUU1TbnhLeUpocGxtbU9JQjJpMm50VmNrX0ZSaTQwZFJYTmY1OEdyQ2V0eWppdmZ4REdYWl9TWFdLTDVidU5rVHhQYjlwb0nSAXdBVV95cUxNSUFTUjRiWnByYmR2aE5SQUZuZV9GMV9XWUxSdVF5N3gxNlYwUDVxQU05WTkzaFpmcE1rSkVTa01kSzlrMVVYeWJSLUFSTFdzMzc2NlR2SThfTHV2TzNWOTNPSjQ2Zm13T2NfS1pCUjkxd3lBRkZ5Zw?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "핀포인트뉴스",
-      "published": "2026-09-06T05:44:58Z",
-      "summary": "강남구, 세제개편안 설명회 2회 추가 개최… 500석 하루 만에 마감 &nbsp;&nbsp; 핀포인트뉴스",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
       "id": "33f02f3a5b0b3edd",
       "title": "23만가구 공급 청사진, '옥상옥' PF 심사에 갇힌 민간의 현실",
       "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE01QU9qN3pqRnB6TE8tbG5Ib0EtVkZob2Nvc1hpcGp0cTFDT1ZXQldUUmRyaWw1dWRPeDhNd18tSzdhazJpR3p5clV6NFZ1SHg0LWxF?oc=5",
       "feed_id": "gnews_policy",
       "feed_name": "구글뉴스·부동산정책",
-      "publisher": "news.nate.com",
+      "publisher": "네이트",
       "published": "2026-09-06T05:42:08Z",
-      "summary": "[기자수첩] 23만가구 공급 청사진, '옥상옥' PF 심사에 갇힌 민간의 현실 &nbsp;&nbsp; news.nate.com",
+      "summary": "[기자수첩] 23만가구 공급 청사진, '옥상옥' PF 심사에 갇힌 민간의 현실 &nbsp;&nbsp; 네이트",
       "body": "",
       "source_weight": 1.3,
       "tags": [
@@ -939,9 +1101,9 @@
       ]
     },
     {
-      "id": "7a7a09f691bc61cf",
+      "id": "c64589a97179870b",
       "title": "‘부자 아빠’ 기요사키의 반전…부동산 부채 1조6000억",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTFBUVXB0S3dMUnRieTA4UXk3cHVhSkIzX0VZS0ZrR0xEOVB6aE5HamVHQklkUlJIUnFYcmtmR1Jzdm1GOGQ2dW5ZdG92LWNLRmlyY1ZjdVN4OWNqT3NrQ3JQdmpuUlUwR0drdVkxVWhQY9IBbEFVX3lxTE5EMlo0V0FneWswd2lYUVVOQ1JfZVpwQXpfVDYtSnRRWnQ4bVREN180alpJWlFBczRwM2M2WFBjb1A2U2N2MjZVcm5JWDhKLWlELTBIdGM5aGJLQTRHd1ItV3hDaWx5NnJtb0dJMw?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxPekRBOTluUXJtQnUyWTRQMXBlNW5Zc29oTXNRRTV0REVRU1RpR1RueTJlY2NlT3ZPQUR3UVJmTkJNQUlBV0lESFNFM0d4R19mWHNkaWNRanljSUd4RUxFNDFLd2FVN0xhZTBzVERhVWhlcDZGdXRva0EySk5EbkhlVnh1RmRoT2l5bklZNGxLVVF3dFJDcUHSAWxBVV95cUxORDJaNFdBZ3lrMHdpWFFVTkNSX2VacEF6X1Q2LUp0UVp0OG1URDdfNGpaSVpRQXM0cDNjNlhQY29QNlNjdjI2VXJuSVg4Si1pRC0wSHRjOWhiS0E0R3dSLVd4Q2lseTZybW9HSTM?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
       "publisher": "kmib.co.kr",
@@ -957,9 +1119,9 @@
       "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFBUVF9zNk4xcmNrcVQ2WUFxdXBFZk5oMDZ1LW9HNkpPMmJHZFJuZmhYbGxldUxpcEU4RmtHNTV5eFpmYWN5SzdkZkxKTWxRUW9aeEJTcFVLejRoOHJab0xUSTk1NzlNUVNYbHfSAW5BVV95cUxOSFZlWW9HeFozeUUxbXFiSXd5TFBoUVR6cFdFWkZMLTBZNmFiZ2xnN2NDODBEOHFYenhyczQ3dnJNdjI2R1Y0bXNlSFR5MUp5clRlR1RCdjVvdWIxelBDYU5ZZjRHZ0luX3pWamlFUQ?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "퍼블릭타임스",
+      "publisher": "public25.com",
       "published": "2026-09-06T05:37:03Z",
-      "summary": "접수 하루 만에 500석 마감…강남구, 세제개편안 설명회 두 차례 더 연다 &nbsp;&nbsp; 퍼블릭타임스",
+      "summary": "접수 하루 만에 500석 마감…강남구, 세제개편안 설명회 두 차례 더 연다 &nbsp;&nbsp; public25.com",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -1012,19 +1174,6 @@
       "publisher": "v.daum.net",
       "published": "2026-09-06T05:18:14Z",
       "summary": "경기도, 정부 8·13 부동산 대책 맞춰 13개 제도개선 추진 &nbsp;&nbsp; v.daum.net",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "df8e2431b1573a9d",
-      "title": "‘부자 아빠’ 아니라 ‘부채 아빠’…1조6000억 빚진 기요사키",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTE1zdmUxcnBXdXBqbDVtQXFLV1BsRWEyNGhubnFDbTU0OXdDZ3hDc28zOWFBU2t2bDRRQlN0ZFI5SmZPZUl6TjE2WWdnNURqSUp6UVY0M1ZrbEEwVHM4THRqREJPQQ?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "ABC뉴스",
-      "published": "2026-09-06T05:16:29Z",
-      "summary": "‘부자 아빠’ 아니라 ‘부채 아빠’…1조6000억 빚진 기요사키 &nbsp;&nbsp; ABC뉴스",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -1164,66 +1313,14 @@
       "tags": []
     },
     {
-      "id": "433b7c3448a38f18",
-      "title": "롯데건설, 도곡우성아파트 재건축 수주…올해 수주액 4조원 돌파",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE12UnRiOWNJODd2dHFocHo0a2JXcE9IWVNNcENkbkZIMnF5Tkl0eEs0RFIwbTJ4T0l2Vi1rQ0ZrVUtxbHFYOFhIcVdBTkQ0Ym1XT2xfSzdaQXh1QTdkSWM2TnBoM2hLaHlj0gFoQVVfeXFMTXZSdGI5Y0k4N3Z0cWhwejRrYldwT0hZU01wQ2RuRkgycXlOSXR4SzREUjBtMnhPSXZWLWtDRmtVS3FscVg4WEhxV0FORDRibVdPbF9LN1pBeHVBN2RJYzZOcGgzaEtoeWM?oc=5",
-      "feed_id": "gnews_supply",
-      "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "매일일보",
-      "published": "2026-09-06T04:43:31Z",
-      "summary": "롯데건설, 도곡우성아파트 재건축 수주…올해 수주액 4조원 돌파 &nbsp;&nbsp; 매일일보",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "3d62e0c7e5e6f1fe",
-      "title": "용호 토토 학생를 위한 글쓰기 기술 심층 분석",
-      "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxPcjVPbnNuZVZ4bzRmdnMyTGZDRGQxX0lsNXZDa1g3QjVTaWt6bGtGekRBMndzbkEwZGxYUGxtcU9oQ2c5ZVh4MXJtNEFLWnEybkZORjVOQ3R0c1FwRlVmNm55SF91TENTcUdZWHprZS15US1QM2VtUWxlcGx5Z2ZuYkFB?oc=5",
-      "feed_id": "gnews_apt_price",
-      "feed_name": "구글뉴스·아파트값",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-06T04:41:56Z",
-      "summary": "용호 토토 학생를 위한 글쓰기 기술 심층 분석 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
       "id": "fb9a1d7598792f5c",
       "title": "“3억 더 내야 주거 가능” 서울 전세 재계약 10건 중 9건 보증금 올랐다",
       "url": "https://news.google.com/rss/articles/CBMiUkFVX3lxTE93UC1vM0hTX084Vms3Mkd1RzFpRFI2T0Z4aG02djFzY1JDcUQyOExkZHNxU2dFaGJISTltbTh5ZmsyUFdiREdqY0RlNHZodWNNNEE?oc=5",
       "feed_id": "gnews_jeonse",
       "feed_name": "구글뉴스·전월세",
-      "publisher": "kpenews.com",
+      "publisher": "한국정경신문",
       "published": "2026-09-06T04:37:58Z",
-      "summary": "“3억 더 내야 주거 가능” 서울 전세 재계약 10건 중 9건 보증금 올랐다 &nbsp;&nbsp; kpenews.com",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "32a6eabc638c20f3",
-      "title": "박정현 의원, 최근 5년간 서울 부동산 거짓신고 및 과태료 미징수 '강서구' 최다",
-      "url": "https://news.google.com/rss/articles/CBMiS0FVX3lxTE9JVjlBVjdVVkZYSTZQUzJuNmxGMUxXUzB4TUxWdzVIMTBRNGNOU0xmR1ZUSWR6UWtXWW1jamgzUGZleXluYk9UVjdaWQ?oc=5",
-      "feed_id": "gnews_policy",
-      "feed_name": "구글뉴스·부동산정책",
-      "publisher": "뉴스체인지",
-      "published": "2026-09-06T04:27:00Z",
-      "summary": "박정현 의원, 최근 5년간 서울 부동산 거짓신고 및 과태료 미징수 '강서구' 최다 &nbsp;&nbsp; 뉴스체인지",
-      "body": "",
-      "source_weight": 1.3,
-      "tags": []
-    },
-    {
-      "id": "aeb3f219f2ce8dab",
-      "title": "'기관 이전' 호재 품은 세종 부동산시장 꿈틀",
-      "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTFBfTldKUWFPVGtHNVhlQzZUMXFFTV9ZTzhEWkFwVVQ3ZzlYY0kxYlRHZWtweS1idWpBYm1BbVpmZnZiLTRTMHM3ZS14MDlkQWZlR2d2UEllRVRtcy15VDY3VjVxeVZrcFBSUzBralJtY1BYSmfSAXNBVV95cUxQX05XSlFhT1RrRzVYZUM2VDFxRU1fWU84RFpBcFVUN2c5WGNJMWJUR2VrcHktYnVqQWJtQW1aZmZ2Yi00UzBzN2UteDA5ZEFmZUdndlBJZUVUbXMteVQ2N1Y1cXlWa3BQUlMwa2pSbWNQWEpn?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "대전일보",
-      "published": "2026-09-06T04:23:52Z",
-      "summary": "'기관 이전' 호재 품은 세종 부동산시장 꿈틀 &nbsp;&nbsp; 대전일보",
+      "summary": "“3억 더 내야 주거 가능” 서울 전세 재계약 10건 중 9건 보증금 올랐다 &nbsp;&nbsp; 한국정경신문",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -1247,11 +1344,24 @@
       "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTFBWMVZKa1hIQWt6VTJocW9wUnI2ZUowdTRTUHN3N2RHSXlqN2hrbmxsN2w0RzlybWVBZlcxdHJ2dU9aS18zZVhqMnliV3RsWXBlSk05eEZxYVY0ZENWVjBuZlM1d1hnelJZ?oc=5",
       "feed_id": "gnews_supply",
       "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "greened.kr",
+      "publisher": "녹색경제신문",
       "published": "2026-09-06T04:21:13Z",
-      "summary": "롯데건설, 도곡우성 재건축 수주… 올해 도시정비 4조원 돌파 &nbsp;&nbsp; greened.kr",
+      "summary": "롯데건설, 도곡우성 재건축 수주… 올해 도시정비 4조원 돌파 &nbsp;&nbsp; 녹색경제신문",
       "body": "",
       "source_weight": 1.1,
+      "tags": []
+    },
+    {
+      "id": "aeb3f219f2ce8dab",
+      "title": "'기관 이전' 호재 품은 세종 부동산시장 꿈틀",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE1ldWFJdDZzS0VqMDU2NmpQb3J4bExYOGxudmlJTTV5WjEzQUVBbGhXc2FhZzd2U0s5MXIxME5sV19Ncmkwc1hrWVBWbHk2QXkwVjhyTg?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "v.daum.net",
+      "published": "2026-09-06T04:16:52Z",
+      "summary": "'기관 이전' 호재 품은 세종 부동산시장 꿈틀 &nbsp;&nbsp; v.daum.net",
+      "body": "",
+      "source_weight": 1.0,
       "tags": []
     },
     {
@@ -1273,9 +1383,9 @@
       "url": "https://news.google.com/rss/articles/CBMiYEFVX3lxTE8xb0h2c3AzZ0NuT280cHFYV2FSaHRla29rbGZpTEF4MzU4cXFSZlN6ZXNGUnRtUmxrWEhjaHp3NWE3SG12S05wUERRV3hDcnRieERIVnFLZGtOX0JYSGlWbA?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "메트로신문",
+      "publisher": "metroseoul.co.kr",
       "published": "2026-09-06T04:07:36Z",
-      "summary": "정기국회 초반, 메가특구특별법·부동산 공급 법안·ETF 사태 등 여야 공방 격화될 듯 &nbsp;&nbsp; 메트로신문",
+      "summary": "정기국회 초반, 메가특구특별법·부동산 공급 법안·ETF 사태 등 여야 공방 격화될 듯 &nbsp;&nbsp; metroseoul.co.kr",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -1286,9 +1396,9 @@
       "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5jeWpuMVUxVnNNZnpiYmIwTi05QmZPdGR5b051VFY4OURaQlVFWmpUZTdydnVqcDdRWG9UNXp6UDNyd1FqWGV2MUR2b0x1dFdQTkp0MG9lRkVzd21sOGxoV2hfT01TLWln?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "renews.co.kr",
+      "publisher": "부동산신문",
       "published": "2026-09-06T04:00:59Z",
-      "summary": "안전한 건설현장, 국민과 함께 만든다...‘건설 추락사고 예방 콘텐츠 공모전’ 개최 &nbsp;&nbsp; renews.co.kr",
+      "summary": "안전한 건설현장, 국민과 함께 만든다...‘건설 추락사고 예방 콘텐츠 공모전’ 개최 &nbsp;&nbsp; 부동산신문",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -1299,9 +1409,9 @@
       "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTFBPUXdaaWREem9VWi1CYUkzUDV5ZjE3VzNuaVdYaEJnd1otYWZza0ZLRTh2U0tlSmNWeloxaDF5ZlExNWVIajRMSmRJaEhZd2pERk13?oc=5",
       "feed_id": "gnews_supply",
       "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "news.nate.com",
+      "publisher": "네이트",
       "published": "2026-09-06T03:59:07Z",
-      "summary": "롯데건설, 도곡우성 재건축 수주…도시정비사업 4조원 돌파 &nbsp;&nbsp; news.nate.com",
+      "summary": "롯데건설, 도곡우성 재건축 수주…도시정비사업 4조원 돌파 &nbsp;&nbsp; 네이트",
       "body": "",
       "source_weight": 1.1,
       "tags": []
@@ -1317,19 +1427,6 @@
       "summary": "대구 남구, 부동산 거래사고 예방 위한 공인중개사 연수 교육 개최 &nbsp;&nbsp; 시사뉴스",
       "body": "",
       "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "59be34946c27ddb1",
-      "title": "도박 여자연예인 : 흥미로운 사실과 통찰력 있는 분석",
-      "url": "https://news.google.com/rss/articles/CBMi1AFBVV95cUxNRUUyOE5jdnJBN3JleUZFem15bWt5U0JueE5TNVJ4bmh3R1dMelNCVEhIUUt2ZFdaVE9la3dLeEhVeHZMSUFjdUZSWmRaeUkwcXNUVWFaZ3BrYnV1NTVCYnFnWXBLbVp6YldPdUdVV3dhWTFvOXJjTmZPR01MZGpRUkszSW1oR2p2cVBIR0s4ajh0bE10YlBLMWhwbjBOcXJoNVQxaExtTlZzY1dicUFQV3BVQXo0bVZ6SS1aRzZ2YzRBamxDc0xpUURqRml0QmZtV25vVw?oc=5",
-      "feed_id": "gnews_apt_price",
-      "feed_name": "구글뉴스·아파트값",
-      "publisher": "Calgary Roughnecks",
-      "published": "2026-09-06T03:58:16Z",
-      "summary": "도박 여자연예인 : 흥미로운 사실과 통찰력 있는 분석 &nbsp;&nbsp; Calgary Roughnecks",
-      "body": "",
-      "source_weight": 1.1,
       "tags": []
     },
     {
@@ -1359,30 +1456,19 @@
       "tags": []
     },
     {
-      "id": "9d5481374c844849",
-      "title": "집값 안 꺾이면 서울 대부분 종부세…2030년 22개구",
-      "url": "https://news.google.com/rss/articles/CBMibEFVX3lxTE9CdXAwTXBEZFJFNnlORXJVeUFqcGR4MW5NdXdHREh4VWU0a2U4LTNsMWo2SFhHVXRYUm5oeWZMRnQ4R2p6WDd1QmpXd19uaFBqYjFxSWVqZVpOVktoWEkzUXBiMV94cmhaeElTRNIBcEFVX3lxTE5jUUtiWDRzcVQ2bmJvMUFuNndSYWFrQW9mcEpYMUU5cEtuMjdhYW4yOE9YS1l0aVZ4emFYR0VhWWJyR2ZXaEZwUzI1WFg2TUZ1WnFUQl96YWFkZXpoYzFLY2h2MlNMZUxRdklSOThuNkM?oc=5",
+      "id": "39fc7a47b6f527cd",
+      "title": "뉴저지 인더스트리얼 부동산 마켓 리포트",
+      "url": "https://news.google.com/rss/articles/CBMizgFBVV95cUxPN0VkMzNWQzYtdWZMNGJYcE1XQ2dRTlFxTmpxR2k2azQ0akE0bjZsX0VEVHgtblZQaHNWaHU3RnlHNEowNEVEQlV1ejRXdE9iVUZ0S29Nd21LYUpGVVE0UU52SjJBVUJUSzV2aFVXdG5zMWhXSnowY3NRSEZsZFdJcXdHWTlFZG9mYWxDMkNSY3ItX0RBeHFLSXVBencxb1BuZWhGa3RvMHNjUHFGWGNvd244WXlZcXNMZk90ZGMwU3pEWUZuNHBnaFRRNW5hZw?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "소년한국일보",
-      "published": "2026-09-06T03:51:52Z",
-      "summary": "집값 안 꺾이면 서울 대부분 종부세…2030년 22개구 &nbsp;&nbsp; 소년한국일보",
+      "publisher": "미주조선일보",
+      "published": "2026-09-06T03:45:09Z",
+      "summary": "[Newmark 칼럼]뉴저지 인더스트리얼 부동산 마켓 리포트 &nbsp;&nbsp; 미주조선일보",
       "body": "",
       "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "863e3e8138f2b670",
-      "title": "대전지역 미분양 주택 감소율 전국 최대",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE9RVkVJaDc5eU41U0pTQU5KbU5Lam5DSDhJMlpUZG9NcUx4MWVaZjQ0Zkgxc0ZOM1hzcWlSSFc5UGt0UHVtc3h0cU9hM3dOeWFpX2RTRkR2SW5Tc1RrRkUtWTJZZi1aSnRuR3lV?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "cctoday.co.kr",
-      "published": "2026-09-06T03:46:01Z",
-      "summary": "대전지역 미분양 주택 감소율 전국 최대 &nbsp;&nbsp; cctoday.co.kr",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
+      "tags": [
+        "Newmark 칼럼"
+      ]
     },
     {
       "id": "edcfa87a12766acc",
@@ -1472,9 +1558,9 @@
       "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE9KbmVlNTRDY0hNTFJrY3k2MTRUYkozeWtnczZON1ZleG9DbWgzUmJSUEZQSTJiNWdNRl9uaFB2REc4SWp3TmloUFBYakhHcmRzTEpB?oc=5",
       "feed_id": "gnews_supply",
       "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "news.nate.com",
+      "publisher": "네이트",
       "published": "2026-09-06T03:14:00Z",
-      "summary": "롯데건설, 도곡우성 재건축 수주…정비사업 수주액 4조 돌파 &nbsp;&nbsp; news.nate.com",
+      "summary": "롯데건설, 도곡우성 재건축 수주…정비사업 수주액 4조 돌파 &nbsp;&nbsp; 네이트",
       "body": "",
       "source_weight": 1.1,
       "tags": []
@@ -1493,40 +1579,14 @@
       "tags": []
     },
     {
-      "id": "b2de7092f8d6a1f2",
-      "title": "팬텀 블랙잭 해방 : 위험 피하기와 보호 조치",
-      "url": "https://news.google.com/rss/articles/CBMiqgJBVV95cUxQbHJOZjFtWm9QdzhxMkZ0T3Y2QXF1cDVrWEhMaUFTaUVYVTk2aUxpMi1kZmtIRHFkV05NbldodnFoa1hLcmI4djhxaUJQVHQzd1hyUzhQa3gzMHZjMnZrcFVUb284dXRHTlFTWElsRnBBSTU2dDY1QXVITThmU09QYk43c1RTbjFsX3VjMUtNQmdhRHJGUHVvRWRaY2JxT1BVTndzeklRSHZHc0pFTWlFWmdCeW1jdjlrYkRuenA0V3lybkh4a0pHaU9YSTJ0SlNONG44WnZjWnlzWTlOanZZT050ZnVrYWxBQmRhczFGNnBWZGpPWV9mSE13Mzg3X0lueEFPeDBJaGJwQjd3TVh1QlhKZkhIRUZrTHJMb0dGU09TYm5RdHBJWXVn?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "Calgary Roughnecks",
-      "published": "2026-09-06T03:06:51Z",
-      "summary": "팬텀 블랙잭 해방 : 위험 피하기와 보호 조치 &nbsp;&nbsp; Calgary Roughnecks",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "a5c68e2031c7011c",
-      "title": "서울 집값 11% 오르면 2030년 22개구 종부세…세 부담 8.9배 껑충",
-      "url": "https://news.google.com/rss/articles/CBMib0FVX3lxTE1MU05uRW1MQlhpRGhwUUtiMTFtaDdKLUNpaEY0a1c3UkFOZFFmZFJYcTlnTUYzcjVvSnJTYllWRlNSYTJUczFMN1JuX3lQS3FBcndQR3h5Zkh6RnNmdGpwMnA1NkF4ZEtKc1NJUTJOVdIBc0FVX3lxTE40emNWU2REMkV6dUdac3NVZXcwYnpaWHFVdmRuYWlyTnNwLTlfdEJQY0lBc3FHQ3ZfNkFqbW9sLW1kaGN6V0RmWmM2Mk1US3pxWFhlWU80OUtVa19YdW5LOGFqVXdjUWNITHFkRnJqVWZzdk0?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "시사저널",
-      "published": "2026-09-06T03:05:00Z",
-      "summary": "서울 집값 11% 오르면 2030년 22개구 종부세…세 부담 8.9배 껑충 &nbsp;&nbsp; 시사저널",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
       "id": "9367a4074a872317",
       "title": "3호선·9호선에 GTX까지 뚫린다?…서울 직장인 몰려간 동네 [철길옆집]",
       "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTFBrU2RqRTJDZHNYYmhKaXlpUkZmNUMzb05xTGxvTDV6bDFQbVNoTzFER3BMS3IyTXh4dURLc2FJSVl6R2xsU3BtSm1sWm8zamJadTVXOGw2S1RQQQ?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "한국경제",
+      "publisher": "hankyung.com",
       "published": "2026-09-06T03:00:03Z",
-      "summary": "3호선·9호선에 GTX까지 뚫린다?…서울 직장인 몰려간 동네 [철길옆집] &nbsp;&nbsp; 한국경제",
+      "summary": "3호선·9호선에 GTX까지 뚫린다?…서울 직장인 몰려간 동네 [철길옆집] &nbsp;&nbsp; hankyung.com",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -1542,19 +1602,6 @@
       "summary": "강남 멈추고 비강남 집값 들썩 \"똘똘한 한 채 공식 흔들리나\" &nbsp;&nbsp; 프라임경제",
       "body": "",
       "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "e72c2c682e768c75",
-      "title": "파라오 카지노 보증 : 실제 경험자들의 조언",
-      "url": "https://news.google.com/rss/articles/CBMipgFBVV95cUxPeXpKOUdVaTlyNjhjeDRZcE1qWmVFTW1FRURlNnpOVGdFUU5UZWY4TmRBNTV2QnZBYU5VZXJNekF6c2pWVTNXbjlmemViczJrcWFUNkVKak1ncUJfby1VRzRVMGNoZzBDS25tVTBzQldJbG5qZ05CY0swREd4Zl9mb2NRbF8wZ3RlUDNESlE3d3dtX21jZDNtbFFFU0l2dTJpY0V4SGVR?oc=5",
-      "feed_id": "gnews_policy",
-      "feed_name": "구글뉴스·부동산정책",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-06T02:53:01Z",
-      "summary": "파라오 카지노 보증 : 실제 경험자들의 조언 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.3,
       "tags": []
     },
     {
@@ -1632,9 +1679,9 @@
       "url": "https://news.google.com/rss/articles/CBMiakFVX3lxTFB0c2FrRGNpeklBb2pDWWVobnBsdklzMExLYkt3RDlDckR4a18wY0p2MUdzSGpoRW5WMW15Mk44R2VoeDNndWNjemFubmFlb0phU2ZxbE5kUFhWMGZISzhSeTlkZ3RWblA3ekE?oc=5",
       "feed_id": "gnews_supply",
       "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "wolyo.co.kr",
+      "publisher": "월요신문",
       "published": "2026-09-06T02:28:13Z",
-      "summary": "롯데건설, 도곡우성 재건축 수주…도시정비 누적 4조원 돌파 &nbsp;&nbsp; wolyo.co.kr",
+      "summary": "롯데건설, 도곡우성 재건축 수주…도시정비 누적 4조원 돌파 &nbsp;&nbsp; 월요신문",
       "body": "",
       "source_weight": 1.1,
       "tags": []
@@ -1648,6 +1695,19 @@
       "publisher": "리드경제",
       "published": "2026-09-06T02:27:02Z",
       "summary": "롯데건설, 도곡우성아파트 재건축 수주…도시정비사업 4조원 돌파 &nbsp;&nbsp; 리드경제",
+      "body": "",
+      "source_weight": 1.1,
+      "tags": []
+    },
+    {
+      "id": "8abffa1e8325c0ca",
+      "title": "다시 요동치는 서울 집값… 추석 이후 규제지역 카드 나오나",
+      "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxQUFc2QXc4clNSZnN2c0p2amlOUWdzYkhqaXJWaXJDWU5BU1BzWWRvbDNEbkVtMGNQVF8tWS1vVks5NDhFcVhHQWZsWlE2b1FPbXhYOFA4TXBDeGJ0cFlXNmJ6RFJPZHRFcWRrS20zSzMxUDJiSkhWODhHZjdza3I2ajAyVnRyeC1yWGJXaUJrNm5ScmtoT3Nfdm1YUkQ3WkJoMlExejhPVmk4Z1hHMFBFYlI1S3AwNGFzMkhuR1EtYkxtMUJyeWNzRjFnXzFJelJkRDFYRHB6dldOdlpR?oc=5",
+      "feed_id": "gnews_apt_price",
+      "feed_name": "구글뉴스·아파트값",
+      "publisher": "미주조선일보",
+      "published": "2026-09-06T02:19:17Z",
+      "summary": "다시 요동치는 서울 집값… 추석 이후 규제지역 카드 나오나 &nbsp;&nbsp; 미주조선일보",
       "body": "",
       "source_weight": 1.1,
       "tags": []
@@ -1718,32 +1778,30 @@
       "tags": []
     },
     {
+      "id": "34fa529d83442582",
+      "title": "머리 에 총 맞고 생존 의 비밀을 풀다: 전문가들이 공유하는 핵심 팁",
+      "url": "https://news.google.com/rss/articles/CBMizAFBVV95cUxOZFItbkd2UVg5b3hpbC1IOXVUV2hLNjdoRFdvLVl5QVZqbm9ma0prMVhISFAtSGM1M0NVVjJmR2ZjeTMxZGNoSUU2a3ludjVGd21YREo2SVFKV3hlNU5rZUMzZ0ZqMGZudHpPaFpuT29CY3dQbTE3QWFwbm1oUGNNa25iQTlUTVI5VncyaENoNW5xakE2WDNVRy1jdnJjckVNc2FDQ2xRYnNhSzAySnBiUjlHWGJ2ZnEtOG9OMXlZdTlMel83LUhvdnJOQzM?oc=5",
+      "feed_id": "gnews_jeonse",
+      "feed_name": "구글뉴스·전월세",
+      "publisher": "Calgary Roughnecks",
+      "published": "2026-09-06T01:58:13Z",
+      "summary": "머리 에 총 맞고 생존 의 비밀을 풀다: 전문가들이 공유하는 핵심 팁 &nbsp;&nbsp; Calgary Roughnecks",
+      "body": "",
+      "source_weight": 1.0,
+      "tags": []
+    },
+    {
       "id": "5b8132b2525f6f49",
       "title": "도곡우성 재건축, 롯데건설 품으로…하이엔드 '르엘' 제안",
       "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1QN1NKWkZQbW1yakFPSkRVVkVhaUF5ZURaaWhGbFRkV0YwZmsxV3V2WVJXZlRkN3BGZVV2REJsc3N4cGxrQmhudlFpaUE1bC1rV0xr?oc=5",
       "feed_id": "gnews_supply",
       "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "news.nate.com",
+      "publisher": "네이트",
       "published": "2026-09-06T01:58:00Z",
-      "summary": "도곡우성 재건축, 롯데건설 품으로…하이엔드 '르엘' 제안 &nbsp;&nbsp; news.nate.com",
+      "summary": "도곡우성 재건축, 롯데건설 품으로…하이엔드 '르엘' 제안 &nbsp;&nbsp; 네이트",
       "body": "",
       "source_weight": 1.1,
       "tags": []
-    },
-    {
-      "id": "570de1523c0de399",
-      "title": "국감이 물어야 할 주택정책의 모순",
-      "url": "https://news.google.com/rss/articles/CBMiZ0FVX3lxTE8yN3pyNnY4R2FJX0NHQjJtTkxyNU80QmZXX3NwN1p2ZVFOTVl4ZjBjcjdtRURYWENHenY2SXkxc0EtNG1wRzhoN3BuMWlCaEl2Xy1uUVVZWHdfS1RuU0hydmNPR01KLTA?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "국토교통신문",
-      "published": "2026-09-06T01:57:37Z",
-      "summary": "[국토위] 국감이 물어야 할 주택정책의 모순 &nbsp;&nbsp; 국토교통신문",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": [
-        "국토위"
-      ]
     },
     {
       "id": "561d318c83b4ea53",
@@ -1754,21 +1812,8 @@
       "publisher": "",
       "published": "2026-09-06T01:52:39Z",
       "summary": "",
-      "body": "ADVERTISEMENT AI를 넘어서는 성공투자 Google 검색에서 한국경제 기사를 더 자주 볼 수 있습니다. ⓒ 한경닷컴, 무단전재 및 재배포 금지 ADVERTISEMENT 미분양관리지역 묶인 물량 9270가구…한 달 새 36% 늘어 주택도시보증공사(HUG)의 미분양관리지역에 묶인 미분양 주택이 9270가구로 한 달 새 35.8% 늘었다. 관리지역 수는 4곳으로 전월과 같았지만 수도권 두 곳이 빠지고 미분양 물량이 많은 지방... 2026.09.04 14:26 서울시, 모아타운 후보지 도로 5년간 토허구역 지정 서울시가 모아타운 후보지로 선정되는 지역의 도로를 토지거래허가구역으로 묶는다. 후보지 발표를 전후해 몰릴 수 있는 투기 수요를 사업 초기 단계부터 원천 차단하겠다는 취지다. 서울시는 지난 2일 제14차 도시... 2026.09.03 11:01 정진혁 국가철도공단 이사장 취임 정진혁 제9대 국가철도공단 이사장이 1일 취임했다. 정 이사장은 이날 대전 본사에서 열린 취임식에서 ‘미래지향적 국가철도공단이 되기 위해 원칙과 기본으로 돌아가자’를 경영 슬로건으로 ... 2026.09.01 14:09 ADVERTISEMENT 로그인이 필요한 서비스 입니다. 로그인 하시겠습니까? ADVERTISEMENT",
-      "source_weight": 1.2,
-      "tags": []
-    },
-    {
-      "id": "34f3b073c19da43e",
-      "title": "동대문구, 구청장 직속 부동산 TF 가동...58개 정비사업 추진",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE16ZmUtZWVidEZWREJDb3d5YmE5UVlrbGgzVEprcmxETFFLNjUwNURWMmlobml3Z1pIbU5FODNsVlVvTXc4a3haUzdSRkh2TW5pbV9yVEtaQVFBVEhHUGtId0RQRWZpOVV6bkhKR2Z3?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "통일경제뉴스",
-      "published": "2026-09-06T01:50:51Z",
-      "summary": "동대문구, 구청장 직속 부동산 TF 가동...58개 정비사업 추진 &nbsp;&nbsp; 통일경제뉴스",
       "body": "",
-      "source_weight": 1.0,
+      "source_weight": 1.2,
       "tags": []
     },
     {
@@ -1777,9 +1822,9 @@
       "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBtU1pta1RvdkxSVjJxQmtmallGbVE2VmlPeV9xa181TjFkY3pGQkh1ZDNhODNRemN3dE5QWktCODB6U0VlZUpJSVc5WXBfV3YzcGVoaXl0YS1lWjJ6bW5JNmcxLUNDYk13ZW1N?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "일간투데이",
+      "publisher": "dtoday.co.kr",
       "published": "2026-09-06T01:50:42Z",
-      "summary": "박정현 의원, 서울 부동산 거짓신고·과태료 미징수 강서구 최다 &nbsp;&nbsp; 일간투데이",
+      "summary": "박정현 의원, 서울 부동산 거짓신고·과태료 미징수 강서구 최다 &nbsp;&nbsp; dtoday.co.kr",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -1832,19 +1877,19 @@
       "publisher": "",
       "published": "2026-09-06T01:32:56Z",
       "summary": "롯데건설은 서울 강남구 ‘도곡우성아파트’ 재건축정비사업을 수주하며 올해 도시정비사업 누적 수주액 4조 원을 돌파했다고 6일 밝혔다. 롯데건설은 지난 5일 서울 강남구 대치중학교 강..",
-      "body": "공유 글자 크기 가 가 가 가 가 번역 구글 검색 선호 추가 Google 검색에서 매일경제 기사를 더 자주 볼 수 있습니다. 번역 롯데건설은 서울 강남구 ‘도곡우성아파트’ 재건축정비사업을 수주하며 올해 도시정비사업 누적 수주액 4조 원을 돌파했다고 6일 밝혔다. 롯데건설은 지난 5일 서울 강남구 대치중학교 강당에서 열린 도곡우성아파트 재건축정비사업 조합원 총회에서 시공사로 선정됐다. 이번 사업은 서울시 강남구 도곡우성아파트를 재건축해 지하 6층~지상 26층, 4개동, 공사비 4002억 원 규모의 아파트 및 부대복리시설을 조성하는 사업이다. 롯데건설은 하이엔드 주거 브랜드 ‘르엘’을 적용한 ‘도곡 르엘’을 단지명으로 제안했다. 글로벌 건축 설계사인 ‘JERDE(저디)’와 협업해 세계적 수준의 외관 디자인을 적용할 예정이다. 단지 곳곳에는 입주민들의 주거 만족도와 품격을 높이기 위한 차별화된 특화 설계를 적용한다. 롯데월드타워와 대모산, 강남 도심의 경관을 한 눈에 조망할 수 있는 스카이 라운지 등 다양한 커뮤니티 시설을 마련해 일상 속에서 여유와 특별함을 누릴 수 있는 공간을 선보일 예정이다. 단지 내 조경은 자연과 도시가 어우러지는 특화 공간으로 조성한다. 싸리고개공원에서 단지까지 연결되는 약 3km 길이의 산책로를 조성하고, 입주민들이 자연과 조화를 이루는 쾌적한 주거환경을 누릴 수 있도록 잔디광장과 정원도 배치할 계획이다. 단지 인근에는 언주초∙은성중이 위치해 있으며, 도곡공원∙말죽거리공원∙양재천 등 풍부한 녹지와 수변 공원을 이용할 수 있다. 강남세브란스병원∙서초구청 등 주요 의료 및 행정 시설도 가깝다. 경부고속도로, 양재역(지하철 3호선∙신분당선)을 통해 서울 주요 지역으로의 접근성이 우수하며, 향후 GTX(수도권광역급행철도)-C 노선이 개통되면 광역 교통망도 한층 강화될 것으로 기대된다. 롯데건설은 이번 수주로 올해 도시정비사업 6건, 누적 수주액 총 4조110억 원을 달성했다. 롯데건설 관계자는 “그동안 축적해 온 시공 역량과 사업 추진 경험을 바탕으로 도곡우성아파트를 강남구를 대표하는 랜드마크 주거단지로 완성할 계획”이라며 “앞으로도 강남권 핵심 정비사업은 물론 목동 재건축 주요 사업지에 역량을 집중하고, 약수역 인근 도심 공공주택 복합사업과 면목9구역 주택정비형 공공재개발사업 등 공공 정비사업에도 적극 참여할 계획”이라고 했다. 롯데지주 산하 롯데건설이 도곡우성아파트 재건축정비사업 시공사로 선정돼 공사비 4002억원 규모를 확보했습니다. 롯데건설은 하이엔드 브랜드 르엘을 적용한 4개동 아파트와 부대복리시설 조성을 제안했습니다. 업계에서는 이번 정비사업 수주가 하반기 실적 반등과 브랜드 경쟁력 강화에 긍정적인 영향을 미칠 것으로 보고 있습니다. 공유 롯데건설이 서울 강남구 '도곡우성아파트' 재건축정비사업을 수주하며 올해 도시정비사업 누적 수주액이 4조 원을 넘어섰다. 이번 사업은 지하 6층~지상 26층 규모로, 입주민의 주거 만족도를 높이기 위한 차별화된 설계를 적용하고 다양한 커뮤니티 시설을 마련할 예정이다. 롯데건설은 도곡우성아파트를 강남구의 랜드마크 주거단지로 완성하기 위해 지속적으로 역량을 집중하겠다고 밝혔다. 이번 롯데건설의 도곡우성 재건축 수주는 지역 주민들에게 새로운 주거 공간을 기대하게 해요. 롯데건설은 '르엘'이라는 하이엔드 브랜드를 적용하고, 글로벌 건축 설계사와 협업하여 세계적 수준의 디자인과 특화 설계를 선보일 예정이라고 해요. 롯데월드타워와 대모산, 강남 도심을 조망할 수 있는 스카이 라운지와 다양한 커뮤니티 시설도 들어설 예정이라, 입주민들은 일상 속에서 특별함을 누릴 수 있을 것으로 보여요. 또한, 단지 내 조경은 자연과 도시가 어우러지도록 조성하며, 싸리고개공원까지 연결되는 산책로와 잔디광장, 정원 등이 계획되어 있어 쾌적한 주거 환경을 기대할 수 있어요. 🌳🏞️✨ 롯데건설은 이번 도곡우성 재건축 수주를 통해 올해 도시정비사업 누적 수주액 4조 원을 돌파하며 업계에서의 입지를 더욱 강화했어요. 이는 롯데건설의 시공 역량과 사업 추진 경험이 풍부하다는 것을 보여주는 성과라고 할 수 있어요. 🏆📈 또한, 롯데건설은 강남권 핵심 정비사업뿐만 아니라 목동 재건축, 도심 공공주택 복합사업, 주택정비형 공공재개발사업 등 다양한 형태의 정비사업에 적극적으로 참여하며 포트폴리오를 확장하고 있어요. 이는 건설 경기 불확실성 속에서도 안정적인 사업 기반을 다지고, 미래 성장 동력을 확보하려는 전략으로 보여요. 🏗️🤝 롯데건설의 도시정비사업 수주 실적 증가는 건설 시장 전반의 활력을 보여주는 지표 중 하나로 해석될 수 있어요. 특히, 강남권 재건축 시장의 지속적인 움직임은 부동산 시장의 안정화와 주거 환경 개선에 기여할 수 있어요. 🌟📈 향후 GTX-C 노선 개통 등 광역 교통망 확충 기대는 지역 가치를 높이고, 관련 산업에도 긍정적인 영향을 줄 것으로 예상돼요. 정부 입장에서는 민간 건설사의 적극적인 도시정비사업 참여를 통해 노후 주택 개선과 주거 환경 질적 향상을 도모할 수 있으며, 이는 주택 시장의 선순환 구조를 만드는 데 기여할 수 있어요. 🚇🏠",
+      "body": "",
       "source_weight": 1.2,
       "tags": []
     },
     {
-      "id": "69dd7c536eac9f1e",
+      "id": "a5dba101625458c6",
       "title": "롯데건설, 강남 도곡우성 재건축 수주…올해 정비사업 4조 돌파",
-      "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE5QUlAySzd2Z1QxVWtIMzB6R1ZYQUh2NlZhbFdxVWgzWHVvLWs3VEJHUXNYcGdLWkhrLTQtRHN6UlVIeDJhUzkzdjRDRmlBRjhvM1M4?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxOcmtDSVBKaXRaWVg2VUVwbHc2RFBuSFUwRkFGeWU4OTBoSW1kM190MmlkRUhIS01mUHdfM3NzdWJwdjRpSm85UkF5R0JybkVIOVFQUFc3MVBhNm1BZ0thYnhtdW9DVkVXQVdMUWgtUVFXWUs1SHVuOV9jbWFmb3BoLQ?oc=5",
       "feed_id": "gnews_supply",
       "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "news.nate.com",
-      "published": "2026-09-06T01:23:00Z",
-      "summary": "롯데건설, 강남 도곡우성 재건축 수주…올해 정비사업 4조 돌파 &nbsp;&nbsp; news.nate.com",
+      "publisher": "edaily.co.kr",
+      "published": "2026-09-06T01:21:45Z",
+      "summary": "롯데건설, 강남 도곡우성 재건축 수주…올해 정비사업 4조 돌파 &nbsp;&nbsp; edaily.co.kr",
       "body": "",
       "source_weight": 1.1,
       "tags": []
@@ -1852,14 +1897,14 @@
     {
       "id": "0dc7d7f715837601",
       "title": "롯데건설, 도곡우성 재건축 수주…도시정비 4조원 돌파",
-      "url": "https://news.google.com/rss/articles/CBMiU0FVX3lxTE1zN3R6SXJwNUhtbjNjQkdaR1hWdWxWalBHT25sRDZVS3BwdUw1cUlvX051OXNNQ3AtNERuN3pNZmJTT0FUVF81dVE3YjJVbUVYN3p3?oc=5",
-      "feed_id": "gnews_supply",
-      "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "news.nate.com",
-      "published": "2026-09-06T01:22:00Z",
-      "summary": "롯데건설, 도곡우성 재건축 수주…도시정비 4조원 돌파 &nbsp;&nbsp; news.nate.com",
+      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE1KWGh1c21ZMldvY2RRamFQZ0VHSExMYkpXVVptT3lhcVp4akxhbzVTR3lZNGhLZnEzckgxelVrLTFKQ0JTUk9ya3AzTS03Rk9oR0JpZUNpb3hSN1RyQ3oxU3U2T08tSmU1?oc=5",
+      "feed_id": "gnews_realestate",
+      "feed_name": "구글뉴스·부동산",
+      "publisher": "ebn.co.kr",
+      "published": "2026-09-06T01:21:10Z",
+      "summary": "롯데건설, 도곡우성 재건축 수주…도시정비 4조원 돌파 &nbsp;&nbsp; ebn.co.kr",
       "body": "",
-      "source_weight": 1.1,
+      "source_weight": 1.0,
       "tags": []
     },
     {
@@ -1879,13 +1924,13 @@
       "id": "e12b056471b25608",
       "title": "강남 집값 내리는데 노원·중랑은 신고가…‘15억 벽’의 역설",
       "url": "https://news.google.com/rss/articles/CBMic0FVX3lxTE15QXNrYzIxZWFOcUI2UFZJZ2pxc2ZfNDJMRGh6NVl2bUF5ZWozS29oZzFYYTRWNjJRTmJLMHNUd0ZGMDZVWEsxemdkOXJiemRlYjlMOVh5aWdqUE9LTzY4eUlSTVZnY3labVJtUDVGSXpFUE3SAXdBVV95cUxOcHlKTHJwR3JPX0U2UHhQUWRoU3NDWHBJbmhhc1M2bmd4TS1KX0pUZV9hMVhjVHhGclJHUjgtV21hdlhGWnMzeTdUd21FdG9VaWwxS0wwak9UcExVRW1Ya2NSN1VyS05YS3h2bzJSSHc3SU4xRVBlcw?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "핀포인트뉴스",
+      "feed_id": "gnews_apt_price",
+      "feed_name": "구글뉴스·아파트값",
+      "publisher": "pinpointnews.co.kr",
       "published": "2026-09-06T01:14:56Z",
-      "summary": "[톡톡! 부동산] 강남 집값 내리는데 노원·중랑은 신고가…‘15억 벽’의 역설 &nbsp;&nbsp; 핀포인트뉴스",
+      "summary": "[톡톡! 부동산] 강남 집값 내리는데 노원·중랑은 신고가…‘15억 벽’의 역설 &nbsp;&nbsp; pinpointnews.co.kr",
       "body": "",
-      "source_weight": 1.0,
+      "source_weight": 1.1,
       "tags": [
         "톡톡! 부동산"
       ]
@@ -2038,27 +2083,14 @@
       "tags": []
     },
     {
-      "id": "7bdd347f7c51e9f7",
+      "id": "d9872147107175e8",
       "title": "혼자 살아도 10명 중 7명 “만족해요”…800만 싱글 최대 고민은 ‘이것’",
-      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTFBJRHFwNmJiejZicFRDXzVENVlEckM3V1ZzWjRDT1RtYXJJd2k5Tk9CRFlXSlgyajYydDFCaWw1U0J1UEVtbEZsOXh6S3lITGhobGZSbA?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiVEFVX3lxTE1vRGFiMjBXN1E2OGtoSUt3RFc0SGF5QTFRZDZaYWdtZGFXNXRHcXVUZmQwWjNaaEN5OXZnNkhoOW1BTk1uTkV3MkI3STBidDRtRE1paw?oc=5",
       "feed_id": "gnews_jeonse",
       "feed_name": "구글뉴스·전월세",
-      "publisher": "v.daum.net",
-      "published": "2026-09-06T00:54:01Z",
-      "summary": "혼자 살아도 10명 중 7명 “만족해요”…800만 싱글 최대 고민은 ‘이것’ &nbsp;&nbsp; v.daum.net",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "306257c45a8d4f92",
-      "title": "태국과 싱가포르, 11년 만에 비공식 정상회담 개최",
-      "url": "https://news.google.com/rss/articles/CBMiaEFVX3lxTE5hSUo5VWpCcGNWaENmWjZTcXV2Mzd1R05FekdDRFFSeTN5N3I2ZWZzUmpyNWpnZ1RFU0xiOFFxaUV1YTN3NjNqMWRqaFZtckNpSDJKQm84T1VrNTkxVDBrSXp2NjJXN2J4?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "renews.co.kr",
-      "published": "2026-09-06T00:49:45Z",
-      "summary": "태국과 싱가포르, 11년 만에 비공식 정상회담 개최 &nbsp;&nbsp; renews.co.kr",
+      "publisher": "매일경제",
+      "published": "2026-09-06T00:51:38Z",
+      "summary": "혼자 살아도 10명 중 7명 “만족해요”…800만 싱글 최대 고민은 ‘이것’ &nbsp;&nbsp; 매일경제",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -2108,24 +2140,11 @@
       "url": "https://news.google.com/rss/articles/CBMieEFVX3lxTFAwMUZPNFJ6TGI4NnVDd0F1NVNaMmpZS0hSM3JsR3paRkZpYXBMcTJycHp2bFpQU1k1TjI2QWFLQU1TTi1jSko4QVdOQ1JacHdZcmRyRjhvOGFzaHV4dUpLWGx3QzYwOC00VmFVcEd2TnZxN21IQ1o2ZQ?oc=5",
       "feed_id": "gnews_supply",
       "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "news.nate.com",
+      "publisher": "네이트",
       "published": "2026-09-06T00:45:00Z",
-      "summary": "롯데건설, 도곡우성 재건축 수주…올해 도시정비 4조 돌파 &nbsp;&nbsp; news.nate.com",
+      "summary": "롯데건설, 도곡우성 재건축 수주…올해 도시정비 4조 돌파 &nbsp;&nbsp; 네이트",
       "body": "",
       "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "31828eff5e21b583",
-      "title": "토토치킨 과학 탐구을 통한 요약: 원리, 방법 및 기술",
-      "url": "https://news.google.com/rss/articles/CBMiZkFVX3lxTFBINjQzVk1FRzNwSWdFd19ubm9MdXdhdEZaS1pHTnYzdm1RUmNGSTZMNlpwamljMHQ0eDRmV3NHYkVBUmk3cUltTWREWnE5eGF1UGhEbTc0OTVmRkUyZWFKc1VjMlQ4QQ?oc=5",
-      "feed_id": "gnews_policy",
-      "feed_name": "구글뉴스·부동산정책",
-      "publisher": "Calgary Roughnecks",
-      "published": "2026-09-06T00:42:46Z",
-      "summary": "토토치킨 과학 탐구을 통한 요약: 원리, 방법 및 기술 &nbsp;&nbsp; Calgary Roughnecks",
-      "body": "",
-      "source_weight": 1.3,
       "tags": []
     },
     {
@@ -2175,9 +2194,9 @@
       "url": "https://news.google.com/rss/articles/CBMijwFBVV95cUxQTnlvOVV6azZfbC1vb092aVlXd0ttY1RDTzdUVExVM3RxZTctRGVrODJTYS1SMXJzRmpqRGNRZml5eGNmVld4RFVVOXBFUWg2ODB1LUVuOXJuNzdlSk9hTUVYaVhUZl8tN0dCRktWQTFXRk5BYTdEUm4yR2ZjczB6OW1mV0FhZ0t1VTd3NW5RUQ?oc=5",
       "feed_id": "gnews_jeonse",
       "feed_name": "구글뉴스·전월세",
-      "publisher": "대한민국 정책브리핑",
+      "publisher": "korea.kr",
       "published": "2026-09-06T00:38:09Z",
-      "summary": "월세 부담 낮추고 임대 수익은 보장…'전월세 안심신탁' 출시 - 키워드 뉴스 | 뉴스 &nbsp;&nbsp; 대한민국 정책브리핑",
+      "summary": "월세 부담 낮추고 임대 수익은 보장…'전월세 안심신탁' 출시 - 키워드 뉴스 | 뉴스 &nbsp;&nbsp; korea.kr",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -2237,19 +2256,6 @@
       "tags": []
     },
     {
-      "id": "457bb24ecf5633f8",
-      "title": "광주 배팅장 : 장점, 단점 및 활용 방법",
-      "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNeFM3bUVPNW1KNVhYdHowWFBuTElkZDJYODdZRXNRLTNvcXkyV1Fpd2kwSkZ6cXJIMWVDNUhmTDQ3R3dkcXdONXhHa3h1MnR5Y1NhSTBTMXdqamd6ZmVITWtGbG1PRXRPNUtnNXhBNDNUNzNRMEFjdi1POEEwMEI4V0gzbDlJYWxKVmhOYmpnWG1VYllILTdTV0dEeEttSDh5NHlyRDhoRFdKaW0tU3IyNA?oc=5",
-      "feed_id": "gnews_supply",
-      "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "Calgary Roughnecks",
-      "published": "2026-09-06T00:04:38Z",
-      "summary": "광주 배팅장 : 장점, 단점 및 활용 방법 &nbsp;&nbsp; Calgary Roughnecks",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
       "id": "3a77496688310a83",
       "title": "이자 20만원 아끼기 vs. 한도 4천만원 올리기…금리 인상기 대출 어떻게 받을까 [머니뭐니]",
       "url": "https://news.google.com/rss/articles/CBMiVkFVX3lxTE1NTjhxbHZ0Z0hraG9GbFdGQjFoV0ZndlhxTTJVZFRPSk9iOW9EWEs1MHlaWXhHTm5wWkpnU0Rxc2o5TEZaTk95Nlk1b3hVdjh3ZkZUMFZn?oc=5",
@@ -2263,29 +2269,16 @@
       "tags": []
     },
     {
-      "id": "d2273ee188932abb",
+      "id": "714fca6affcf3530",
       "title": "국토장관 후보의 아파트, 1년 4억 올랐다는데…",
-      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTFBNV3lPMDFwbTdwMFI2anNVTWJ5SXUtdjFTRVZsR3E1aVZ1TUhiMVJLaE1sUEZIbnBjWE12NVJkSC1uTzlsTXFQc0xwUUw0cjA?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMicEFVX3lxTFBwMF91RzBaN1YtVXRiSzg1Tm56amIyd2podW4zZWEweDhUbUFJeUpOT1RwYXJ4eURWWjYtZV9FZjMzMmVnNzVSU3BZOWh4czc5TEZXR0ktbU9rR25KX1IyajJxTkZXbVlEYXVBaUVjYnU?oc=5",
       "feed_id": "gnews_policy",
       "feed_name": "구글뉴스·부동산정책",
-      "publisher": "v.daum.net",
-      "published": "2026-09-05T23:39:27Z",
-      "summary": "국토장관 후보의 아파트, 1년 4억 올랐다는데… &nbsp;&nbsp; v.daum.net",
+      "publisher": "news.bizwatch.co.kr",
+      "published": "2026-09-05T23:38:02Z",
+      "summary": "국토장관 후보의 아파트, 1년 4억 올랐다는데… &nbsp;&nbsp; news.bizwatch.co.kr",
       "body": "",
       "source_weight": 1.3,
-      "tags": []
-    },
-    {
-      "id": "04ff820670da6b10",
-      "title": "인터넷경마예상지 프리랜서를 위한 시장 분석 효율적 방법",
-      "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTFBrSkVtVVlvdTE3d0hRbzd5Y0x5bXhUQzVBRWJiV1BNWUZISVBSS2k2bXh0d0RBRWJJUTE3dlZ4bHNPdnZ4aHpkSW9FcnEzU2U2OUVnOVhMMnlYYVRBQTc3UlZtcHFkdUQzdEtV?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "Calgary Roughnecks",
-      "published": "2026-09-05T23:35:14Z",
-      "summary": "인터넷경마예상지 프리랜서를 위한 시장 분석 효율적 방법 &nbsp;&nbsp; Calgary Roughnecks",
-      "body": "",
-      "source_weight": 1.0,
       "tags": []
     },
     {
@@ -2322,9 +2315,9 @@
       "url": "https://news.google.com/rss/articles/CBMia0FVX3lxTE5lb2FJYTg2MTJxZ3lIeDdTVkxQUXhWQVg5UUxNbGVLZkluV0p4dHNvcE9aS1p0RVNuRFZXazFfNnJ2bWdvM3JyeEtPdHJIakQxRkJvc29KSnlqdHFna0dzVnJPaV9faXVBdU9r0gFvQVVfeXFMTXZvczhkVG9hbHhTTWM4ajUyWmZUbHpwNWo0V1FHcnF2UDlfMF8wYU1oTno0VDlTSHdxbkxlelhTcmNmVl9hMGJ4alJvY0hoVnhJSG9ZV3FDMTF3NVZzZDZzVk5MLWowSHI1LTR2RkZr?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "더퍼블릭",
+      "publisher": "thepublic.kr",
       "published": "2026-09-05T23:19:08Z",
-      "summary": "부동산‧개각‧메가특구 등...점점 뚜렸해지는 '당정 엇박자' &nbsp;&nbsp; 더퍼블릭",
+      "summary": "부동산‧개각‧메가특구 등...점점 뚜렸해지는 '당정 엇박자' &nbsp;&nbsp; thepublic.kr",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -2356,27 +2349,14 @@
       "tags": []
     },
     {
-      "id": "516a62b6c4e03345",
-      "title": "[2026 국감 미리보기③] “집 더 짓겠다”면서 대출은 조인다…주택정책, 공급과 금융 사이 ‘엇박자’",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE9EMkdTUkw3ZEY3eldQVmw1LU1NZzhJVnZrM2ZRQlJhVmZZaUdFUlJycHFrY3VYOF9pTnZUVUJ6cFZTTFM4X2wtWkZOS0xjTEVEVVNBS1dvSzVHblJBZjRwaGR1b2xybXhCdXVmOURB0gFuQVVfeXFMT0QyR1NSTDdkRjd6V1BWbDUtTU1nOElWdmszZlFCUmFWZllpR0VSUnJwcWtjdVg4X2lOdlRVQnpwVlNMUzhfbC1aRk5LTGNMRURVU0FLV29LNUduUkFmNHBoZHVvbHJteEJ1dWY5REE?oc=5",
-      "feed_id": "gnews_loan",
-      "feed_name": "구글뉴스·대출/금리",
-      "publisher": "뉴시안",
-      "published": "2026-09-05T22:42:51Z",
-      "summary": "[2026 국감 미리보기③] “집 더 짓겠다”면서 대출은 조인다…주택정책, 공급과 금융 사이 ‘엇박자’ &nbsp;&nbsp; 뉴시안",
-      "body": "",
-      "source_weight": 1.2,
-      "tags": []
-    },
-    {
-      "id": "3e83ac2df2a386f9",
-      "title": "맞고 사는 여자 - 시대별 변화와 영향 - 업계 전문가들의 조언",
-      "url": "https://news.google.com/rss/articles/CBMiowFBVV95cUxOT1VYLXhZQjdSelJWYnN2Mk13UF9uYmZqQVdvLUpEdGtrbkQxMFJnZGJLVmJZRk9oNEJvaDZKWVFORWJWcXAtRXNZRVRxZDlGUVV6MXY5blI0d3VEd3dobmFKYnFrSlRLUjNEc3RzUEk5N2p0T1dDX292bUFMMnBhOU41clV4Zl80UEFGVWZTTTZnc2tuNFJMQklzVy1Oak5iWmYw?oc=5",
+      "id": "2a9bd5278a9d057a",
+      "title": "‘주거 사다리’냐 ‘그림자 사금융’이냐… 두 얼굴의 전세 [비즈앤피플]",
+      "url": "https://news.google.com/rss/articles/CBMickFVX3lxTE13RVRnZTRwYUJ2S1lJektkMTZ2aGZ3ZGw3d0Y5ejhVcFNYWTZ4S244eHF2VV9sNmtKd2JpblllejFGcWRjalYwMzV2VElrX0EyVW51UlprbVFqZF93NUYyem1GM2tMVDRwTHk4OVA4d3ZNQQ?oc=5",
       "feed_id": "gnews_jeonse",
       "feed_name": "구글뉴스·전월세",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T22:29:20Z",
-      "summary": "맞고 사는 여자 - 시대별 변화와 영향 - 업계 전문가들의 조언 &nbsp;&nbsp; Histoire pour tous",
+      "publisher": "부산일보",
+      "published": "2026-09-05T23:00:00Z",
+      "summary": "‘주거 사다리’냐 ‘그림자 사금융’이냐… 두 얼굴의 전세 [비즈앤피플] &nbsp;&nbsp; 부산일보",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -2400,9 +2380,9 @@
       "url": "https://news.google.com/rss/articles/CBMigAFBVV95cUxPM2hWZnVvWFFTeFJLNU5CdWdRTFRHX3hrZjQwUVd3UVdJdmdoQVRscHRwWUtwcllmY3VxUFdWOHJRM2RBeXJCWUJTRUNqNzBKM0NvSzRmTDMzcHktaVBNLTNhcWR2ZjlCeDN5RHZzM1NxclJweWY4S3kzSndTLUpoctIBlAFBVV95cUxQSjVMaFIyYWdnQkFiSWVGWl9uMmpza0lMQ1lqZDNLS2Z1RHZwSWlQNnpLVHpUMDFMY2lid1BhWnFITUhVdkd6dXFvcDQ2SjloQmp6MU9CMmY1dHozWlVaRy04ZzFOQWh3dmtyQVowcGsyY19xMFBqbU9EWlphV0NLOERDVlZ0bjFKVXVLYWY1Sm5KbVhR?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
-      "publisher": "Chosunbiz",
+      "publisher": "biz.chosun.com",
       "published": "2026-09-05T22:05:45Z",
-      "summary": "문닫은 점포 팔려는 은행들… 알짜 입지도 줄줄이 유찰 - 조선비즈 &nbsp;&nbsp; Chosunbiz",
+      "summary": "문닫은 점포 팔려는 은행들… 알짜 입지도 줄줄이 유찰 - 조선비즈 &nbsp;&nbsp; biz.chosun.com",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -2426,24 +2406,11 @@
       "url": "https://news.google.com/rss/articles/CBMiXEFVX3lxTE85UXE3TWh3bXBqRncxaUlpMElsb29GekY0RWN0Z19mZ3QtbktYX0NrMEpGT0htTnQ4U1V6UjhoT0pwcWVqNHY5dzNXV2QxdmcyM3JiVmxpNENLVGNw0gFTQVVfeXFMTUlEc05UNFdPaTI4bU5sV203Vl9ocWRGYzBqbGVhUzdDbGNBbDlFdFpuWnRFekhnaGJwV0VqNy1WQ0R1ejV4SkZuSER2LVFnclhOS1E?oc=5",
       "feed_id": "gnews_apt_price",
       "feed_name": "구글뉴스·아파트값",
-      "publisher": "KPI뉴스",
+      "publisher": "kpinews.kr",
       "published": "2026-09-05T21:55:22Z",
-      "summary": "현대차 메타플랜트 발(發) ′사바나의 역설′…집값은 오르고 임대료는 뚝 &nbsp;&nbsp; KPI뉴스",
+      "summary": "현대차 메타플랜트 발(發) ′사바나의 역설′…집값은 오르고 임대료는 뚝 &nbsp;&nbsp; kpinews.kr",
       "body": "",
       "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "eafc7a7f2735bac9",
-      "title": "오세훈 “‘부동산 정책 실패 가리기’ 아닌지 의심”…정부 821조 예산 직격",
-      "url": "https://news.google.com/rss/articles/CBMiY0FVX3lxTFBqLVZXMVAtRUZ0aVQyWTNIWWp6Z3NTblZyZjZqNnJBMUs2RUtpTzc4b0hEbk14aU5sVWV2V3VBZUJzb0RTNUF6V2c5NDRmT2JIVUN4aHhwT0xhMks1bXdRR1RVTQ?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "쿠키뉴스",
-      "published": "2026-09-05T21:31:05Z",
-      "summary": "오세훈 “‘부동산 정책 실패 가리기’ 아닌지 의심”…정부 821조 예산 직격 &nbsp;&nbsp; 쿠키뉴스",
-      "body": "",
-      "source_weight": 1.0,
       "tags": []
     },
     {
@@ -2499,19 +2466,6 @@
       "tags": []
     },
     {
-      "id": "ffea508e49a3f3ff",
-      "title": "더힐 토토 사이트 : 흥미로운 사실과 통찰력 있는 분석",
-      "url": "https://news.google.com/rss/articles/CBMi5gFBVV95cUxQaDF3dkRUY2RYUlNZNXZtRTF4UVRYZEVZNGEydU9wTk1hM1RLc1FHN2NGYlRlZnhpbXlvQlZPOWxKUi1iVDBrYVk0enFPNmNLQUNPazlLcXpNMWFzSHFDd2g5V1Q3Z2FqV3haVFQtaTB0bkNBeHB6dGlBZTRWTXllc0stemUzeU1mbmFCaGxFNjgxdUNqZE9kRk9vcjFHUV9UcjNTeFcyTjg3UllGSlhSV01IZDA2QXpRZFY0U19lZ1JlMnE0RG05dTd1UFEzOVhPQmpsaFVKbl9za0xGWm1sM25OQjFFUQ?oc=5",
-      "feed_id": "gnews_apt_price",
-      "feed_name": "구글뉴스·아파트값",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T20:58:38Z",
-      "summary": "더힐 토토 사이트 : 흥미로운 사실과 통찰력 있는 분석 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
       "id": "057747337b11237f",
       "title": "저궤도 명당을 잡아라...우주도 '부동산 전쟁'",
       "url": "https://news.google.com/rss/articles/CBMiXkFVX3lxTFByUndoSTA4OElic0hmWG1RRk5GRkVWYlo2aklrOTMyMzdlaEl4ZkRvakhvVGhTdXhwMTJLMkVreXh0TC1MczlpZnZkUVhZVXRlcGJuWGI5RUlzYVMwWkE?oc=5",
@@ -2525,9 +2479,9 @@
       "tags": []
     },
     {
-      "id": "5d6b213c1c8fe4b6",
+      "id": "634c12af0b687579",
       "title": "서울 부동산 거짓신고 과태료 120억…43%는 아직 못 거뒀다",
-      "url": "https://news.google.com/rss/articles/CBMiT0FVX3lxTE45dlhocV9xRDhlcnVDU0c2d1d4MnZjR2haUFlheXNPcUFoR1d3ZmZpcGZtTEZhU2JFZG8xczJSaHRaZXZQbVBQWTdJZURRTEE?oc=5",
+      "url": "https://news.google.com/rss/articles/CBMiRkFVX3lxTE1yblAtaVRUOFNsSU4wU21MZHpoUm9PaG9qVGY2S2sxWkREQ1ZRaFVScHd1RHF1VFpCYi1XVG0xVDNxTVo0UGc?oc=5",
       "feed_id": "gnews_realestate",
       "feed_name": "구글뉴스·부동산",
       "publisher": "v.daum.net",
@@ -2551,68 +2505,16 @@
       "tags": []
     },
     {
-      "id": "526985cfcae1e558",
-      "title": "꽁머니 카지노 창의적 종사자를 위한 갈등 해결 이성적 사고",
-      "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxNbWcyUWtBaHFpSFVORl9GTGlIR1VQYkNqeFgxbWRCVHduRkhBN3ZLWUhSVnF5YW1Ka3ptMVNaY213b0tBYURQQmswOWctNEIwNGl3ZnRJYk1BUU9vQ1lGTXVLRHRyTWU0X2tvREtkRFMwY3hQVHNkS2tUT0V1TmtScDhOR3B2b2JUdWdxTGJZNVRfWmFnSWc?oc=5",
+      "id": "96ba369870a20ba3",
+      "title": "1xbet 보너스 포인트 : 학습 전략과 자원 - 최신 트렌드",
+      "url": "https://news.google.com/rss/articles/CBMilgFBVV95cUxORDc4bXJ1UmlNQWhJdDRlanBVTm5UTlhCaTBmYmJGNkhCeEVtbVBMRVk4cVhhTXhqWktBRGk4Ukk0S3JWbWVNMWIzdFdsdnBIV29Wb1lLbXgwa3dFdi1qcUw2NGkyUGdRMkQ0eHVWR09nQXV4ZlJTNU1CXzhLZ29aQjVZLUVFX001VTlIMlVqdVVKc0N3Mmc?oc=5",
       "feed_id": "gnews_policy",
       "feed_name": "구글뉴스·부동산정책",
       "publisher": "Histoire pour tous",
-      "published": "2026-09-05T18:23:42Z",
-      "summary": "꽁머니 카지노 창의적 종사자를 위한 갈등 해결 이성적 사고 &nbsp;&nbsp; Histoire pour tous",
+      "published": "2026-09-05T16:39:57Z",
+      "summary": "1xbet 보너스 포인트 : 학습 전략과 자원 - 최신 트렌드 &nbsp;&nbsp; Histoire pour tous",
       "body": "",
       "source_weight": 1.3,
-      "tags": []
-    },
-    {
-      "id": "1513880a4929e46a",
-      "title": "토토 텔레 마케팅 : 학습 전략과 자원 - 최신 트렌드",
-      "url": "https://news.google.com/rss/articles/CBMi3AFBVV95cUxNcjZ2T0cwTTBDcTNlbjZ2a09WT2tQYmV2cjVjV1RjM1Z0My0xOV81alprZEtGeHZCRHJOYUhFek81TElUT1g5OU1ua0ExUk5DdVdrUGNaNzNHYXRTVFFFNFd4RDhEU2c2bEZCOEhHYkhOWF90MkRjajZPaE82dDRGaFJ5Y21JY2RqQkhLQ2xRQXhGa0N0SnVIeFowMHVYM1VJeDlDZkhJbU9ZYWt6R2V4QkV0cjlQQkR4ZWdVMTAwZGdrZmFKQ0UzM2RjSXJUNTNNelYzZWM2VHFPeWJP?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T17:31:37Z",
-      "summary": "토토 텔레 마케팅 : 학습 전략과 자원 - 최신 트렌드 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "cbb6989734608647",
-      "title": "올스타 포커 연구원를 위한 비판적 사고 해결책",
-      "url": "https://news.google.com/rss/articles/CBMimgFBVV95cUxPOHhHRVpDZXV4R3Rid3Z5VGNHMU10YkZjNy1CS3BIZzNDY3Z4cjM2c00yM2ljQ0IzMF8ydXZwTXdQVG9XMEtMRDBLQmlUTVBNUDJmS000dGlGRGhIeGZnd1dlTXZWTjBLeTVCSllBUVJ5X2R6M2xLQXNUUzQ1QS1GSFhtVk13Z1hvOHRkNkZ1RkJmeXdiR0llU2Z3?oc=5",
-      "feed_id": "gnews_supply",
-      "feed_name": "구글뉴스·재건축/재개발",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T17:01:34Z",
-      "summary": "올스타 포커 연구원를 위한 비판적 사고 해결책 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "cb8d12064479cdc6",
-      "title": "토토로버스 탄소 중립을 통한 요약: 원리, 방법 및 기술",
-      "url": "https://news.google.com/rss/articles/CBMiekFVX3lxTE4xa3RwM2dlSzZ4N3lpVkZpNzZ2RG9MaGU0c29wR3loRkNEZ2lzQVJLMTU0anpBM1Z5ZWsxVlBmQVpzTy1LRmdDUWUwM2JvZzlIdk5Oc3lmVW1ib2ZDbVpNNnVVazJSRmNxdkF1ZFd4cGZwamk0RUtsc1ln?oc=5",
-      "feed_id": "gnews_policy",
-      "feed_name": "구글뉴스·부동산정책",
-      "publisher": "Calgary Roughnecks",
-      "published": "2026-09-05T16:57:33Z",
-      "summary": "토토로버스 탄소 중립을 통한 요약: 원리, 방법 및 기술 &nbsp;&nbsp; Calgary Roughnecks",
-      "body": "",
-      "source_weight": 1.3,
-      "tags": []
-    },
-    {
-      "id": "070f354ea81d4287",
-      "title": "오늘 경마 동영상 비교 팀 협업 체계적 방법",
-      "url": "https://news.google.com/rss/articles/CBMi2AFBVV95cUxOQWdyQ2QxdlltaEFaZlVJUVVLaWhXbkstdFo5Z1ZWTGNpbWlLNW96S083NFNZM0ZEVHJ1ZWZEOWQ2OVhQUDRTQkk5akJVby0xd3g5MjBNUzkzc3EwTXZfbFlZUlQtamtvSmlCSHFRZVNhcXNDbWh0MUpFX1J0ZmVnbFUzX1Bfb1VmZFBKT3VmeW50VFp6UnZ5dGpGX21hNEtXZVNPWENsSmFkcHF6SVcxVFF2R05oRUF1d1lRX1ZSTGd2YU1kMXJGQkJWdVFmSEFqdndUdnFTLWc?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T16:45:05Z",
-      "summary": "오늘 경마 동영상 비교 팀 협업 체계적 방법 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.0,
       "tags": []
     },
     {
@@ -2629,45 +2531,6 @@
       "tags": []
     },
     {
-      "id": "9294526c2e58f25d",
-      "title": "스포츠도박 의 모든 측면: 장점, 단점 및 활용 방법",
-      "url": "https://news.google.com/rss/articles/CBMibkFVX3lxTE1oanFJSmFxNkx6T29vTHh6YmxTR1BCTUI3V2hzbE5jRHd5ZEhFWjlHS3AzQ2pOdnQwcEVwWTM5NUtJODZfYm4xbFJsQ2dTckRGUkIwVExNaHVIRGFhRzlELXRRbnRXVXpOY1BvN0Rn?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T16:14:40Z",
-      "summary": "스포츠도박 의 모든 측면: 장점, 단점 및 활용 방법 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "b9906ba1e167e45b",
-      "title": "우성카지노 쿠폰 기억 기술과 비밀 풀기: 분석, 평가 및 최적화",
-      "url": "https://news.google.com/rss/articles/CBMiX0FVX3lxTE4zLXFhNUVZekNaU0VtWWdFMERQa0FDeFFlYXd3LVM1SWk5Q0FXQnUyWEcxTVQ1M1RXTzNEczQ3X01NaGR5ZUtHeHhuZzkzS21TUHZMV3djSDAyTWwtNUVR?oc=5",
-      "feed_id": "gnews_apt_price",
-      "feed_name": "구글뉴스·아파트값",
-      "publisher": "Calgary Roughnecks",
-      "published": "2026-09-05T15:55:37Z",
-      "summary": "우성카지노 쿠폰 기억 기술과 비밀 풀기: 분석, 평가 및 최적화 &nbsp;&nbsp; Calgary Roughnecks",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "a0a5d828124f0d44",
-      "title": "디아블로4 도박 고유 : 학습 전략과 자원 - 최신 트렌드",
-      "url": "https://news.google.com/rss/articles/CBMiiAJBVV95cUxPMFhoZ05FUlMycW16UW5HeGVRc1p5NGU0NmJmUUhRdl9ZclpWcUhFbVFwMk1nN01mVkxseG1pdzhkYVprYVBUalQzX3JMdXJuN0YwQ054RlBJYWVIaEpYTHhwTmthM09OU3dDRGdKbHR6clh3TUhNX0RHSlJWdC10ZjFMTTcyMU1oejl0OVFoSlR3THVFWTNOejE5ZEE3aUFOVEtFY29nN2NPZFhHVzJZRjhWbEhGWkVBUmx4YklTV1NWTklFd3UxUHFFYkZJalRKNm03R1hybWFrWi11M2REd0xmeVJMWDdmMXdXSHVreGs4dGItcVc4REt5MXlPVzloWWZvX093T04?oc=5",
-      "feed_id": "gnews_apt_price",
-      "feed_name": "구글뉴스·아파트값",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T15:55:01Z",
-      "summary": "디아블로4 도박 고유 : 학습 전략과 자원 - 최신 트렌드 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
       "id": "ab1d9edcbe12951b",
       "title": "李 지지율 호재였던 부동산, 반년 만에 최대 악재로…민심은 왜 돌아섰나",
       "url": "https://news.google.com/rss/articles/CBMilAFBVV95cUxNR2dCaXdRdWtkVE5hbENwYjlWMTRFVWpoXzRPeDFfOUYwdUVTZ3NPVlJsZXFHQ2RuT2o4S3ViVmo5Ui12Y0tKZmxUUnpCelNVZ3dVdXBSWFAxVHEwNDV2WWlVTGtLQkxGZEJNWGtVM2Q2aHQyTE5wZFVjeWMzdWw4UE5uMmVDeVVwMlR6WWQ1WjUwQm8z?oc=5",
@@ -2678,84 +2541,6 @@
       "summary": "李 지지율 호재였던 부동산, 반년 만에 최대 악재로…민심은 왜 돌아섰나 &nbsp;&nbsp; 쿠키뉴스",
       "body": "",
       "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "ebedd49a95589769",
-      "title": "‘주거 사다리’냐 ‘그림자 사금융’이냐… 두 얼굴의 전세 [비즈앤피플]",
-      "url": "https://news.google.com/rss/articles/CBMidEFVX3lxTE1BOWVvOWlmZFBzYjF0cTZ2MHpCbE5FdFlrZm1HRlBBd25rck9hTU9UOV92LTRSVUwtQWYtanhWRmY2emF5a3c0X3JwY3g2MlVYdXFGWERTaHFoSWZkQ3I2N0lYdjltcE5JRnNMdXhYZG5GRXRL?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "부산일보",
-      "published": "2026-09-05T15:29:25Z",
-      "summary": "‘주거 사다리’냐 ‘그림자 사금융’이냐… 두 얼굴의 전세 [비즈앤피플] &nbsp;&nbsp; 부산일보",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "1919c1f3b3059d81",
-      "title": "경마 용품 관리 : 흥미로운 사실과 통찰력 있는 분석",
-      "url": "https://news.google.com/rss/articles/CBMi3gFBVV95cUxNWDZzcXU2eVpBZUxydnkzNGl2VDY1T2ZUNWQzTnI2WS15eDFVZ1VIekZaNl9hVHJ2cmQtYXVVQWYySDR3S19KNDJEWEtVMWh5ckFDU2RjaUY1ZVlsZWdTNGluS3lIRjFEc2NvTUpMYl9LcHF6c3RGZ3VpVGY1cTU2QXhONDMyeGEzbXhrcU82OHpSeklQSUREQjZ5ejEzQ0FmZFdGR3J0S3A4Nm02QTJnazRjNy1ONDRPWUFqMTQyWkdvN1A0VlBxVTY3T21Wa0o3R0NKbGJiNS1ZTEd1OVE?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T14:57:24Z",
-      "summary": "경마 용품 관리 : 흥미로운 사실과 통찰력 있는 분석 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "4c519db8365e31e1",
-      "title": "토토 한폴낙 디시 시스템 아키텍처의 입문 가이드: 사상, 행동 및 결과",
-      "url": "https://news.google.com/rss/articles/CBMivgFBVV95cUxQLVB2cEV3SWphUkJUQ2Y5NEJ6b2JMZm9YQnhjNEFCcUVXcFdRb2JZZ3EzeHYyNWRrU2pkSTI5S0YyVHBUT3Z6ck5qa1hqRURjZXpBUkVqM3EtcENfNlNMUGpwOHQxMElPelhVR2U0aUxRd2I2UGZoQkx1S052REhlMjdaZHlMUnRlSnZKcHhZSkFqVlZFZ2dLRWVOVHh6X1M4THBVVVhMRWplb0VrYnlyRFNuckJGRkRKY0hudTJ3?oc=5",
-      "feed_id": "gnews_policy",
-      "feed_name": "구글뉴스·부동산정책",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T14:49:55Z",
-      "summary": "토토 한폴낙 디시 시스템 아키텍처의 입문 가이드: 사상, 행동 및 결과 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.3,
-      "tags": []
-    },
-    {
-      "id": "dee411c5470db49e",
-      "title": "넛 플러시 드로우 에 대한 궁금증을 해소하는 완벽한 가이드",
-      "url": "https://news.google.com/rss/articles/CBMiggFBVV95cUxQWGsyaEhiUzN5aGwwVXJlMWd1WkZYS3hXSVBtbVZvRzk0RWoxeGRZaXpmYWVRQzB3V1RaN3FaaXhHNjdIXzUxTHJzdUt2VTNyS0E0ZE5KbDhvcmttUFJDd0hKUk5NQXp0Nl9jQ3hqT0laOEtycTlMLU1mbGxpRGlTVjV3?oc=5",
-      "feed_id": "gnews_apt_price",
-      "feed_name": "구글뉴스·아파트값",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T14:23:47Z",
-      "summary": "넛 플러시 드로우 에 대한 궁금증을 해소하는 완벽한 가이드 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
-      "id": "37f8e47c2f9de787",
-      "title": "배팅 룸슬롯보증 의 미래: 새로운 트렌드와 발전 방향 - 스텝 바이 스텝 가이드",
-      "url": "https://news.google.com/rss/articles/CBMitgFBVV95cUxNTjdjYjJ2OGdCcDFkV19xb25lQ01rY0s4ZmZqQUl1RU4tcjFmMWZsaGstNU82VnJjZTMzUGRNTjgzSkUyNllOV2JjZ29nMExGOXRVdlJpZXNNSmlXaVVzck54clVETmgzckZXOW1xNnd0MWVrWm1RcGhweloxYi1IR1pPVjhoVjZSV0pNaUhzcjZMSHZTd3ZNcFdfSDJYSTJvZ2hOWURjaEkwQjdibVFVanVmSVBlZw?oc=5",
-      "feed_id": "gnews_loan",
-      "feed_name": "구글뉴스·대출/금리",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T13:49:27Z",
-      "summary": "배팅 룸슬롯보증 의 미래: 새로운 트렌드와 발전 방향 - 스텝 바이 스텝 가이드 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.2,
-      "tags": []
-    },
-    {
-      "id": "d1f0eb5a0e5c6465",
-      "title": "【議政】김선교 국회의원,지민희 양평군의회 의장과 \"부동산 정책간담회\"",
-      "url": "https://news.google.com/rss/articles/CBMiZEFVX3lxTE9oSzM5dUZiLThNY1gxZncyVl91bkpTd3N4VmtDUXFrYkdkUFZpZ0VYZktyR0xyVHNidlBvdXVPS21hS1pWdXZINk5kbGhVSGlCOGE0OEdtZnlQYUdJRzQ5N1pnMy0?oc=5",
-      "feed_id": "gnews_realestate",
-      "feed_name": "구글뉴스·부동산",
-      "publisher": "양평백운신문",
-      "published": "2026-09-05T13:04:22Z",
-      "summary": "【議政】김선교 국회의원,지민희 양평군의회 의장과 \"부동산 정책간담회\" &nbsp;&nbsp; 양평백운신문",
-      "body": "",
-      "source_weight": 1.0,
       "tags": []
     },
     {
@@ -2777,9 +2562,9 @@
       "url": "https://news.google.com/rss/articles/CBMiWkFVX3lxTE9PeHBid1I5SEtIMUZsN3ZBY1M1eFV3Yms2SUxBZTNSakh3eWt5OFAtY3Y2b25QZjRrWW9PUkZiNHRGM1p3VGNLcWtlMndzaVhQLTktNVRhSmR1QQ?oc=5",
       "feed_id": "gnews_chungyak",
       "feed_name": "구글뉴스·청약/분양",
-      "publisher": "한국경제",
+      "publisher": "hankyung.com",
       "published": "2026-09-05T12:22:06Z",
-      "summary": "\"8년 만에 17억 뛰었다\"…'로또' 맞은 동네 어디길래 &nbsp;&nbsp; 한국경제",
+      "summary": "\"8년 만에 17억 뛰었다\"…'로또' 맞은 동네 어디길래 &nbsp;&nbsp; hankyung.com",
       "body": "",
       "source_weight": 1.0,
       "tags": []
@@ -2798,19 +2583,6 @@
       "tags": []
     },
     {
-      "id": "4c81361ddfff5e83",
-      "title": "파생상품 도박 파악 시간 관리 종합 평가",
-      "url": "https://news.google.com/rss/articles/CBMi_wFBVV95cUxNZWx1MG1CMWk4bURGSnFheDNRZEJhQmgwZFVaVWlDSk1KaEJpNHZ6LU9mUmtqMFpJVnMzM0NrT3ZCdUZvSzQ5MUZHVnUtVG9GNm5Vd1E5WGs5UkRJd0t0dUNOTVV0RnNiRzE5N3JWbFFidlE4ZEg2b3VrdWhtWG0xQk1fN29vVUp6LUR1cEM4VEhUcjF1VEN6aFRkREZ4M0FFQVBUN1ZFbGdjVEJWcFpOOG1kbmZlSjhGSGwxWWpSU3RNbklVTWJLN0cwQTJWaUJIUXpBTW9JY1pub085aXM2X2c1SzZGNHdFZUdMU2JWOEFYQk9MdTBrcnp1bW9WOGs?oc=5",
-      "feed_id": "gnews_apt_price",
-      "feed_name": "구글뉴스·아파트값",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T11:48:48Z",
-      "summary": "파생상품 도박 파악 시간 관리 종합 평가 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.1,
-      "tags": []
-    },
-    {
       "id": "39cbe78f457bb622",
       "title": "15억 넘으면 대출 2억 '뚝'…눈에 보이지 않는 경계선 생겨",
       "url": "https://www.hankyung.com/article/2026090560137",
@@ -2821,32 +2593,6 @@
       "summary": "",
       "body": "",
       "source_weight": 1.2,
-      "tags": []
-    },
-    {
-      "id": "26938ef8216884e2",
-      "title": "한게임 섯다 도박 : 장점, 단점 및 활용 방법",
-      "url": "https://news.google.com/rss/articles/CBMie0FVX3lxTFBVYXZlVnpIeXJjTVRybGRRRjRNRUVuRWFzeUtjRjJNaFR3Q1U4V0VWSW9RWnIzWDRYaTVDbkV2ejlMeEcwSHlZdndIS0k3Rmp1NUFmU2RfRTQxbi1sRGxtU0hHUE9hSlRhR2VySExISFJ4V25HQm4tUTYzOA?oc=5",
-      "feed_id": "gnews_jeonse",
-      "feed_name": "구글뉴스·전월세",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T11:05:41Z",
-      "summary": "한게임 섯다 도박 : 장점, 단점 및 활용 방법 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.0,
-      "tags": []
-    },
-    {
-      "id": "7aff97ad108355b3",
-      "title": "꽁 머니슬롯보증 : 실용적인 팁과 전략 - 스텝 바이 스텝 가이드",
-      "url": "https://news.google.com/rss/articles/CBMisAFBVV95cUxNQ3BBbktBWURYa05scUlRYVZCOTQ2dFhMelN5eFJfc0dyT3ZxVWRRRkR1ZXk1Tm5raUZDUGxVbjlvUkhfdTdiUHRCLUNpcmFuMHNqR25QaEhhNXotX0RwSHZid2lhZWNHWlFDdVNLbG1PNmxnVUpwM3N1VklkUVhsT25rSnEtQVlHWElTbVZCV05fT2FadnFlbi1iZkxmOEZGc1FKV1VGUFNXc0lNYWlUNQ?oc=5",
-      "feed_id": "gnews_apt_price",
-      "feed_name": "구글뉴스·아파트값",
-      "publisher": "Histoire pour tous",
-      "published": "2026-09-05T10:59:45Z",
-      "summary": "꽁 머니슬롯보증 : 실용적인 팁과 전략 - 스텝 바이 스텝 가이드 &nbsp;&nbsp; Histoire pour tous",
-      "body": "",
-      "source_weight": 1.1,
       "tags": []
     },
     {
@@ -2871,19 +2617,6 @@
       "publisher": "",
       "published": "2026-09-05T08:29:35Z",
       "summary": "",
-      "body": "",
-      "source_weight": 1.2,
-      "tags": []
-    },
-    {
-      "id": "ccca4e2bf0470bd2",
-      "title": "“8년 만에 17억 벌었다”...‘롯데캐슬’ 아닌 ‘로또캐슬’ 어디길래",
-      "url": "https://www.mk.co.kr/news/realestate/12145065",
-      "feed_id": "mk_realestate",
-      "feed_name": "매일경제·부동산",
-      "publisher": "",
-      "published": "2026-09-05T06:26:38Z",
-      "summary": "경기 화성시 동탄구 ‘동탄역 롯데캐슬’ 전용면적 84㎡가 22억2500만원에 최근 거래되며 최고가를 새로 썼다. 지난 2017년 동일 면적 최고 4억8200만원이었던 분양가와 비교..",
       "body": "",
       "source_weight": 1.2,
       "tags": []

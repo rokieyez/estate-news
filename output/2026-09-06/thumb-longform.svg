@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720" font-family="'Apple SD Gothic Neo','Noto Sans KR',system-ui,-apple-system,sans-serif">
+<rect width="1280" height="720" fill="#fcfcfb"/>
+<rect x="0" y="0" width="1280" height="720" fill="#fcfcfb"/>
+<rect x="72" y="267" width="14" height="127" rx="4" fill="#256abf"/>
+<text x="72" y="102" font-size="32" font-weight="700" fill="#256abf">부동산 브리핑</text>
+<text x="116" y="359" font-size="108" font-weight="800" fill="#0b0b0b">22개구 종부세</text>
+<text x="72" y="658" font-size="28" fill="#898781">2026-09-06</text>
+</svg>

@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="560" viewBox="0 0 1000 560" font-family="'Apple SD Gothic Neo','Noto Sans KR',system-ui,-apple-system,sans-serif">
+<rect width="1000" height="560" fill="#fcfcfb"/>
+<text x="90" y="76" font-size="38" font-weight="700" fill="#0b0b0b">임대주택 공급, 최근 3년 사이</text>
+<text x="90" y="164" font-size="72" font-weight="700" fill="#d03b3b">▼ 81%<tspan font-size="30" font-weight="400" fill="#52514e"> 감소</tspan></text>
+<text x="90" y="205" font-size="19" fill="#52514e">임대주택 공급 감소율 · 최근 3년</text>
+<text x="90" y="268" font-size="17" fill="#898781">지수 비교 · 최근 3년 전을 100으로 두었을 때</text>
+<text x="232" y="338" font-size="21" text-anchor="end" fill="#52514e">최근 3년 전</text>
+<path d="M250,300 H806.0 A4,4 0 0 1 810.0,304 V352 A4,4 0 0 1 806.0,356 H250 Z" fill="#256abf"/>
+<text x="792" y="338" font-size="26" font-weight="700" text-anchor="end" fill="#ffffff">100</text>
+<text x="232" y="416" font-size="21" text-anchor="end" fill="#52514e">현재</text>
+<path d="M250,378 H352.4 A4,4 0 0 1 356.4,382 V430 A4,4 0 0 1 352.4,434 H250 Z" fill="#cde2fb"/>
+<text x="338.4" y="416" font-size="26" font-weight="700" text-anchor="end" fill="#ffffff">19</text>
+<line x1="250" y1="296" x2="250" y2="434" stroke="#c3c2b7" stroke-width="2"/>
+<text x="90" y="492" font-size="16" fill="#898781">※ 보도된 감소율(81%)로 지수화한 값입니다. 구간별 실제 수치는 보도에 제시되지 않았습니다.</text>
+<text x="90" y="518" font-size="16" fill="#898781">출처 매일경제 · 2026-09-06 보도 — 기사 제목에 제시된 수치</text>
+</svg>

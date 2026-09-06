@@ -17,6 +17,8 @@ collect:
   fetch_body_top_n: 20      # 상위 N개 기사만 본문 수집 (속도/차단 고려)
   body_max_chars: 4000
   user_agent: "Mozilla/5.0 (compatible; rebrief/1.0; +https://github.com/rokieyez/estate-news)"
+  check_links: true         # 선정된 이슈의 기사 링크가 열리는지 HEAD 요청으로 확인
+  check_links_max: 60       # 점검할 링크 상한 (시간 고려)
 
 cluster:
   # 제목 유사도(글자 2-gram Dice) 임계값. 이 값 이상이면 같은 사건으로 봅니다.
@@ -40,6 +42,17 @@ llm:
   effort: high              # low | medium | high | xhigh | max
   max_tokens: 16000
   timeout_seconds: 600
+  krw_per_usd: 1400         # INDEX.md 비용 표시에 쓰는 환율 (대략값)
+
+images:
+  enabled: true             # 수치를 인포그래픽 SVG 로 자동 생성
+  max: 3                    # 하루 최대 장수 (블로그 이미지 자리 수에 맞춤)
+  png: true                 # 네이버에 올리려면 PNG 가 필요합니다 (크롬이 있을 때만 변환)
+  png_scale: 2              # 2배 해상도
+  thumbnails: true          # 롱폼(1280×720)·쇼츠(1080×1920) 표지 이미지
+
+site:
+  url: "https://www.rokiz.net/estate-news/"   # 알림 메시지에 붙는 사이트 주소
 
 output:
   dir: output
@@ -63,6 +76,8 @@ video:
     - "확실한 수익"
     - "추천 종목"
   cta: "도움이 되셨다면 구독과 알림 설정 부탁드립니다."
+  draft: true               # 자막 카드를 이어 붙인 쇼츠 초안 mp4 (ffmpeg·크롬이 있을 때만)
+  draft_fps: 30
 
 blog:
   # 발행 플랫폼. 글의 문체와 산출 파일이 달라집니다.

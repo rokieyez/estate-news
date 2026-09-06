@@ -130,14 +130,28 @@ class DailyBrief(BaseModel):
 # ── 콘텐츠 단계 (Claude 구조화 출력) ────────────────────────
 
 
+class ImageSlot(BaseModel):
+    """본문의 [이미지: …] 자리 하나. 수치 그림 자리면 어떤 수치인지 라벨로 못박는다."""
+
+    description: str = Field(description="어떤 이미지를 넣을지 설명. 본문의 [이미지: …] 안 문장과 같게")
+    datapoint_label: str = Field(
+        default="",
+        description=(
+            "이 자리가 브리핑의 수치(issues[].numbers[].label)를 그림으로 보여주는 자리라면 "
+            "그 label 을 글자 그대로. 현장 사진·캡처 같은 자리면 빈 문자열"
+        ),
+    )
+
+
 class BlogPost(BaseModel):
     title: str = Field(description="블로그 제목. 검색 유입을 고려하되 낚시성 금지")
     slug: str = Field(description="영문 소문자 하이픈 슬러그")
     meta_description: str = Field(description="검색결과 설명문. 80~120자")
     tags: list[str] = Field(description="태그 목록. 개수는 지시에 따름")
     body_markdown: str = Field(description="마크다운 본문. H2/H3 소제목, 표, 불릿 활용")
-    image_notes: list[str] = Field(
-        description="본문에 넣을 이미지 제안. body_markdown 안의 [이미지: ...] 자리와 같은 순서. 없으면 빈 배열"
+    image_slots: list[ImageSlot] = Field(
+        default_factory=list,
+        description="body_markdown 안의 [이미지: …] 자리와 같은 순서. 없으면 빈 배열",
     )
 
 
@@ -181,3 +195,19 @@ class LongformScript(BaseModel):
 class VideoPack(BaseModel):
     shorts: ShortsScript
     longform: LongformScript
+
+
+# ── 주간 결산 (Claude 구조화 출력) ──────────────────────────
+
+
+class WeeklyReview(BaseModel):
+    """일주일치 브리핑을 묶은 결산 글."""
+
+    title: str = Field(description="블로그 제목. '이번 주 부동산' 이 들어가면 좋다. 25~35자")
+    slug: str = Field(description="영문 소문자 하이픈 슬러그")
+    meta_description: str = Field(description="검색결과 설명문. 80~120자")
+    five_lines: list[str] = Field(description="이번 주를 다섯 줄로. 각 줄 40자 이내, 숫자 포함")
+    body_markdown: str = Field(description="마크다운 본문. 요일 순이 아니라 주제 순으로 묶는다")
+    next_week_watch: list[str] = Field(description="다음 주에 볼 일정·지표 2~4개")
+    tags: list[str] = Field(description="태그 목록")
+

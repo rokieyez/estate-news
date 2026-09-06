@@ -65,6 +65,9 @@
     border: 2px dashed #c9cdd2; border-radius: 8px;
     background: #fafbfc; color: #6b7178; font-size: 14px;
   }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
   .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
   .hint {
     max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
@@ -103,7 +106,9 @@
       <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다</li>
       <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
       <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
-      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
       <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
     </ol>
     이 안내문은 복사에 포함되지 않습니다.
@@ -117,10 +122,22 @@ document.querySelectorAll("[data-copy]").forEach(function (btn) {
     var node = document.getElementById(btn.dataset.copy);
     if (!node) return;
 
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    var copyNode = node;
+    var clone = null;
+    if (node.querySelector(".nocopy")) {
+      clone = node.cloneNode(true);
+      clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+      clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+      document.body.appendChild(clone);
+      copyNode = clone;
+    }
+
     // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
     // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
     var range = document.createRange();
-    range.selectNodeContents(node);
+    range.selectNodeContents(copyNode);
     var sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
@@ -128,9 +145,11 @@ document.querySelectorAll("[data-copy]").forEach(function (btn) {
     var ok = false;
     try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
     sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    if (clone) clone.remove();
 
     if (!ok && navigator.clipboard) {
-      navigator.clipboard.writeText(node.innerText).then(flash, function () {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
         alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
       });
       return;

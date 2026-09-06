@@ -2,6 +2,10 @@
 
 기사 {{ stats.articles }}건 · 매체 {{ stats.publishers }}곳 · 피드 {{ stats.feeds_ok }}/{{ stats.feeds_total }}개 정상
 
+{% if checked_links %}
+링크 점검 {{ checked_links }}개 중 {% if dead_links %}**{{ dead_links|length }}개 열리지 않음** — 아래 ⚠️ 표시{% else %}전부 정상{% endif %}
+
+{% endif %}
 {% if feed_errors %}
 > 실패한 피드: {% for f in feed_errors %}`{{ f.id }}`{% if not loop.last %}, {% endif %}{% endfor %}
 > — `python -m rebrief doctor` 로 확인 후 `config/sources.yaml` 에서 꺼두세요.
@@ -15,7 +19,7 @@
 `{{ c.categories|join(' · ') or '미분류' }}` · 보도 {{ c.size }}건 · 점수 {{ '%.2f'|format(c.score) }}
 
 {% for a in c.articles %}
-- [{{ a.publisher or a.feed_name }}] [{{ a.title }}]({{ a.url }}){% if a.published %} — {{ a.published.strftime('%m-%d %H:%M') }}{% endif %}
+- [{{ a.publisher or a.feed_name }}] [{{ a.title }}]({{ a.url }}){% if a.published %} — {{ a.published.strftime('%m-%d %H:%M') }}{% endif %}{% if a.url in dead_links %} ⚠️ 열리지 않음 ({{ dead_links[a.url] }}){% endif %}
 
 {% endfor %}
 {% endfor %}

@@ -1,0 +1,65 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="906" viewBox="0 0 1000 906" font-family="'Apple SD Gothic Neo','Noto Sans KR',system-ui,-apple-system,sans-serif">
+<rect width="1000" height="906" fill="#fcfcfb"/>
+<text x="90" y="76" font-size="38" font-weight="700" fill="#0b0b0b">2030년 종부세 과세 대상 서울 자치구</text>
+<text x="90" y="118" font-size="21" fill="#52514e">종부세 확산 경고와 기업형 임대 세제완화</text>
+<rect x="90" y="146" width="17" height="17" rx="4" fill="#256abf"/>
+<text x="115" y="160" font-size="18" fill="#52514e">대상 22개구</text>
+<rect x="255" y="146" width="17" height="17" rx="4" fill="#fcfcfb" stroke="#c3c2b7" stroke-width="2"/>
+<text x="280" y="160" font-size="18" fill="#52514e">제외 3개구 (강북·금천·도봉)</text>
+<rect x="504" y="200" width="130" height="86" rx="8" fill="#fcfcfb" stroke="#c3c2b7" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="569" y="247" font-size="23" text-anchor="middle" fill="#52514e">도봉</text>
+<text x="569" y="270" font-size="15" text-anchor="middle" fill="#898781">제외</text>
+<rect x="642" y="200" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="707" y="252" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">노원</text>
+<rect x="228" y="294" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="293" y="346" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">은평</text>
+<rect x="366" y="294" width="130" height="86" rx="8" fill="#fcfcfb" stroke="#c3c2b7" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="431" y="341" font-size="23" text-anchor="middle" fill="#52514e">강북</text>
+<text x="431" y="364" font-size="15" text-anchor="middle" fill="#898781">제외</text>
+<rect x="504" y="294" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="569" y="346" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">성북</text>
+<rect x="642" y="294" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="707" y="346" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">중랑</text>
+<rect x="228" y="388" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="293" y="440" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">서대문</text>
+<rect x="366" y="388" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="431" y="440" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">종로</text>
+<rect x="504" y="388" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="569" y="440" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">동대문</text>
+<rect x="642" y="388" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="707" y="440" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">광진</text>
+<rect x="90" y="482" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="155" y="534" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">강서</text>
+<rect x="228" y="482" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="293" y="534" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">마포</text>
+<rect x="366" y="482" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="431" y="534" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">중구</text>
+<rect x="504" y="482" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="569" y="534" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">성동</text>
+<rect x="642" y="482" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="707" y="534" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">송파</text>
+<rect x="780" y="482" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="845" y="534" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">강동</text>
+<rect x="90" y="576" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="155" y="628" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">양천</text>
+<rect x="228" y="576" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="293" y="628" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">영등포</text>
+<rect x="366" y="576" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="431" y="628" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">용산</text>
+<rect x="504" y="576" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="569" y="628" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">서초</text>
+<rect x="642" y="576" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="707" y="628" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">강남</text>
+<rect x="90" y="670" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="155" y="722" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">구로</text>
+<rect x="228" y="670" width="130" height="86" rx="8" fill="#fcfcfb" stroke="#c3c2b7" stroke-width="2" stroke-dasharray="6 4"/>
+<text x="293" y="717" font-size="23" text-anchor="middle" fill="#52514e">금천</text>
+<text x="293" y="740" font-size="15" text-anchor="middle" fill="#898781">제외</text>
+<rect x="366" y="670" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="431" y="722" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">동작</text>
+<rect x="504" y="670" width="130" height="86" rx="8" fill="#256abf"/>
+<text x="569" y="722" font-size="24" font-weight="600" text-anchor="middle" fill="#ffffff">관악</text>
+<text x="90" y="790" font-size="16" fill="#898781">※ 실제 지형이 아닌 위치 도식입니다. 칸의 모양·크기는 면적과 무관합니다.</text>
+<text x="90" y="816" font-size="16" fill="#898781">※ 강북·금천·도봉 3개구만 제외</text>
+<text x="90" y="842" font-size="16" fill="#898781">출처 뉴스1 · 2026-09-06 보도</text>
+</svg>

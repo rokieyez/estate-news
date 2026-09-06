@@ -23,6 +23,7 @@ from rebrief.models import (
     CaptionLine,
     DailyBrief,
     DataPoint,
+    ImageSlot,
     IssueBrief,
     LongformScript,
     LongformSection,
@@ -39,54 +40,7 @@ RUN_DATE = "2026-09-06"
 # ── 픽스처 ───────────────────────────────────────────────────
 
 
-class FakeResponse:
-    def __init__(self, content: bytes, status_code: int = 200):
-        self.content = content
-        self.text = content.decode("utf-8")
-        self.status_code = status_code
-        self.encoding = "utf-8"
-        self.apparent_encoding = "utf-8"
-
-    def raise_for_status(self):
-        if self.status_code >= 400:
-            import requests
-
-            raise requests.HTTPError(f"HTTP {self.status_code}")
-
-
-@pytest.fixture
-def feed_bytes() -> bytes:
-    """발행 시각을 '방금'으로 채운 RSS 본문."""
-    recent = format_datetime(datetime.now(timezone.utc) - timedelta(hours=2))
-    return FIXTURE.read_text(encoding="utf-8").replace("__PUBDATE__", recent).encode("utf-8")
-
-
-@pytest.fixture
-def cfg(tmp_path: Path) -> Config:
-    """실제 config/ 를 읽되 출력·상태 경로만 임시 폴더로 돌린다."""
-    real = load_config()
-    settings = json.loads(json.dumps(real.settings, default=str))
-    settings["output"]["dir"] = str(tmp_path / "output")
-    settings["collect"]["fetch_body"] = False        # 본문 수집은 네트워크가 필요
-    settings["run"]["skip_recent_days"] = 0
-
-    # 피드는 픽스처 하나만 쓴다.
-    sources = yaml.safe_load(yaml.safe_dump(real.sources, allow_unicode=True))
-    sources["feeds"] = [
-        {"id": "fixture", "name": "테스트피드", "url": "https://example.test/rss", "weight": 1.0}
-    ]
-
-    config = Config(settings=settings, sources=sources, config_dir=real.config_dir)
-    config.repo_root = tmp_path
-    return config
-
-
-@pytest.fixture(autouse=True)
-def stub_network(monkeypatch, feed_bytes):
-    def fake_get(url, **kwargs):
-        return FakeResponse(feed_bytes)
-
-    monkeypatch.setattr("rebrief.collect.requests.get", fake_get)
+# (공용 픽스처 FakeResponse / feed_bytes / cfg / stub_network 는 conftest.py 에 있다)
 
 
 # ── 수집 · 정규화 ────────────────────────────────────────────
@@ -300,7 +254,8 @@ def make_post() -> BlogPost:
             "## 오늘의 체크포인트\n\n"
             "- 하락폭 축소\n- 관망 지속\n"
         ),
-        image_notes=["한국부동산원 주간 통계 화면 캡처"],
+        image_slots=[ImageSlot(description="한국부동산원 주간 통계 화면 캡처",
+                               datapoint_label="서울 아파트 주간 매매가격 변동률")],
     )
 
 
@@ -442,6 +397,20 @@ class FakeGenerator:
     def generate_video(self, brief):
         self.calls.append("video")
         return make_pack()
+
+    def generate_weekly(self, days, week_label):
+        self.calls.append("weekly")
+        self.usage.calls += 1
+        from rebrief.models import WeeklyReview
+        return WeeklyReview(
+            title=f"이번 주 부동산 다섯 줄, {week_label}",
+            slug=f"weekly-{week_label.lower()}",
+            meta_description="일주일치 부동산 뉴스를 다섯 줄과 주제별로 정리했습니다.",
+            five_lines=[f"{d['date']} {d.get('headline', '')}" for d in days][:5],
+            body_markdown="## 가격\n\n서울 아파트값이 3주 연속 내렸습니다.\n\n## 다음 주 볼 것\n\n- 주간 통계",
+            next_week_watch=["한국부동산원 주간 통계"],
+            tags=["부동산", "주간결산"],
+        )
 
 
 def test_llm_path_writes_every_artifact(cfg, monkeypatch):
@@ -656,3 +625,104 @@ def test_volume_cap_is_applied(cfg):
     uncapped_gap = big.score - small.score
 
     assert capped_gap < uncapped_gap, "상한이 점수 차이를 줄이지 못했습니다"
+
+
+# ── 인포그래픽 연결 ──────────────────────────────────────────
+
+
+def test_llm_실행이_인포그래픽까지_만든다(cfg, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
+    pipeline.run(cfg, run_date=RUN_DATE, use_llm=True)
+
+    out = cfg.output_dir / RUN_DATE
+    svgs = sorted(out.glob("img-*.svg"))
+    assert svgs, "이미지가 하나도 생성되지 않았습니다"
+    # 가짜 글의 이미지 자리 1번이 변동률 수치를 가리키므로 자리 번호가 붙은 카드가 나온다
+    assert svgs[0].name == "img-1-stat-card.svg"
+    assert "-0.03" in svgs[0].read_text(encoding="utf-8")
+    # png: false 로 껐으므로 PNG 는 없어야 한다 → 본문은 SVG 파일명을 가리킨다
+    assert not list(out.glob("img-*.png"))
+    blog = (out / "blog.md").read_text(encoding="utf-8")
+    assert "![한국부동산원 주간 통계 화면 캡처](img-1-stat-card.svg)" in blog
+    naver = (out / "blog-naver.html").read_text(encoding="utf-8")
+    assert "imgslot has-file" in naver and 'class="preview nocopy" src="img-1-stat-card.svg"' in naver
+    # 썸네일 두 장
+    assert (out / "thumb-longform.svg").exists() and (out / "thumb-shorts.svg").exists()
+
+
+def test_설정으로_인포그래픽을_끌_수_있다(cfg, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
+    cfg.settings.setdefault("images", {})["enabled"] = False
+    pipeline.run(cfg, run_date=RUN_DATE, use_llm=True)
+
+    assert not list((cfg.output_dir / RUN_DATE).glob("img-*"))
+
+
+# ── 주간 결산 ────────────────────────────────────────────────
+
+
+def _seed_days(cfg, dates):
+    for d in dates:
+        day = cfg.output_dir / d
+        day.mkdir(parents=True, exist_ok=True)
+        (day / "data.json").write_text(json.dumps({
+            "date": d, "headline": f"{d} 헤드라인", "market_temperature": "보합",
+            "issues": [{"title": "이슈", "category": "가격동향", "one_liner": "한 줄", "numbers": []}],
+            "datapoints": [],
+        }, ensure_ascii=False), encoding="utf-8")
+
+
+def test_주간_결산은_사흘_미만이면_만들지_않는다(cfg):
+    from rebrief.weekly import run_weekly
+    _seed_days(cfg, ["2026-09-05", "2026-09-06"])
+    result = run_weekly(cfg, end_date="2026-09-06", use_llm=False)
+    assert result.days == 2 and not result.files
+    assert any("3일" in w for w in result.warnings)
+
+
+def test_키가_없으면_프롬프트_팩만_남긴다(cfg, monkeypatch):
+    from rebrief.weekly import run_weekly
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    _seed_days(cfg, ["2026-09-01", "2026-09-03", "2026-09-06", "2026-08-20"])   # 8-20 은 범위 밖
+    result = run_weekly(cfg, end_date="2026-09-06", use_llm=False)
+    assert result.week == "2026-W36" and result.days == 3
+    names = {p.name for p in result.files}
+    assert names == {"data.json", "weekly-prompt-pack.md"}
+    pack = (result.out_dir / "weekly-prompt-pack.md").read_text(encoding="utf-8")
+    assert "2026-09-01 헤드라인" in pack and "2026-08-20" not in pack
+
+
+def test_주간_결산_LLM_경로(cfg, monkeypatch):
+    from rebrief.weekly import run_weekly
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.weekly.ContentGenerator", FakeGenerator)
+    _seed_days(cfg, ["2026-09-02", "2026-09-04", "2026-09-06"])
+
+    result = run_weekly(cfg, end_date="2026-09-06", use_llm=True)
+    assert result.llm_used and not result.warnings, result.warnings
+    out = result.out_dir
+    md = (out / "weekly.md").read_text(encoding="utf-8")
+    assert "이번 주 다섯 줄" in md and "2026-09-06 헤드라인" in md and "다음 주 볼 것" in md
+    naver = (out / "weekly-naver.html").read_text(encoding="utf-8")
+    assert "이번 주 부동산 다섯 줄" in naver and "#주간결산" in naver
+    # 비용은 weekly 로 구분해 기록된다
+    costs = json.loads((cfg.state_dir / "costs.json").read_text(encoding="utf-8"))
+    assert costs["entries"][-1]["kind"] == "weekly"
+    # INDEX 에 주간 절이 붙는다
+    assert "## 주간 결산" in (cfg.output_dir / "INDEX.md").read_text(encoding="utf-8")
+
+
+def test_사이트에_주간_결산이_실린다(cfg, monkeypatch, tmp_path):
+    from rebrief.site import build_site
+    from rebrief.weekly import run_weekly
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.weekly.ContentGenerator", FakeGenerator)
+    _seed_days(cfg, ["2026-09-02", "2026-09-04", "2026-09-06"])
+    run_weekly(cfg, end_date="2026-09-06", use_llm=True)
+
+    dest = build_site(cfg, tmp_path / "site")
+    assert (dest / "weekly" / "2026-W36" / "weekly-naver.html").exists()
+    assert (dest / "weekly" / "2026-W36" / "weekly.html").exists()
+    assert "주간 결산 (1주)" in (dest / "index.html").read_text(encoding="utf-8")

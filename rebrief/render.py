@@ -11,6 +11,7 @@ from pathlib import Path
 import markdown as markdown_lib
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
+from . import images as images_mod
 from .config import Config
 from .models import BlogPost, CaptionLine, Cluster, DailyBrief, VideoPack
 
@@ -66,12 +67,14 @@ class Renderer:
             generated_at=_now(),
         )
 
-    def blog(self, post: BlogPost, clusters: list[Cluster]) -> Path:
+    def blog(self, post: BlogPost, clusters: list[Cluster],
+             slot_files: dict[int, str] | None = None) -> Path:
         blog_cfg = self.cfg.get("blog", {}) or {}
         return self._write(
             "blog.md",
             "blog.md.j2",
             post=post,
+            body_markdown=place_images_markdown(post.body_markdown, slot_files or {}),
             clusters=clusters,
             date=self.date,
             frontmatter=bool(blog_cfg.get("frontmatter", True)),
@@ -79,16 +82,17 @@ class Renderer:
             disclaimer=blog_cfg.get("disclaimer", ""),
         )
 
-    def blog_naver(self, post: BlogPost) -> Path:
+    def blog_naver(self, post: BlogPost, slot_files: dict[int, str] | None = None,
+                   filename: str = "blog-naver.html") -> Path:
         """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
         blog_cfg = self.cfg.get("blog", {}) or {}
         return self._write(
-            "blog-naver.html",
+            filename,
             "blog_naver.html.j2",
             post=post,
             date=self.date,
             category=blog_cfg.get("category", "부동산"),
-            body_html=to_naver_html(post.body_markdown),
+            body_html=to_naver_html(post.body_markdown, slot_files or {}),
             hashtags=format_hashtags(post.tags),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
                 "write_url", "https://blog.naver.com/"
@@ -145,7 +149,10 @@ class Renderer:
         stats: RenderStats,
         feed_errors: list[dict],
         leftovers: list,
+        link_status: dict | None = None,
     ) -> Path:
+        link_status = link_status or {}
+        dead = {url: st.note for url, st in link_status.items() if not st.ok}
         return self._write(
             "sources.md",
             "sources.md.j2",
@@ -154,6 +161,8 @@ class Renderer:
             feed_errors=feed_errors,
             leftovers=leftovers,
             date=self.date,
+            dead_links=dead,
+            checked_links=len(link_status),
         )
 
     def data_json(self, brief: DailyBrief) -> Path:
@@ -175,6 +184,79 @@ class Renderer:
         return self._write_raw(
             "data.json", json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
         )
+
+    def images(self, brief: DailyBrief, history: list[dict] | None = None,
+               post: BlogPost | None = None) -> dict[int, str]:
+        """수치를 인포그래픽으로 만든다. 블로그 글이 있으면 그 이미지 자리에 맞춰 만든다.
+
+        돌려주는 값은 {자리 번호: 파일명}. 그릴 게 없는 날은 빈 dict.
+        """
+        cfg = self.cfg.get("images", {}) or {}
+        if not cfg.get("enabled", True):
+            return {}
+        datapoints = flatten_datapoints(brief)
+        limit = int(cfg.get("max", 3))
+        slot_labels = [s.datapoint_label for s in (post.image_slots if post else [])]
+        by_slot, extras = images_mod.build_for_slots(
+            datapoints, self.date, slot_labels,
+            headline=brief.headline, history=history or [], limit=limit,
+        ) if slot_labels else ({}, images_mod.build(
+            datapoints, self.date, headline=brief.headline, limit=limit, history=history or [],
+        ))
+
+        slot_files: dict[int, str] = {}
+        for slot_no, img in by_slot.items():
+            slot_files[slot_no] = self._write_image(img, cfg)
+        for img in extras:
+            self._write_image(img, cfg)
+        return slot_files
+
+    def thumbnails(self, pack: VideoPack) -> list[Path]:
+        """롱폼·쇼츠 표지. 제목 후보와 썸네일 문구는 대본 생성 때 이미 나와 있다."""
+        cfg = self.cfg.get("images", {}) or {}
+        if not cfg.get("enabled", True) or not cfg.get("thumbnails", True):
+            return []
+        channel = str((self.cfg.get("video", {}) or {}).get("channel_name", "") or "")
+        jobs = []
+        if pack.longform.thumbnail_texts:
+            jobs.append(("thumb-longform", pack.longform.thumbnail_texts[0],
+                         (pack.longform.title_candidates or [""])[0], (1280, 720)))
+        if pack.shorts.title_candidates:
+            jobs.append(("thumb-shorts", pack.shorts.title_candidates[0], pack.shorts.hook, (1080, 1920)))
+        paths: list[Path] = []
+        for slug, text, sub, size in jobs:
+            img = images_mod.thumbnail(text, sub=sub, channel=channel, date=self.date, size=size)
+            img.slug = slug
+            self._write_image(img, cfg, prefix="")
+            paths.append(self.out_dir / f"{slug}.svg")
+        return paths
+
+    def shorts_draft(self, pack: VideoPack) -> Path | None:
+        """자막 카드를 이어 붙인 쇼츠 초안 mp4. ffmpeg·크롬이 없으면 None."""
+        video_cfg = self.cfg.get("video", {}) or {}
+        if not video_cfg.get("draft", True):
+            return None
+        from .video import build_shorts_draft
+
+        pngs = sorted(self.out_dir.glob("img-*.png"))
+        path = build_shorts_draft(
+            self.out_dir, pack.shorts, pngs,
+            channel=str(video_cfg.get("channel_name", "") or ""),
+            fps=int(video_cfg.get("draft_fps", 30)),
+        )
+        if path:
+            self.written.append(path)
+        return path
+
+    def _write_image(self, img, cfg: dict, prefix: str = "img-") -> str:
+        """SVG 를 쓰고, 되면 PNG 도 쓴다. 본문에서 가리킬 파일명(PNG 우선)을 돌려준다."""
+        svg = self._write_raw(f"{prefix}{img.slug}.svg", img.svg)
+        if cfg.get("png", True):
+            png = svg.with_suffix(".png")
+            if images_mod.svg_to_png(svg, png, int(cfg.get("png_scale", 2))):
+                self.written.append(png)
+                return png.name
+        return svg.name
 
     def prompt_pack(self, text: str) -> Path:
         return self._write_raw("prompt-pack.md", text)
@@ -200,26 +282,54 @@ _IMAGE_SLOT = re.compile(r"<p>\s*\[이미지\s*:\s*(.*?)\]\s*</p>", re.DOTALL)
 _IMAGE_SLOT_INLINE = re.compile(r"\[이미지\s*:\s*(.*?)\]", re.DOTALL)
 
 
-def to_naver_html(body_markdown: str) -> str:
+def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None) -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
     제목·표·굵게·목록을 그대로 받아들이므로, 의미 태그(h2/table/strong/ul)로
     변환해 두고 브라우저에서 복사하게 한다.
+
+    slot_files 가 있으면 해당 자리의 점선 상자에 파일명을 적고, 그 아래 미리보기
+    이미지를 붙인다. 미리보기는 복사에 포함되지 않는다(class="nocopy").
     """
     html = markdown_lib.markdown(
         body_markdown or "",
         extensions=["tables", "sane_lists"],
         output_format="html",
     )
+    slot_files = slot_files or {}
+    counter = {"n": 0}
 
     def slot(match: re.Match) -> str:
+        counter["n"] += 1
         caption = " ".join(match.group(1).split())
-        return f'<div class="imgslot">📷 이미지 — {caption}</div>'
+        filename = slot_files.get(counter["n"])
+        if not filename:
+            return f'<div class="imgslot">📷 이미지 — {caption}</div>'
+        return (
+            f'<div class="imgslot has-file">📷 이미지 — {caption}'
+            f'<br><small>→ 파일 <b>{filename}</b> 을 이 자리에 올리고 상자는 지웁니다</small></div>'
+            f'<img class="preview nocopy" src="{filename}" alt="{caption}">'
+        )
 
     html = _IMAGE_SLOT.sub(slot, html)
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
     return html
+
+
+def place_images_markdown(body_markdown: str, slot_files: dict[int, str]) -> str:
+    """마크다운 판에는 자리에 맞는 그림을 실제 이미지 문법으로 넣는다. 못 맞춘 자리는 그대로."""
+    if not slot_files:
+        return body_markdown
+    counter = {"n": 0}
+
+    def slot(match: re.Match) -> str:
+        counter["n"] += 1
+        caption = " ".join(match.group(1).split())
+        filename = slot_files.get(counter["n"])
+        return f"![{caption}]({filename})" if filename else match.group(0)
+
+    return _IMAGE_SLOT_INLINE.sub(slot, body_markdown or "")
 
 
 def format_hashtags(tags: list[str]) -> str:
@@ -275,36 +385,38 @@ def _srt_stamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
-def to_srt(lines: list[CaptionLine], total_seconds: int | None = None) -> str:
-    """자막 줄 목록을 SRT 파일 내용으로 변환한다.
+def caption_timings(lines: list[CaptionLine], total_seconds: int | None = None) -> list[tuple[float, float]]:
+    """자막 줄마다 (시작, 끝) 초.
 
-    각 자막의 끝 시각은 '다음 자막의 시작'으로 잡는다. 마지막 자막만
-    전체 길이 또는 +3초로 닫는다. 편집 프로그램에서 그대로 임포트된다.
+    끝 시각은 '다음 자막의 시작'으로 잡고 마지막만 전체 길이 또는 +3초로 닫는다.
+    타임코드를 못 읽으면 앞 자막 뒤 2.5초, 시간이 거꾸로 가면 +0.5초로 단조 증가를 강제한다.
+    SRT 와 쇼츠 초안 영상이 같은 규칙을 쓴다.
     """
     starts: list[float] = []
-    for index, line in enumerate(lines):
+    for line in lines:
         parsed = parse_timecode(line.at)
         if parsed is None:
-            # 타임코드를 못 읽으면 앞 자막 뒤에 2.5초 간격으로 이어 붙인다.
             parsed = (starts[-1] + 2.5) if starts else 0.0
-        # 시간이 거꾸로 가면 SRT 가 깨지므로 단조 증가를 강제한다.
         if starts and parsed <= starts[-1]:
             parsed = starts[-1] + 0.5
         starts.append(parsed)
-
     if not starts:
-        return ""
-
+        return []
     tail = float(total_seconds) if total_seconds else starts[-1] + 3.0
     if tail <= starts[-1]:
         tail = starts[-1] + 3.0
+    return [(start, starts[i + 1] if i + 1 < len(starts) else tail) for i, start in enumerate(starts)]
 
-    blocks: list[str] = []
-    for index, (line, start) in enumerate(zip(lines, starts)):
-        end = starts[index + 1] if index + 1 < len(starts) else tail
-        blocks.append(
-            f"{index + 1}\n{_srt_stamp(start)} --> {_srt_stamp(end)}\n{line.text}\n"
-        )
+
+def to_srt(lines: list[CaptionLine], total_seconds: int | None = None) -> str:
+    """자막 줄 목록을 SRT 파일 내용으로 변환한다. 편집 프로그램에서 그대로 임포트된다."""
+    timings = caption_timings(lines, total_seconds)
+    if not timings:
+        return ""
+    blocks = [
+        f"{index + 1}\n{_srt_stamp(start)} --> {_srt_stamp(end)}\n{line.text}\n"
+        for index, (line, (start, end)) in enumerate(zip(lines, timings))
+    ]
     return "\n".join(blocks)
 
 
@@ -343,9 +455,61 @@ def update_index(cfg: Config) -> Path | None:
             f"| {cell('data.json', 'JSON')} |"
         )
 
+    lines += _weekly_section(out_dir)
+    lines += _cost_section(cfg)
+
     path = out_dir / "INDEX.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def _weekly_section(out_dir: Path) -> list[str]:
+    weekly = out_dir / "weekly"
+    if not weekly.exists():
+        return []
+    weeks = sorted((p for p in weekly.iterdir() if p.is_dir()), reverse=True)
+    if not weeks:
+        return []
+    lines = ["", "## 주간 결산", "", "| 주차 | 결산 | 네이버 | 데이터 |", "| --- | --- | --- | --- |"]
+    for wk in weeks[:26]:
+        def cell(filename: str, label: str) -> str:
+            return f"[{label}](weekly/{wk.name}/{filename})" if (wk / filename).exists() else "—"
+        lines.append(f"| **{wk.name}** | {cell('weekly.md', '결산')} | {cell('weekly-naver.html', 'HTML')} | {cell('data.json', 'JSON')} |")
+    return lines
+
+
+def _cost_section(cfg: Config) -> list[str]:
+    """state/costs.json 이 있으면 최근 비용 요약을 INDEX 에 붙인다."""
+    from .store import CostLog
+
+    log_ = CostLog(cfg.state_dir / "costs.json")
+    if not log_.entries:
+        return []
+    krw = float(cfg.get("llm.krw_per_usd", 1400))
+    week_usd, week_days = log_.recent(7)
+    month_usd, month_days = log_.recent(30)
+    by_date = log_.by_date()
+    avg = (sum(by_date.values()) / len(by_date)) if by_date else 0.0
+    lines = [
+        "",
+        "## 비용 (실측)",
+        "",
+        f"환율 {krw:,.0f}원/$ 기준 · 기록 {len(by_date)}일 · 하루 평균 ${avg:.3f} (약 {avg * krw:,.0f}원)",
+        "",
+        "| 기간 | 실행일 | 비용 |",
+        "| --- | --- | --- |",
+        f"| 최근 7일 | {week_days}일 | ${week_usd:.3f} (약 {week_usd * krw:,.0f}원) |",
+        f"| 최근 30일 | {month_days}일 | ${month_usd:.3f} (약 {month_usd * krw:,.0f}원) |",
+        "",
+        "<details><summary>날짜별</summary>",
+        "",
+        "| 날짜 | 비용 |",
+        "| --- | --- |",
+    ]
+    for d, usd in list(by_date.items())[-30:][::-1]:
+        lines.append(f"| {d} | ${usd:.3f} |")
+    lines += ["", "</details>"]
+    return lines
 
 
 def _now() -> str:

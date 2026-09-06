@@ -4,6 +4,8 @@
     python -m rebrief collect      수집만 하고 원본 저장
     python -m rebrief render       저장된 원본으로 산출물만 다시 생성
     python -m rebrief doctor       RSS 피드가 살아있는지 점검
+    python -m rebrief notify       실행 결과를 텔레그램으로 보내기 (토큰이 있을 때)
+    python -m rebrief weekly       지난 7일치를 묶은 주간 결산 글
 """
 
 from __future__ import annotations
@@ -45,6 +47,15 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("doctor", help="RSS 피드 상태 점검")
 
+    p_notify = sub.add_parser("notify", help="실행 결과를 텔레그램으로 보내기")
+    p_notify.add_argument("--date", help="대상 날짜 (기본: 오늘)")
+    p_notify.add_argument("--failed", action="store_true", help="실패 알림을 보냄")
+    p_notify.add_argument("--run-url", default="", help="Actions 실행 링크 (실패 알림에 붙임)")
+
+    p_weekly = sub.add_parser("weekly", help="지난 7일치를 묶은 주간 결산 글")
+    p_weekly.add_argument("--end", help="결산 마지막 날짜 (기본: 오늘, YYYY-MM-DD)")
+    p_weekly.add_argument("--no-llm", action="store_true", help="글 생성을 건너뛰고 프롬프트 팩만")
+
     return parser
 
 
@@ -68,6 +79,10 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_site(cfg)
     if args.command == "doctor":
         return _cmd_doctor(cfg, verbose=args.verbose)
+    if args.command == "notify":
+        return _cmd_notify(cfg, args)
+    if args.command == "weekly":
+        return _cmd_weekly(cfg, args)
     return 1
 
 
@@ -78,6 +93,7 @@ def _cmd_run(cfg, args) -> int:
     use_llm = False if args.no_llm else None
     result = run_pipeline(cfg, run_date=args.date, use_llm=use_llm, limit=args.limit)
     _report(result)
+    _notify_result(cfg, result)
     return 0 if result.files else 1
 
 
@@ -117,6 +133,87 @@ def _cmd_render(cfg, args) -> int:
         return 1
     _report(result)
     return 0
+
+
+def _cmd_notify(cfg, args) -> int:
+    """저장된 산출물을 읽어 알림을 보낸다. 워크플로의 실패 단계에서도 쓴다."""
+    from .notify import build_failure_message, send_telegram, telegram_configured
+
+    if not telegram_configured():
+        print("TELEGRAM_BOT_TOKEN / TELEGRAM_CHAT_ID 가 없어 알림을 보내지 않습니다.")
+        return 0
+    date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
+    site_url = str(cfg.get("site.url", "") or "")
+    if args.failed:
+        ok = send_telegram(build_failure_message(date=date_str, site_url=site_url, run_url=args.run_url))
+    else:
+        ok = send_telegram(_message_from_output(cfg, date_str))
+    print("알림을 보냈습니다." if ok else "알림 전송에 실패했습니다.")
+    return 0 if ok else 1
+
+
+def _message_from_output(cfg, date_str: str) -> str:
+    """output/<날짜>/ 의 파일만으로 알림 문구를 만든다 (파이프라인 결과 객체 없이)."""
+    import json
+
+    from .notify import build_run_message
+
+    out = cfg.output_dir / date_str
+    headline, issues = "", 0
+    data = out / "data.json"
+    if data.exists():
+        try:
+            payload = json.loads(data.read_text(encoding="utf-8"))
+            headline = payload.get("headline", "")
+            issues = len(payload.get("issues", []))
+        except (json.JSONDecodeError, OSError):
+            pass
+    return build_run_message(
+        date=date_str, headline=headline, issues=issues, articles=0,
+        site_url=str(cfg.get("site.url", "") or ""), warnings=[],
+        llm_used=data.exists(), images=len(list(out.glob("img-*.png"))),
+    )
+
+
+def _notify_result(cfg, result) -> None:
+    """토큰이 설정돼 있을 때만 실행 결과를 보낸다. 없으면 아무 말 없이 지나간다."""
+    from .notify import build_run_message, send_telegram, telegram_configured
+
+    if not telegram_configured():
+        return
+    headline = ""
+    data = result.out_dir / "data.json"
+    if data.exists():
+        import json
+        try:
+            headline = json.loads(data.read_text(encoding="utf-8")).get("headline", "")
+        except (json.JSONDecodeError, OSError):
+            pass
+    text = build_run_message(
+        date=result.date, headline=headline, issues=result.issues, articles=result.articles,
+        site_url=str(cfg.get("site.url", "") or ""), warnings=result.warnings,
+        llm_used=result.llm_used, images=len(list(result.out_dir.glob("img-*.png"))),
+    )
+    print("📨 텔레그램 알림 " + ("전송" if send_telegram(text) else "실패"))
+
+
+def _cmd_weekly(cfg, args) -> int:
+    from .weekly import run_weekly
+
+    result = run_weekly(cfg, end_date=args.end, use_llm=False if args.no_llm else None)
+    print(f"\n🗓  {result.week}  ({result.start} ~ {result.end})  ·  브리핑 {result.days}일치")
+    if result.files:
+        print(f"\n생성된 파일 ({len(result.files)}개)")
+        for path in result.files:
+            print(f"  · {path}")
+    if result.usage and result.usage.calls:
+        print(f"\n💰 {result.usage.summary()}")
+    if result.warnings:
+        print("\n⚠️  확인이 필요한 사항")
+        for w in result.warnings:
+            print(f"  · {w}")
+    print()
+    return 0 if result.files else 1
 
 
 def _cmd_site(cfg) -> int:
