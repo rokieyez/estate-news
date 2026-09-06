@@ -177,3 +177,22 @@ def test_사이트에_manifest_와_아이콘이_있다(cfg, tmp_path):
     assert not (dest / "icon-512.png").exists()                 # png=False 인 테스트 설정
     assert 'rel="manifest" href="manifest.webmanifest"' in (dest / "index.html").read_text(encoding="utf-8")
     assert 'href="../manifest.webmanifest"' in (dest / "2026-09-06" / "brief.html").read_text(encoding="utf-8")
+
+
+def test_unverified_numbers_keep_lead_link_and_snippet_spacing():
+    from rebrief.models import Article, Cluster, DailyBrief, DataPoint, IssueBrief
+    from rebrief.verify import check_numbers
+
+    art = Article(id="a1", title="서울 22개구 종부세 대상", url="https://x.test/1", feed_id="f", feed_name="F",
+                  summary="", body="집값이 매년 11% 오르면 2030년에는 22개구가 대상이 된다. " + "본문 " * 200)
+    cluster = Cluster(key="c1", articles=[art], score=1.0)
+    issue = IssueBrief(title="종부세", one_liner="x", category="세금·절세", what_happened=["a"],
+                       numbers=[DataPoint(label="상승률", value="11", unit="%"),
+                                DataPoint(label="제외 자치구", value="3개구(강북·금천·도봉)", unit="개구"),
+                                DataPoint(label="인원", value="71명", unit="명")],
+                       why_it_matters="y", who_is_affected=[], caution="없음", source_urls=[art.url])
+    brief = DailyBrief(date="2026-09-07", headline="h", lead="l", issues=[issue], market_temperature="t", tomorrow_watch=[])
+    checks = {c.label: c for c in check_numbers(brief, [cluster])}
+    assert checks["상승률"].status == "확인" and "매년 11% 오르면" in checks["상승률"].snippet   # 띄어쓰기 보존
+    assert checks["제외 자치구"].status == "미확인" and checks["제외 자치구"].url == art.url    # 못 찾아도 대표 기사 링크
+    assert checks["인원"].display == "71명"                                                     # '명명' 방지

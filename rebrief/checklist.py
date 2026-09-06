@@ -56,8 +56,10 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
     missing = [c for c in (checks or []) if c.status == "미확인"]
     if missing:
         items.append(Item("numbers", WARN, f"수치 {len(missing)}건이 기사 원문에서 확인되지 않음",
-                          "brief.md '숫자 검산' 표를 보고 원문에서 직접 찾아보세요.",
-                          [f"{c.issue} · {c.label} {c.value}{c.unit}" for c in missing]))
+                          "아래 '원문' 링크를 눌러 기사에서 직접 찾아보세요. 기사에 없는 값이면 글에서 빼는 게 안전합니다. "
+                          "[오늘의 정리 열기](brief.html)",
+                          [f"{c.issue} · {c.label} **{c.display}**" + (f" — [원문]({c.url})" if c.url else "")
+                           for c in missing]))
     elif checks:
         items.append(Item("numbers", OK, f"수치 {len(checks)}건 모두 기사 원문에서 확인"))
 
@@ -65,7 +67,7 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
     dead = [u for u, st in (link_status or {}).items() if not st.ok]
     if dead:
         items.append(Item("links", WARN, f"출처 링크 {len(dead)}개가 열리지 않음",
-                          "sources.md 의 ⚠️ 표시를 보고 링크를 바꾸거나 빼세요.", dead[:5]))
+                          "'기사 원문' 페이지의 ⚠️ 표시를 보고 링크를 바꾸거나 빼세요. [기사 원문 열기](sources.html)", dead[:5]))
     elif link_status:
         items.append(Item("links", OK, f"출처 링크 {len(link_status)}개 모두 정상"))
 
@@ -103,7 +105,7 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
             items.append(Item("tags", OK, f"태그 {tags}개"))
         if empty_photo_slots:
             items.append(Item("photos", WARN, f"직접 넣을 사진 자리 {empty_photo_slots}곳",
-                              "blog-naver.html 의 점선 상자 아래 '사진 찾기' 링크를 쓰세요."))
+                              "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)"))
 
     # 5) 영상 발화량
     if pack is not None:

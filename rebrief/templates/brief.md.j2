@@ -78,7 +78,7 @@
 | 이슈 | 수치 | 값 | 비고 |
 | --- | --- | --- | --- |
 {% for c in unverified %}
-| {{ c.issue }} | {{ c.label }} | **{{ c.value }}{{ c.unit }}** | ⚠️ {{ c.hint }} |
+| {{ c.issue }} | {{ c.label }} | **{{ c.display }}** | ⚠️ {{ c.hint }}{% if c.url %} · [원문 열기]({{ c.url }}){% endif %} |
 {% endfor %}
 
 > 미확인 수치는 발행 전에 원문에서 직접 찾아보세요. 기사에 없는 값이거나 단위·표기가 다를 수 있습니다.
@@ -91,7 +91,7 @@
 <details><summary>확인된 수치 {{ verified|length }}건 — 원문 문장 보기</summary>
 
 {% for c in verified %}
-- **{{ c.value }}{{ c.unit }}** {{ c.label }}{% if c.url %} · [원문]({{ c.url }}){% endif %}{% if c.hint %} ({{ c.hint }}){% endif %}
+- **{{ c.display }}** {{ c.label }}{% if c.url %} · [원문]({{ c.url }}){% endif %}{% if c.hint %} ({{ c.hint }}){% endif %}
 
   > {{ c.snippet }}
 {% endfor %}
