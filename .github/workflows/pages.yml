@@ -1,7 +1,7 @@
 name: 사이트 배포
 
 # output/ 이 바뀌면 휴대폰용 사이트를 다시 만들어 GitHub Pages 에 올립니다.
-# 최초 1회: 저장소 Settings → Pages → Source 를 "GitHub Actions" 로 바꿔 주세요.
+# Pages 가 꺼져 있으면 configure-pages 가 알아서 켭니다 (enablement: true).
 on:
   push:
     # 기본 브랜치에서만 배포합니다. 브랜치 이름을 바꾸면 여기도 고쳐야 합니다.
@@ -47,6 +47,10 @@ jobs:
         run: python -m rebrief site
 
       - uses: actions/configure-pages@v5
+        with:
+          # 저장소에 Pages 가 아직 설정돼 있지 않으면 여기서 켠다.
+          # 이게 없으면 "Get Pages site failed ... Not Found" 로 실패한다.
+          enablement: true
 
       - uses: actions/upload-pages-artifact@v3
         with:

@@ -65,17 +65,19 @@ feeds:
     weight: 1.2
     enabled: true
 
+  # 2026-09-06 피드 점검에서 응답하지 않아 꺼 둠.
+  # 나중에 주소가 복구되면 enabled: true 로 바꾸고 doctor 로 확인하세요.
   - id: edaily_realestate
     name: "이데일리·부동산"
     url: "https://rss.edaily.co.kr/estate_news.xml"
     weight: 1.1
-    enabled: true
+    enabled: false   # 연결이 끊김 (Connection reset)
 
   - id: sedaily_realestate
     name: "서울경제·부동산"
     url: "https://www.sedaily.com/RSS/S1N7.xml"
     weight: 1.1
-    enabled: true
+    enabled: false   # HTTP 404 — 주소가 바뀐 것으로 보임
 
   - id: chosunbiz_realestate
     name: "조선비즈·부동산"
