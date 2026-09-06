@@ -38,6 +38,7 @@ class WeeklyResult:
     usage: Usage | None = None
     llm_used: bool = False
     warnings: list[str] = field(default_factory=list)
+    skipped: bool = False          # 자료가 모자라 일부러 안 만든 경우 (실패가 아니다)
 
 
 def week_label(end: date) -> str:
@@ -113,6 +114,7 @@ def run_weekly(cfg: Config, *, end_date: str | None = None, use_llm: bool | None
     days = collect_week(cfg, end)
     result.days = len(days)
     if len(days) < min_days:
+        result.skipped = True
         result.warnings.append(
             f"지난 7일 중 브리핑이 {len(days)}일치뿐이라 결산을 만들지 않았습니다 (최소 {min_days}일)."
         )

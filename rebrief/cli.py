@@ -108,7 +108,8 @@ def _cmd_run(cfg, args) -> int:
     result = run_pipeline(cfg, run_date=args.date, use_llm=use_llm, limit=args.limit)
     _report(result)
     _notify_result(cfg, result)
-    return 0 if result.files else 1
+    # 자료가 3일치 미만이라 건너뛴 건 실패가 아니다 — 워크플로가 빨간 X 로 보이지 않게 0
+    return 0 if (result.files or result.skipped) else 1
 
 
 def _cmd_collect(cfg, args) -> int:
