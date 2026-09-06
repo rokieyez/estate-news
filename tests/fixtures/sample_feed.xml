@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>테스트 부동산 피드</title>
+    <link>https://example.test/</link>
+    <description>파이프라인 테스트용 고정 데이터</description>
+    <item>
+      <title>서울 아파트값 3주 연속 하락…낙폭은 축소 - 한국경제</title>
+      <link>https://example.test/news/1</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>한국부동산원에 따르면 이번 주 서울 아파트 매매가격은 0.03% 하락했다. 3주 연속 내림세지만 낙폭은 전주 0.05%보다 줄었다.</description>
+    </item>
+    <item>
+      <title>서울 아파트 매매가격 3주째 하락, 낙폭 줄어 - 매일경제</title>
+      <link>https://example.test/news/2</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>서울 아파트 매매가격이 3주째 하락했다. 강남 3구는 보합, 노도강은 0.06% 내렸다.</description>
+    </item>
+    <item>
+      <title>[속보] 서울 아파트값 3주 연속 내림세 - 이데일리</title>
+      <link>https://example.test/news/3?utm_source=rss</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>주간 아파트 가격 동향에서 서울이 3주 연속 하락을 기록했다.</description>
+    </item>
+    <item>
+      <title>국토교통부, 전세사기 피해자 지원 확대 방안 발표 - 연합뉴스</title>
+      <link>https://example.test/news/4</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>국토교통부는 전세사기 피해자에 대한 보증금 반환 지원을 확대한다고 밝혔다. 임대차 보증 한도도 상향된다.</description>
+    </item>
+    <item>
+      <title>전세사기 피해 지원 대책 확대…보증금 반환 강화 - 서울경제</title>
+      <link>https://example.test/news/5</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>전세사기 피해자 지원 대책이 확대된다. HUG 전세보증 요건도 손질된다.</description>
+    </item>
+    <item>
+      <title>주택담보대출 금리 다시 오름세…DSR 규제 영향 - 조선비즈</title>
+      <link>https://example.test/news/6</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>주담대 금리가 다시 오르고 있다. 스트레스 DSR 적용으로 대출 한도도 줄어드는 추세다.</description>
+    </item>
+    <item>
+      <title>9월 분양 물량 2만가구…청약 경쟁률 관건 - 한국경제</title>
+      <link>https://example.test/news/7</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>이달 전국 분양 물량은 2만가구 수준이다. 1순위 청약 경쟁률이 시장 온도를 가늠할 지표로 꼽힌다.</description>
+    </item>
+    <item>
+      <title>강남 재건축 조합, 시공사 선정 난항 - 매일경제</title>
+      <link>https://example.test/news/8</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>강남 재건축 조합이 시공사 선정에 어려움을 겪고 있다. 공사비 인상이 쟁점이다.</description>
+    </item>
+    <item>
+      <title>오늘의 운세 9월 6일 - 스포츠서울</title>
+      <link>https://example.test/news/9</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>띠별 운세입니다.</description>
+    </item>
+    <item>
+      <title>부고 홍길동씨 별세 - 한국경제</title>
+      <link>https://example.test/news/10</link>
+      <pubDate>__PUBDATE__</pubDate>
+      <description>부고입니다.</description>
+    </item>
+  </channel>
+</rss>

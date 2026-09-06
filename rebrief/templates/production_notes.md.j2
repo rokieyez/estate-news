@@ -1,0 +1,95 @@
+# 제작 메모 — {{ date }}
+
+편집실에서 바로 복사해 쓰는 문서입니다.
+
+## 1. 업로드 정보
+
+### 제목 후보 (롱폼)
+
+{% for t in l.title_candidates %}
+{{ loop.index }}. {{ t }}
+{% endfor %}
+
+### 제목 후보 (쇼츠)
+
+{% for t in s.title_candidates %}
+{{ loop.index }}. {{ t }}
+{% endfor %}
+
+### 썸네일 문구
+
+{% for t in l.thumbnail_texts %}
+- {{ t }}
+{% endfor %}
+
+### 설명란 (복사용)
+
+```
+{{ l.description }}
+```
+
+### 태그 (복사용)
+
+```
+{{ l.tags|join(', ') }}
+```
+
+### 고정 댓글 (복사용)
+
+```
+{{ l.pinned_comment }}
+```
+
+---
+
+## 2. 촬영 · 자료화면 체크리스트
+
+{% set ns = namespace(count=0) %}
+{% for sec in l.sections %}
+{% for b in sec.broll %}
+{% set ns.count = ns.count + 1 %}
+- [ ] `{{ sec.at }}` {{ b }}
+{% endfor %}
+{% endfor %}
+
+총 {{ ns.count }}컷.
+
+---
+
+## 3. 그래픽 제작 목록
+
+{% if datapoints %}
+| 이슈 | 항목 | 값 | 기준 | 맥락 | 출처 |
+| --- | --- | --- | --- | --- | --- |
+{% for d in datapoints %}
+| {{ d.issue }} | {{ d.label }} | **{{ d.value }}{{ d.unit }}** | {{ d.period or '-' }} | {{ d.context or '-' }} | {{ d.source or '-' }} |
+{% endfor %}
+
+> 위 수치는 `data.json` 에도 들어 있습니다. 차트 자동 생성에 쓰세요.
+{% else %}
+오늘 브리핑에서 추출된 수치가 없습니다.
+{% endif %}
+
+---
+
+## 4. 사실 확인이 필요한 항목
+
+{% set ns2 = namespace(any=false) %}
+{% for issue in brief.issues %}
+{% if issue.caution and issue.caution != '없음' %}
+{% set ns2.any = true %}
+- [ ] **{{ issue.title }}** — {{ issue.caution }}
+{% endif %}
+{% endfor %}
+{% if not ns2.any %}
+- 특별히 표시된 항목 없음. 그래도 수치는 원문 대조를 권장합니다.
+{% endif %}
+
+---
+
+## 5. 발행 전 최종 점검
+
+- [ ] 대본의 모든 수치를 원문 기사와 대조
+- [ ] 단정적 표현 / 투자 권유 표현 없는지 확인
+- [ ] 출처 자막 또는 설명란 링크 표기
+- [ ] 썸네일 문구와 실제 내용 일치 (낚시 방지)

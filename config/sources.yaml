@@ -1,0 +1,153 @@
+# ─────────────────────────────────────────────────────────────
+# 수집 소스 설정
+#
+#  · enabled: false 로 바꾸면 해당 피드를 건너뜁니다.
+#  · weight  : 이슈 점수 계산에 쓰는 매체 가중치 (1.0 기준)
+#  · 피드가 살아있는지 확인:  python -m rebrief doctor
+#    죽은 피드는 enabled: false 로 꺼두면 됩니다.
+# ─────────────────────────────────────────────────────────────
+
+feeds:
+  # ── 구글뉴스 키워드 피드 (가장 안정적. 여러 매체를 한 번에 훑음) ──
+  - id: gnews_realestate
+    name: "구글뉴스·부동산"
+    url: "https://news.google.com/rss/search?q=%EB%B6%80%EB%8F%99%EC%82%B0+when:1d&hl=ko&gl=KR&ceid=KR:ko"
+    weight: 1.0
+    enabled: true
+
+  - id: gnews_apt_price
+    name: "구글뉴스·아파트값"
+    url: "https://news.google.com/rss/search?q=%EC%95%84%ED%8C%8C%ED%8A%B8+%EB%A7%A4%EB%A7%A4%EA%B0%80%EA%B2%A9+when:1d&hl=ko&gl=KR&ceid=KR:ko"
+    weight: 1.1
+    enabled: true
+
+  - id: gnews_jeonse
+    name: "구글뉴스·전월세"
+    url: "https://news.google.com/rss/search?q=%EC%A0%84%EC%84%B8+%EC%9B%94%EC%84%B8+when:1d&hl=ko&gl=KR&ceid=KR:ko"
+    weight: 1.0
+    enabled: true
+
+  - id: gnews_policy
+    name: "구글뉴스·부동산정책"
+    url: "https://news.google.com/rss/search?q=%EB%B6%80%EB%8F%99%EC%82%B0+%EB%8C%80%EC%B1%85+%EA%B5%AD%ED%86%A0%EA%B5%90%ED%86%B5%EB%B6%80+when:1d&hl=ko&gl=KR&ceid=KR:ko"
+    weight: 1.3
+    enabled: true
+
+  - id: gnews_supply
+    name: "구글뉴스·재건축/재개발"
+    url: "https://news.google.com/rss/search?q=%EC%9E%AC%EA%B1%B4%EC%B6%95+%EC%9E%AC%EA%B0%9C%EB%B0%9C+when:1d&hl=ko&gl=KR&ceid=KR:ko"
+    weight: 1.1
+    enabled: true
+
+  - id: gnews_chungyak
+    name: "구글뉴스·청약/분양"
+    url: "https://news.google.com/rss/search?q=%EC%B2%AD%EC%95%BD+%EB%B6%84%EC%96%91+%EA%B2%BD%EC%9F%81%EB%A5%A0+when:1d&hl=ko&gl=KR&ceid=KR:ko"
+    weight: 1.0
+    enabled: true
+
+  - id: gnews_loan
+    name: "구글뉴스·대출/금리"
+    url: "https://news.google.com/rss/search?q=%EC%A3%BC%ED%83%9D%EB%8B%B4%EB%B3%B4%EB%8C%80%EC%B6%9C+DSR+%EA%B8%88%EB%A6%AC+when:1d&hl=ko&gl=KR&ceid=KR:ko"
+    weight: 1.2
+    enabled: true
+
+  # ── 언론사 직접 피드 (본문까지 긁어올 수 있어 요약 품질이 좋음) ──
+  # 주소가 바뀌는 일이 잦습니다. doctor 로 확인 후 켜세요.
+  - id: hankyung_realestate
+    name: "한국경제·부동산"
+    url: "https://www.hankyung.com/feed/realestate"
+    weight: 1.2
+    enabled: true
+
+  - id: mk_realestate
+    name: "매일경제·부동산"
+    url: "https://www.mk.co.kr/rss/50300009/"
+    weight: 1.2
+    enabled: true
+
+  - id: edaily_realestate
+    name: "이데일리·부동산"
+    url: "https://rss.edaily.co.kr/estate_news.xml"
+    weight: 1.1
+    enabled: true
+
+  - id: sedaily_realestate
+    name: "서울경제·부동산"
+    url: "https://www.sedaily.com/RSS/S1N7.xml"
+    weight: 1.1
+    enabled: true
+
+  - id: chosunbiz_realestate
+    name: "조선비즈·부동산"
+    url: "https://biz.chosun.com/arc/outboundfeeds/rss/category/real_estate/?outputType=xml"
+    weight: 1.1
+    enabled: true
+
+  - id: yna_economy
+    name: "연합뉴스·경제"
+    url: "https://www.yna.co.kr/rss/economy.xml"
+    weight: 1.3
+    enabled: false   # 경제 전반이라 부동산 외 기사가 많이 섞임. 필요하면 켜세요.
+
+
+# ─────────────────────────────────────────────────────────────
+# 키워드 사전 — 이슈 점수와 카테고리 분류에 사용
+# terms 중 하나라도 제목/요약에 들어가면 weight 만큼 점수를 더합니다.
+# ─────────────────────────────────────────────────────────────
+keywords:
+  정책·규제:
+    weight: 3.0
+    terms: [국토교통부, 국토부, 부동산 대책, 규제지역, 조정대상지역, 투기과열지구,
+            토지거래허가, 종부세, 종합부동산세, 취득세, 양도세, 재산세, 보유세,
+            분양가상한제, 실거주 의무, 전매제한, 특례보금자리, 신생아 특례]
+
+  대출·금리:
+    weight: 2.8
+    terms: [주택담보대출, 주담대, DSR, LTV, DTI, 기준금리, 금리 인상, 금리 인하,
+            대출 규제, 스트레스 DSR, 정책대출, 디딤돌, 버팀목, 가계부채]
+
+  가격동향:
+    weight: 2.5
+    terms: [매매가격, 전세가격, 실거래가, 아파트값, 집값, 신고가, 하락 전환,
+            상승 전환, 반등, 낙폭, 주간 아파트, 부동산원, KB부동산, 매매수급]
+
+  공급·정비사업:
+    weight: 2.2
+    terms: [재건축, 재개발, 리모델링, 조합, 시공사, 분양, 입주 물량, 착공, 인허가,
+            3기 신도시, 공공주택, 사전청약, 미분양, 준공 후 미분양]
+
+  청약·분양:
+    weight: 2.0
+    terms: [청약, 경쟁률, 특별공급, 1순위, 무순위, 줍줍, 분양권, 견본주택]
+
+  전월세·임대:
+    weight: 2.0
+    terms: [전세, 월세, 반전세, 임대차, 갱신청구권, 전세사기, 역전세, 깡통전세,
+            보증금, 전세보증, HUG, 임대사업자]
+
+  지역이슈:
+    weight: 1.5
+    terms: [강남, 서초, 송파, 마용성, 노도강, 판교, 위례, 동탄, 세종, 부산, 대구,
+            광주, 대전, 인천, 수도권, 지방 광역시, GTX]
+
+  세금·절세:
+    weight: 1.8
+    terms: [양도소득세, 증여, 상속, 1가구 1주택, 비과세, 다주택자, 절세]
+
+  시장심리:
+    weight: 1.4
+    terms: [거래량, 매수심리, 관망세, 패닉바잉, 영끌, 경매, 낙찰가율, 급매]
+
+# 이 단어가 제목에 있으면 광고성/무관 기사로 보고 버립니다.
+exclude_terms:
+  - 부고
+  - 인사
+  - 포토
+  - 카드뉴스
+  - 오늘의 운세
+  - 신간
+  - 협찬
+  - 이벤트 당첨
+
+# 제목 앞의 이 태그들은 "속보성"으로 보고 가점을 줍니다.
+breaking_tags: ["단독", "속보", "특징주", "1보"]

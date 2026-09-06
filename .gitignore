@@ -1,0 +1,12 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+env/
+.env
+.DS_Store
+.pytest_cache/
+*.egg-info/
+
+# 로컬 실행 캐시 (수집 이력은 state/seen.json 만 커밋)
+state/*.tmp

@@ -1,0 +1,34 @@
+# 수집 기사 원본 — {{ date }}
+
+기사 {{ stats.articles }}건 · 매체 {{ stats.publishers }}곳 · 피드 {{ stats.feeds_ok }}/{{ stats.feeds_total }}개 정상
+
+{% if feed_errors %}
+> 실패한 피드: {% for f in feed_errors %}`{{ f.id }}`{% if not loop.last %}, {% endif %}{% endfor %}
+> — `python -m rebrief doctor` 로 확인 후 `config/sources.yaml` 에서 꺼두세요.
+{% endif %}
+
+---
+
+{% for c in clusters %}
+## {{ loop.index }}. {{ c.lead.title }}
+
+`{{ c.categories|join(' · ') or '미분류' }}` · 보도 {{ c.size }}건 · 점수 {{ '%.2f'|format(c.score) }}
+
+{% for a in c.articles %}
+- [{{ a.publisher or a.feed_name }}] [{{ a.title }}]({{ a.url }}){% if a.published %} — {{ a.published.strftime('%m-%d %H:%M') }}{% endif %}
+
+{% endfor %}
+{% endfor %}
+{% if leftovers %}
+---
+
+## 이슈로 선정되지 않은 기사 ({{ leftovers|length }}건)
+
+<details><summary>펼치기</summary>
+
+{% for a in leftovers %}
+- [{{ a.publisher or a.feed_name }}] [{{ a.title }}]({{ a.url }})
+{% endfor %}
+
+</details>
+{% endif %}

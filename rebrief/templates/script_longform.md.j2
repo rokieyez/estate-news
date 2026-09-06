@@ -1,0 +1,51 @@
+# 롱폼 대본 — {{ date }}
+
+**예상 길이** {{ l.estimated_minutes }}분 · **챕터** {{ l.sections|length }}개 · **발화** 약 {{ char_count }}자
+
+## 제목 후보
+
+{% for t in l.title_candidates %}
+{{ loop.index }}. {{ t }}
+{% endfor %}
+
+## 썸네일 문구 후보
+
+{% for t in l.thumbnail_texts %}
+- **{{ t }}**
+{% endfor %}
+
+---
+
+## 콜드오픈 `00:00`
+
+{{ l.cold_open }}
+
+---
+
+{% for sec in l.sections %}
+## {{ loop.index }}. {{ sec.chapter }} `{{ sec.at }}`
+
+{{ sec.script }}
+
+{% if sec.broll %}
+**B-roll / 자료화면**
+
+{% for b in sec.broll %}
+- [ ] {{ b }}
+{% endfor %}
+
+{% endif %}
+{% if sec.graphics %}
+**그래픽 · 자막 카드**
+
+{% for g in sec.graphics %}
+- [ ] {{ g }}
+{% endfor %}
+
+{% endif %}
+---
+
+{% endfor %}
+## 아웃트로
+
+{{ l.outro }}

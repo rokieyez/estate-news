@@ -1,0 +1,65 @@
+# {{ brief.headline }}
+
+> **{{ date }} 부동산 데일리 브리핑**
+> 기사 {{ stats.articles }}건 · 매체 {{ stats.publishers }}곳 · 선정 이슈 {{ brief.issues|length }}개
+> 생성 {{ generated_at }}
+
+{{ brief.lead }}
+
+**시장 온도** · {{ brief.market_temperature }}
+
+---
+
+{% for issue in brief.issues %}
+## {{ loop.index }}. {{ issue.title }}
+
+`{{ issue.category }}` · **{{ issue.one_liner }}**
+
+**무슨 일이 있었나**
+
+{% for line in issue.what_happened %}
+- {{ line }}
+{% endfor %}
+
+{% if issue.numbers %}
+**숫자로 보면**
+
+| 항목 | 값 | 기준 시점 | 맥락 | 출처 |
+| --- | --- | --- | --- | --- |
+{% for n in issue.numbers %}
+| {{ n.label }} | **{{ n.value }}{{ n.unit }}** | {{ n.period or '-' }} | {{ n.context or '-' }} | {{ n.source or '-' }} |
+{% endfor %}
+
+{% endif %}
+**왜 중요한가**
+
+{{ issue.why_it_matters }}
+
+{% if issue.who_is_affected %}
+**영향받는 쪽** · {{ issue.who_is_affected|join(' / ') }}
+
+{% endif %}
+{% if issue.caution and issue.caution != '없음' %}
+> ⚠️ **확인 필요** — {{ issue.caution }}
+
+{% endif %}
+{% if issue.source_urls %}
+<details><summary>근거 기사 {{ issue.source_urls|length }}건</summary>
+
+{% for url in issue.source_urls %}
+- {{ url }}
+{% endfor %}
+
+</details>
+
+{% endif %}
+---
+
+{% endfor %}
+## 내일 확인할 것
+
+{% for item in brief.tomorrow_watch %}
+- [ ] {{ item }}
+{% else %}
+- (자료에 언급된 예정 사항 없음)
+{% endfor %}

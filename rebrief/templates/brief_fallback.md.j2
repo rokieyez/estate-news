@@ -1,0 +1,26 @@
+# {{ date }} 부동산 뉴스 스크랩
+
+> 기사 {{ stats.articles }}건 · 매체 {{ stats.publishers }}곳 · 이슈 {{ clusters|length }}개
+> 생성 {{ generated_at }}
+>
+> ⚠️ `ANTHROPIC_API_KEY` 가 없어 자동 요약을 건너뛰었습니다.
+> 수집·분류·중복제거까지는 끝난 상태입니다. 요약과 대본은 `prompt-pack.md` 를
+> 챗봇에 붙여넣으면 만들 수 있습니다.
+
+---
+
+{% for c in clusters %}
+## {{ loop.index }}. {{ c.lead.title }}
+
+- **분류** {{ c.categories|join(', ') or '미분류' }}
+- **보도** {{ c.size }}건 — {{ c.publishers|join(', ') }}
+- **점수** {{ '%.2f'|format(c.score) }}
+{% if c.matched_keywords %}
+- **걸린 키워드** {{ c.matched_keywords[:10]|join(', ') }}
+{% endif %}
+
+{% for a in c.articles[:6] %}
+- [{{ a.publisher or a.feed_name }}] [{{ a.title }}]({{ a.url }}){% if a.published %} · {{ a.published.strftime('%m-%d %H:%M') }}{% endif %}
+
+{% endfor %}
+{% endfor %}

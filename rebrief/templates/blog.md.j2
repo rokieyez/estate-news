@@ -1,0 +1,27 @@
+{% if frontmatter %}
+---
+title: "{{ post.title }}"
+slug: "{{ post.slug }}"
+date: {{ date }}
+category: "{{ category }}"
+tags: [{% for t in post.tags %}"{{ t }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+description: "{{ post.meta_description }}"
+---
+{% endif %}
+
+{{ post.body_markdown }}
+
+---
+
+### 참고한 기사
+
+{% for c in clusters %}
+{{ loop.index }}. **{{ c.lead.title }}**
+{% for a in c.articles[:4] %}
+   - [{{ a.publisher or a.feed_name }}]({{ a.url }})
+{% endfor %}
+{% endfor %}
+
+---
+
+*{{ disclaimer }}*

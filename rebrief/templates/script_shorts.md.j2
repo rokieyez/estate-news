@@ -1,0 +1,41 @@
+# 쇼츠 대본 — {{ date }}
+
+**예상 길이** {{ s.estimated_seconds }}초 · **자막** {{ s.lines|length }}컷 · **발화** 약 {{ char_count }}자
+
+## 제목 후보
+
+{% for t in s.title_candidates %}
+{{ loop.index }}. {{ t }}
+{% endfor %}
+
+## 훅 (0–3초)
+
+> ## {{ s.hook }}
+
+## 자막 & 화면 지시
+
+| # | 시간 | 자막 (읽는 말) | 화면 |
+| --- | --- | --- | --- |
+{% for line in s.lines %}
+| {{ loop.index }} | `{{ line.at }}` | {{ line.text }} | {{ line.visual }} |
+{% endfor %}
+
+## 마무리
+
+{{ s.cta }}
+
+## 해시태그
+
+```
+{{ s.hashtags|join(' ') }}
+```
+
+---
+
+### 편집 체크리스트
+
+- [ ] 자막 파일 `script-shorts.srt` 임포트 (Premiere / FinalCut / CapCut 공통)
+- [ ] 훅 구간 0.5초 안에 첫 자막 노출
+- [ ] 수치 자막 카드 {{ graphic_cuts }}개 제작
+- [ ] 세로 9:16 세이프존 확인 (상단 12%, 하단 20% 비움)
+- [ ] 출처 표기 자막 삽입
