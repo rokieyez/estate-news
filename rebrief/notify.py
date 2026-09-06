@@ -68,7 +68,7 @@ def build_failure_message(*, date: str, site_url: str = "", run_url: str = "", s
         lines.append(f"🚨 {streak}일 연속 실패입니다. 일시적 장애가 아닐 수 있어요 — API 키·한도, 피드 상태를 확인하세요.")
         lines.append("Actions 탭 → 피드 점검 워크플로를 한 번 돌려 보세요.")
     else:
-        lines.append("깃허브 Actions 로그를 확인하세요. 07:40 안전망 실행이 한 번 더 시도합니다.")
+        lines.append("깃허브 Actions 로그를 확인하세요. 07:25 안전망 실행이 한 번 더 시도합니다.")
     if run_url:
         lines.append(run_url)
     return "\n".join(lines)

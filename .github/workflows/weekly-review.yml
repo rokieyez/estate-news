@@ -2,8 +2,8 @@ name: 부동산 주간 결산
 
 on:
   schedule:
-    # 매주 일요일 오전 8시(KST) = 토요일 23:00 UTC. 데일리(07:00)가 끝난 뒤 돈다.
-    - cron: "0 23 * * 6"
+    # 매주 일요일 08:20 KST = 토요일 23:20 UTC. 데일리(06:45)가 끝난 뒤, 정각은 피해서.
+    - cron: "20 23 * * 6"
   workflow_dispatch:
     inputs:
       end:
