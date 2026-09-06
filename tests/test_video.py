@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
 from rebrief import video
 from rebrief.models import CaptionLine, ShortsScript

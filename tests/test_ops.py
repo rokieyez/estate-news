@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import json
-from pathlib import Path
 
 import pytest
 
@@ -76,7 +75,7 @@ def test_검산_결과가_brief_와_경고에_들어간다(cfg, monkeypatch):
     from tests.test_pipeline import FakeGenerator
     monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
     monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
-    result = pipeline.run(cfg, run_date="2026-09-06", use_llm=True)
+    pipeline.run(cfg, run_date="2026-09-06", use_llm=True)
     text = (cfg.output_dir / "2026-09-06" / "brief.md").read_text(encoding="utf-8")
     assert "## 숫자 검산" in text
 

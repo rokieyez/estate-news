@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import json
 from datetime import date
-from pathlib import Path
 
 from rebrief import checklist as cl
 from rebrief import notify, verify

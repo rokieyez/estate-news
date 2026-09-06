@@ -41,7 +41,8 @@ def send_telegram(text: str, *, timeout: float = 15) -> bool:
             return False
         return True
     except requests.RequestException as exc:
-        log.warning("텔레그램 전송 실패: %s", exc)
+        # 예외 문자열에는 요청 URL(= 봇 토큰이 든 주소)이 섞이므로 종류만 남긴다
+        log.warning("텔레그램 전송 실패: %s", type(exc).__name__)
         return False
 
 

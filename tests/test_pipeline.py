@@ -7,17 +7,13 @@ RSS 는 픽스처로, Claude 호출은 가짜 응답 객체로 대체한다.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timedelta, timezone
-from email.utils import format_datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
-import pytest
-import yaml
 
 from rebrief import pipeline
 from rebrief.cluster import build_clusters, similarity
 from rebrief.collect import split_publisher, strip_leading_tags
-from rebrief.config import Config, load_config
 from rebrief.models import (
     BlogPost,
     CaptionLine,
@@ -534,7 +530,7 @@ def test_site_markdown_checkboxes_render():
 # 21개 매체가 받아쓴 보도자료가 6개 매체의 실제 이슈를 이겼다.
 
 
-def _article(title: str, summary: str = "", size_id: str = "x") -> "Article":
+def _article(title: str, summary: str = "", size_id: str = "x"):
     from rebrief.models import Article
 
     return Article(
