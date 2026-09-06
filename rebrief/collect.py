@@ -50,7 +50,8 @@ def collect(cfg: Config, now: datetime | None = None) -> tuple[list[Article], li
 
     articles = dedupe(articles)
     articles = filter_by_time(articles, now, int(cfg.get("run.lookback_hours", 28)))
-    articles = filter_excluded(articles, cfg.exclude_terms)
+    articles = filter_excluded(articles, cfg.exclude_terms, cfg.exclude_patterns)
+    articles = filter_required(articles, cfg.require_terms)
     articles.sort(key=lambda a: a.published or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
 
     limit = int(cfg.get("run.max_articles", 300))
@@ -200,13 +201,51 @@ def filter_by_time(articles: list[Article], now: datetime, lookback_hours: int) 
     return kept
 
 
-def filter_excluded(articles: list[Article], exclude_terms: list[str]) -> list[Article]:
-    if not exclude_terms:
+def filter_excluded(
+    articles: list[Article],
+    exclude_terms: list[str],
+    exclude_patterns: list[str] | None = None,
+) -> list[Article]:
+    """금지어나 금지 패턴이 제목·요약에 있으면 버린다.
+
+    스팸은 제목만 보면 멀쩡해 보이고 요약에서 정체가 드러나는 경우가 많아
+    둘 다 본다. 한국어는 부분 문자열이 잘 겹치므로('포커' ⊂ '포커스')
+    애매한 단어는 exclude_patterns 에 정규식으로 적는다.
+    """
+    compiled = [re.compile(p) for p in (exclude_patterns or [])]
+    if not exclude_terms and not compiled:
         return articles
-    return [
+
+    kept = []
+    for article in articles:
+        haystack = article.text_for_matching
+        if any(term in haystack for term in exclude_terms):
+            continue
+        if any(rx.search(haystack) for rx in compiled):
+            continue
+        kept.append(article)
+
+    if len(kept) < len(articles):
+        log.info("금지어·패턴으로 %d건 제외", len(articles) - len(kept))
+    return kept
+
+
+def filter_required(articles: list[Article], require_terms: list[str]) -> list[Article]:
+    """부동산 실무 용어가 하나도 없으면 버린다.
+
+    구글뉴스는 부동산 키워드 검색에도 도박·코인 SEO 스팸을 섞어 내보낸다.
+    그런 글은 '부동산'이라는 말은 흉내 내도 전세·청약·재건축 같은 실무 용어까지
+    갖추지는 못하므로, 이 관문 하나로 대부분 걸러진다.
+    """
+    if not require_terms:
+        return articles
+    kept = [
         a for a in articles
-        if not any(term in a.title for term in exclude_terms)
+        if any(term in a.text_for_matching for term in require_terms)
     ]
+    if len(kept) < len(articles):
+        log.info("부동산 기사가 아니어서 %d건 제외", len(articles) - len(kept))
+    return kept
 
 
 # ── 본문 보강 ────────────────────────────────────────────────

@@ -68,7 +68,7 @@
 
 끝나면 이 주소가 열립니다. **휴대폰에 즐겨찾기 해두세요.**
 
-**https://rokieyez.github.io/rokiz/**
+**https://rokieyez.github.io/estate-news/**
 
 > 매일 볼 링크는 따로 설정할 게 없습니다. 워크플로가 알아서 만들어 줍니다.
 > 처음 한 번은 주소가 만들어지기까지 2~3분 더 걸릴 수 있습니다.

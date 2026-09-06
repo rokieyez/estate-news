@@ -18,6 +18,9 @@ def score_clusters(cfg: Config, clusters: list[Cluster], now: datetime | None = 
     now = now or datetime.now(timezone.utc)
     lookback = max(int(cfg.get("run.lookback_hours", 28)), 1)
     weights = cfg.get("rank", {}) or {}
+    # 21개 매체가 받아쓴 보도자료가 6개 매체가 다룬 실제 이슈를 이기면 안 된다.
+    # 어느 지점을 넘으면 매체가 더 늘어도 새로운 정보는 없다고 보고 잘라낸다.
+    volume_cap = int(cfg.get("rank.volume_cap", 8))
     keywords = cfg.keywords
     breaking_tags = set(cfg.breaking_tags)
 
@@ -26,7 +29,7 @@ def score_clusters(cfg: Config, clusters: list[Cluster], now: datetime | None = 
         cluster.categories = categories
         cluster.matched_keywords = matched
 
-        volume = math.log(1 + cluster.size)
+        volume = math.log(1 + min(cluster.size, volume_cap))
         recency = _recency(cluster, now, lookback)
         source = sum(a.source_weight for a in cluster.articles) / cluster.size
         breaking = 1.0 if any(set(a.tags) & breaking_tags for a in cluster.articles) else 0.0

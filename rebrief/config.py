@@ -67,6 +67,14 @@ class Config:
         return self.sources.get("exclude_terms", []) or []
 
     @property
+    def exclude_patterns(self) -> list[str]:
+        return self.sources.get("exclude_patterns", []) or []
+
+    @property
+    def require_terms(self) -> list[str]:
+        return self.sources.get("require_terms", []) or []
+
+    @property
     def breaking_tags(self) -> list[str]:
         return self.sources.get("breaking_tags", []) or []
 

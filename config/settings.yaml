@@ -16,7 +16,7 @@ collect:
   fetch_body: true          # 언론사 직접 링크는 본문까지 긁어옴 (요약 품질↑)
   fetch_body_top_n: 20      # 상위 N개 기사만 본문 수집 (속도/차단 고려)
   body_max_chars: 4000
-  user_agent: "Mozilla/5.0 (compatible; rebrief/1.0; +https://github.com/rokieyez/rokiz)"
+  user_agent: "Mozilla/5.0 (compatible; rebrief/1.0; +https://github.com/rokieyez/estate-news)"
 
 cluster:
   # 제목 유사도(글자 2-gram Dice) 임계값. 이 값 이상이면 같은 사건으로 봅니다.
@@ -28,6 +28,7 @@ cluster:
 rank:
   # 이슈 점수 가중치
   volume: 3.0        # 여러 매체가 동시에 보도 = 핫이슈
+  volume_cap: 8      # 보도 매체 수를 이 값까지만 인정 (보도자료 물량공세 방지)
   keyword: 1.0       # 키워드 사전 매칭
   recency: 1.5       # 최신성
   source: 0.8        # 매체 가중치

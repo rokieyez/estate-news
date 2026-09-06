@@ -555,3 +555,104 @@ def test_site_markdown_checkboxes_render():
     assert "☐ 촬영" in html
     assert "☑ 대본 확인" in html
     assert "[ ]" not in html
+
+
+# ── 스팸 차단 · 보도자료 물량공세 방지 ──────────────────────
+#
+# 아래 값들은 2026-09-06 첫 실제 실행에서 수집한 214건을 근거로 한다.
+# 구글뉴스가 부동산 키워드에 도박·코인 SEO 스팸을 12% 섞어 보냈고,
+# 21개 매체가 받아쓴 보도자료가 6개 매체의 실제 이슈를 이겼다.
+
+
+def _article(title: str, summary: str = "", size_id: str = "x") -> "Article":
+    from rebrief.models import Article
+
+    return Article(
+        id=size_id, title=title, url=f"https://e.test/{size_id}",
+        feed_id="f", feed_name="테스트", summary=summary,
+    )
+
+
+def test_gambling_spam_is_filtered(cfg):
+    from rebrief.collect import filter_excluded
+
+    spam = [
+        _article("용호 토토 학생를 위한 글쓰기 기술 심층 분석", size_id="s1"),
+        _article("파라오 카지노 보증 : 실제 경험자들의 조언", size_id="s2"),
+        _article("팬텀 블랙잭 해방 : 위험 피하기와 보호 조치", size_id="s3"),
+        _article("오늘 경마 동영상 비교 팀 협업 체계적 방법", size_id="s4"),
+        _article("바이 비트 24 시간 : 현황, 경향 및 미래 전망", size_id="s5"),
+    ]
+    real = [
+        _article("서울 아파트값 3주 연속 하락", size_id="r1"),
+        _article("국토부, 전세사기 피해 지원 확대", size_id="r2"),
+    ]
+
+    kept = filter_excluded(spam + real, cfg.exclude_terms, cfg.exclude_patterns)
+    assert {a.id for a in kept} == {"r1", "r2"}
+
+
+def test_pattern_avoids_substring_collision(cfg):
+    """'포커'는 막되 기사 말머리 '[MD포커스]'는 살려야 한다."""
+    from rebrief.collect import filter_excluded
+
+    articles = [
+        _article("올스타 포커 연구원를 위한 비판적 사고 해결책", size_id="spam"),
+        _article("사옥 팔고 유휴부동산 내놓고…우리금융이 CET1에 매달리는 이유",
+                 summary="[MD포커스] 사옥 팔고 유휴부동산 내놓고", size_id="real"),
+    ]
+    kept = filter_excluded(articles, cfg.exclude_terms, cfg.exclude_patterns)
+    assert [a.id for a in kept] == ["real"]
+
+
+def test_press_release_churn_does_not_outrank_real_news(cfg):
+    """보도자료를 21곳이 받아써도, 실속 있는 이슈를 이기면 안 된다."""
+    from rebrief.models import Cluster
+
+    # 정책·규제 + 가격동향에 걸리는 실제 이슈. 6개 매체 보도.
+    substantive = Cluster(
+        key="s",
+        articles=[
+            _article("집값 안 꺾이면 2030년 서울 대부분 종부세 낸다",
+                     summary="종합부동산세 과세 대상이 서울 22개구로 확대된다는 분석. "
+                             "매매가격 상승이 이어질 경우다.",
+                     size_id=f"s{i}")
+            for i in range(6)
+        ],
+    )
+    # 정비사업 키워드 하나에 걸리는 보도자료. 21개 매체가 그대로 받아씀.
+    churn = Cluster(
+        key="c",
+        articles=[
+            _article("롯데건설, 도곡우성 재건축 수주…올해 도시정비사업 4조 원 돌파",
+                     size_id=f"c{i}")
+            for i in range(21)
+        ],
+    )
+
+    scored = score_clusters(cfg, [substantive, churn])
+    assert scored[0].key == "s", (
+        f"보도자료가 1위가 됐습니다 "
+        f"(실속 {substantive.score:.2f} vs 보도자료 {churn.score:.2f})"
+    )
+
+
+def test_volume_cap_is_applied(cfg):
+    """상한을 없애면 물량공세가 이긴다 — 상한이 실제로 작동하는지 확인."""
+    from rebrief.models import Cluster
+
+    def make(n: int, title: str, key: str) -> Cluster:
+        return Cluster(key=key, articles=[_article(title, size_id=f"{key}{i}") for i in range(n)])
+
+    big = make(40, "롯데건설 재건축 수주", "big")
+    small = make(5, "롯데건설 재건축 수주", "small")
+
+    cfg.settings["rank"]["volume_cap"] = 8
+    score_clusters(cfg, [big, small])
+    capped_gap = big.score - small.score
+
+    cfg.settings["rank"]["volume_cap"] = 10_000
+    score_clusters(cfg, [big, small])
+    uncapped_gap = big.score - small.score
+
+    assert capped_gap < uncapped_gap, "상한이 점수 차이를 줄이지 못했습니다"
