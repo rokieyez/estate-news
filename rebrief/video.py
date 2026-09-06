@@ -77,9 +77,32 @@ def frame_svg(text: str, index: int, total: int, *, channel: str = "",
     return "\n".join(p)
 
 
+INTRO_SECONDS = 2.5   # '오늘의 숫자' 첫 컷 길이
+
+
+def intro_svg(nums: list, *, channel: str = "") -> str:
+    """첫 컷: 오늘의 숫자 최대 3개를 크게. 자막 카드와 같은 틀(채널명·색)을 쓴다."""
+    e = images.esc
+    p = images.svg_open(W, H)
+    if channel:
+        p.append(f'<text x="80" y="140" font-size="40" font-weight="700" fill="{images.BLUE}">{e(channel)}</text>')
+    p.append(f'<text x="{W / 2}" y="420" font-size="64" font-weight="800" text-anchor="middle" fill="{images.INK}">오늘의 숫자</text>')
+    p.append(f'<rect x="{W / 2 - 40}" y="450" width="80" height="8" rx="4" fill="{images.BLUE}"/>')
+    top, gap = 640, 380
+    for i, n in enumerate(nums[:3]):
+        y = top + i * gap
+        p.append(f'<text x="{W / 2}" y="{y}" font-size="132" font-weight="800" text-anchor="middle" '
+                 f'fill="{images.BLUE}">{e(n.display)}</text>')
+        for j, ln in enumerate(images.wrap(n.label, 44, W - 240)[:2]):
+            p.append(f'<text x="{W / 2}" y="{y + 80 + j * 56}" font-size="44" text-anchor="middle" '
+                     f'fill="{images.INK_2}">{e(ln)}</text>')
+    p.append("</svg>")
+    return "\n".join(p)
+
+
 def build_shorts_draft(out_dir: Path, shorts: ShortsScript, image_paths: list[Path], *,
                        channel: str = "", fps: int = 30,
-                       filename: str = "shorts-draft.mp4") -> Path | None:
+                       filename: str = "shorts-draft.mp4", intro: list | None = None) -> Path | None:
     """카드를 그려 이어 붙인다. 도구가 없거나 실패하면 None."""
     ffmpeg = ffmpeg_path()
     if not ffmpeg or not images.find_browser():
@@ -93,6 +116,13 @@ def build_shorts_draft(out_dir: Path, shorts: ShortsScript, image_paths: list[Pa
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp)
         concat: list[str] = []
+        if intro:
+            svg = tmp_dir / "frame-000.svg"
+            svg.write_text(intro_svg(intro, channel=channel), encoding="utf-8")
+            if images.svg_to_png(svg, svg.with_suffix(".png"), scale=1):
+                concat.append(f"file 'frame-000.png'\nduration {INTRO_SECONDS:.3f}")
+            else:
+                log.warning("쇼츠 초안: 오늘의 숫자 카드 렌더 실패, 건너뜀")
         for i, (line, (start, end)) in enumerate(zip(shorts.lines, timings), start=1):
             img = pngs[(i - 1) % len(pngs)] if pngs else None
             svg = tmp_dir / f"frame-{i:03d}.svg"

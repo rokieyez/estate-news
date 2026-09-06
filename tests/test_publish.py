@@ -177,25 +177,71 @@ def test_썸네일은_후보_두_개를_그린다(cfg, tmp_path):
     assert names == ["thumb-longform-2.svg", "thumb-longform.svg", "thumb-shorts-2.svg", "thumb-shorts.svg"]
 
 
-# ── 되풀이되는 수치 형광펜 ───────────────────────────────
+# ── 수치 강조: 되풀이 형광펜 · 핵심 수치 · 오늘의 숫자 카드 ───
 
 
-def test_repeated_numbers_get_highlighted_but_words_do_not():
+def test_repeated_numbers_first_highlight_then_underline():
     from rebrief.render import to_naver_html
 
     body = (
+        "## 상승률 10% 전망\n\n"
         "집값 상승률이 10%를 넘었다. 상승률 10%인 집값. 집값 상승률 10%를 잡기 위해. "
         "2026년, 2026년, 2026년 9월 6일. 거래가 3억 원·3억원·3억원. 5억원은 5억원 두 번.\n\n"
         "[이미지: 10% 상승률 그래프]"
     )
     html = to_naver_html(body, {1: "img-1-stat-card.png"})
-    assert html.count(">10%</span>") == 3            # 수치는 세 번 모두 형광펜
-    assert "집값</span>" not in html                  # 주제어는 건드리지 않는다
-    assert "2026년</span>" not in html                # 연도는 수치가 아니다
-    assert html.count("억원</span>") + html.count("억 원</span>") == 3   # 띄어쓰기 달라도 같은 수치
-    assert "5억원</span>" not in html                 # 두 번은 아직 아니다
-    assert 'alt="10% 상승률 그래프"' in html          # 태그 속성·이미지 자리는 그대로
+    assert html.count(">10%</span>") == 1 and html.count("<u>10%</u>") == 2   # 첫 등장만 형광펜
+    assert "<h2>상승률 10% 전망</h2>" in html          # 소제목은 건드리지 않는다
+    assert "집값</span>" not in html and "2026년</span>" not in html   # 주제어·연도는 제외
+    assert ">3억 원</span>" in html and html.count("<u>3억원</u>") == 2  # 띄어쓰기 달라도 같은 수치
+    assert "5억원</span>" not in html and "<u>5억원</u>" not in html
+    assert 'alt="10% 상승률 그래프"' in html
     assert "<span" not in to_naver_html(body, highlight_min=0)
+
+
+def test_key_numbers_bold_and_card():
+    from rebrief.keynumbers import KeyNumber
+    from rebrief.render import to_naver_html
+
+    keys = [KeyNumber("11%", "11%", "서울 집값 연간 상승 가정", "2030년까지"),
+            KeyNumber("22개구", "22개구", "종부세 대상 자치구")]
+    html = to_naver_html("집값이 매년 11% 오르면 22개구가 대상. 다시 11%.", key_numbers=keys)
+    assert '<span class="hl" style="background-color:#fff59d"><strong>11%</strong></span>' in html   # 한 번만 나와도 핵심이면 강조
+    assert "<strong>22개구</strong>" in html
+    assert "<u>11%</u>" in html
+    assert html.index("오늘의 숫자") < html.index("집값이")          # 카드가 본문 앞에
+    assert html.count("<td") == 2 and "2030년까지" in html
+
+
+def test_pick_prefers_numbers_used_in_body():
+    from rebrief.keynumbers import pick
+    from rebrief.models import DailyBrief, DataPoint, IssueBrief
+
+    def issue(title, nums):
+        return IssueBrief(title=title, one_liner="x", category="가격동향", what_happened=["a"],
+                          numbers=nums, why_it_matters="y", who_is_affected=[], caution="없음", source_urls=[])
+
+    brief = DailyBrief(date="2026-09-07", headline="h", lead="l", market_temperature="t", tomorrow_watch=[], issues=[
+        issue("첫째", [DataPoint(label="연도", value="2030", unit="년"), DataPoint(label="상승률", value="11", unit="%"),
+                      DataPoint(label="자치구", value="22", unit="개구")]),
+        issue("둘째", [DataPoint(label="감소율", value="81", unit="%", period="3년새")]),
+        issue("셋째", [DataPoint(label="본문에 없는 수치", value="4", unit="조원")]),
+    ])
+    got = pick(brief, "집값이 11% 오르면 22개구. 임대주택 81% 감소.", 3)
+    assert [k.display for k in got] == ["11%", "81%", "22개구"]   # 이슈당 하나 먼저, 본문에 있는 것 먼저
+    assert got[1].note == "3년새"
+    assert pick(brief, "", 0) == [] and pick(None, "x") == []
+
+
+def test_thumbnail_badge_and_shorts_intro():
+    from rebrief import images, video
+    from rebrief.keynumbers import KeyNumber
+
+    svg = images.thumbnail("서울 22개구 종부세?", badge="11%", size=(1080, 1920)).svg
+    assert ">11%</text>" in svg
+    assert ">11%" not in images.thumbnail("제목").svg
+    intro = video.intro_svg([KeyNumber("11%", "11%", "서울 집값 연간 상승 가정")], channel="브리핑")
+    assert "오늘의 숫자" in intro and ">11%</text>" in intro and "브리핑" in intro
 
 
 def test_renderer_reads_highlight_threshold(cfg, tmp_path):
@@ -208,5 +254,5 @@ def test_renderer_reads_highlight_threshold(cfg, tmp_path):
     off = Renderer(cfg, tmp_path / "off", "2026-09-06").blog_naver(post).read_text(encoding="utf-8")
     cfg.settings["blog"]["highlight_repeats"] = 3
     on = Renderer(cfg, tmp_path / "on", "2026-09-06").blog_naver(post).read_text(encoding="utf-8")
-    assert "7%</span>" not in off.split('id="post"')[1]
-    assert on.count("7%</span>") == 3
+    assert "7%</span>" not in off.split('id="post"')[1] and "<u>7%</u>" not in off
+    assert on.count("7%</span>") == 1 and on.count("<u>7%</u>") == 2

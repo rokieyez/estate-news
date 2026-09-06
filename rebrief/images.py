@@ -480,8 +480,9 @@ def build_for_slots(datapoints: list[dict], date: str, slot_labels: list[str], *
 
 
 def thumbnail(text: str, *, sub: str = "", channel: str = "", date: str = "",
-              size: tuple[int, int] = (1280, 720)) -> Image:
-    """큰 글씨 한 줄(최대 3줄)짜리 표지. 롱폼 1280×720, 쇼츠 1080×1920."""
+              size: tuple[int, int] = (1280, 720), badge: str = "") -> Image:
+    """큰 글씨 한 줄(최대 3줄)짜리 표지. 롱폼 1280×720, 쇼츠 1080×1920.
+    badge 는 오른쪽 위 파란 알약 — 오늘의 첫 번째 핵심 수치."""
     w, h = size
     portrait = h > w
     margin = 80 if portrait else 72
@@ -513,6 +514,14 @@ def thumbnail(text: str, *, sub: str = "", channel: str = "", date: str = "",
     if date:
         p.append(f'<text x="{margin}" y="{h - margin + 10}" font-size="{34 if portrait else 28}" '
                  f'fill="{MUTED}">{esc(date)}</text>')
+    if badge:
+        bsize = 52 if portrait else 40
+        bw = text_width(badge, bsize) + bsize * 1.2
+        bh = bsize * 1.7
+        bx, by = w - margin - bw, margin - bh * 0.45
+        p.append(f'<rect x="{bx:.0f}" y="{by:.0f}" width="{bw:.0f}" height="{bh:.0f}" rx="{bh / 2:.0f}" fill="{BLUE}"/>')
+        p.append(f'<text x="{bx + bw / 2:.0f}" y="{by + bh * 0.68:.0f}" font-size="{bsize}" font-weight="800" '
+                 f'text-anchor="middle" fill="#ffffff">{esc(badge)}</text>')
     p.append("</svg>")
     return Image("thumb", "\n".join(p), text)
 

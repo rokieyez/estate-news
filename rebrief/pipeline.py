@@ -11,6 +11,7 @@ from pathlib import Path
 from .cluster import build_clusters
 from .collect import FeedResult, collect
 from .config import Config
+from . import keynumbers
 from .llm import ContentGenerator, LLMError, Usage
 from .models import Article, Cluster
 from .prompts import build_prompt_pack
@@ -240,12 +241,15 @@ def _generate_with_llm(
         result.warnings.append(f"블로그 생성 실패 — {exc}")
 
     slot_files = renderer.images(brief, history=history, post=post)
+    keys: list = []
     if post is not None:
-        made.update(post=post, empty_photo_slots=sum(
+        # 오늘의 핵심 수치: 브리핑 datapoint 가운데 글에 실제로 쓰인 것. 블로그 카드·강조·썸네일·쇼츠 첫 컷이 함께 쓴다.
+        keys = keynumbers.pick(brief, post.body_markdown, int(cfg.get("blog.key_numbers", 3) or 0))
+        made.update(post=post, key_numbers=keys, empty_photo_slots=sum(
             1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
-        renderer.blog(post, issues, slot_files)
+        renderer.blog(post, issues, slot_files, key_numbers=keys)
         if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-            renderer.blog_naver(post, slot_files)
+            renderer.blog_naver(post, slot_files, key_numbers=keys)
         _record_titles(cfg, date_str, blog=[post.title])
 
     try:
@@ -259,8 +263,8 @@ def _generate_with_llm(
     renderer.shorts(pack)
     renderer.longform(pack)
     renderer.production_notes(brief, pack)
-    renderer.thumbnails(pack)
-    renderer.shorts_draft(pack)
+    renderer.thumbnails(pack, key_numbers=keys)
+    renderer.shorts_draft(pack, key_numbers=keys)
     _record_titles(cfg, date_str, longform=pack.longform.title_candidates,
                    shorts=pack.shorts.title_candidates)
     _autofix_banned(cfg, renderer, made, issues, slot_files, result)
@@ -446,9 +450,10 @@ def _autofix_banned(cfg: Config, renderer: Renderer, made: dict, issues: list[Cl
         post.body_markdown, ch = cl.autofix(post.body_markdown, phrases, lambda s, p: gen.rewrite(s, p, tone))
         if ch:
             fixed += [f"블로그: {a} → {b}" for a, b in ch]
-            renderer.blog(post, issues, slot_files)
+            keys = made.get("key_numbers") or []
+            renderer.blog(post, issues, slot_files, key_numbers=keys)
             if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-                renderer.blog_naver(post, slot_files)
+                renderer.blog_naver(post, slot_files, key_numbers=keys)
     if pack is not None:
         changed = False
         for line in pack.shorts.lines:

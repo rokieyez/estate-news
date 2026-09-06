@@ -12,6 +12,7 @@ import markdown as markdown_lib
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from . import images as images_mod
+from . import keynumbers as kn
 from .config import Config
 from .models import BlogPost, CaptionLine, Cluster, DailyBrief, VideoPack
 
@@ -75,12 +76,14 @@ class Renderer:
         )
 
     def blog(self, post: BlogPost, clusters: list[Cluster],
-             slot_files: dict[int, str] | None = None) -> Path:
+             slot_files: dict[int, str] | None = None,
+             key_numbers: list | None = None) -> Path:
         blog_cfg = self.cfg.get("blog", {}) or {}
         return self._write(
             "blog.md",
             "blog.md.j2",
             post=post,
+            key_card=kn.card_markdown(key_numbers or []),
             body_markdown=place_images_markdown(post.body_markdown, slot_files or {}),
             clusters=clusters,
             date=self.date,
@@ -90,7 +93,7 @@ class Renderer:
         )
 
     def blog_naver(self, post: BlogPost, slot_files: dict[int, str] | None = None,
-                   filename: str = "blog-naver.html") -> Path:
+                   filename: str = "blog-naver.html", key_numbers: list | None = None) -> Path:
         """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
         blog_cfg = self.cfg.get("blog", {}) or {}
         photo_links = {
@@ -107,6 +110,7 @@ class Renderer:
             body_html=to_naver_html(
                 post.body_markdown, slot_files or {}, photo_links,
                 highlight_min=int(blog_cfg.get("highlight_repeats", 3) or 0),
+                key_numbers=key_numbers,
             ),
             hashtags=format_hashtags(post.tags),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
@@ -227,8 +231,9 @@ class Renderer:
             self._write_image(img, cfg)
         return slot_files
 
-    def thumbnails(self, pack: VideoPack) -> list[Path]:
-        """롱폼·쇼츠 표지. 제목 후보와 썸네일 문구는 대본 생성 때 이미 나와 있다."""
+    def thumbnails(self, pack: VideoPack, key_numbers: list | None = None) -> list[Path]:
+        """롱폼·쇼츠 표지. 제목 후보와 썸네일 문구는 대본 생성 때 이미 나와 있다.
+        오늘의 첫 번째 핵심 수치가 있으면 모서리 배지로 붙인다."""
         cfg = self.cfg.get("images", {}) or {}
         if not cfg.get("enabled", True) or not cfg.get("thumbnails", True):
             return []
@@ -242,15 +247,17 @@ class Renderer:
         for n, text in enumerate(pack.shorts.title_candidates[:variants], start=1):
             jobs.append((f"thumb-shorts{'' if n == 1 else f'-{n}'}", text, pack.shorts.hook, (1080, 1920)))
         paths: list[Path] = []
+        badge = key_numbers[0].display if key_numbers else ""
         for slug, text, sub, size in jobs:
-            img = images_mod.thumbnail(text, sub=sub, channel=channel, date=self.date, size=size)
+            img = images_mod.thumbnail(text, sub=sub, channel=channel, date=self.date, size=size, badge=badge)
             img.slug = slug
             self._write_image(img, cfg, prefix="")
             paths.append(self.out_dir / f"{slug}.svg")
         return paths
 
-    def shorts_draft(self, pack: VideoPack) -> Path | None:
-        """자막 카드를 이어 붙인 쇼츠 초안 mp4. ffmpeg·크롬이 없으면 None."""
+    def shorts_draft(self, pack: VideoPack, key_numbers: list | None = None) -> Path | None:
+        """자막 카드를 이어 붙인 쇼츠 초안 mp4. ffmpeg·크롬이 없으면 None.
+        핵심 수치가 있으면 '오늘의 숫자' 카드를 첫 컷으로 넣는다."""
         video_cfg = self.cfg.get("video", {}) or {}
         if not video_cfg.get("draft", True):
             return None
@@ -261,6 +268,7 @@ class Renderer:
             self.out_dir, pack.shorts, pngs,
             channel=str(video_cfg.get("channel_name", "") or ""),
             fps=int(video_cfg.get("draft_fps", 30)),
+            intro=key_numbers or [],
         )
         if path:
             self.written.append(path)
@@ -324,7 +332,7 @@ _IMAGE_SLOT_INLINE = re.compile(r"\[이미지\s*:\s*(.*?)\]", re.DOTALL)
 
 def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
                   photo_links: dict[int, list[tuple[str, str]]] | None = None,
-                  highlight_min: int = 3) -> str:
+                  highlight_min: int = 3, key_numbers: list | None = None) -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -333,7 +341,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
 
     slot_files 가 있으면 해당 자리의 점선 상자에 파일명을 적고, 그 아래 미리보기
     이미지를 붙인다. 미리보기는 복사에 포함되지 않는다(class="nocopy").
-    highlight_min 회 이상 되풀이되는 수치는 형광펜으로 감싼다(0 이면 끔).
+    highlight_min 회 이상 되풀이되는 수치와 key_numbers(오늘의 핵심 수치)는 강조한다.
+    key_numbers 가 있으면 맨 위에 '오늘의 숫자' 카드를 붙인다.
     """
     html = markdown_lib.markdown(
         body_markdown or "",
@@ -361,71 +370,46 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
             f'<img class="preview nocopy" src="{filename}" alt="{caption}">'
         )
 
-    html = highlight_repeated_numbers(html, highlight_min)
+    html = highlight_repeated_numbers(html, highlight_min, {n.key for n in (key_numbers or [])})
     html = _IMAGE_SLOT.sub(slot, html)
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
-    return html
+    return kn.card_html(key_numbers or []) + html
 
 
-# 수치 토큰: 숫자(천 단위 쉼표·소수 허용) + 단위. 긴 단위를 앞에 둬야 '개월' 이 '개' 로 잘리지 않는다.
-_NUM_UNITS = (
-    r"%p|%포인트|%|％|조\s?원|억\s?원|만\s?원|천\s?원|원|조|억|만|"
-    r"가구|세대|개구|개월|개|건|호|채|명|년|배|㎡|평|층|bp|p|포인트"
-)
-_NUM_TOKEN = re.compile(
-    r"(?<![\d,.\-A-Za-z%])(\d{1,3}(?:,\d{3})+|\d+)(\.\d+)?(" + _NUM_UNITS + r")?"
-)
-# 글자가 아닌 조각: 태그, 엔티티(&#39; 처럼 숫자를 품는다), 아직 치환 전인 이미지 자리
-_OPAQUE = re.compile(r"(<[^>]+>|&#?\w+;|\[이미지\s*:[^\]]*\])")
 _HL_STYLE = "background-color:#fff59d"
 
 
-def _number_key(match: re.Match) -> str | None:
-    """같은 수치로 볼 정규화 키. 데이터가 아닌 숫자(연도·날짜·단위 없는 정수)는 None."""
-    whole, frac, unit = match.group(1), match.group(2) or "", match.group(3)
-    digits = whole.replace(",", "")
-    if unit is None:
-        # 단위가 없으면 쉼표나 소수점이 있는 것만 수치로 본다. '3' 같은 정수는 셈에서 뺀다.
-        if "," not in whole and not frac:
-            return None
-        following = match.string[match.end():match.end() + 1]
-        if following in "월일시분초":          # 9월 6일, 10시 — 날짜·시각
-            return None
-        return digits + frac
-    unit = unit.replace(" ", "").replace("％", "%")
-    if unit == "년" and len(digits) == 4:     # 2026년 — 연도는 수치가 아니다
-        return None
-    return digits + frac + unit
+def highlight_repeated_numbers(html: str, min_count: int = 3, keys: set[str] | None = None) -> str:
+    """수치를 세 단계로 강조한다.
 
-
-def highlight_repeated_numbers(html: str, min_count: int = 3) -> str:
-    """본문에서 min_count 회 이상 되풀이되는 수치를 형광펜(<span>)으로 감싼다.
-
-    '집값' 처럼 주제어가 반복되는 건 당연하므로 글자는 세지 않고 숫자+단위만 센다.
-    '3억 원' 과 '3억원', '10%' 와 '10％' 는 같은 수치로 묶는다. 태그·엔티티·이미지 자리는
-    건드리지 않는다. 인라인 style 을 쓰는 이유: 네이버 에디터가 class 는 버려도
-    background-color 는 살리기 때문이다.
+    · 핵심 수치(keys — 브리핑 datapoint)와 min_count 회 이상 되풀이되는 수치를 '중요' 로 본다.
+    · 중요 수치의 첫 등장: 형광펜. 핵심 수치면 굵게도. 두 번째부터는 밑줄만(눈이 덜 피로하게).
+    · '집값' 같은 글자는 세지 않고 숫자+단위만 센다. '3억 원' 과 '3억원' 은 같은 수치.
+    · 태그·엔티티·이미지 자리·소제목은 건드리지 않는다.
+    인라인 style 을 쓰는 이유: 네이버 에디터가 class 는 버려도 background-color 는 살리기 때문.
     """
-    if min_count <= 0 or not html:
+    if not html:
         return html
-    parts = _OPAQUE.split(html)          # 짝수 칸이 글자, 홀수 칸이 태그류
-    counts: dict[str, int] = {}
-    for i in range(0, len(parts), 2):
-        for m in _NUM_TOKEN.finditer(parts[i]):
-            key = _number_key(m)
-            if key:
-                counts[key] = counts.get(key, 0) + 1
-    repeated = {k for k, n in counts.items() if n >= min_count}
-    if not repeated:
+    keys = set(keys or ())
+    counts = kn.keys_in(html) if min_count > 0 else {}
+    important = {k for k, n in counts.items() if n >= min_count} | keys
+    if not important:
         return html
+    seen: set[str] = set()
 
     def wrap(m: re.Match) -> str:
-        if _number_key(m) in repeated:
-            return f'<span class="hl" style="{_HL_STYLE}">{m.group(0)}</span>'
-        return m.group(0)
+        key = kn.number_key(m)
+        if key not in important:
+            return m.group(0)
+        if key in seen:
+            return f"<u>{m.group(0)}</u>"
+        seen.add(key)
+        inner = f"<strong>{m.group(0)}</strong>" if key in keys else m.group(0)
+        return f'<span class="hl" style="{_HL_STYLE}">{inner}</span>'
 
+    parts = kn.OPAQUE.split(html)          # 짝수 칸이 글자, 홀수 칸이 태그류
     for i in range(0, len(parts), 2):
-        parts[i] = _NUM_TOKEN.sub(wrap, parts[i])
+        parts[i] = kn.NUM_TOKEN.sub(wrap, parts[i])
     return "".join(parts)
 
 
