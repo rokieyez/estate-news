@@ -8,6 +8,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 
+import markdown as markdown_lib
 from jinja2 import Environment, FileSystemLoader, StrictUndefined
 
 from .config import Config
@@ -76,6 +77,19 @@ class Renderer:
             frontmatter=bool(blog_cfg.get("frontmatter", True)),
             category=blog_cfg.get("category", "부동산"),
             disclaimer=blog_cfg.get("disclaimer", ""),
+        )
+
+    def blog_naver(self, post: BlogPost) -> Path:
+        """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
+        blog_cfg = self.cfg.get("blog", {}) or {}
+        return self._write(
+            "blog-naver.html",
+            "blog_naver.html.j2",
+            post=post,
+            date=self.date,
+            category=blog_cfg.get("category", "부동산"),
+            body_html=to_naver_html(post.body_markdown),
+            hashtags=format_hashtags(post.tags),
         )
 
     def shorts(self, pack: VideoPack) -> list[Path]:
@@ -179,6 +193,42 @@ class Renderer:
 # ── 헬퍼 ─────────────────────────────────────────────────────
 
 
+_IMAGE_SLOT = re.compile(r"<p>\s*\[이미지\s*:\s*(.*?)\]\s*</p>", re.DOTALL)
+_IMAGE_SLOT_INLINE = re.compile(r"\[이미지\s*:\s*(.*?)\]", re.DOTALL)
+
+
+def to_naver_html(body_markdown: str) -> str:
+    """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
+
+    스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
+    제목·표·굵게·목록을 그대로 받아들이므로, 의미 태그(h2/table/strong/ul)로
+    변환해 두고 브라우저에서 복사하게 한다.
+    """
+    html = markdown_lib.markdown(
+        body_markdown or "",
+        extensions=["tables", "sane_lists"],
+        output_format="html",
+    )
+
+    def slot(match: re.Match) -> str:
+        caption = " ".join(match.group(1).split())
+        return f'<div class="imgslot">📷 이미지 — {caption}</div>'
+
+    html = _IMAGE_SLOT.sub(slot, html)
+    html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
+    return html
+
+
+def format_hashtags(tags: list[str]) -> str:
+    """네이버는 본문에 쓴 #해시태그를 그대로 블로그 태그로 등록한다."""
+    seen: list[str] = []
+    for tag in tags or []:
+        cleaned = tag.strip().lstrip("#").replace(" ", "")
+        if cleaned and cleaned not in seen:
+            seen.append(cleaned)
+    return " ".join(f"#{t}" for t in seen[:30])   # 네이버 태그 상한 30개
+
+
 def flatten_datapoints(brief: DailyBrief) -> list[dict]:
     """이슈별로 흩어진 수치를 표/차트용 평면 리스트로 모은다."""
     rows: list[dict] = []
@@ -272,8 +322,8 @@ def update_index(cfg: Config) -> Path | None:
         "",
         f"마지막 갱신 {_now()} · 총 {len(days)}일치",
         "",
-        "| 날짜 | 브리핑 | 블로그 | 쇼츠 | 롱폼 | 제작메모 | 데이터 |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        "| 날짜 | 브리핑 | 블로그 | 네이버 | 쇼츠 | 롱폼 | 제작메모 | 데이터 |",
+        "| --- | --- | --- | --- | --- | --- | --- | --- |",
     ]
     for day in days[:60]:
         def cell(filename: str, label: str) -> str:
@@ -283,6 +333,7 @@ def update_index(cfg: Config) -> Path | None:
             f"| **{day.name}** "
             f"| {cell('brief.md', '브리핑')} "
             f"| {cell('blog.md', '블로그')} "
+            f"| {cell('blog-naver.html', 'HTML')} "
             f"| {cell('script-shorts.md', '쇼츠')} "
             f"| {cell('script-longform.md', '롱폼')} "
             f"| {cell('production-notes.md', '메모')} "

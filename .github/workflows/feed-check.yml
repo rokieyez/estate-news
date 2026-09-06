@@ -1,0 +1,31 @@
+name: 피드 점검
+
+# 로컬에 파이썬을 깔지 않아도 브라우저에서 버튼 하나로 RSS 상태를 확인합니다.
+# Actions 탭 → "피드 점검" → Run workflow
+on:
+  workflow_dispatch:
+
+jobs:
+  doctor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
+
+      - name: 피드 상태 확인
+        run: |
+          {
+            echo "## RSS 피드 점검 결과"
+            echo
+            echo '```'
+            python -m rebrief doctor 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          # 실패한 피드가 있어도 워크플로는 성공으로 끝냅니다 (결과만 보면 되므로)
+          python -m rebrief doctor || true

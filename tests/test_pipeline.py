@@ -287,11 +287,20 @@ def make_pack() -> VideoPack:
 
 def make_post() -> BlogPost:
     return BlogPost(
-        title="서울 아파트값 3주 연속 하락, 오늘의 부동산 브리핑",
+        title="서울 아파트값 3주 연속 하락, 9월 6일 부동산 브리핑",
         slug="seoul-apt-price-2026-09-06",
         meta_description="서울 아파트 매매가격이 3주 연속 하락했습니다. 낙폭 축소의 의미를 정리했습니다.",
-        tags=["부동산", "서울아파트", "집값", "전세사기", "청약"],
-        body_markdown="## 오늘의 시장\n\n서울 아파트값이 3주 연속 내렸습니다.\n\n| 항목 | 값 |\n| --- | --- |\n| 변동률 | -0.03% |\n",
+        tags=["부동산", "서울아파트", "집값", " 전세사기 ", "#청약", "부동산"],
+        body_markdown=(
+            "서울 아파트값이 3주 연속 내렸습니다.\n\n"
+            "## 이번 주 숫자\n\n"
+            "낙폭은 오히려 줄었습니다.\n\n"
+            "| 항목 | 값 |\n| --- | --- |\n| 변동률 | -0.03% |\n\n"
+            "[이미지: 한국부동산원 주간 통계 화면 캡처]\n\n"
+            "## 오늘의 체크포인트\n\n"
+            "- 하락폭 축소\n- 관망 지속\n"
+        ),
+        image_notes=["한국부동산원 주간 통계 화면 캡처"],
     )
 
 
@@ -315,8 +324,10 @@ def test_all_templates_render(cfg, tmp_path):
     renderer.sources(clusters, stats, [], [])
     renderer.data_json(brief)
 
+    renderer.blog_naver(post)
+
     for name in (
-        "brief.md", "blog.md", "script-shorts.md", "script-shorts.srt",
+        "brief.md", "blog.md", "blog-naver.html", "script-shorts.md", "script-shorts.srt",
         "script-longform.md", "production-notes.md", "sources.md", "data.json",
     ):
         path = out / name
@@ -354,3 +365,140 @@ def test_srt_is_monotonic_and_parsable():
     starts = [s.split(" --> ")[0] for s in stamps]
     assert starts == sorted(starts), "자막 시작 시각이 단조 증가해야 합니다"
     assert srt.rstrip().endswith("못 읽는 타임코드")
+
+
+# ── 네이버 블로그 산출물 ────────────────────────────────────
+
+
+def test_naver_html_converts_markdown_semantically():
+    """스마트에디터는 마크다운을 모른다. 의미 태그로 변환돼 있어야 서식이 살아난다."""
+    from rebrief.render import to_naver_html
+
+    html = to_naver_html(make_post().body_markdown)
+
+    assert "<h2>이번 주 숫자</h2>" in html
+    assert "<table>" in html and "<th>항목</th>" in html
+    assert "<ul>" in html and "<li>하락폭 축소</li>" in html
+    # 마크다운 기호가 그대로 남으면 네이버 본문에 텍스트로 보인다
+    assert "##" not in html
+    assert "| ---" not in html
+
+
+def test_naver_image_slot_becomes_placeholder():
+    from rebrief.render import to_naver_html
+
+    html = to_naver_html("[이미지: 통계 화면 캡처]")
+    assert 'class="imgslot"' in html
+    assert "통계 화면 캡처" in html
+    assert "[이미지:" not in html
+
+
+def test_naver_hashtags_are_normalized():
+    from rebrief.render import format_hashtags
+
+    tags = format_hashtags(["부동산", " 전세사기 ", "#청약", "부동산", "서울 아파트"])
+    # 중복 제거, # 중복 방지, 공백 제거
+    assert tags == "#부동산 #전세사기 #청약 #서울아파트"
+    # 네이버 태그 상한 30개
+    assert len(format_hashtags([f"태그{i}" for i in range(40)]).split()) == 30
+
+
+def test_naver_html_copy_area_excludes_guide(cfg, tmp_path):
+    """복사 버튼이 본문(#post)만 집는지 — 안내문이 붙여넣기에 섞이면 안 된다."""
+    renderer = Renderer(cfg, tmp_path / "naver", RUN_DATE)
+    path = renderer.blog_naver(make_post())
+    html = path.read_text(encoding="utf-8")
+
+    assert 'id="post"' in html and 'id="title"' in html and 'id="tags"' in html
+    # 안내 문구는 복사 대상 영역 바깥(#post 종료 이후)에 있어야 한다
+    guide_at = html.index("쓰는 법")
+    post_close = html.index('<div class="hint">')
+    assert guide_at > post_close
+    assert "#부동산" in html
+
+
+# ── LLM 경로 통합 (가짜 생성기) ──────────────────────────────
+
+
+class FakeGenerator:
+    """Claude 호출을 대신하는 가짜. 파이프라인 배선만 검증한다."""
+
+    def __init__(self, cfg):
+        from rebrief.llm import Usage
+
+        self.cfg = cfg
+        self.usage = Usage(model="fake-model")
+        self.calls: list[str] = []
+
+    def generate_brief(self, clusters, run_date):
+        self.calls.append("brief")
+        self.usage.calls += 1
+        return make_brief()
+
+    def generate_blog(self, brief):
+        self.calls.append("blog")
+        return make_post()
+
+    def generate_video(self, brief):
+        self.calls.append("video")
+        return make_pack()
+
+
+def test_llm_path_writes_every_artifact(cfg, monkeypatch):
+    """요약이 켜진 실행에서 네이버 HTML 까지 전부 나오는지."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
+
+    result = pipeline.run(cfg, run_date=RUN_DATE, use_llm=True)
+    out = cfg.output_dir / RUN_DATE
+
+    assert result.llm_used is True
+    assert not result.warnings, result.warnings
+    for name in (
+        "brief.md", "blog.md", "blog-naver.html", "script-shorts.md",
+        "script-shorts.srt", "script-longform.md", "production-notes.md",
+        "sources.md", "data.json",
+    ):
+        assert (out / name).exists(), f"{name} 이 생성되지 않았습니다"
+
+    # 키가 있을 때는 프롬프트 팩을 만들지 않는다
+    assert not (out / "prompt-pack.md").exists()
+
+    # INDEX 에 네이버 열이 링크로 들어갔는지
+    index = (cfg.output_dir / "INDEX.md").read_text(encoding="utf-8")
+    assert "네이버" in index
+    assert f"{RUN_DATE}/blog-naver.html" in index
+
+
+def test_platform_markdown_skips_naver_html(cfg, monkeypatch):
+    """platform: markdown 이면 네이버 HTML 은 만들지 않는다."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
+    cfg.settings["blog"]["platform"] = "markdown"
+
+    pipeline.run(cfg, run_date=RUN_DATE, use_llm=True)
+    out = cfg.output_dir / RUN_DATE
+
+    assert (out / "blog.md").exists()
+    assert not (out / "blog-naver.html").exists()
+
+
+def test_blog_failure_does_not_stop_video(cfg, monkeypatch):
+    """블로그 생성이 실패해도 영상 대본은 나와야 한다."""
+    from rebrief.llm import LLMError
+
+    class BlogFails(FakeGenerator):
+        def generate_blog(self, brief):
+            raise LLMError("일시적 오류")
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", BlogFails)
+
+    result = pipeline.run(cfg, run_date=RUN_DATE, use_llm=True)
+    out = cfg.output_dir / RUN_DATE
+
+    assert (out / "brief.md").exists()
+    assert not (out / "blog.md").exists()
+    assert (out / "script-shorts.md").exists()
+    assert (out / "production-notes.md").exists()
+    assert any("블로그 생성 실패" in w for w in result.warnings)

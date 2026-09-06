@@ -50,6 +50,28 @@ jobs:
           if [ "${{ inputs.no_llm }}" = "true" ]; then ARGS="$ARGS --no-llm"; fi
           python -m rebrief $ARGS
 
+      - name: 실행 결과 요약
+        if: always()
+        run: |
+          DATE="${{ inputs.date }}"
+          [ -z "$DATE" ] && DATE=$(TZ=Asia/Seoul date +%F)
+          BRIEF="output/$DATE/brief.md"
+          {
+            echo "# $DATE 부동산 브리핑"
+            echo
+            if [ -f "$BRIEF" ]; then
+              cat "$BRIEF"
+            else
+              echo "브리핑이 생성되지 않았습니다. 위 로그를 확인하세요."
+            fi
+            echo
+            echo "---"
+            echo "생성된 파일:"
+            echo '```'
+            ls -1 "output/$DATE" 2>/dev/null || echo "(없음)"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: 결과 커밋
         run: |
           git config user.name  "github-actions[bot]"

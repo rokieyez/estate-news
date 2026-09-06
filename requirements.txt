@@ -3,6 +3,7 @@ feedparser>=6.0.11        # RSS/Atom 파싱
 requests>=2.32.0          # HTTP 수집
 PyYAML>=6.0.1             # 설정 파일
 Jinja2>=3.1.4             # 산출물 템플릿
+Markdown>=3.6             # 네이버 붙여넣기용 HTML 변환
 anthropic>=0.69.0         # Claude API (요약/대본 생성). pydantic 포함
 
 # 본문 추출(선택). 없으면 자동으로 건너뜀.

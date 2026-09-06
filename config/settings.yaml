@@ -64,9 +64,18 @@ video:
   cta: "도움이 되셨다면 구독과 알림 설정 부탁드립니다."
 
 blog:
-  # 산출되는 블로그 글의 형식
+  # 발행 플랫폼. 글의 문체와 산출 파일이 달라집니다.
+  #   naver    — 네이버 블로그. blog-naver.html(붙여넣기용) 을 추가로 만듭니다.
+  #   markdown — 티스토리/워드프레스/깃허브 등 범용 마크다운
+  platform: naver
+
   min_chars: 1800
   max_chars: 3500
-  frontmatter: true         # ---로 감싼 YAML 머리말 포함 (Jekyll/Hugo/Obsidian 호환)
+  frontmatter: true         # blog.md 에 YAML 머리말 포함 (Jekyll/Hugo/Obsidian 호환)
   category: "부동산"
   disclaimer: "본 글은 공개된 언론 보도를 정리한 것이며, 투자 판단의 책임은 이용자 본인에게 있습니다."
+
+  naver:
+    tag_count: 20           # 본문 하단 해시태그 개수 (네이버 태그 상한은 30개)
+    image_slots: 3          # 본문에 넣을 이미지 자리 개수
+    paragraph_max_chars: 120  # 문단 최대 길이. 모바일에서 읽히려면 짧아야 합니다.

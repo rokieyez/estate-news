@@ -134,8 +134,11 @@ class BlogPost(BaseModel):
     title: str = Field(description="블로그 제목. 검색 유입을 고려하되 낚시성 금지")
     slug: str = Field(description="영문 소문자 하이픈 슬러그")
     meta_description: str = Field(description="검색결과 설명문. 80~120자")
-    tags: list[str] = Field(description="태그 5~8개")
+    tags: list[str] = Field(description="태그 목록. 개수는 지시에 따름")
     body_markdown: str = Field(description="마크다운 본문. H2/H3 소제목, 표, 불릿 활용")
+    image_notes: list[str] = Field(
+        description="본문에 넣을 이미지 제안. body_markdown 안의 [이미지: ...] 자리와 같은 순서. 없으면 빈 배열"
+    )
 
 
 class CaptionLine(BaseModel):

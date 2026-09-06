@@ -206,7 +206,10 @@ def _generate_with_llm(
     renderer.data_json(brief)
 
     try:
-        renderer.blog(generator.generate_blog(brief), issues)
+        post = generator.generate_blog(brief)
+        renderer.blog(post, issues)
+        if str(cfg.get("blog.platform", "naver")).lower() == "naver":
+            renderer.blog_naver(post)
     except LLMError as exc:
         log.error("블로그 생성 실패: %s", exc)
         result.warnings.append(f"블로그 생성 실패 — {exc}")

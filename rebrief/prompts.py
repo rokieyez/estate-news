@@ -78,6 +78,12 @@ def build_shared_context(cfg: Config, brief: DailyBrief) -> str:
 
 def build_blog_user(cfg: Config) -> str:
     blog = cfg.get("blog", {}) or {}
+    if str(blog.get("platform", "naver")).lower() == "naver":
+        return _blog_user_naver(cfg, blog)
+    return _blog_user_markdown(blog)
+
+
+def _blog_user_markdown(blog: dict) -> str:
     min_chars = int(blog.get("min_chars", 1800))
     max_chars = int(blog.get("max_chars", 3500))
 
@@ -89,7 +95,54 @@ def build_blog_user(cfg: Config) -> str:
 - 각 이슈 끝에 근거 기사 링크를 넣습니다.
 - 마지막에 '오늘의 체크포인트' 3줄 요약을 붙입니다.
 - title 은 검색해서 들어올 만한 제목으로 짓되, 과장하거나 낚지 않습니다.
-- 글 안에서 독자를 '여러분'으로 부르고, 존댓말로 씁니다."""
+- 글 안에서 독자를 '여러분'으로 부르고, 존댓말로 씁니다.
+- tags 는 5~8개. image_notes 는 빈 배열로 두세요."""
+
+
+def _blog_user_naver(cfg: Config, blog: dict) -> str:
+    """네이버 블로그는 검색 유입과 모바일 열람 비중이 커서 요구사항이 다르다.
+
+    - 검색으로 들어온 사람은 스크롤을 거의 안 한다 → 결론을 맨 앞에
+    - 대부분 휴대폰으로 본다 → 문단이 길면 읽지 않는다
+    - 본문에 쓴 #해시태그가 그대로 블로그 태그로 등록된다
+    """
+    min_chars = int(blog.get("min_chars", 1800))
+    max_chars = int(blog.get("max_chars", 3500))
+    naver = blog.get("naver", {}) or {}
+    tag_count = int(naver.get("tag_count", 20))
+    image_slots = int(naver.get("image_slots", 3))
+    para_max = int(naver.get("paragraph_max_chars", 120))
+
+    return f"""위 브리핑을 바탕으로 **네이버 블로그**에 올릴 글 한 편을 완성하세요.
+네이버 블로그의 특성에 맞춰야 하므로 아래 규칙을 정확히 지켜 주세요.
+
+■ 제목 (title)
+- 핵심 키워드를 **앞쪽에** 배치합니다. 검색 노출에 유리합니다.
+- 25~35자. 날짜를 넣으면 좋습니다. 예: "서울 아파트값 3주 연속 하락, 9월 6일 부동산 브리핑"
+- 과장·낚시성 표현은 쓰지 않습니다.
+
+■ 첫 문단 (본문 맨 앞)
+- 검색으로 들어온 사람은 스크롤하지 않습니다. **결론부터** 씁니다.
+- 3줄 이내로 "오늘 무슨 일이 있었고, 그래서 어떻다"를 끝냅니다.
+
+■ 본문 (body_markdown)
+- 분량 {min_chars}~{max_chars}자.
+- **한 문단은 2~3문장, {para_max}자 이내.** 휴대폰 화면에서 벽처럼 보이면 읽지 않습니다.
+- 문단 사이는 반드시 빈 줄로 띄웁니다.
+- `##` 소제목을 4~6개 넣습니다. 소제목에도 키워드를 자연스럽게 넣으세요.
+- 핵심 키워드를 본문 전체에 3~5회 자연스럽게 반복합니다. 억지로 끼워 넣지는 마세요.
+- 수치가 2개 이상인 이슈는 마크다운 표로 정리합니다.
+- 이미지 자리를 본문 흐름에 맞게 {image_slots}곳 넣습니다. 형식은 정확히 이렇게 씁니다:
+  `[이미지: 어떤 이미지를 넣을지 설명]`
+  같은 설명을 image_notes 배열에 같은 순서로 담습니다.
+- 각 이슈 끝에 근거 기사 링크를 붙입니다.
+- 마지막 소제목은 '오늘의 체크포인트'로 하고 3줄 요약을 넣습니다.
+- 독자를 '여러분'으로 부르고 존댓말로 씁니다. 딱딱한 보고서 문체는 피합니다.
+
+■ 태그 (tags)
+- {tag_count}개. 본문 하단에 해시태그로 붙일 것이며 네이버가 이를 태그로 인식합니다.
+- 넓은 키워드(부동산, 아파트)와 좁은 키워드(서울아파트값, 전세사기지원)를 섞습니다.
+- 띄어쓰기 없이 붙여 씁니다. # 기호는 빼고 단어만 담으세요."""
 
 
 def build_video_user(cfg: Config) -> str:
