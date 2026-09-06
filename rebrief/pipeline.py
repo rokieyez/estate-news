@@ -243,7 +243,7 @@ def _generate_with_llm(
     slot_files = renderer.images(brief, history=history, post=post)
     keys: list = []
     if post is not None:
-        # 오늘의 핵심 수치: 브리핑 datapoint 가운데 글에 실제로 쓰인 것. 블로그 카드·강조·썸네일·쇼츠 첫 컷이 함께 쓴다.
+        # 오늘의 핵심 수치: 브리핑 datapoint 가운데 글에 실제로 쓰인 것. 블로그 카드·강조·썸네일 배지가 함께 쓴다.
         keys = keynumbers.pick(brief, post.body_markdown, int(cfg.get("blog.key_numbers", 3) or 0))
         made.update(post=post, key_numbers=keys, empty_photo_slots=sum(
             1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
@@ -264,7 +264,6 @@ def _generate_with_llm(
     renderer.longform(pack)
     renderer.production_notes(brief, pack)
     renderer.thumbnails(pack, key_numbers=keys)
-    renderer.shorts_draft(pack, key_numbers=keys)
     _record_titles(cfg, date_str, longform=pack.longform.title_candidates,
                    shorts=pack.shorts.title_candidates)
     _autofix_banned(cfg, renderer, made, issues, slot_files, result)

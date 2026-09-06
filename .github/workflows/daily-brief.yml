@@ -78,7 +78,6 @@ jobs:
           else
             echo "::warning::크롬이 없어 PNG 변환을 건너뜁니다 (SVG 만 생성)"
           fi
-          command -v ffmpeg >/dev/null 2>&1 && echo "ffmpeg 있음: $(ffmpeg -version | head -1)" || echo "ffmpeg 없음 — 쇼츠 초안 영상은 건너뜁니다"
 
       - name: 브리핑 생성
         if: steps.guard.outputs.skip != 'true'
@@ -120,7 +119,6 @@ jobs:
             if [ "$SVG" -gt 0 ] && [ "$PNG" -eq 0 ]; then
               echo "::warning::SVG 는 생성됐지만 PNG 변환이 되지 않았습니다. 크롬 설치 여부를 확인하세요."
             fi
-            [ -f "output/$DATE/shorts-draft.mp4" ] && echo "쇼츠 초안 영상: 있음 (아티팩트에서 내려받기)" || true
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: 결과 커밋
@@ -143,15 +141,6 @@ jobs:
           done
           echo "푸시에 실패했습니다." >&2
           exit 1
-
-      - name: 산출물 아티팩트 업로드
-        if: always() && steps.guard.outputs.skip != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: brief-${{ github.run_id }}
-          path: output/
-          retention-days: 14
-          if-no-files-found: warn
 
       - name: 실패 알림
         if: failure()

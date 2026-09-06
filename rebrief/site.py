@@ -34,7 +34,7 @@ PAGES = [
     ("sources.md", "기사 원문", "근거가 된 기사 링크"),
 ]
 EXTRA_FILES = ["script-shorts.srt", "data.json"]
-# 그림·썸네일은 이름 패턴으로 통째로 복사한다. 영상 초안(mp4)은 용량 때문에 뺀다.
+# 그림·썸네일은 이름 패턴으로 통째로 복사한다.
 ASSET_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg"]
 
 

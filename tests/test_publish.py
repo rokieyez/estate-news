@@ -232,15 +232,12 @@ def test_pick_prefers_numbers_used_in_body():
     assert pick(brief, "", 0) == [] and pick(None, "x") == []
 
 
-def test_thumbnail_badge_and_shorts_intro():
-    from rebrief import images, video
-    from rebrief.keynumbers import KeyNumber
+def test_thumbnail_badge():
+    from rebrief import images
 
     svg = images.thumbnail("서울 22개구 종부세?", badge="11%", size=(1080, 1920)).svg
     assert ">11%</text>" in svg
     assert ">11%" not in images.thumbnail("제목").svg
-    intro = video.intro_svg([KeyNumber("11%", "11%", "서울 집값 연간 상승 가정")], channel="브리핑")
-    assert "오늘의 숫자" in intro and ">11%</text>" in intro and "브리핑" in intro
 
 
 def test_renderer_reads_highlight_threshold(cfg, tmp_path):

@@ -205,12 +205,10 @@ def test_사이트에_그림과_모아보기_페이지가_들어간다(cfg, tmp_
     (day / "img-district-map.png").write_bytes(b"\x89PNG")
     (day / "img-district-map.svg").write_text("<svg/>", encoding="utf-8")
     (day / "thumb-shorts.png").write_bytes(b"\x89PNG")
-    (day / "shorts-draft.mp4").write_bytes(b"0000")
 
     dest = build_site(cfg, tmp_path / "site")
     assert (dest / "2026-09-06" / "img-district-map.png").exists()
     assert (dest / "latest" / "thumb-shorts.png").exists()
-    assert not (dest / "2026-09-06" / "shorts-draft.mp4").exists()     # 영상은 사이트에 안 올린다
     gallery = (dest / "2026-09-06" / "images.html").read_text(encoding="utf-8")
     assert "서울 자치구 도식" in gallery and "쇼츠 썸네일" in gallery
     index = (dest / "index.html").read_text(encoding="utf-8")

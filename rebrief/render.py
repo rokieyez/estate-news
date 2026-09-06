@@ -259,25 +259,6 @@ class Renderer:
             paths.append(self.out_dir / f"{slug}.svg")
         return paths
 
-    def shorts_draft(self, pack: VideoPack, key_numbers: list | None = None) -> Path | None:
-        """자막 카드를 이어 붙인 쇼츠 초안 mp4. ffmpeg·크롬이 없으면 None.
-        핵심 수치가 있으면 '오늘의 숫자' 카드를 첫 컷으로 넣는다."""
-        video_cfg = self.cfg.get("video", {}) or {}
-        if not video_cfg.get("draft", True):
-            return None
-        from .video import build_shorts_draft
-
-        pngs = sorted(self.out_dir.glob("img-*.png"))
-        path = build_shorts_draft(
-            self.out_dir, pack.shorts, pngs,
-            channel=str(video_cfg.get("channel_name", "") or ""),
-            fps=int(video_cfg.get("draft_fps", 30)),
-            intro=key_numbers or [],
-        )
-        if path:
-            self.written.append(path)
-        return path
-
     def _write_image(self, img, cfg: dict, prefix: str = "img-") -> str:
         """SVG 를 쓰고, 되면 PNG 도 쓴다. 본문에서 가리킬 파일명(PNG 우선)을 돌려준다."""
         svg = self._write_raw(f"{prefix}{img.slug}.svg", img.svg)
@@ -506,7 +487,7 @@ def caption_timings(lines: list[CaptionLine], total_seconds: int | None = None) 
 
     끝 시각은 '다음 자막의 시작'으로 잡고 마지막만 전체 길이 또는 +3초로 닫는다.
     타임코드를 못 읽으면 앞 자막 뒤 2.5초, 시간이 거꾸로 가면 +0.5초로 단조 증가를 강제한다.
-    SRT 와 쇼츠 초안 영상이 같은 규칙을 쓴다.
+    SRT 자막 파일이 이 규칙으로 만들어진다.
     """
     starts: list[float] = []
     for line in lines:

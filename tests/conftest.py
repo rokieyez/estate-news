@@ -51,7 +51,6 @@ def cfg(tmp_path: Path) -> Config:
     settings["run"]["skip_recent_days"] = 0
     settings.setdefault("images", {})["png"] = False   # 테스트는 브라우저를 띄우지 않는다
     settings["collect"]["check_links"] = False        # 링크 점검은 별도 테스트에서 스텁으로
-    settings["video"]["draft"] = False               # 초안 영상은 ffmpeg·크롬을 띄운다
 
     # 피드는 픽스처 하나만 쓴다.
     sources = yaml.safe_load(yaml.safe_dump(real.sources, allow_unicode=True))
