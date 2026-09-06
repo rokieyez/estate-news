@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ channel }}</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 16px 60px; background: #f2f4f6; color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.7; -webkit-text-size-adjust: 100%;
+  }
+  .wrap { max-width: 640px; margin: 0 auto; }
+  header { padding: 28px 0 20px; }
+  h1 { font-size: 22px; margin: 0 0 6px; }
+  .sub { color: #6b7178; font-size: 14px; margin: 0; }
+
+  .today { background: #fff; border-radius: 14px; padding: 22px 18px; margin-bottom: 24px; }
+  .today .date { font-size: 13px; color: #6b7178; margin-bottom: 4px; }
+  .today h2 { font-size: 18px; margin: 0 0 18px; }
+
+  a.big {
+    display: block; text-decoration: none; margin-bottom: 10px;
+    padding: 16px 18px; border-radius: 10px;
+    background: #f7f8fa; border: 1px solid #e4e7ea; color: #1a1a1a;
+  }
+  a.big:active { background: #eef0f3; }
+  a.big .label { font-weight: 700; font-size: 16px; display: block; }
+  a.big .desc { font-size: 13px; color: #6b7178; display: block; margin-top: 3px; }
+  a.big.primary {
+    background: #03c75a; border-color: #03c75a; color: #fff;
+  }
+  a.big.primary .desc { color: rgba(255,255,255,.88); }
+  a.big .step { font-size: 12px; opacity: .8; display: block; margin-bottom: 2px; }
+
+  details { background: #fff; border-radius: 14px; padding: 6px 18px 10px; }
+  summary { cursor: pointer; padding: 14px 0; font-weight: 700; font-size: 15px; }
+  .past { list-style: none; margin: 0; padding: 0 0 8px; }
+  .past li { padding: 10px 0; border-top: 1px solid #eceef0; }
+  .past a { color: #0068c3; text-decoration: none; font-size: 15px; }
+  .past .files { font-size: 13px; color: #8b9096; }
+
+  footer { margin-top: 26px; font-size: 13px; color: #8b9096; text-align: center; }
+  .empty { background: #fff; border-radius: 14px; padding: 28px 18px; text-align: center; color: #6b7178; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>{{ channel }}</h1>
+  <p class="sub">매일 아침 자동으로 준비됩니다 · {{ generated_at }} 기준</p>
+</header>
+
+{% if today %}
+<div class="today">
+  <div class="date">{{ today.date }}</div>
+  <h2>오늘 할 일</h2>
+
+  {% for page in today.pages %}
+  <a class="big {% if loop.first %}primary{% endif %}" href="latest/{{ page.href }}">
+    <span class="step">{{ loop.index }}</span>
+    <span class="label">{{ page.label }}</span>
+    <span class="desc">{{ page.description }}</span>
+  </a>
+  {% endfor %}
+</div>
+
+{% if days|length > 1 %}
+<details>
+  <summary>지난 날짜 ({{ days|length - 1 }}일치)</summary>
+  <ul class="past">
+    {% for day in days[1:] %}
+    <li>
+      <a href="{{ day.date }}/{{ day.pages[0].href }}">{{ day.date }}</a>
+      <span class="files">· {{ day.pages|length }}개 문서</span>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
+
+{% else %}
+<div class="empty">
+  아직 만들어진 글이 없습니다.<br>
+  깃허브 <b>Actions</b> 탭에서 <b>부동산 데일리 브리핑</b>을 한 번 실행해 보세요.
+</div>
+{% endif %}
+
+<footer>
+  이 페이지는 발행 전 초안입니다. 숫자는 기사 원문과 대조해 주세요.
+</footer>
+
+</div>
+</body>
+</html>

@@ -41,6 +41,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_render.add_argument("--date", help="대상 날짜 (기본: 오늘)")
     p_render.add_argument("--no-llm", action="store_true", help="요약·대본 생성을 건너뜀")
 
+    sub.add_parser("site", help="휴대폰에서 볼 사이트 만들기 (site/)")
+
     sub.add_parser("doctor", help="RSS 피드 상태 점검")
 
     return parser
@@ -62,6 +64,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_collect(cfg, args)
     if args.command == "render":
         return _cmd_render(cfg, args)
+    if args.command == "site":
+        return _cmd_site(cfg)
     if args.command == "doctor":
         return _cmd_doctor(cfg, verbose=args.verbose)
     return 1
@@ -112,6 +116,16 @@ def _cmd_render(cfg, args) -> int:
         print("먼저 `python -m rebrief collect` 를 실행하세요.", file=sys.stderr)
         return 1
     _report(result)
+    return 0
+
+
+def _cmd_site(cfg) -> int:
+    from .site import build_site
+
+    dest = build_site(cfg)
+    days = sum(1 for p in dest.iterdir() if p.is_dir() and p.name != "latest")
+    print(f"사이트를 만들었습니다 — {dest}  (날짜 {days}일치)")
+    print(f"브라우저로 열어 보기: {dest / 'index.html'}")
     return 0
 
 

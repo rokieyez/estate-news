@@ -90,6 +90,9 @@ class Renderer:
             category=blog_cfg.get("category", "부동산"),
             body_html=to_naver_html(post.body_markdown),
             hashtags=format_hashtags(post.tags),
+            write_url=(blog_cfg.get("naver", {}) or {}).get(
+                "write_url", "https://blog.naver.com/"
+            ) or "https://blog.naver.com/",
         )
 
     def shorts(self, pack: VideoPack) -> list[Path]:

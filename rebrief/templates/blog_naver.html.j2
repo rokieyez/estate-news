@@ -28,6 +28,18 @@
   }
   .bar button:hover { background: rgba(255,255,255,.3); }
   .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
   .wrap { max-width: 720px; margin: 0 auto; }
   .card { background: #fff; border-radius: 10px; padding: 32px 28px; }
   .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
@@ -69,6 +81,7 @@
   <button type="button" data-copy="title">제목 복사</button>
   <button type="button" data-copy="post">본문 복사</button>
   <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="{{ write_url }}" target="_blank" rel="noopener">글쓰기 열기</a>
 </div>
 
 <div class="wrap">
@@ -87,7 +100,8 @@
   <div class="hint">
     <strong>쓰는 법</strong>
     <ol>
-      <li><b>제목 복사</b> → 네이버 블로그 글쓰기의 제목 칸에 붙여넣기</li>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
       <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
       <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.</li>
       <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>

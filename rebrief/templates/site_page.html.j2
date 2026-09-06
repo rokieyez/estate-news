@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }} — {{ date }}</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 0 16px 60px; background: #f2f4f6; color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.75; -webkit-text-size-adjust: 100%;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 5; margin: 0 -16px 18px; padding: 12px 16px;
+    background: #fff; border-bottom: 1px solid #e4e7ea;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .bar a { color: #0068c3; text-decoration: none; font-size: 15px; font-weight: 600; }
+  .bar span { color: #6b7178; font-size: 14px; }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  .card { background: #fff; border-radius: 12px; padding: 24px 20px; }
+  h1 { font-size: 21px; margin: 26px 0 12px; }
+  h2 { font-size: 19px; margin: 30px 0 12px; padding-bottom: 7px; border-bottom: 2px solid #e4e7ea; }
+  h3 { font-size: 16px; margin: 22px 0 8px; }
+  p { margin: 0 0 15px; }
+  ul, ol { padding-left: 20px; margin: 0 0 15px; }
+  li { margin-bottom: 6px; }
+  table { border-collapse: collapse; width: 100%; margin: 0 0 18px; font-size: 14px; display: block; overflow-x: auto; }
+  th, td { border: 1px solid #e0e3e6; padding: 8px 11px; text-align: left; white-space: nowrap; }
+  th { background: #f5f6f8; }
+  blockquote { margin: 0 0 15px; padding: 12px 15px; background: #f7f8fa; border-left: 4px solid #c9cdd2; color: #4a4f55; }
+  code { background: #f2f4f6; padding: 2px 5px; border-radius: 4px; font-size: 13px; }
+  pre { background: #f7f8fa; padding: 14px; border-radius: 8px; overflow-x: auto; font-size: 13px; }
+  pre code { background: none; padding: 0; }
+  a { color: #0068c3; word-break: break-all; }
+  hr { border: 0; border-top: 1px solid #e4e7ea; margin: 28px 0; }
+  details { margin: 0 0 15px; }
+  summary { cursor: pointer; color: #0068c3; }
+</style>
+</head>
+<body>
+<div class="bar">
+  <a href="../index.html">← 목록</a>
+  <span>{{ date }} · {{ title }}</span>
+</div>
+<div class="wrap">
+  <div class="card">
+{{ body_html }}
+  </div>
+</div>
+</body>
+</html>

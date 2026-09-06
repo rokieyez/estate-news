@@ -502,3 +502,56 @@ def test_blog_failure_does_not_stop_video(cfg, monkeypatch):
     assert (out / "script-shorts.md").exists()
     assert (out / "production-notes.md").exists()
     assert any("블로그 생성 실패" in w for w in result.warnings)
+
+
+# ── 휴대폰용 사이트 ──────────────────────────────────────────
+
+
+def test_site_build(cfg, monkeypatch, tmp_path):
+    """실행 결과가 링크 하나로 열리는 사이트가 되는지."""
+    from rebrief.site import build_site
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
+    pipeline.run(cfg, run_date="2026-09-05", use_llm=True)
+    pipeline.run(cfg, run_date=RUN_DATE, use_llm=True)
+
+    site = build_site(cfg, dest=tmp_path / "site")
+
+    # 마크다운은 브라우저에서 읽히도록 HTML 로 바뀌어야 한다
+    assert (site / RUN_DATE / "brief.html").exists()
+    assert not (site / RUN_DATE / "brief.md").exists()
+    # 네이버 페이지는 복사 버튼이 있으므로 그대로 옮긴다
+    assert (site / RUN_DATE / "blog-naver.html").exists()
+    # 자막·데이터 파일도 내려받을 수 있어야 한다
+    assert (site / RUN_DATE / "script-shorts.srt").exists()
+
+    # latest/ 는 항상 최신 날짜의 사본 — 주소가 바뀌지 않아야 즐겨찾기가 유효하다
+    assert (site / "latest" / "blog-naver.html").exists()
+    assert (site / "latest" / "blog-naver.html").read_text(encoding="utf-8") == \
+           (site / RUN_DATE / "blog-naver.html").read_text(encoding="utf-8")
+
+    index = (site / "index.html").read_text(encoding="utf-8")
+    assert RUN_DATE in index
+    assert "latest/blog-naver.html" in index      # 첫 번째 버튼이 네이버 글
+    assert "2026-09-05" in index                  # 지난 날짜 목록
+    assert (site / ".nojekyll").exists()
+
+
+def test_site_handles_empty_output(cfg, tmp_path):
+    """아직 아무것도 안 만들었을 때도 안내 화면이 떠야 한다."""
+    from rebrief.site import build_site
+
+    site = build_site(cfg, dest=tmp_path / "site")
+    index = (site / "index.html").read_text(encoding="utf-8")
+    assert "아직 만들어진 글이 없습니다" in index
+    assert not (site / "latest").exists()
+
+
+def test_site_markdown_checkboxes_render():
+    from rebrief.site import md_to_html
+
+    html = md_to_html("- [ ] 촬영\n- [x] 대본 확인\n")
+    assert "☐ 촬영" in html
+    assert "☑ 대본 확인" in html
+    assert "[ ]" not in html
