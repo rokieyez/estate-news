@@ -342,7 +342,8 @@ class Renderer:
         return svg.name
 
     def stats(self, data: dict, series: dict | None = None,
-              history: list[dict] | None = None, history_region: str = "") -> Path | None:
+              history: list[dict] | None = None, history_region: str = "",
+              jeonse_history: list[dict] | None = None) -> Path | None:
         """실거래가 집계표와 그림. 자료가 없으면 아무것도 만들지 않는다."""
         if not data or not data.get("districts"):
             return None
@@ -355,11 +356,17 @@ class Renderer:
                 ("index", images_mod.price_index_line(series or {}, self.date, extra)),
                 ("history", images_mod.trade_history_line(history or [], history_region,
                                                           self.date, extra)),
+                ("jeonse", images_mod.jeonse_history_line(jeonse_history or [], history_region,
+                                                          self.date, extra)),
             )
             for key, img in made:
                 if img:
                     files[key] = self._write_image(img, cfg)
         self.stats_images = files
+        # 검색 색인이 읽을 수 있게 집계 결과를 그대로 한 벌 남긴다 (그림 경로는 뺀다)
+        import json as _json
+
+        self._write_raw("stats.json", _json.dumps(data, ensure_ascii=False, indent=2) + "\n")
         return self._write("stats.md", "stats.md.j2", index=index_table(series or {}),
                            images=files, history_region=history_region, **data)
 

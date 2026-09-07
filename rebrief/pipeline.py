@@ -148,6 +148,7 @@ def run(
     seen.prune(keep_days=30)
     seen.save()
     _record_cost(cfg, result)
+    _warn_if_costly(cfg, result)
 
     index = update_index(cfg)
     result.files = list(renderer.written) + ([index] if index else [])
@@ -398,6 +399,26 @@ def _record_titles(cfg: Config, date_str: str, **kinds: list[str]) -> None:
         log.warning("제목 기록 실패: %s", exc)
 
 
+def _warn_if_costly(cfg: Config, result: RunResult, times: float = 2.0) -> None:
+    """평소보다 유난히 비싼 날이면 알린다.
+
+    월 예산 경보는 한 달이 다 지나야 울린다. 그 사이에 프롬프트가 길어지거나 재시도가 늘면
+    조용히 몇 배가 나갈 수 있어, 하루 단위로도 견줘 본다.
+    """
+    if not result.usage or not getattr(result.usage, "calls", 0):
+        return
+    book = CostLog(cfg.state_dir / "costs.json")
+    typical = book.typical()
+    today = float(getattr(result.usage, "estimated_usd", 0) or 0)
+    if typical <= 0 or today <= typical * times:
+        return
+    krw = float(cfg.get("llm.krw_per_usd", 1400))
+    result.warnings.append(
+        f"오늘 비용 ${today:.2f}(약 {round(today * krw):,}원)이 평소 ${typical:.2f} 의 "
+        f"{today / typical:.1f}배입니다. 프롬프트나 재시도를 확인하세요."
+    )
+
+
 def _budget_guard(cfg: Config, result: RunResult) -> str | None:
     """월 예산에 따라 쓸 모델을 정한다. None = 기본, 대체 모델명 = 절약, "" = 이번 실행 건너뜀."""
     budget = float(cfg.get("llm.monthly_budget_usd", 0) or 0)
@@ -495,8 +516,11 @@ def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result,
         from .store import TradeLog
 
         region = data["districts"][0]["name"] if data["districts"] else ""
-        history = TradeLog(cfg.state_dir / "trades.json").month_series(region) if region else []
-        renderer.stats(data, series, history=history, history_region=region)
+        book = TradeLog(cfg.state_dir / "trades.json")
+        history = book.month_series(region) if region else []
+        jeonse = book.jeonse_series(region) if region else []
+        renderer.stats(data, series, history=history, history_region=region,
+                       jeonse_history=jeonse)
         log.info("실거래가 %d개 지역 집계", len(data["districts"]))
     return data
 

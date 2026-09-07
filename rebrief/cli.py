@@ -237,6 +237,8 @@ def _notify_result(cfg, result) -> None:
         site_url=str(cfg.get("site.url", "") or ""), warnings=result.warnings,
         llm_used=result.llm_used, images=len(list(result.out_dir.glob("img-*.png"))),
         stats=getattr(result, "stats", None),
+        usd=float(getattr(result.usage, "estimated_usd", 0) or 0) if result.usage else 0.0,
+        krw_per_usd=float(cfg.get("llm.krw_per_usd", 1400)),
     )
     print("📨 텔레그램 알림 " + ("전송" if send_telegram(text) else "실패"))
 
@@ -370,7 +372,8 @@ def _cmd_stats(cfg, args) -> int:
     book.save()
     region = data["districts"][0]["name"] if data["districts"] else ""
     renderer = Renderer(cfg, cfg.output_dir / date_str, date_str)
-    path = renderer.stats(data, series, history=book.month_series(region), history_region=region)
+    path = renderer.stats(data, series, history=book.month_series(region), history_region=region,
+                          jeonse_history=book.jeonse_series(region))
     print(f"{data['month']} 전체 {data['total']}건 (전달 {data['total_before']}건)")
     for row in data["districts"]:
         print(f"  {row['name']:<6} {row['now']['count']:>4}건  {row['change']:+4d}  "

@@ -150,6 +150,19 @@ class CostLog:
                 if (parsed := _parse_date(d)) and cutoff < parsed <= today}
         return round(sum(hits.values()), 4), len(hits)
 
+    def typical(self, kind: str = "daily", limit: int = 14) -> float:
+        """최근 실행들의 가운뎃값(USD). 하루가 유난히 비쌌는지 견줄 기준.
+
+        평균이 아니라 가운뎃값을 쓴다 — 비싼 하루가 기준 자체를 끌어올리면 다음 날도 못 잡는다.
+        """
+        vals = sorted(float(e.get("usd", 0)) for e in self.entries
+                      if e.get("kind") == kind and float(e.get("usd", 0)) > 0)[-limit:]
+        if not vals:
+            return 0.0
+        vals.sort()
+        mid = len(vals) // 2
+        return vals[mid] if len(vals) % 2 else round((vals[mid - 1] + vals[mid]) / 2, 4)
+
     def this_month(self, today: date | None = None) -> float:
         """이번 달(1일부터 오늘까지) 합계 USD."""
         today = today or date.today()
@@ -391,7 +404,21 @@ class TradeLog:
                           for r in data["districts"]},
             "index": {name: (rows[-1]["value"] if rows else None)
                       for name, rows in (series or {}).items()},
+            # 전세가율은 지수로 못 하는 이야기라 따로 쌓는다. 견준 단지 수도 함께 —
+            # 표본이 적은 날의 값은 덜 믿어야 한다.
+            "jeonse": {j["name"]: {"median": j["median"], "count": j["count"]}
+                       for j in (data.get("jeonse") or [])},
+            "highlights": len(data.get("highlights") or []),
         }
+
+    def jeonse_series(self, name: str, limit: int = 12) -> list[dict]:
+        """한 지역의 집계일별 전세가율. 값이 있는 날만."""
+        rows = []
+        for day, entry in sorted(self.days.items()):
+            got = (entry.get("jeonse") or {}).get(name)
+            if got and got.get("median") is not None:
+                rows.append({"date": day, **got})
+        return rows[-limit:]
 
     def month_series(self, name: str, limit: int = 12) -> list[dict]:
         """한 지역의 집계일별 거래 건수. 같은 달을 여러 번 집계한 것도 그대로 남긴다."""

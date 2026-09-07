@@ -63,7 +63,7 @@ function search() {
   hits.slice(0, 100).forEach(function (h) {
     var nums = h.issue.numbers.map(function (n) { return mark(n.label, term) + " <b>" + esc(n.value) + esc(n.unit || "") + "</b>"; }).join(" · ");
     out.insertAdjacentHTML("beforeend",
-      '<div class="hit"><div class="d"><a href="' + h.day.date + '/' + h.day.href + '">' + h.day.date + '</a> · ' + esc(h.issue.category || "") + '</div>' +
+      '<div class="hit"><div class="d"><a href="' + h.day.date + '/' + (h.issue.href || h.day.href) + '">' + h.day.date + '</a> · ' + esc(h.issue.category || "") + '</div>' +
       '<div class="t">' + mark(h.issue.title, term) + '</div>' +
       '<div>' + mark(h.issue.one_liner || "", term) + '</div>' +
       (nums ? '<div class="n">' + nums + '</div>' : '') + '</div>');

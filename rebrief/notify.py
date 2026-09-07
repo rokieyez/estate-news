@@ -48,11 +48,14 @@ def send_telegram(text: str, *, timeout: float = 15) -> bool:
 
 def build_run_message(*, date: str, headline: str, issues: int, articles: int,
                       site_url: str, warnings: list[str], llm_used: bool,
-                      images: int = 0, stats: dict | None = None) -> str:
+                      images: int = 0, stats: dict | None = None,
+                      usd: float = 0.0, krw_per_usd: float = 1400) -> str:
     lines = [f"📅 {date} 부동산 브리핑"]
     if headline:
         lines.append(headline)
     lines.append(f"이슈 {issues}개 · 기사 {articles}건" + (f" · 그림 {images}장" if images else ""))
+    if usd:
+        lines.append(f"💳 오늘 비용 ${usd:.2f} (약 {round(usd * krw_per_usd):,}원)")
     lines += stats_lines(stats)
     if not llm_used:
         lines.append("⚠️ 요약·대본은 만들지 못했습니다 (prompt-pack.md 참고)")

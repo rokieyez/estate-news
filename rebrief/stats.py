@@ -423,6 +423,7 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
         if settings.get("jeonse", True):
             ratio = jeonse_ratio(deals, apt_rents(cfg, code, ym))
             if ratio:
+                ratio["pairs"] = ratio["pairs"][:5]
                 row["jeonse"] = ratio
         rows.append(row)
         picks += highlights(deals, history, district=name)
@@ -435,7 +436,10 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
             "before": before, "before_label": month_label(before), "districts": rows,
             "highlights": picks[: int(settings.get("max_highlights", 5))],
             "focus": [r["name"] for r in rows if r["focus"]],
-            "jeonse": [{"name": r["name"], **r["jeonse"]} for r in rows if r.get("jeonse")],
+            # 단지 목록은 상위 몇 곳만 남긴다 — 전부 실으면 하루 200KB 가 매일 커밋된다
+            "jeonse": [{"name": r["name"], **r["jeonse"],
+                        "pairs": r["jeonse"]["pairs"][:5]}
+                       for r in rows if r.get("jeonse")],
             "history_months": months_back,
             "total": sum(r["now"]["count"] for r in rows),
             "total_before": sum(r["was"]["count"] for r in rows)}

@@ -138,6 +138,44 @@ def _write_pwa(dest: Path, channel: str, png: bool = True) -> None:
     }, ensure_ascii=False, indent=2), encoding="utf-8")
 
 
+def _stats_entries(day: Path) -> list[dict]:
+    """그날 실거래 집계를 검색에 넣는다. 뉴스 수치만 색인하면 '노원구 전세가율' 로 찾아도 안 나온다.
+
+    검색 화면이 이미 쓰는 모양(제목·한 줄·수치 목록)을 그대로 따르고, 링크만 통계 쪽으로 돌린다.
+    """
+    import json
+
+    path = day / "stats.json"
+    if not path.exists():
+        return []
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except (json.JSONDecodeError, OSError):
+        return []
+    rows = data.get("districts") or []
+    if not rows:
+        return []
+
+    numbers = [{"label": f"{r['name']} 거래", "value": r["now"]["count"], "unit": "건"} for r in rows]
+    numbers += [{"label": f"{r['name']} 평균 거래가",
+                 "value": round(r["now"]["avg"] / 100_000_000, 1), "unit": "억"} for r in rows]
+    numbers += [{"label": f"{j['name']} 전세가율", "value": j["median"], "unit": "%"}
+                for j in (data.get("jeonse") or [])]
+    numbers += [{"label": f"{h['district']} {h['name']} {h['kind']}",
+                 "value": round(h["amount"] / 100_000_000, 1), "unit": "억"}
+                for h in (data.get("highlights") or [])]
+    label = data.get("month_label", "")
+    return [{
+        "title": f"실거래 집계 — {label}",
+        "category": "실거래",
+        "one_liner": f"{label} 신고 매매 {data.get('total', 0):,}건 "
+                     f"({data.get('before_label', '')} {data.get('total_before', 0):,}건). "
+                     f"지역별 거래·평균가·전세가율·신고가.",
+        "numbers": numbers,
+        "href": "stats.html",
+    }]
+
+
 def _build_search(env, days: list[Path], built: list[dict], dest: Path) -> None:
     """모든 날의 data.json 을 색인 하나로 모아 브라우저에서만 찾는 검색 페이지."""
     import json
@@ -152,15 +190,17 @@ def _build_search(env, days: list[Path], built: list[dict], dest: Path) -> None:
             data = json.loads(path.read_text(encoding="utf-8"))
         except (json.JSONDecodeError, OSError):
             continue
+        issues = [{
+            "title": i.get("title", ""), "category": i.get("category", ""),
+            "one_liner": i.get("one_liner", ""),
+            "numbers": [{"label": n.get("label", ""), "value": n.get("value", ""), "unit": n.get("unit", "")}
+                        for n in i.get("numbers", [])],
+        } for i in data.get("issues", [])]
+        issues += _stats_entries(day)
         index.append({
             "date": day.name, "href": first_page.get(day.name, "brief.html"),
             "headline": data.get("headline", ""),
-            "issues": [{
-                "title": i.get("title", ""), "category": i.get("category", ""),
-                "one_liner": i.get("one_liner", ""),
-                "numbers": [{"label": n.get("label", ""), "value": n.get("value", ""), "unit": n.get("unit", "")}
-                            for n in i.get("numbers", [])],
-            } for i in data.get("issues", [])],
+            "issues": issues,
         })
     if not index:
         return

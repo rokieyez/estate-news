@@ -605,6 +605,61 @@ def price_index_line(series: dict, date: str, extra: dict | None = None) -> "Ima
     return Image("stats-index", "\n".join(p), title)
 
 
+def jeonse_history_line(rows: list[dict], region: str, date: str,
+                        extra: dict | None = None) -> "Image | None":
+    """날마다 잰 전세가율 추이. 사흘 이상 쌓여야 그린다."""
+    points = [r for r in rows if r.get("median") is not None]
+    if len(points) < 3:
+        return None
+    title = f"{region} 전세가율 — 우리 집계 추이"
+    sub = f"{points[0]['date']} ~ {points[-1]['date']} 집계 · 같은 단지·같은 면적 비교"
+    notes = [
+        "※ 전세 보증금 ÷ 매매가입니다. 월세가 붙은 계약과 갱신 계약은 뺐습니다. "
+        "견준 단지 수가 적은 날은 값이 크게 흔들립니다.",
+        "출처: 국토교통부 실거래가 공개시스템 · 날마다 직접 집계",
+    ]
+    w, plot_h = 1000, 260
+    h = card_height(w, title, sub, plot_h + 96, notes)
+    p, g = frame_open(w, h, title=title, subtitle=sub, channel=_channel(extra), date=date)
+    x, y, inner = g["x"], g["top"], g["inner"]
+
+    values = [r["median"] for r in points]
+    ticks = nice_ticks(min(values), max(values))
+    lo, hi = ticks[0], ticks[-1]
+    axis_w = 74
+    px, pw = x + axis_w, inner - axis_w
+    py = y + 40
+
+    def sy(v: float) -> float:
+        return py + plot_h - (v - lo) / (hi - lo) * plot_h
+
+    for t in ticks:
+        ty = sy(t)
+        p.append(f'<line x1="{px}" y1="{ty:g}" x2="{px + pw}" y2="{ty:g}" '
+                 f'stroke="{GRID}" stroke-width="1"/>')
+        p.append(f'<text x="{px - 14}" y="{ty + 6:g}" font-size="18" text-anchor="end" '
+                 f'fill="{MUTED}">{t:g}%</text>')
+
+    step = pw / max(len(points) - 1, 1)
+    coords = [(px + i * step, sy(v)) for i, v in enumerate(values)]
+    p.append(f'<polyline fill="none" stroke="{ORANGE}" stroke-width="3" '
+             'stroke-linejoin="round" points="'
+             + " ".join(f"{cx:.1f},{cy:.1f}" for cx, cy in coords) + '"/>')
+    for (cx, cy), row in zip(coords, points):
+        # 표본이 적은 날은 점을 작게 — 같은 굵기로 그리면 똑같이 믿게 된다
+        r = 5 if row.get("count", 0) >= 20 else 3
+        p.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="{r}" fill="{ORANGE}" '
+                 f'stroke="{CARD}" stroke-width="2"/>')
+    ex, ey = coords[-1]
+    p.append(f'<text x="{ex:.1f}" y="{ey - 16:.1f}" font-size="24" font-weight="700" '
+             f'text-anchor="end" fill="{INK}">{values[-1]:.1f}%</text>')
+    for idx, anchor in ((0, "start"), (len(points) - 1, "end")):
+        p.append(f'<text x="{coords[idx][0]:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
+                 f'text-anchor="{anchor}" fill="{MUTED}">{esc(points[idx]["date"])}</text>')
+    frame_close(p, notes, g)
+    return Image("stats-jeonse", "\n".join(p), title)
+
+
 def trade_history_line(rows: list[dict], region: str, date: str,
                        extra: dict | None = None) -> "Image | None":
     """우리가 날마다 집계한 거래 건수 추이. 사흘 이상 쌓여야 그린다."""

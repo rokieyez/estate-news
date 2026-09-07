@@ -1126,3 +1126,74 @@ def test_trade_pages_are_followed_to_the_end(cfg, monkeypatch):
     monkeypatch.setattr(S, "_get", fake_get)
     rows = S.apt_trades(cfg, "11680", "202607")
     assert len(rows) == 1359 and asked == ["1", "2"]     # 두 쪽이면 충분하다
+
+
+# ── 전세가율 쌓기 · 비용 감시 · 검색 색인 ────────────────────
+
+def test_trade_log_keeps_jeonse_history(tmp_path):
+    from rebrief.store import TradeLog
+
+    book = TradeLog(tmp_path / "trades.json")
+    for day, median, count in (("2026-09-05", 54.1, 120), ("2026-09-06", 54.8, 128)):
+        book.add(day, {"month": "202607", "total": 2200,
+                       "districts": [{"name": "노원구", "now": {"count": 700, "avg": 7e8}}],
+                       "jeonse": [{"name": "노원구", "median": median, "count": count}],
+                       "highlights": [{"kind": "신고가"}]}, {})
+    book.save()
+
+    rows = TradeLog(tmp_path / "trades.json").jeonse_series("노원구")
+    assert [r["median"] for r in rows] == [54.1, 54.8]
+    assert rows[-1]["count"] == 128            # 표본 수도 함께 — 적은 날은 덜 믿는다
+    assert TradeLog(tmp_path / "trades.json").jeonse_series("없는구") == []
+
+
+def test_costly_day_is_flagged(cfg, tmp_path):
+    from types import SimpleNamespace
+
+    from rebrief.pipeline import RunResult, _warn_if_costly
+    from rebrief.store import CostLog
+
+    book = CostLog(cfg.state_dir / "costs.json")
+    for usd in (0.30, 0.32, 0.28):
+        book.entries.append({"date": "2026-09-0", "kind": "daily", "usd": usd})
+    book.save()
+    assert book.typical() == 0.30              # 가운뎃값
+
+    result = RunResult(date="2026-09-07", out_dir=tmp_path)
+    result.usage = SimpleNamespace(calls=3, estimated_usd=0.95)
+    _warn_if_costly(cfg, result)
+    assert "3.2배" in result.warnings[0] and "원" in result.warnings[0]
+
+    normal = RunResult(date="2026-09-07", out_dir=tmp_path)
+    normal.usage = SimpleNamespace(calls=3, estimated_usd=0.35)
+    _warn_if_costly(cfg, normal)
+    assert normal.warnings == []
+
+    # 견줄 이력이 없으면 아무 말도 하지 않는다 (첫날을 비싸다고 할 수 없다)
+    assert CostLog(tmp_path / "none.json").typical() == 0.0
+
+
+def test_search_index_includes_trade_stats(tmp_path):
+    import json
+
+    from rebrief.site import _stats_entries
+
+    day = tmp_path / "2026-09-07"
+    day.mkdir()
+    assert _stats_entries(day) == []           # 통계가 없는 날은 조용히 넘어간다
+
+    (day / "stats.json").write_text(json.dumps({
+        "month_label": "2026년 7월", "before_label": "2026년 6월",
+        "total": 2230, "total_before": 2252,
+        "districts": [{"name": "노원구", "now": {"count": 723, "avg": 700000000}}],
+        "jeonse": [{"name": "노원구", "median": 54.8, "count": 128}],
+        "highlights": [{"kind": "신고가", "district": "성동구", "name": "벽산",
+                        "amount": 1_080_000_000}],
+    }, ensure_ascii=False), encoding="utf-8")
+
+    entry = _stats_entries(day)[0]
+    assert entry["href"] == "stats.html" and entry["category"] == "실거래"
+    labels = [n["label"] for n in entry["numbers"]]
+    assert "노원구 전세가율" in labels and "노원구 거래" in labels
+    assert "성동구 벽산 신고가" in labels
+    assert "2,230건" in entry["one_liner"]

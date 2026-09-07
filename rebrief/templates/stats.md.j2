@@ -56,6 +56,14 @@
 {% endfor %}
 {% endif %}
 
+{% if images.get('jeonse') %}
+## 전세가율 추이 ({{ history_region }})
+
+![집계일별 전세가율]({{ images['jeonse'] }})
+
+견준 단지 수가 적은 날은 값이 크게 흔들립니다. 점이 작은 날이 그런 날입니다.
+{% endif %}
+
 {% if images.get('history') %}
 ## 우리가 날마다 센 추이 ({{ history_region }})
 
