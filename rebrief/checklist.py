@@ -38,9 +38,47 @@ def _find_phrases(text: str, phrases: list[str]) -> list[str]:
     return hits
 
 
+def long_sentences(markdown_text: str, limit: int = 90) -> list[str]:
+    """너무 긴 문장들. 표·소제목·인용은 빼고 본문 문장만 센다."""
+    out: list[str] = []
+    for block in _body_blocks(markdown_text):
+        for sentence in re.split(r"(?<=[.!?])\s+", block):
+            flat = " ".join(sentence.split())
+            if len(flat) > limit:
+                out.append(flat)
+    return out
+
+
+def long_paragraphs(markdown_text: str, limit: int = 320) -> list[str]:
+    """한 문단이 너무 길면 휴대폰에서 벽처럼 보인다."""
+    return [b for b in _body_blocks(markdown_text) if len(b) > limit]
+
+
+def _body_blocks(markdown_text: str) -> list[str]:
+    blocks: list[str] = []
+    for raw in (markdown_text or "").split("\n\n"):
+        block = " ".join(raw.split())
+        if not block or block.startswith(("#", ">", "|", "-", "*", "!", "[이미지")):
+            continue
+        blocks.append(block)
+    return blocks
+
+
+def long_captions(pack, max_chars: int = 16, max_lines: int = 2) -> list[str]:
+    """두 줄에 담기지 않는 쇼츠 자막 컷. 화면에서 글자가 작아지거나 넘친다."""
+    from .render import wrap_caption
+
+    out: list[str] = []
+    for i, line in enumerate(pack.shorts.lines, start=1):
+        wrapped = wrap_caption(line.text, max_chars, max_lines)
+        if any(len(part) > max_chars for part in wrapped.split("\n")):
+            out.append(f"{i}컷 · {' '.join(line.text.split())}")
+    return out
+
+
 def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
           link_status=None, warnings=None, llm_used: bool = True,
-          empty_photo_slots: int = 0) -> list[Item]:
+          empty_photo_slots: int = 0, repeats=None) -> list[Item]:
     items: list[Item] = []
     video = cfg.get("video", {}) or {}
     blog = cfg.get("blog", {}) or {}
@@ -103,6 +141,20 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
             items.append(Item("tags", WARN, f"태그 {tags}개 (설정 {want}개)"))
         else:
             items.append(Item("tags", OK, f"태그 {tags}개"))
+        # 4-1) 읽기 쉬움 — 긴 문장·긴 문단
+        long_s = long_sentences(post.body_markdown, int(blog.get("max_sentence_chars", 90)))
+        long_p = long_paragraphs(post.body_markdown, int(blog.get("max_paragraph_chars", 320)))
+        if long_s or long_p:
+            bits = []
+            if long_s:
+                bits.append(f"긴 문장 {len(long_s)}개")
+            if long_p:
+                bits.append(f"긴 문단 {len(long_p)}개")
+            items.append(Item("readability", WARN, " · ".join(bits) + " — 휴대폰에서 답답해 보입니다",
+                              "문장은 둘로 나누고, 문단은 두세 문장에서 끊으세요.",
+                              [t[:60] + "…" for t in (long_s + long_p)[:3]]))
+        else:
+            items.append(Item("readability", OK, "문장·문단 길이 적당"))
         if empty_photo_slots:
             items.append(Item("photos", WARN, f"직접 넣을 사진 자리 {empty_photo_slots}곳",
                               "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)"))
@@ -123,6 +175,21 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
             items.append(Item("long_len", WARN, f"롱폼 발화 {l_chars:,}자 (약 {l_chars / cpm:.1f}분, 목표 {video.get('longform_minutes', 8)}분)"))
         else:
             items.append(Item("long_len", OK, f"롱폼 발화 {l_chars:,}자 (약 {l_chars / cpm:.1f}분)"))
+
+    # 5-1) 자막 길이 — 두 줄에 안 들어가는 컷
+    if pack is not None:
+        over = long_captions(pack, int(video.get("caption_max_chars", 16)),
+                             int(video.get("caption_max_lines", 2)))
+        if over:
+            items.append(Item("caption_len", WARN, f"두 줄에 안 들어가는 자막 {len(over)}컷",
+                              "쇼츠는 세로 화면입니다. 컷을 쪼개거나 문장을 줄이세요.", over[:3]))
+
+    # 5-2) 같은 주제 반복
+    for r in (repeats or []):
+        items.append(Item("repeat", WARN,
+                          f"'{r['title']}' 은 {r['days_ago']}일 전에도 다뤘습니다",
+                          "그대로 또 쓰면 재탕으로 보입니다. 그때와 달라진 숫자를 앞세우거나 후속 국면을 잡으세요.",
+                          [f"{r['prev_date']} · {r['prev_title']}"]))
 
     # 6) 실행 중 나온 경고 (max_tokens 잘림, 강등 등)
     for w in (warnings or []):

@@ -9,6 +9,7 @@ run:
   max_issues: 5             # 하루에 다룰 이슈 개수
   min_cluster_size: 1       # 이슈로 올릴 최소 보도 건수 (2로 올리면 단독 기사 제외)
   skip_recent_days: 3       # 최근 N일 안에 이미 다룬 기사는 제외 (재탕 방지)
+  repeat_lookback_days: 7   # 며칠 전까지의 이슈 제목과 견줘 '같은 주제 반복' 을 알릴지
 
 collect:
   timeout_seconds: 15
@@ -43,6 +44,10 @@ llm:
   max_tokens: 16000
   timeout_seconds: 600
   krw_per_usd: 1400         # INDEX.md 비용 표시에 쓰는 환율 (대략값)
+  # 영상 대본만 다른(값싼) 모델로. 출력 토큰이 가장 많은 호출이라 하루 비용이 크게 준다.
+  # 비우면 위 model 을 그대로 씁니다.
+  script_model: claude-sonnet-5
+
   fallback_model: claude-sonnet-5   # 한도·장애로 실패하면 이 모델로 한 번 더 (비우면 안 함)
   monthly_budget_usd: 0     # 월 예산(달러). 0 이면 제한 없음. 80% 넘으면 fallback_model 로, 넘으면 건너뜀
   budget_soft_ratio: 0.8
@@ -80,6 +85,10 @@ video:
   shorts_seconds: 60        # 쇼츠 목표 길이
   longform_minutes: 8       # 롱폼 목표 길이
   speaking_rate_cpm: 330    # 분당 발화 글자 수(한국어 기준) — 대본 길이 계산에 사용
+  caption_max_chars: 16     # SRT 자막 한 줄 최대 글자 (세로 화면 기준)
+  caption_max_lines: 2      # 한 컷에 보여 줄 최대 줄 수
+  cut_list_fps: 30          # 컷 리스트 타임코드(HH:MM:SS:FF)의 초당 프레임
+
   banned_phrases:           # 대본에 쓰면 안 되는 표현
     - "무조건 오른다"
     - "지금 안 사면 늦는다"
@@ -92,6 +101,9 @@ blog:
   #   naver    — 네이버 블로그. blog-naver.html(붙여넣기용) 을 추가로 만듭니다.
   #   markdown — 티스토리/워드프레스/깃허브 등 범용 마크다운
   platform: naver
+
+  max_sentence_chars: 90    # 이보다 긴 문장은 점검표에 올림
+  max_paragraph_chars: 320  # 이보다 긴 문단은 점검표에 올림
 
   min_chars: 1800
   max_chars: 3500

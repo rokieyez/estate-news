@@ -33,7 +33,7 @@ PAGES = [
     ("production-notes.md", "제작 메모", "제목·썸네일·태그·촬영 목록"),
     ("sources.md", "기사 원문", "근거가 된 기사 링크"),
 ]
-EXTRA_FILES = ["script-shorts.srt", "data.json"]
+EXTRA_FILES = ["script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv", "data.json"]
 # 그림·썸네일은 이름 패턴으로 통째로 복사한다.
 ASSET_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg"]
 
@@ -68,6 +68,13 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
     weeks = _build_weeks(env, source / "weekly", dest / "weekly")
     _build_dashboard(env, cfg, days, built, dest)
     _build_search(env, days, built, dest)
+    upcoming = _build_upcoming(env, days, dest)
+
+    from .store import PublishLog
+
+    published = PublishLog(cfg.state_dir / "published.json")
+    for entry in built:
+        entry["published"] = published.get(entry["date"])
 
     index = env.get_template("site_index.html.j2").render(
         days=built,
@@ -75,6 +82,7 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
         weeks=weeks,
         has_dashboard=bool(days),
         has_search=any((d / "data.json").exists() for d in days),
+        upcoming=upcoming,
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
         channel=(cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑"),
     )
@@ -146,6 +154,38 @@ def _build_search(env, days: list[Path], built: list[dict], dest: Path) -> None:
         index_json=json.dumps(index, ensure_ascii=False).replace("</", "<\\/"),
     )
     (dest / "search.html").write_text(html, encoding="utf-8")
+
+
+def _build_upcoming(env, days: list[Path], dest: Path, limit: int = 7) -> int:
+    """브리핑마다 나온 '내일 볼 것' 을 모아 한 장으로. 같은 말은 한 번만 싣는다."""
+    import json
+
+    from .cluster import similarity
+
+    rows: list[dict] = []
+    for day in days[:limit]:
+        path = day / "data.json"
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        for item in data.get("tomorrow_watch", []) or []:
+            text = " ".join(str(item).split())
+            if not text or any(similarity(text, r["text"]) >= 0.7 for r in rows):
+                continue
+            rows.append({"text": text, "date": day.name})
+    if not rows:
+        return 0
+    lines = ["# 이번 주 볼 것", "", "브리핑마다 나온 '내일 확인할 것' 을 모았습니다. 같은 말은 한 번만 실었습니다.", ""]
+    lines += [f"- {r['text']}  \n  <small>{r['date']} 브리핑에서</small>" for r in rows]
+    html = env.get_template("site_page.html.j2").render(
+        title="이번 주 볼 것", date=days[0].name if days else "",
+        body_html=md_to_html("\n".join(lines)),
+    )
+    (dest / "upcoming.html").write_text(html, encoding="utf-8")
+    return len(rows)
 
 
 def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest: Path,

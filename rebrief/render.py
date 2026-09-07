@@ -54,13 +54,14 @@ class Renderer:
     # ── 개별 산출물 ──────────────────────────────────────────
 
     def brief(self, brief: DailyBrief, stats: RenderStats, checks: list | None = None,
-              diff: dict | None = None) -> Path:
+              diff: dict | None = None, why: list[str] | None = None) -> Path:
         checks = checks or []
         return self._write(
             "brief.md",
             "brief.md.j2",
             brief=brief,
             stats=stats,
+            why=why or [],
             date=self.date,
             generated_at=_now(),
             diff=diff or {},
@@ -139,21 +140,34 @@ class Renderer:
                 graphic_cuts=graphic_cuts,
             )
         ]
-        srt = to_srt(shorts.lines, shorts.estimated_seconds)
+        video_cfg = self.cfg.get("video", {}) or {}
+        srt = to_srt(shorts.lines, shorts.estimated_seconds,
+                     int(video_cfg.get("caption_max_chars", 16)),
+                     int(video_cfg.get("caption_max_lines", 2)))
         if srt:
             paths.append(self._write_raw("script-shorts.srt", srt))
+        # 편집 프로그램에 그대로 넣는 컷 리스트. 그림은 이미 만들어져 있으므로 파일명을 짚어 준다.
+        pictures = [p.name for p in sorted(self.out_dir.glob("img-*.png"))] or \
+                   [p.name for p in sorted(self.out_dir.glob("img-*.svg"))]
+        cuts = shorts_cut_csv(shorts, pictures, int(video_cfg.get("cut_list_fps", 30)))
+        if cuts:
+            paths.append(self._write_raw("shorts-cuts.csv", cuts))
         return paths
 
     def longform(self, pack: VideoPack) -> Path:
         longform = pack.longform
         char_count = sum(len(s.script) for s in longform.sections) + len(longform.cold_open)
-        return self._write(
+        path = self._write(
             "script-longform.md",
             "script_longform.md.j2",
             l=longform,
             date=self.date,
             char_count=char_count,
         )
+        chapters = longform_chapter_csv(longform, int((self.cfg.get("video", {}) or {}).get("cut_list_fps", 30)))
+        if chapters:
+            self._write_raw("longform-chapters.csv", chapters)
+        return path
 
     def production_notes(self, brief: DailyBrief, pack: VideoPack) -> Path:
         return self._write(
@@ -203,6 +217,7 @@ class Renderer:
                 }
                 for issue in brief.issues
             ],
+            "tomorrow_watch": list(brief.tomorrow_watch or []),
             "datapoints": flatten_datapoints(brief),
         }
         return self._write_raw(
@@ -282,6 +297,7 @@ class Renderer:
             checks=artifacts.get("checks"), link_status=link_status or {},
             warnings=result.warnings, llm_used=result.llm_used,
             empty_photo_slots=int(artifacts.get("empty_photo_slots", 0) or 0),
+            repeats=artifacts.get("repeats") or [],
         )
         if artifacts.get("autofixed"):
             items.insert(0, cl.Item("autofix", cl.WARN, f"금지 표현 문장 {len(artifacts['autofixed'])}개를 자동으로 고쳐 씀",
@@ -398,6 +414,44 @@ def highlight_repeated_numbers(html: str, min_count: int = 3, keys: set[str] | N
     return "".join(parts)
 
 
+def explain_issues(brief: DailyBrief, clusters: list[Cluster], tz: str = "Asia/Seoul") -> list[str]:
+    """이슈마다 '왜 이게 뽑혔는지' 한 줄. 모델을 부르지 않고 수집 결과만 센다.
+
+    이슈와 묶음(cluster)은 근거 기사 주소가 겹치는 것으로 맞춘다. 모델이 순서를 바꾸거나
+    제목을 다르게 붙여도 주소는 그대로이기 때문이다. 겹치는 게 없으면 순서대로 짝짓는다.
+    """
+    lines: list[str] = []
+    for index, issue in enumerate(brief.issues):
+        urls = set(issue.source_urls or [])
+        best, best_hits = None, 0
+        for rank, cluster in enumerate(clusters):
+            hits = sum(1 for a in cluster.articles if a.url in urls)
+            if hits > best_hits:
+                best, best_hits = (rank, cluster), hits
+        if best is None:
+            best = (index, clusters[index]) if index < len(clusters) else None
+        if best is None:
+            lines.append("")
+            continue
+        rank, cluster = best
+        publishers = {a.publisher or a.feed_name for a in cluster.articles if (a.publisher or a.feed_name)}
+        parts = [f"오늘 {rank + 1}위", f"매체 {len(publishers)}곳", f"기사 {len(cluster.articles)}건"]
+        latest = max((a.published for a in cluster.articles if a.published), default=None)
+        if latest is not None:
+            parts.append(f"최신 {_to_local(latest, tz).strftime('%m-%d %H:%M')}")
+        lines.append(" · ".join(parts))
+    return lines
+
+
+def _to_local(moment: datetime, tz: str = "Asia/Seoul") -> datetime:
+    try:
+        from zoneinfo import ZoneInfo
+
+        return moment.astimezone(ZoneInfo(tz))
+    except Exception:
+        return moment
+
+
 def photo_search_links(query: str) -> list[tuple[str, str]]:
     """사진 자리용 스톡 검색 링크. 키 없이 링크만 만든다. 한글이면 픽사베이(한국어)가 먼저."""
     from urllib.parse import quote
@@ -505,16 +559,136 @@ def caption_timings(lines: list[CaptionLine], total_seconds: int | None = None) 
     return [(start, starts[i + 1] if i + 1 < len(starts) else tail) for i, start in enumerate(starts)]
 
 
-def to_srt(lines: list[CaptionLine], total_seconds: int | None = None) -> str:
+def _greedy_lines(words: list[str], width: int) -> list[str]:
+    """폭 width 로 띄어쓰기에서 접는다. 한 낱말이 폭보다 길면 글자 수로 자른다."""
+    lines: list[str] = []
+    current = ""
+    for word in words:
+        while len(word) > width:                      # 붙여 쓴 긴 낱말
+            if current:
+                lines.append(current)
+                current = ""
+            lines.append(word[:width])
+            word = word[width:]
+        candidate = f"{current} {word}".strip()
+        if current and len(candidate) > width:
+            lines.append(current)
+            current = word
+        else:
+            current = candidate
+    if current:
+        lines.append(current)
+    return lines
+
+
+def wrap_caption(text: str, max_chars: int = 16, max_lines: int = 2) -> str:
+    """세로 화면에서 읽히도록 자막 한 컷을 짧은 줄로 끊는다.
+
+    한 줄 max_chars 자가 기준이지만, 그 폭으로 max_lines 줄에 못 담으면 담길 때까지 폭을
+    한 글자씩 넓힌다 — 글자를 버리지 않으면서 줄 길이를 고르게 하려는 것이다. 두 줄이 될
+    때는 가운데에 가장 가까운 띄어쓰기에서 잘라 한쪽만 길어 보이지 않게 한다.
+    """
+    flat = " ".join((text or "").split())
+    if not flat:
+        return ""
+    if len(flat) <= max_chars:
+        return flat
+
+    words = flat.split(" ")
+    width = max_chars
+    lines = _greedy_lines(words, width)
+    while len(lines) > max_lines and width < len(flat):
+        width += 1
+        lines = _greedy_lines(words, width)
+
+    if len(lines) == 2 and len(words) > 1:            # 두 줄은 길이를 맞춘다
+        best, best_gap = None, None
+        for i in range(1, len(words)):
+            left = len(" ".join(words[:i]))
+            right = len(flat) - left - 1
+            if max(left, right) > width:
+                continue
+            gap = abs(left - right)
+            if best_gap is None or gap < best_gap:
+                best, best_gap = i, gap
+        if best is not None:
+            lines = [" ".join(words[:best]), " ".join(words[best:])]
+    return "\n".join(lines)
+
+
+def to_srt(lines: list[CaptionLine], total_seconds: int | None = None,
+           max_chars: int = 16, max_lines: int = 2) -> str:
     """자막 줄 목록을 SRT 파일 내용으로 변환한다. 편집 프로그램에서 그대로 임포트된다."""
     timings = caption_timings(lines, total_seconds)
     if not timings:
         return ""
     blocks = [
-        f"{index + 1}\n{_srt_stamp(start)} --> {_srt_stamp(end)}\n{line.text}\n"
+        f"{index + 1}\n{_srt_stamp(start)} --> {_srt_stamp(end)}\n"
+        f"{wrap_caption(line.text, max_chars, max_lines)}\n"
         for index, (line, (start, end)) in enumerate(zip(lines, timings))
     ]
     return "\n".join(blocks)
+
+
+def _timecode(seconds: float, fps: int = 30) -> str:
+    """HH:MM:SS:FF — 프리미어·다빈치가 마커 시각으로 읽는 형식."""
+    total = max(seconds, 0.0)
+    h, rem = divmod(int(total), 3600)
+    m, sec = divmod(rem, 60)
+    frames = min(int(round((total - int(total)) * fps)), fps - 1)
+    return f"{h:02d}:{m:02d}:{sec:02d}:{frames:02d}"
+
+
+def _csv(rows: list[list[str]]) -> str:
+    """엑셀이 한글을 깨뜨리지 않도록 BOM 을 붙인 CSV 문자열."""
+    import csv as csv_mod
+    import io
+
+    buffer = io.StringIO()
+    writer = csv_mod.writer(buffer, lineterminator="\r\n")
+    writer.writerows(rows)
+    return "\ufeff" + buffer.getvalue()
+
+
+_GRAPHIC_WORDS = ("자막", "카드", "그래픽", "차트", "표", "수치")
+
+
+def shorts_cut_csv(shorts, image_files: list[str] | None = None, fps: int = 30) -> str:
+    """쇼츠 편집용 컷 리스트. 컷마다 시각·자막·화면 지시·쓸 그림을 한 줄에 담는다."""
+    timings = caption_timings(shorts.lines, shorts.estimated_seconds)
+    if not timings:
+        return ""
+    pictures = list(image_files or [])
+    used = 0
+    rows = [["컷", "시작(TC)", "끝(TC)", "시작(초)", "길이(초)", "자막", "화면 지시", "쓸 그림"]]
+    for i, (line, (start, end)) in enumerate(zip(shorts.lines, timings), start=1):
+        picture = ""
+        if pictures and any(w in (line.visual or "") for w in _GRAPHIC_WORDS):
+            picture = pictures[used % len(pictures)]
+            used += 1
+        rows.append([
+            str(i), _timecode(start, fps), _timecode(end, fps),
+            f"{start:.2f}", f"{end - start:.2f}",
+            " ".join((line.text or "").split()),
+            " ".join((line.visual or "").split()),
+            picture,
+        ])
+    return _csv(rows)
+
+
+def longform_chapter_csv(longform, fps: int = 30) -> str:
+    """롱폼 챕터 마커. 챕터 시각·제목·자료화면·띄울 수치를 한 줄씩."""
+    rows = [["번호", "시작(TC)", "시작(초)", "챕터", "자료화면(B롤)", "띄울 수치·문구"]]
+    for i, section in enumerate(longform.sections, start=1):
+        start = parse_timecode(section.at)
+        start = 0.0 if start is None else start
+        rows.append([
+            str(i), _timecode(start, fps), f"{start:.2f}",
+            " ".join((section.chapter or "").split()),
+            " / ".join(" ".join(b.split()) for b in (section.broll or [])),
+            " / ".join(" ".join(g.split()) for g in (section.graphics or [])),
+        ])
+    return _csv(rows) if len(rows) > 1 else ""
 
 
 def update_index(cfg: Config) -> Path | None:

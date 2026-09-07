@@ -16,9 +16,9 @@ from .llm import ContentGenerator, LLMError, Usage
 from .models import Article, Cluster
 from .prompts import build_prompt_pack
 from .rank import score_clusters, select_issues
-from .render import RenderStats, Renderer, update_index
+from .render import RenderStats, Renderer, explain_issues, update_index
 from .linkcheck import check_links
-from .store import CostLog, SeenStore, SeriesStore, load_raw, save_raw
+from .store import CostLog, SeenStore, SeriesStore, load_raw, recent_topics, save_raw
 
 log = logging.getLogger(__name__)
 
@@ -227,7 +227,10 @@ def _generate_with_llm(
     result.llm_used = True
     checks = _verify_numbers(cfg, brief, issues, result)
     made.update(brief=brief, checks=checks)
-    renderer.brief(brief, _stats_from_clusters(issues), checks, diff=_diff_yesterday(cfg, brief, date_str))
+    made["repeats"] = _repeat_topics(cfg, brief, date_str)
+    renderer.brief(brief, _stats_from_clusters(issues), checks,
+                   diff=_diff_yesterday(cfg, brief, date_str),
+                   why=explain_issues(brief, issues, str(cfg.get("run.timezone", "Asia/Seoul"))))
     renderer.data_json(brief)
     history = _record_series(cfg, brief, date_str)
 
@@ -392,6 +395,30 @@ def _budget_guard(cfg: Config, result: RunResult) -> str | None:
         )
         return fallback
     return None
+
+
+def _repeat_topics(cfg: Config, brief, run_date: str, threshold: float = 0.5) -> list[dict]:
+    """오늘 이슈가 최근 며칠 안에 이미 다룬 주제인지 본다. 제목 2-gram Dice 로 비교한다."""
+    from datetime import date as _date
+
+    from .cluster import similarity
+
+    try:
+        today = _date.fromisoformat(run_date)
+    except ValueError:
+        today = None
+    history = recent_topics(cfg.output_dir, today, days=int(cfg.get("run.repeat_lookback_days", 7)))
+    if not history or brief is None:
+        return []
+    out: list[dict] = []
+    for issue in brief.issues:
+        best = max(history, key=lambda h: similarity(issue.title, h[1]), default=None)
+        if best is None or similarity(issue.title, best[1]) < threshold:
+            continue
+        days_ago = (today - _date.fromisoformat(best[0])).days if today else 0
+        out.append({"title": issue.title, "prev_date": best[0], "prev_title": best[1],
+                    "days_ago": max(days_ago, 1)})
+    return out
 
 
 def _diff_yesterday(cfg: Config, brief, date_str: str) -> dict:

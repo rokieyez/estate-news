@@ -62,9 +62,10 @@ class Usage:
     calls: int = 0
     notes: list[str] = field(default_factory=list)
     models_used: list[str] = field(default_factory=list)
+    details: list[dict] = field(default_factory=list)   # 호출별 내역 — 어디서 돈이 나가는지 보려고
     _usd: float = 0.0
 
-    def add(self, response, model: str | None = None) -> None:
+    def add(self, response, model: str | None = None, kind: str = "") -> None:
         usage = getattr(response, "usage", None)
         if usage is None:
             return
@@ -83,8 +84,15 @@ class Usage:
         # 강등되면 호출마다 모델이 다를 수 있으므로 그 호출의 모델 단가로 더한다
         rate_in, rate_out = PRICING.get(model, (5.00, 25.00))
         million = 1_000_000
-        self._usd += (inp / million * rate_in + cw / million * rate_in * 1.25
-                      + cr / million * rate_in * 0.10 + out / million * rate_out)
+        usd = (inp / million * rate_in + cw / million * rate_in * 1.25
+               + cr / million * rate_in * 0.10 + out / million * rate_out)
+        self._usd += usd
+        self.details.append({
+            "kind": kind or "기타", "model": model,
+            "input_tokens": inp, "output_tokens": out,
+            "cache_read_tokens": cr, "cache_write_tokens": cw,
+            "usd": round(usd, 4),
+        })
 
     @property
     def estimated_usd(self) -> float:
@@ -99,6 +107,10 @@ class Usage:
             + self.cache_read_tokens / million * rate_in * 0.10
             + self.output_tokens / million * rate_out
         )
+
+    def by_kind(self) -> list[str]:
+        """'브리핑 $0.21 (opus)' 처럼 호출별 한 줄씩. 없으면 빈 목록."""
+        return [f"{d['kind']} ${d['usd']:.3f} ({d['model']})" for d in self.details]
 
     def summary(self) -> str:
         shown = "+".join(self.models_used) if len(self.models_used) > 1 else self.model
@@ -115,6 +127,9 @@ class ContentGenerator:
     def __init__(self, cfg: Config, model: str | None = None):
         self.cfg = cfg
         self.model = model or str(cfg.get("llm.model", "claude-opus-5"))
+        # 영상 대본은 출력 토큰이 가장 많다. 값싼 모델로 돌리면 하루 비용이 눈에 띄게 준다.
+        # 비워 두면 기본 모델을 그대로 쓴다. 강등(fallback)은 두 경우 모두 그대로 동작한다.
+        self.script_model = str(cfg.get("llm.script_model", "") or "").strip() or self.model
         self.max_tokens = int(cfg.get("llm.max_tokens", 16000))
         self.effort = str(cfg.get("llm.effort", "high"))
         self.fallback_model = str(cfg.get("llm.fallback_model", "") or "").strip()
@@ -133,6 +148,7 @@ class ContentGenerator:
             user=user,
             output_format=DailyBrief,
             cache_system=True,
+            kind="브리핑",
         )
         brief.date = brief.date or run_date
         return brief
@@ -146,6 +162,7 @@ class ContentGenerator:
             user=build_blog_user(self.cfg),
             output_format=BlogPost,
             cache_system=True,
+            kind="블로그",
         )
 
     def generate_video(self, brief: DailyBrief) -> VideoPack:
@@ -155,6 +172,8 @@ class ContentGenerator:
             user=build_video_user(self.cfg),
             output_format=VideoPack,
             cache_system=True,
+            kind="영상 대본",
+            model=self.script_model,
         )
 
     # ── 주간 결산 (별도 system, 캐시 없음) ───────────────────
@@ -162,7 +181,8 @@ class ContentGenerator:
     def generate_weekly(self, days: list[dict], week_label: str) -> WeeklyReview:
         system, user = build_weekly_messages(self.cfg, days, week_label)
         log.info("주간 결산 생성 중… (%d일치)", len(days))
-        return self._parse(system=system, user=user, output_format=WeeklyReview, cache_system=False)
+        return self._parse(system=system, user=user, output_format=WeeklyReview, cache_system=False,
+                           kind="주간 결산")
 
     # ── 문장 고쳐 쓰기 (점검표 ❌ 자동 수정) ─────────────────
 
@@ -171,7 +191,8 @@ class ContentGenerator:
                   "다시 씁니다. 사실·숫자는 바꾸지 않습니다. 단정적 예측이나 투자 권유로 읽히지 않게 합니다."
                   + (f" 톤: {tone}" if tone else ""))
         user = f"금지 표현: {', '.join(phrases)}\n\n문장:\n{sentence}"
-        return self._parse(system=system, user=user, output_format=Rewrite, cache_system=False).text.strip()
+        return self._parse(system=system, user=user, output_format=Rewrite, cache_system=False,
+                           kind="문장 고쳐쓰기").text.strip()
 
     def _shared(self, brief: DailyBrief) -> str:
         if self._shared_context is None:
@@ -180,12 +201,14 @@ class ContentGenerator:
 
     # ── 공통 호출 ────────────────────────────────────────────
 
-    def _parse(self, *, system: str, user: str, output_format, cache_system: bool):
-        """기본 모델로 부르고, 한도·장애면 대체 모델로 한 번 더 시도한다."""
+    def _parse(self, *, system: str, user: str, output_format, cache_system: bool,
+               kind: str = "", model: str | None = None):
+        """지정 모델로 부르고, 한도·장애면 대체 모델로 한 번 더 시도한다."""
+        base = model or self.model
         try:
-            response, model = self._call(system, user, output_format, cache_system, self.model)
+            response, model = self._call(system, user, output_format, cache_system, base)
         except _Retryable as exc:
-            if not self.fallback_model or self.fallback_model == self.model:
+            if not self.fallback_model or self.fallback_model == base:
                 raise LLMError(exc.message) from exc
             log.warning("%s — %s 로 다시 시도합니다.", exc.message, self.fallback_model)
             try:
@@ -196,7 +219,7 @@ class ContentGenerator:
                 f"{output_format.__name__} 은 기본 모델이 실패해 {self.fallback_model} 로 생성했습니다."
             )
 
-        self.usage.add(response, model)
+        self.usage.add(response, model, kind=kind)
 
         if response.stop_reason == "refusal":
             detail = getattr(response, "stop_details", None)
@@ -213,7 +236,8 @@ class ContentGenerator:
 
     def _call(self, system: str, user: str, output_format, cache_system: bool, model: str):
         system_blocks = [{"type": "text", "text": system}]
-        if cache_system:
+        # 캐시는 모델마다 따로 잡힌다. 대본을 다른 모델로 돌리는 날 캐시를 또 쓰면 돈만 더 든다.
+        if cache_system and model == self.model:
             # 접두사 캐싱: blog/video 호출이 같은 system 을 공유하므로
             # 두 번째 호출부터 입력 토큰이 1/10 가격으로 처리된다.
             system_blocks[0]["cache_control"] = {"type": "ephemeral"}

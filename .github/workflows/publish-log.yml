@@ -1,0 +1,61 @@
+name: 발행 기록
+
+# 네이버에 글을 올린 뒤 그 주소를 적어 두는 입력 폼입니다.
+# Actions 탭 → 발행 기록 → Run workflow 에서 칸을 채우면 state/published.json 에 남고,
+# 사이트 첫 화면에 '발행함' 으로 표시됩니다.
+on:
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "날짜 (YYYY-MM-DD). 비우면 오늘"
+        required: false
+        type: string
+      url:
+        description: "발행한 네이버 글 주소"
+        required: false
+        type: string
+      views:
+        description: "조회수 (나중에 다시 실행해 채워도 됩니다)"
+        required: false
+        type: string
+      note:
+        description: "메모 (선택)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  log:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
+      - name: 기록
+        # 입력값은 셸 문자열에 끼워 넣지 않고 환경변수로 넘긴다 (따옴표·세미콜론이 들어와도 안전).
+        env:
+          IN_DATE: ${{ inputs.date }}
+          IN_URL: ${{ inputs.url }}
+          IN_VIEWS: ${{ inputs.views }}
+          IN_NOTE: ${{ inputs.note }}
+        run: |
+          set -- publish
+          [ -n "$IN_DATE" ] && set -- "$@" --date "$IN_DATE"
+          [ -n "$IN_URL" ] && set -- "$@" --url "$IN_URL"
+          [ -n "$IN_VIEWS" ] && set -- "$@" --views "$IN_VIEWS"
+          [ -n "$IN_NOTE" ] && set -- "$@" --note "$IN_NOTE"
+          python -m rebrief "$@"
+      - name: 커밋
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state
+          git diff --staged --quiet && exit 0
+          git commit -m "발행 기록: ${{ inputs.date }}"
+          git pull --rebase origin "${GITHUB_REF_NAME}" && git push

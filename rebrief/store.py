@@ -129,6 +129,9 @@ class CostLog:
             "cache_write_tokens": usage.cache_write_tokens,
             "usd": round(usage.estimated_usd, 4),
         }
+        details = list(getattr(usage, "details", []) or [])
+        if details:
+            entry["by_call"] = details          # 어느 단계에서 돈이 나갔는지 (모델 분리 판단용)
         self.entries.append(entry)
         return entry
 
@@ -299,6 +302,59 @@ class TitleLog:
             slot["avg_views"] = round(sum(slot["views"]) / len(slot["views"])) if slot["views"] else None
             del slot["views"]
         return out
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"updated_at": datetime.now().isoformat(timespec="seconds"), "days": self.days}
+        self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def recent_topics(output_dir: Path, today: date | None = None, days: int = 7,
+                  skip_today: bool = True) -> list[tuple[str, str]]:
+    """최근 며칠간 다룬 이슈 제목을 (날짜, 제목) 으로 모은다. 같은 주제를 또 쓰는지 볼 때 쓴다."""
+    today = today or date.today()
+    out: list[tuple[str, str]] = []
+    for i in range(0 if not skip_today else 1, days + 1):
+        day = (today - timedelta(days=i)).isoformat()
+        path = output_dir / day / "data.json"
+        if not path.exists():
+            continue
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            continue
+        for issue in data.get("issues", []) or []:
+            title = (issue.get("title") or "").strip()
+            if title:
+                out.append((day, title))
+    return out
+
+
+class PublishLog:
+    """어느 날 글을 실제로 발행했는지, 주소는 무엇인지 적는 장부."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.days: dict[str, dict] = {}
+        if path.exists():
+            try:
+                self.days = json.loads(path.read_text(encoding="utf-8")).get("days", {}) or {}
+            except (json.JSONDecodeError, OSError):
+                self.days = {}
+
+    def record(self, run_date: str, url: str = "", note: str = "", views: int | None = None) -> dict:
+        entry = self.days.setdefault(run_date, {})
+        entry["at"] = datetime.now().isoformat(timespec="seconds")
+        if url:
+            entry["url"] = url.strip()
+        if note:
+            entry["note"] = note.strip()
+        if views is not None:
+            entry["views"] = int(views)
+        return entry
+
+    def get(self, run_date: str) -> dict:
+        return self.days.get(run_date, {})
 
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)

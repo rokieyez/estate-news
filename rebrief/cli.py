@@ -68,6 +68,12 @@ def build_parser() -> argparse.ArgumentParser:
     t_log.add_argument("--views", type=int, help="조회수")
     t_log.add_argument("--title", help="후보에 없는 제목을 썼다면")
 
+    p_pub = sub.add_parser("publish", help="네이버에 올린 글 주소를 기록 (사이트에 '발행함' 으로 표시)")
+    p_pub.add_argument("--date", help="날짜 (기본: 오늘)")
+    p_pub.add_argument("--url", default="", help="발행한 글 주소")
+    p_pub.add_argument("--note", default="", help="메모 (선택)")
+    p_pub.add_argument("--views", type=int, help="조회수 (나중에 다시 실행해 채워도 됩니다)")
+
     return parser
 
 
@@ -97,6 +103,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_weekly(cfg, args)
     if args.command == "titles":
         return _cmd_titles(cfg, args)
+    if args.command == "publish":
+        return _cmd_publish(cfg, args)
     return 1
 
 
@@ -229,6 +237,8 @@ def _cmd_weekly(cfg, args) -> int:
             print(f"  · {path}")
     if result.usage and result.usage.calls:
         print(f"\n💰 {result.usage.summary()}")
+        for line in result.usage.by_kind():          # 어느 단계에서 돈이 나갔는지
+            print(f"  · {line}")
     if result.warnings:
         print("\n⚠️  확인이 필요한 사항")
         for w in result.warnings:
@@ -264,6 +274,23 @@ def _cmd_titles(cfg, args) -> int:
     update_index(cfg)
     print(f"기록했습니다 — {args.date} {args.kind}: \"{entry['title']}\" ({entry['type']})"
           + (f", 조회수 {entry['views']:,}" if entry.get("views") is not None else ""))
+    return 0
+
+
+def _cmd_publish(cfg, args) -> int:
+    from .store import PublishLog
+
+    date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
+    log_ = PublishLog(cfg.state_dir / "published.json")
+    entry = log_.record(date_str, url=args.url, note=args.note, views=args.views)
+    log_.save()
+    bits = [f"{date_str} 발행 기록"]
+    if entry.get("url"):
+        bits.append(entry["url"])
+    if entry.get("views") is not None:
+        bits.append(f"조회수 {entry['views']:,}")
+    print(" · ".join(bits))
+    print("사이트를 다시 만들면 '발행함' 으로 표시됩니다.")
     return 0
 
 
@@ -334,6 +361,8 @@ def _report(result) -> None:
 
     if result.usage and result.usage.calls:
         print(f"\n💰 {result.usage.summary()}")
+        for line in result.usage.by_kind():          # 어느 단계에서 돈이 나갔는지
+            print(f"  · {line}")
     elif not result.llm_used:
         print("\n요약·대본은 생성하지 않았습니다 (prompt-pack.md 참고).")
 

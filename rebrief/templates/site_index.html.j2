@@ -76,7 +76,7 @@
 </a>
 {% endif %}
 <div class="today">
-  <div class="date">{{ today.date }}</div>
+  <div class="date">{{ today.date }}{% if today.published %} · <b style="color:#03c75a">발행함</b>{% if today.published.url %} <a href="{{ today.published.url }}" style="color:#0068c3">글 보기</a>{% endif %}{% endif %}</div>
   <h2>오늘 할 일</h2>
 
   {% for page in today.pages %}
@@ -95,7 +95,7 @@
     {% for day in days[1:] %}
     <li>
       <a href="{{ day.date }}/{{ day.pages[0].href }}">{{ day.date }}</a>
-      <span class="files">· {{ day.pages|length }}개 문서</span>
+      <span class="files">· {{ day.pages|length }}개 문서{% if day.published %} · 발행함{% endif %}</span>
     </li>
     {% endfor %}
   </ul>
@@ -126,6 +126,7 @@
 {% if has_dashboard %}
 <p style="text-align:center;margin:18px 0 0">
   {% if has_search %}<a href="search.html" style="color:#0068c3;font-size:14px;text-decoration:none">🔎 지난 글 검색</a> &nbsp;·&nbsp; {% endif %}
+  {% if upcoming %}<a href="upcoming.html" style="color:#0068c3;font-size:14px;text-decoration:none">🗓 이번 주 볼 것 {{ upcoming }}</a> &nbsp;·&nbsp; {% endif %}
   <a href="dashboard.html" style="color:#0068c3;font-size:14px;text-decoration:none">📊 운영 현황</a>
 </p>
 {% endif %}

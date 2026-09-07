@@ -27,6 +27,9 @@
 ## {{ loop.index }}. {{ issue.title }}
 
 `{{ issue.category }}` · **{{ issue.one_liner }}**
+{% if why and why[loop.index0] %}
+*고른 이유 · {{ why[loop.index0] }}*
+{% endif %}
 
 **무슨 일이 있었나**
 
