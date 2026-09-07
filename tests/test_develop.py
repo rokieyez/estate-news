@@ -1428,3 +1428,41 @@ def test_storage_use_projects_a_year(cfg):
     assert use["mb"] == 2.0 and use["per_day_mb"] == 1.0
     assert use["year_gb"] == 0.36                       # 하루 1MB × 365
     assert _storage_use(cfg, 0)["per_day_mb"] == 0
+
+
+# ── 자치구 도식이 실제 위치를 지키는지 ──────────────────────
+
+# 자치구청 기준 중심 좌표(위도, 경도). 도식은 실제 지형이 아니지만 **순서는 지켜야** 한다.
+SEOUL_CENTER = {
+    "도봉": (37.668, 127.032), "노원": (37.654, 127.075), "강북": (37.640, 127.011),
+    "은평": (37.618, 126.928), "성북": (37.605, 127.018), "중랑": (37.598, 127.093),
+    "종로": (37.595, 126.978), "서대문": (37.577, 126.937), "동대문": (37.575, 127.045),
+    "마포": (37.560, 126.909), "중구": (37.560, 126.996), "강서": (37.556, 126.824),
+    "성동": (37.550, 127.041), "강동": (37.549, 127.147), "광진": (37.538, 127.083),
+    "용산": (37.532, 126.981), "양천": (37.524, 126.861), "영등포": (37.522, 126.910),
+    "동작": (37.505, 126.943), "송파": (37.505, 127.115), "강남": (37.497, 127.063),
+    "구로": (37.494, 126.858), "서초": (37.475, 127.032), "관악": (37.470, 126.947),
+    "금천": (37.460, 126.898),
+}
+
+
+def test_district_grid_never_flips_north_or_east():
+    """도식의 줄·칸이 실제 남북·동서 순서를 뒤집지 않아야 한다.
+
+    예전 도식은 남북 11쌍·동서 4쌍이 뒤집혀 있었습니다 — 관악이 동작에서 아홉 칸 오른쪽에,
+    광진·송파가 실제보다 다섯 자리 북쪽에 있었습니다. 칸을 옮길 일이 생기면 위 좌표를 보세요.
+    """
+    from rebrief.images import SEOUL_LAYOUT
+
+    pos = {gu: (r, c) for r, row in enumerate(SEOUL_LAYOUT) for c, gu in row.items()}
+    assert set(pos) == set(SEOUL_CENTER), "25개 구가 빠짐없이 한 번씩 있어야 합니다"
+
+    flipped_ns = [(a, b) for a in pos for b in pos
+                  if SEOUL_CENTER[a][0] > SEOUL_CENTER[b][0] and pos[a][0] > pos[b][0]]
+    flipped_ew = [(a, b) for a in pos for b in pos
+                  if SEOUL_CENTER[a][1] > SEOUL_CENTER[b][1] and pos[a][1] < pos[b][1]]
+    assert not flipped_ns, f"북쪽 구가 아래 줄에 있습니다: {flipped_ns[:3]}"
+    assert not flipped_ew, f"동쪽 구가 왼쪽 칸에 있습니다: {flipped_ew[:3]}"
+
+    # 한 칸에 두 구를 넣으면 하나가 가려진다
+    assert len(set(pos.values())) == 25
