@@ -377,6 +377,11 @@ def _cmd_stats(cfg, args) -> int:
     for row in data["districts"]:
         print(f"  {row['name']:<6} {row['now']['count']:>4}건  {row['change']:+4d}  "
               f"평균 {row['now']['avg'] / 100000000:.1f}억")
+    if series:
+        print(f"\n부동산원 주간 지수({series[0]['region']}) "
+              f"{series[0]['when'] or series[0]['time']} {series[0]['value']:.2f}"
+              f" → {series[-1]['when'] or series[-1]['time']} {series[-1]['value']:.2f}"
+              f"  ({len(series)}주)")
     print(f"\n저장 → {path}" if path else "")
     return 0
 

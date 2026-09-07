@@ -44,6 +44,7 @@ jobs:
       - name: 실거래가 통계 확인
         env:
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+          REB_API_KEY: ${{ secrets.REB_API_KEY }}
         run: |
           # 로그에도 남기고 요약 화면에도 싣는다 (tee)
           python -m rebrief stats 2>&1 | tee /tmp/stats.txt || true
