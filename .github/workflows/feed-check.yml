@@ -1,9 +1,15 @@
 name: 피드 점검
 
-# 로컬에 파이썬을 깔지 않아도 브라우저에서 버튼 하나로 RSS 상태를 확인합니다.
+# 로컬에 파이썬을 깔지 않아도 브라우저에서 버튼 하나로 상태를 확인합니다.
+# RSS 피드 · 정책브리핑 · 인증키가 실제로 먹는지까지 봅니다. 아무것도 커밋하지 않습니다.
 # Actions 탭 → "피드 점검" → Run workflow
 on:
   workflow_dispatch:
+    inputs:
+      reb_keyword:
+        description: "부동산원 통계표를 찾을 낱말 (기본: 아파트)"
+        required: false
+        type: string
 
 jobs:
   doctor:
@@ -19,9 +25,14 @@ jobs:
       - run: pip install -r requirements.txt
 
       - name: 피드 상태 확인
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+          REB_API_KEY: ${{ secrets.REB_API_KEY }}
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
         run: |
           {
-            echo "## RSS 피드 점검 결과"
+            echo "## RSS 피드 · 정책브리핑 · 인증키"
             echo
             echo '```'
             python -m rebrief doctor 2>&1 || true
@@ -29,3 +40,31 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
           # 실패한 피드가 있어도 워크플로는 성공으로 끝냅니다 (결과만 보면 되므로)
           python -m rebrief doctor || true
+
+      - name: 실거래가 통계 확인
+        env:
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+        run: |
+          {
+            echo "## 실거래가 집계 (결과만 보여 주고 커밋하지 않습니다)"
+            echo
+            echo '```'
+            python -m rebrief stats 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: 부동산원 통계표 번호 찾기
+        env:
+          REB_API_KEY: ${{ secrets.REB_API_KEY }}
+          IN_KEYWORD: ${{ inputs.reb_keyword }}
+        run: |
+          WORD="${IN_KEYWORD:-아파트}"
+          {
+            echo "## 부동산원 통계표 — '$WORD' 로 찾은 것"
+            echo
+            echo "여기서 고른 번호를 config/settings.yaml 의 stats.reb_statbl_id 에 적으세요."
+            echo
+            echo '```'
+            python -m rebrief stats --tables "$WORD" 2>&1 || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
