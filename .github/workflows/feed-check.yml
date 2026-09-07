@@ -45,11 +45,13 @@ jobs:
         env:
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
         run: |
+          # 로그에도 남기고 요약 화면에도 싣는다 (tee)
+          python -m rebrief stats 2>&1 | tee /tmp/stats.txt || true
           {
             echo "## 실거래가 집계 (결과만 보여 주고 커밋하지 않습니다)"
             echo
             echo '```'
-            python -m rebrief stats 2>&1 || true
+            cat /tmp/stats.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -59,12 +61,13 @@ jobs:
           IN_KEYWORD: ${{ inputs.reb_keyword }}
         run: |
           WORD="${IN_KEYWORD:-아파트}"
+          python -m rebrief stats --tables "$WORD" 2>&1 | tee /tmp/tables.txt || true
           {
             echo "## 부동산원 통계표 — '$WORD' 로 찾은 것"
             echo
             echo "여기서 고른 번호를 config/settings.yaml 의 stats.reb_statbl_id 에 적으세요."
             echo
             echo '```'
-            python -m rebrief stats --tables "$WORD" 2>&1 || true
+            cat /tmp/tables.txt
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
