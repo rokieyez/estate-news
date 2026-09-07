@@ -45,7 +45,19 @@ def _get(url: str, **kw):
 
 
 def deal_key() -> str:
-    return os.environ.get("DATA_GO_KR_KEY", "").strip()
+    """공공데이터포털 인증키.
+
+    포털은 같은 키를 'Encoding' 과 'Decoding' 두 벌로 보여 줍니다. 우리는 요청을 보낼 때
+    프로그램이 다시 인코딩하므로 **Decoding 쪽**이 맞습니다. 사용자가 Encoding 쪽을
+    붙여넣어도 되도록, %2B 같은 이스케이프가 보이면 여기서 되돌립니다 — 두 번 인코딩되면
+    포털이 '등록되지 않은 서비스키' 로 되돌려주는데, 원인을 찾기가 아주 어렵습니다.
+    """
+    raw = os.environ.get("DATA_GO_KR_KEY", "").strip()
+    if "%" in raw:
+        from urllib.parse import unquote
+
+        return unquote(raw)
+    return raw
 
 
 def reb_key() -> str:

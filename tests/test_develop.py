@@ -771,3 +771,13 @@ def test_upcoming_page_shows_policy_dates(cfg, tmp_path):
     assert "2026-12-01" in html and "https://www.korea.kr/x" in html
     assert "지나간 일정" not in html          # 오늘보다 이전 일정은 싣지 않는다
     assert "금통위 발표 확인" in html          # 브리핑에서 나온 확인거리도 그대로
+
+
+def test_data_portal_key_accepts_both_forms(monkeypatch):
+    """포털이 보여 주는 Encoding/Decoding 두 벌 중 무엇을 넣어도 되게."""
+    from rebrief.stats import deal_key
+
+    monkeypatch.setenv("DATA_GO_KR_KEY", "abc+def/ghi==")
+    assert deal_key() == "abc+def/ghi=="
+    monkeypatch.setenv("DATA_GO_KR_KEY", "abc%2Bdef%2Fghi%3D%3D")
+    assert deal_key() == "abc+def/ghi=="        # 두 번 인코딩되면 '등록되지 않은 키' 가 된다
