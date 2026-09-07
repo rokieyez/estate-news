@@ -257,9 +257,11 @@ def _generate_with_llm(
                                                      days=int(cfg.get("blog.overlap_lookback_days", 3))),
                     empty_photo_slots=sum(
                         1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
-        renderer.blog(post, issues, slot_files, key_numbers=keys, related=related)
+        cover = renderer.cover(post, keys)          # 검색 목록 썸네일이 될 표지
+        made["cover"] = cover
+        renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover)
         if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-            renderer.blog_naver(post, slot_files, key_numbers=keys, related=related)
+            renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover)
         _record_titles(cfg, date_str, blog=[post.title])
 
     try:
@@ -485,9 +487,10 @@ def _autofix_banned(cfg: Config, renderer: Renderer, made: dict, issues: list[Cl
             fixed += [f"블로그: {a} → {b}" for a, b in ch]
             keys = made.get("key_numbers") or []
             related = made.get("related") or []
-            renderer.blog(post, issues, slot_files, key_numbers=keys, related=related)
+            cover = made.get("cover", "")
+            renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover)
             if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-                renderer.blog_naver(post, slot_files, key_numbers=keys, related=related)
+                renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover)
     if pack is not None:
         changed = False
         for line in pack.shorts.lines:

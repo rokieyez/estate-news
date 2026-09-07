@@ -100,8 +100,101 @@ def svg_open(w: float, h: float) -> list[str]:
 
 
 def footnotes(parts: list[str], x: float, y: float, size: float = 16) -> list[str]:
-    return [f'<text x="{x:g}" y="{y + i * 26:g}" font-size="{size:g}" fill="{MUTED}">{esc(t)}</text>'
+    return [f'<text x="{x:g}" y="{y + i * 24:g}" font-size="{size:g}" fill="{MUTED}">{esc(t)}</text>'
             for i, t in enumerate(parts)]
+
+
+CARD = "#ffffff"
+CARD_EDGE = "#e6e5df"
+CHIP_BG = "#eef4fd"
+
+# 카드 여백 — 바깥 테두리(M)와 카드 안쪽 여백(P)
+M, P = 40, 44
+
+
+def chip(x: float, y: float, text: str, *, fill: str = CHIP_BG, color: str = BLUE,
+         size: float = 20) -> str:
+    """작은 알약 라벨. 기준 시점·구분 표시에 쓴다."""
+    w = text_width(text, size) + size * 1.6
+    h = size * 1.9
+    return (f'<rect x="{x:g}" y="{y:g}" width="{w:g}" height="{h:g}" rx="{h / 2:g}" fill="{fill}"/>'
+            f'<text x="{x + w / 2:g}" y="{y + h * 0.68:g}" font-size="{size:g}" font-weight="600" '
+            f'text-anchor="middle" fill="{color}">{esc(text)}</text>')
+
+
+def head_height(w: float, title: str, subtitle: str = "", header: bool = True) -> float:
+    """머리말(채널·날짜·제목·구분선)이 차지하는 높이 = 본문이 시작되는 y."""
+    inner = w - (M + P) * 2
+    y = M + P + 22 + (34 if header else 0)
+    y += 44 * len(wrap(title, 34, inner)[:2])
+    if subtitle:
+        y += 34
+    return y + 26 + 34
+
+
+def card_height(w: float, title: str, subtitle: str, content_h: float, notes: list[str],
+                header: bool = True) -> float:
+    """머리말 + 본문 + 각주를 더한 카드 전체 높이."""
+    return head_height(w, title, subtitle, header) + content_h + notes_height(notes)
+
+
+def frame_open(w: float, h: float, *, title: str, subtitle: str = "",
+               channel: str = "", date: str = "") -> tuple[list[str], dict]:
+    """모든 그림이 공유하는 카드 틀.
+
+    흰 카드 + 머리말(채널·날짜) + 제목 + 가는 구분선. 낱장으로 보나 여러 장을 나란히 보나
+    같은 서식이라 자료처럼 읽힌다. 본문을 그리기 시작할 y 를 함께 돌려준다.
+    """
+    x = M + P
+    inner = w - (M + P) * 2
+    p = svg_open(w, h)
+    p.append(f'<rect x="{M}" y="{M}" width="{w - M * 2:g}" height="{h - M * 2:g}" rx="22" '
+             f'fill="{CARD}" stroke="{CARD_EDGE}" stroke-width="1.5"/>')
+
+    head_y = M + P + 22
+    if channel:
+        p.append(f'<rect x="{x}" y="{head_y - 15}" width="5" height="20" rx="2.5" fill="{BLUE}"/>')
+        p.append(f'<text x="{x + 14}" y="{head_y}" font-size="20" font-weight="700" '
+                 f'fill="{BLUE}">{esc(channel)}</text>')
+    if date:
+        p.append(f'<text x="{x + inner}" y="{head_y}" font-size="19" text-anchor="end" '
+                 f'fill="{MUTED}">{esc(date)}</text>')
+
+    y = head_y + (34 if (channel or date) else 0)
+    lines = wrap(title, 34, inner)[:2]
+    for i, line in enumerate(lines):
+        y += 44
+        p.append(f'<text x="{x}" y="{y}" font-size="34" font-weight="700" fill="{INK}">{esc(line)}</text>')
+    if subtitle:
+        y += 34
+        p.append(f'<text x="{x}" y="{y}" font-size="21" fill="{INK_2}">{esc(subtitle)}</text>')
+    y += 26
+    p.append(f'<line x1="{x}" y1="{y}" x2="{x + inner}" y2="{y}" stroke="{GRID}" stroke-width="1"/>')
+    return p, {"x": x, "inner": inner, "top": y + 34, "w": w, "h": h}
+
+
+def frame_close(p: list[str], notes: list[str], geom: dict) -> None:
+    """아래쪽 구분선과 각주. 각주는 카드 바닥에 붙인다."""
+    notes = [n for n in notes if n]
+    x, inner, h = geom["x"], geom["inner"], geom["h"]
+    base = h - M - P - max(len(notes) - 1, 0) * 24 - 4
+    p.append(f'<line x1="{x}" y1="{base - 30}" x2="{x + inner}" y2="{base - 30}" '
+             f'stroke="{GRID}" stroke-width="1"/>')
+    p += footnotes(notes, x, base, size=17)
+    p.append("</svg>")
+
+
+def notes_height(notes: list[str]) -> float:
+    """각주 줄 수에 맞춰 카드 아래에 확보할 높이.
+
+    frame_close 가 각주를 카드 바닥에서 거꾸로 배치하므로, 이 값이 모자라면 본문과 겹친다.
+    (본문 끝 + 40) 자리에 첫 각주가 오도록 여백까지 포함해 계산한다.
+    """
+    return max(len([n for n in notes if n]), 1) * 24 + 104
+
+
+def _channel(extra: dict | None) -> str:
+    return str((extra or {}).get("channel", "") or "")
 
 
 def _num(dp: dict) -> float | None:
@@ -139,49 +232,45 @@ def seoul_district_map(dp: dict, date: str, extra: dict | None = None) -> Image 
         log.warning("자치구 도식 건너뜀: 도식 %d개 ≠ 보도 %s개", taxed, dp.get("value"))
         return None
 
-    tw, th, gap = 130, 86, 8
-    x0, y0 = 90, 200
-    w = x0 * 2 + 6 * tw + 5 * gap
-    h = y0 + len(SEOUL_LAYOUT) * (th + gap) - gap + 150
-
-    sub = (extra or {}).get("subtitle", "")
-    p = svg_open(w, h)
-    p.append(f'<text x="{x0}" y="76" font-size="38" font-weight="700" fill="{INK}">'
-             f'{esc(dp["label"].replace(" 수", ""))}</text>')
-    if sub:
-        p.append(f'<text x="{x0}" y="118" font-size="21" fill="{INK_2}">{esc(sub)}</text>')
-
-    # 범례. 칸마다 이름도 적으므로 색만으로 구분되지는 않는다.
-    p.append(f'<rect x="{x0}" y="146" width="17" height="17" rx="4" fill="{BLUE}"/>')
-    p.append(f'<text x="{x0 + 25}" y="160" font-size="18" fill="{INK_2}">대상 {taxed}개구</text>')
-    p.append(f'<rect x="{x0 + 165}" y="146" width="17" height="17" rx="4" fill="{SURFACE}" '
-             f'stroke="{BASELINE}" stroke-width="2"/>')
-    p.append(f'<text x="{x0 + 190}" y="160" font-size="18" fill="{INK_2}">'
-             f'제외 {len(excluded)}개구 ({"·".join(sorted(excluded))})</text>')
-
-    for r, row in enumerate(SEOUL_LAYOUT):
-        for c, gu in row.items():
-            x, y = x0 + c * (tw + gap), y0 + r * (th + gap)
-            if gu in excluded:
-                p.append(f'<rect x="{x}" y="{y}" width="{tw}" height="{th}" rx="8" '
-                         f'fill="{SURFACE}" stroke="{BASELINE}" stroke-width="2" '
-                         f'stroke-dasharray="6 4"/>')
-                p.append(f'<text x="{x + tw / 2:g}" y="{y + th / 2 + 4:g}" font-size="23" '
-                         f'text-anchor="middle" fill="{INK_2}">{gu}</text>')
-                p.append(f'<text x="{x + tw / 2:g}" y="{y + th / 2 + 27:g}" font-size="15" '
-                         f'text-anchor="middle" fill="{MUTED}">제외</text>')
-            else:
-                p.append(f'<rect x="{x}" y="{y}" width="{tw}" height="{th}" rx="8" fill="{BLUE}"/>')
-                p.append(f'<text x="{x + tw / 2:g}" y="{y + th / 2 + 9:g}" font-size="24" '
-                         f'font-weight="600" text-anchor="middle" fill="#ffffff">{gu}</text>')
-
-    fy = y0 + len(SEOUL_LAYOUT) * (th + gap) + 26
+    tw, th, gap = 128, 84, 10
     notes = ["※ 실제 지형이 아닌 위치 도식입니다. 칸의 모양·크기는 면적과 무관합니다."]
     if dp.get("context"):
         notes.append(f'※ {dp["context"]}')
     notes.append(_source_line(dp, date))
-    p += footnotes([n for n in notes if n], x0, fy)
-    p.append("</svg>")
+
+    w = (M + P) * 2 + 6 * tw + 5 * gap
+    rows = len(SEOUL_LAYOUT)
+    sub = (extra or {}).get("subtitle", "")
+    h = card_height(w, dp["label"].replace(" 수", ""), sub, 34 + rows * (th + gap) - gap + 24, notes)
+    p, g = frame_open(w, h, title=dp["label"].replace(" 수", ""), subtitle=sub,
+                      channel=_channel(extra), date=date)
+    x, y = g["x"], g["top"]
+
+    # 범례. 칸마다 이름도 적으므로 색만으로 구분되지는 않는다.
+    p.append(f'<rect x="{x}" y="{y - 14}" width="18" height="18" rx="5" fill="{BLUE}"/>')
+    p.append(f'<text x="{x + 27}" y="{y}" font-size="19" fill="{INK_2}">대상 {taxed}개구</text>')
+    lx = x + 165
+    p.append(f'<rect x="{lx}" y="{y - 14}" width="18" height="18" rx="5" fill="{CARD}" '
+             f'stroke="{BASELINE}" stroke-width="2" stroke-dasharray="4 3"/>')
+    p.append(f'<text x="{lx + 27}" y="{y}" font-size="19" fill="{INK_2}">'
+             f'제외 {len(excluded)}개구 ({"·".join(sorted(excluded))})</text>')
+
+    map_top = y + 34
+    for r, row in enumerate(SEOUL_LAYOUT):
+        for c, gu in row.items():
+            gx, gy = x + c * (tw + gap), map_top + r * (th + gap)
+            if gu in excluded:
+                p.append(f'<rect x="{gx}" y="{gy}" width="{tw}" height="{th}" rx="10" '
+                         f'fill="{SURFACE}" stroke="{BASELINE}" stroke-width="2" stroke-dasharray="6 4"/>')
+                p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 + 2:g}" font-size="23" '
+                         f'text-anchor="middle" fill="{INK_2}">{gu}</text>')
+                p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 + 26:g}" font-size="15" '
+                         f'text-anchor="middle" fill="{MUTED}">제외</text>')
+            else:
+                p.append(f'<rect x="{gx}" y="{gy}" width="{tw}" height="{th}" rx="10" fill="{BLUE}"/>')
+                p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 + 9:g}" font-size="24" '
+                         f'font-weight="600" text-anchor="middle" fill="#ffffff">{gu}</text>')
+    frame_close(p, notes, g)
     return Image("district-map", "\n".join(p), dp["label"])
 
 
@@ -202,47 +291,47 @@ def index_comparison(dp: dict, date: str, extra: dict | None = None) -> Image | 
     before, after = 100.0, round(100 - pct if down else 100 + pct)
     period = dp.get("period", "") or "이전"
 
-    w, h = 1000, 560
-    bx, bw = 250, 560
-    scale = bw / max(before, after)
-
-    p = svg_open(w, h)
-    p.append(f'<text x="90" y="76" font-size="38" font-weight="700" fill="{INK}">'
-             f'{esc(dp["label"].replace(m.group(0), "").strip() or dp["label"])}, {esc(period)} 사이</text>')
-    # 델타는 색만으로 뜻을 전하지 않도록 화살표와 글자를 함께 둔다.
-    # 한 <text> 안의 tspan 으로 두어 x 좌표를 손으로 계산하지 않는다.
-    p.append(f'<text x="90" y="164" font-size="72" font-weight="700" '
-             f'fill="{CRITICAL if down else GOOD}">{"▼" if down else "▲"} '
-             f'{esc(dp["value"])}{esc(dp["unit"])}'
-             f'<tspan font-size="30" font-weight="400" fill="{INK_2}"> {m.group(1)}</tspan></text>')
-    p.append(f'<text x="90" y="205" font-size="19" fill="{INK_2}">'
-             f'{esc(dp["label"])}{" · " + esc(period) if period else ""}</text>')
-    p.append(f'<text x="90" y="268" font-size="17" fill="{MUTED}">'
-             f'지수 비교 · {esc(period)} 전을 100으로 두었을 때</text>')
-
-    for i, (name, val) in enumerate([(f"{period} 전", before), ("현재", after)]):
-        y = 300 + i * 78
-        bwid = val * scale
-        p.append(f'<text x="{bx - 18}" y="{y + 38}" font-size="21" text-anchor="end" '
-                 f'fill="{INK_2}">{esc(name)}</text>')
-        p.append(f'<path d="{bar_path(bx, y, bwid, 56)}" fill="{BLUE if i == 0 else BLUE_SOFT}"/>')
-        inside = bwid > 90
-        lx = bx + bwid - 18 if inside else bx + bwid + 16
-        p.append(f'<text x="{lx:g}" y="{y + 38}" font-size="26" font-weight="700" '
-                 f'text-anchor="{"end" if inside else "start"}" '
-                 f'fill="{"#ffffff" if inside else INK}">{val:g}</text>')
-
-    p.append(f'<line x1="{bx}" y1="296" x2="{bx}" y2="{300 + 78 + 56}" '
-             f'stroke="{BASELINE}" stroke-width="2"/>')
-    p += footnotes([
+    notes = [
         f'※ 보도된 {m.group(1)}율({dp["value"]}{dp["unit"]})로 지수화한 값입니다. '
         f'구간별 실제 수치는 보도에 제시되지 않았습니다.',
         (_source_line(dp, date) + (f' — {dp["context"]}' if dp.get("context") else "")).strip(),
-    ], 90, 492)
-    p.append("</svg>")
+    ]
+    w = 1000
+    title = dp["label"].replace(m.group(0), "").strip() or dp["label"]
+    sub = f"{period} 전을 100으로 둔 지수 비교"
+    h = card_height(w, f"{title}, {period} 사이", sub, 160 + 84 + 56 + 30, notes)
+    p, g = frame_open(w, h, title=f"{title}, {period} 사이", subtitle=sub,
+                      channel=_channel(extra), date=date)
+    x, y = g["x"], g["top"]
+
+    # 변화량을 먼저 크게. 색만으로 뜻을 전하지 않도록 화살표와 글자를 함께 둔다.
+    p.append(f'<text x="{x}" y="{y + 62}" font-size="76" font-weight="800" '
+             f'fill="{CRITICAL if down else GOOD}">{"▼" if down else "▲"} '
+             f'{esc(dp["value"])}{esc(dp["unit"])}'
+             f'<tspan font-size="30" font-weight="500" fill="{INK_2}"> {m.group(1)}</tspan></text>')
+    p.append(f'<text x="{x}" y="{y + 100}" font-size="19" fill="{MUTED}">{esc(dp["label"])}</text>')
+
+    bx = x + 150
+    bw = g["inner"] - 150 - 70
+    scale = bw / max(before, after)
+    top = y + 160
+    for i, (name, val) in enumerate([(f"{period} 전", before), ("현재", after)]):
+        by = top + i * 84
+        width = val * scale
+        p.append(f'<text x="{bx - 20}" y="{by + 38}" font-size="21" text-anchor="end" '
+                 f'fill="{INK_2}">{esc(name)}</text>')
+        dark = i == 0
+        p.append(f'<path d="{bar_path(bx, by, width, 56)}" fill="{BLUE if dark else BLUE_SOFT}"/>')
+        inside = width > 96
+        lx = bx + width - 18 if inside else bx + width + 16
+        # 옅은 막대 위에 흰 글씨를 얹으면 읽히지 않는다. 막대 색에 따라 글자색을 고른다.
+        color = ("#ffffff" if dark else INK) if inside else INK
+        p.append(f'<text x="{lx:g}" y="{by + 38}" font-size="26" font-weight="700" '
+                 f'text-anchor="{"end" if inside else "start"}" fill="{color}">{val:g}</text>')
+    p.append(f'<line x1="{bx}" y1="{top - 8}" x2="{bx}" y2="{top + 84 + 56 + 8}" '
+             f'stroke="{BASELINE}" stroke-width="2"/>')
+    frame_close(p, notes, g)
     return Image("index-comparison", "\n".join(p), dp["label"])
-
-
 # ── 시계열 (이력이 쌓인 지표만) ─────────────────────────────
 
 SERIES_MIN_POINTS = 3
@@ -256,6 +345,23 @@ def _same_metric(a: dict, b: dict) -> bool:
         return False
     la, lb = a.get("label", ""), b.get("label", "")
     return la == lb or similarity(la, lb) >= SERIES_SIMILARITY
+
+
+def nice_ticks(lo: float, hi: float, count: int = 5) -> list[float]:
+    """1·2·5 배수로 떨어지는 눈금값. 0.0344 같은 숫자를 축에 적지 않으려는 것."""
+    import math
+
+    if hi <= lo:
+        hi = lo + 1
+    raw = (hi - lo) / max(count - 1, 1)
+    power = math.floor(math.log10(raw)) if raw > 0 else 0
+    base = 10 ** power
+    step = next((m * base for m in (1, 2, 2.5, 5, 10) if m * base >= raw), 10 * base)
+    # 데이터 범위를 반드시 덮도록 아래·위로 넉넉히 잡는다 (선이 눈금 밖으로 나가면 안 된다)
+    start = math.floor(lo / step) * step
+    end = math.ceil(hi / step) * step
+    steps = max(int(round((end - start) / step)), 1)
+    return [round(start + i * step, 10) for i in range(steps + 1)]
 
 
 def series_for(dp: dict, history: list[dict]) -> list[tuple[str, float]]:
@@ -279,14 +385,25 @@ def time_series(dp: dict, date: str, extra: dict | None = None) -> Image | None:
     if date and date not in dict(points):
         return None                       # 오늘 값이 없는 지표의 옛 추이는 오늘 그림이 아니다
 
-    w, h = 1000, 600
-    px0, px1, py0, py1 = 110, 930, 150, 470
+    notes = [
+        "※ 매일 기사에서 뽑힌 값을 그대로 이은 것입니다. 발표 기관·기준이 날마다 다를 수 있습니다.",
+        _source_line(dp, date),
+    ]
+    w = 1000
+    unit = dp.get("unit") or ""
+    sub = f'{points[0][0]} ~ {points[-1][0]} · {len(points)}일치' + (f" · 단위 {unit}" if unit else "")
+    h = card_height(w, dp["label"], sub, 30 + 330 + 60, notes)
+    p, g = frame_open(w, h, title=dp["label"], subtitle=sub, channel=_channel(extra), date=date)
+
+    px0, px1 = g["x"] + 56, g["x"] + g["inner"]
+    py0, py1 = g["top"] + 30, g["top"] + 330
     vals = [v for _, v in points]
     lo, hi = min(vals), max(vals)
     if hi == lo:
         lo, hi = lo - 1, hi + 1
-    pad = (hi - lo) * 0.15
-    lo, hi = lo - pad, hi + pad
+    pad = (hi - lo) * 0.18
+    ticks = nice_ticks(lo - pad, hi + pad)
+    lo, hi = min(ticks), max(ticks)
 
     def sx(i: int) -> float:
         return px0 + (px1 - px0) * (i / max(len(points) - 1, 1))
@@ -294,43 +411,39 @@ def time_series(dp: dict, date: str, extra: dict | None = None) -> Image | None:
     def sy(v: float) -> float:
         return py1 - (py1 - py0) * ((v - lo) / (hi - lo))
 
-    p = svg_open(w, h)
-    p.append(f'<text x="90" y="70" font-size="34" font-weight="700" fill="{INK}">{esc(dp["label"])}</text>')
-    p.append(f'<text x="90" y="104" font-size="19" fill="{INK_2}">'
-             f'{esc(points[0][0])} ~ {esc(points[-1][0])} · {len(points)}일치 · 단위 {esc(dp.get("unit") or "-")}</text>')
-
-    # 눈금선 4개 + 축 라벨 (가늘게, 뒤로 물러나게)
-    for k in range(5):
-        v = lo + (hi - lo) * k / 4
+    for v in ticks:                                     # 눈금선은 뒤로 물러나게
         y = sy(v)
         p.append(f'<line x1="{px0}" y1="{y:.1f}" x2="{px1}" y2="{y:.1f}" stroke="{GRID}" stroke-width="1"/>')
-        p.append(f'<text x="{px0 - 12}" y="{y + 5:.1f}" font-size="14" text-anchor="end" fill="{MUTED}">{v:g}</text>')
+        p.append(f'<text x="{px0 - 14}" y="{y + 5:.1f}" font-size="15" text-anchor="end" '
+                 f'fill="{MUTED}">{v:g}</text>')
     if lo < 0 < hi:
-        p.append(f'<line x1="{px0}" y1="{sy(0):.1f}" x2="{px1}" y2="{sy(0):.1f}" stroke="{BASELINE}" stroke-width="1.5"/>')
+        p.append(f'<line x1="{px0}" y1="{sy(0):.1f}" x2="{px1}" y2="{sy(0):.1f}" '
+                 f'stroke="{BASELINE}" stroke-width="1.5"/>')
 
-    path = " ".join(f'{"M" if i == 0 else "L"}{sx(i):.1f},{sy(v):.1f}' for i, (_, v) in enumerate(points))
-    p.append(f'<path d="{path}" fill="none" stroke="{BLUE}" stroke-width="2.5" stroke-linejoin="round"/>')
+    # 선 아래를 옅게 채워 추이 방향이 한눈에 들어오게
+    area = (f'M{sx(0):.1f},{py1:.1f} '
+            + " ".join(f'L{sx(i):.1f},{sy(v):.1f}' for i, (_, v) in enumerate(points))
+            + f' L{sx(len(points) - 1):.1f},{py1:.1f} Z')
+    p.append(f'<path d="{area}" fill="{BLUE_SOFT}" opacity="0.55"/>')
+    line = " ".join(f'{"M" if i == 0 else "L"}{sx(i):.1f},{sy(v):.1f}' for i, (_, v) in enumerate(points))
+    p.append(f'<path d="{line}" fill="none" stroke="{BLUE}" stroke-width="3" '
+             f'stroke-linejoin="round" stroke-linecap="round"/>')
+    p.append(f'<line x1="{px0}" y1="{py1:.1f}" x2="{px1}" y2="{py1:.1f}" stroke="{BASELINE}" stroke-width="1.5"/>')
+
     for i, (d, v) in enumerate(points):
-        p.append(f'<circle cx="{sx(i):.1f}" cy="{sy(v):.1f}" r="5" fill="{BLUE}" stroke="{SURFACE}" stroke-width="2"/>')
+        last = i == len(points) - 1
+        p.append(f'<circle cx="{sx(i):.1f}" cy="{sy(v):.1f}" r="{7 if last else 5}" '
+                 f'fill="{BLUE}" stroke="{CARD}" stroke-width="2.5"/>')
         # 날짜는 월-일만. 점이 많으면 처음·끝·중간만 적어 겹침을 막는다.
-        show = len(points) <= 8 or i in (0, len(points) - 1, len(points) // 2)
-        if show:
-            p.append(f'<text x="{sx(i):.1f}" y="{py1 + 28}" font-size="14" text-anchor="middle" fill="{MUTED}">{esc(d[5:])}</text>')
-    # 직접 라벨은 처음과 끝에만
-    for i in (0, len(points) - 1):
+        if len(points) <= 8 or i in (0, len(points) - 1, len(points) // 2):
+            p.append(f'<text x="{sx(i):.1f}" y="{py1 + 30}" font-size="15" text-anchor="middle" '
+                     f'fill="{MUTED}">{esc(d[5:])}</text>')
+    for i in (0, len(points) - 1):                      # 직접 라벨은 처음과 끝에만
         d, v = points[i]
-        anchor = "start" if i == 0 else "end"
-        p.append(f'<text x="{sx(i):.1f}" y="{sy(v) - 14:.1f}" font-size="18" font-weight="700" '
-                 f'text-anchor="{anchor}" fill="{INK}">{v:g}{esc(dp.get("unit") or "")}</text>')
-
-    p += footnotes([
-        "※ 매일 기사에서 뽑힌 값을 그대로 이은 것입니다. 발표 기관·기준이 날마다 다를 수 있습니다.",
-        _source_line(dp, date),
-    ], 90, 530)
-    p.append("</svg>")
+        p.append(f'<text x="{sx(i):.1f}" y="{sy(v) - 18:.1f}" font-size="19" font-weight="700" '
+                 f'text-anchor="{"start" if i == 0 else "end"}" fill="{INK}">{v:g}{esc(unit)}</text>')
+    frame_close(p, notes, g)
     return Image("time-series", "\n".join(p), dp["label"])
-
-
 # ── 3) 수치 카드 (기본형) ────────────────────────────────────
 
 
@@ -338,39 +451,31 @@ def stat_card(dp: dict, date: str, extra: dict | None = None) -> Image | None:
     """어떤 수치든 받아 큰 숫자 카드로 만든다. 마지막 수단."""
     if not dp.get("value"):
         return None
-    w, x = 1000, 90
-    maxw = w - x * 2
-
-    label_lines = wrap(dp["label"], 26, maxw)[:2]
+    w = 1000
     notes = []
     if dp.get("context"):
         notes += [f"※ {ln}" if i == 0 else f"　 {ln}"
-                  for i, ln in enumerate(wrap(dp["context"], 16, maxw))]
+                  for i, ln in enumerate(wrap(dp["context"], 17, w - (M + P) * 2))]
     if src := _source_line(dp, date):
         notes.append(src)
 
-    # 높이는 내용에 맞춰 계산한다. 고정하면 아래쪽에 빈 공간이 남는다.
-    hero_y = 86 + len(label_lines) * 36 + 88
-    period_y = hero_y + 48 if dp.get("period") else hero_y
-    notes_y = period_y + 66
-    h = notes_y + max(len(notes) - 1, 0) * 26 + 46
+    # 제목 줄 수와 각주 줄 수에 맞춰 높이를 잡는다. 고정하면 아래가 비거나 넘친다.
+    content_h = 190 if dp.get("period") else 150
+    h = card_height(w, dp["label"], "", content_h, notes)
 
-    p = svg_open(w, h)
-    for i, line in enumerate(label_lines):
-        p.append(f'<text x="{x}" y="{86 + i * 36}" font-size="26" fill="{INK_2}">{esc(line)}</text>')
-    p.append(f'<text x="{x}" y="{hero_y}" font-size="104" font-weight="700" fill="{INK}">'
+    p, g = frame_open(w, h, title=dp["label"], subtitle="", channel=_channel(extra), date=date)
+    x, y = g["x"], g["top"]
+
+    # 큰 숫자 — 단위는 한 단계 작게 붙여 숫자가 먼저 읽히게
+    p.append(f'<text x="{x}" y="{y + 96}" font-size="112" font-weight="800" fill="{INK}">'
              f'{esc(dp["value"])}'
-             f'<tspan font-size="44" font-weight="400" fill="{INK_2}">'
-             f'{esc(dp.get("unit", ""))}</tspan></text>')
+             f'<tspan font-size="46" font-weight="500" fill="{INK_2}">{esc(dp.get("unit", ""))}</tspan></text>')
+    # 숫자 아래 짧은 강조선. 카드에 무게중심을 준다.
+    p.append(f'<rect x="{x}" y="{y + 122}" width="96" height="6" rx="3" fill="{BLUE}"/>')
     if dp.get("period"):
-        p.append(f'<text x="{x}" y="{period_y}" font-size="21" fill="{INK_2}">'
-                 f'기준 {esc(dp["period"])}</text>')
-    p += footnotes(notes, x, notes_y)
-    p.append("</svg>")
+        p.append(chip(x, y + 150, f'기준 {dp["period"]}'))
+    frame_close(p, notes, g)
     return Image("stat-card", "\n".join(p), dp["label"])
-
-
-# 정보량이 많은 형태를 먼저 채우고, 남는 자리만 기본 카드로 메운다.
 SPECIFIC = (time_series, seoul_district_map, index_comparison)
 FALLBACK = (stat_card,)
 GENERATORS = SPECIFIC + FALLBACK
@@ -496,26 +601,37 @@ def thumbnail(text: str, *, sub: str = "", channel: str = "", date: str = "",
     lines = lines[:3]
     line_h = big * 1.18
     block_h = line_h * len(lines)
-    base_y = (h * (0.50 if portrait else 0.46)) - block_h / 2 + big * 0.85
+    # 부제까지 한 덩어리로 보고 가운데를 잡는다. 제목만 기준으로 잡으면 부제가 아래 띠를 침범한다.
+    sub_size = 44 if portrait else 36
+    sub_lines = wrap(sub, sub_size, w - margin * 2 - 44)[:2] if sub else []
+    sub_h = (40 + len(sub_lines) * 58) if sub_lines else 0
+    base_y = (h * (0.50 if portrait else 0.46)) - (block_h + sub_h) / 2 + big * 0.85
 
     p = svg_open(w, h)
     # 왼쪽 세로 강조 막대 + 상단 채널명, 하단 날짜. 사진 없이도 표지로 읽히게.
     p.append(f'<rect x="0" y="0" width="{w}" height="{h}" fill="{SURFACE}"/>')
     p.append(f'<rect x="{margin}" y="{base_y - big * 0.85:.0f}" width="14" height="{block_h:.0f}" rx="4" fill="{BLUE}"/>')
-    if channel:
-        p.append(f'<text x="{margin}" y="{margin + 30}" font-size="{40 if portrait else 32}" '
-                 f'font-weight="700" fill="{BLUE}">{esc(channel)}</text>')
     for i, line in enumerate(lines):
         p.append(f'<text x="{margin + 44}" y="{base_y + i * line_h:.0f}" font-size="{big}" '
                  f'font-weight="800" fill="{INK}">{esc(line)}</text>')
-    if sub:
-        sub_lines = wrap(sub, 44 if portrait else 36, w - margin * 2 - 44)[:2]
-        for i, line in enumerate(sub_lines):
-            p.append(f'<text x="{margin + 44}" y="{base_y + block_h + 40 + i * 58:.0f}" '
-                     f'font-size="{44 if portrait else 36}" fill="{INK_2}">{esc(line)}</text>')
+    if sub_lines:
+        sub_top = base_y + block_h + 40
+        # 아래 띠를 침범하면 부제를 생략한다. 겹쳐 찍느니 없는 편이 낫다.
+        # sub_top 은 첫 줄의 기준선이므로 마지막 줄의 아래끝만 보면 된다.
+        last_bottom = sub_top + (len(sub_lines) - 1) * 58 + sub_size * 0.3
+        if last_bottom < h - (96 if portrait else 76) - 12:
+            for i, line in enumerate(sub_lines):
+                p.append(f'<text x="{margin + 44}" y="{sub_top + i * 58:.0f}" '
+                         f'font-size="{sub_size}" fill="{INK_2}">{esc(line)}</text>')
+    # 아래 띠 — 채널명·날짜를 얹어 표지처럼 보이게 한다
+    band = 96 if portrait else 76
+    p.append(f'<rect x="0" y="{h - band}" width="{w}" height="{band}" fill="{INK}"/>')
+    if channel:
+        p.append(f'<text x="{margin}" y="{h - band / 2 + 12:g}" font-size="{34 if portrait else 28}" '
+                 f'font-weight="700" fill="#ffffff">{esc(channel)}</text>')
     if date:
-        p.append(f'<text x="{margin}" y="{h - margin + 10}" font-size="{34 if portrait else 28}" '
-                 f'fill="{MUTED}">{esc(date)}</text>')
+        p.append(f'<text x="{w - margin}" y="{h - band / 2 + 12:g}" font-size="{30 if portrait else 25}" '
+                 f'text-anchor="end" fill="#c9cdd2">{esc(date)}</text>')
     if badge:
         bsize = 52 if portrait else 40
         bw = text_width(badge, bsize) + bsize * 1.2

@@ -638,15 +638,20 @@ def test_llm_실행이_인포그래픽까지_만든다(cfg, monkeypatch):
     out = cfg.output_dir / RUN_DATE
     svgs = sorted(out.glob("img-*.svg"))
     assert svgs, "이미지가 하나도 생성되지 않았습니다"
-    # 가짜 글의 이미지 자리 1번이 변동률 수치를 가리키므로 자리 번호가 붙은 카드가 나온다
-    assert svgs[0].name == "img-1-stat-card.svg"
-    assert "-0.03" in svgs[0].read_text(encoding="utf-8")
+    # 표지가 맨 앞에 오고(검색 목록 썸네일), 자리 1번은 변동률 수치 카드다
+    assert svgs[0].name == "img-0-cover.svg"
+    card = next(p for p in svgs if p.name == "img-1-stat-card.svg")
+    assert "-0.03" in card.read_text(encoding="utf-8")
     # png: false 로 껐으므로 PNG 는 없어야 한다 → 본문은 SVG 파일명을 가리킨다
     assert not list(out.glob("img-*.png"))
     blog = (out / "blog.md").read_text(encoding="utf-8")
     assert "![한국부동산원 주간 통계 화면 캡처](img-1-stat-card.svg)" in blog
     naver = (out / "blog-naver.html").read_text(encoding="utf-8")
     assert "imgslot has-file" in naver and 'class="preview nocopy" src="img-1-stat-card.svg"' in naver
+    # 표지는 본문 맨 위, 3줄 요약보다 먼저 (첫 이미지가 썸네일이 되므로)
+    assert naver.index("대표 이미지") < naver.index("3줄 요약") < naver.index("서울 아파트값이 3주")
+    assert "이 글의 순서" not in naver          # 가짜 글은 소제목이 2개뿐 → 목차 없음
+    assert "![대표 이미지](img-0-cover.svg)" in blog
     # 썸네일 두 장
     assert (out / "thumb-longform.svg").exists() and (out / "thumb-shorts.svg").exists()
 

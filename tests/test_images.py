@@ -29,8 +29,8 @@ def test_자치구_도식은_보도값과_칸수가_맞을_때만_그린다():
     # 25개 자치구 이름이 모두 들어가야 한다
     for gu in images.SEOUL_GU:
         assert f">{gu}<" in img.svg
-    # 제외 3곳은 점선으로, 나머지는 파랑으로
-    assert img.svg.count("stroke-dasharray") == 3
+    # 제외 3곳은 점선으로, 나머지는 파랑으로 (범례에도 같은 점선 견본이 하나 더 있다)
+    assert img.svg.count("stroke-dasharray") == 3 + 1
     assert img.svg.count(f'fill="{images.BLUE}"') == 22 + 1   # 칸 22개 + 범례 1개
 
 

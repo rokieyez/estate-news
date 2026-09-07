@@ -156,10 +156,13 @@ class ContentGenerator:
     # ── 2·3단계: 같은 system 블록을 공유해 캐시를 태운다 ────
 
     def generate_blog(self, brief: DailyBrief) -> BlogPost:
-        log.info("블로그 글 생성 중…")
+        from .regions import from_brief
+
+        regions = from_brief(brief)
+        log.info("블로그 글 생성 중…%s", f" (지역: {', '.join(regions)})" if regions else "")
         return self._parse(
             system=self._shared(brief),
-            user=build_blog_user(self.cfg),
+            user=build_blog_user(self.cfg, regions),
             output_format=BlogPost,
             cache_system=True,
             kind="블로그",

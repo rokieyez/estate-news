@@ -4,9 +4,12 @@ title: "{{ post.title }}"
 slug: "{{ post.slug }}"
 date: {{ date }}
 category: "{{ category }}"
-tags: [{% for t in post.tags %}"{{ t }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+tags: [{% for t in tags %}"{{ t }}"{% if not loop.last %}, {% endif %}{% endfor %}]
 description: "{{ post.meta_description }}"
 ---
+{% endif %}
+{% if cover %}
+![대표 이미지]({{ cover }})
 {% endif %}
 {% if lead_block %}
 {{ lead_block }}{% endif %}

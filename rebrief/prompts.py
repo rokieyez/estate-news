@@ -76,10 +76,10 @@ def build_shared_context(cfg: Config, brief: DailyBrief) -> str:
 ──────────────────────────────────────"""
 
 
-def build_blog_user(cfg: Config) -> str:
+def build_blog_user(cfg: Config, regions: list[str] | None = None) -> str:
     blog = cfg.get("blog", {}) or {}
     if str(blog.get("platform", "naver")).lower() == "naver":
-        return _blog_user_naver(cfg, blog)
+        return _blog_user_naver(cfg, blog, regions or [])
     return _blog_user_markdown(blog)
 
 
@@ -99,7 +99,7 @@ def _blog_user_markdown(blog: dict) -> str:
 - tags 는 5~8개. image_slots 는 빈 배열로 두세요."""
 
 
-def _blog_user_naver(cfg: Config, blog: dict) -> str:
+def _blog_user_naver(cfg: Config, blog: dict, regions: list[str] | None = None) -> str:
     """네이버 블로그는 검색 유입과 모바일 열람 비중이 커서 요구사항이 다르다.
 
     - 검색으로 들어온 사람은 스크롤을 거의 안 한다 → 결론을 맨 앞에
@@ -112,6 +112,17 @@ def _blog_user_naver(cfg: Config, blog: dict) -> str:
     tag_count = int(naver.get("tag_count", 20))
     image_slots = int(naver.get("image_slots", 3))
     para_max = int(naver.get("paragraph_max_chars", 120))
+
+    region_rule = ""
+    if regions:
+        names = " · ".join(regions[:5])
+        region_rule = f"""
+
+■ 지역명 ({names})
+- 부동산 검색은 절반이 지역입니다. 위 지역 가운데 오늘 이슈와 **실제로 관계있는 곳**을
+  제목이나 소제목에 넣으세요. 관계없는 지역을 끼워 넣지는 마세요.
+- 가능하면 focus_keyword 에도 지역을 넣습니다. 예: "강북구 종부세", "노원구 아파트값".
+- tags 에도 지역명을 넣습니다(프로그램이 '지역명+아파트' 형태도 자동으로 덧붙입니다)."""
 
     return f"""위 브리핑을 바탕으로 **네이버 블로그**에 올릴 글 한 편을 완성하세요.
 네이버 블로그의 특성에 맞춰야 하므로 아래 규칙을 정확히 지켜 주세요.
@@ -162,7 +173,7 @@ def _blog_user_naver(cfg: Config, blog: dict) -> str:
 ■ 태그 (tags)
 - {tag_count}개. 본문 하단에 해시태그로 붙일 것이며 네이버가 이를 태그로 인식합니다.
 - 넓은 키워드(부동산, 아파트)와 좁은 키워드(서울아파트값, 전세사기지원)를 섞습니다.
-- 띄어쓰기 없이 붙여 씁니다. # 기호는 빼고 단어만 담으세요."""
+- 띄어쓰기 없이 붙여 씁니다. # 기호는 빼고 단어만 담으세요.{region_rule}"""
 
 
 def build_video_user(cfg: Config) -> str:

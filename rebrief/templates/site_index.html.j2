@@ -79,6 +79,12 @@
   <div class="date">{{ today.date }}{% if today.published %} · <b style="color:#03c75a">발행함</b>{% if today.published.url %} <a href="{{ today.published.url }}" style="color:#0068c3">글 보기</a>{% endif %}{% endif %}</div>
   <h2>오늘 할 일</h2>
 
+  {% if today.bundle %}
+  <a class="big" href="latest/{{ today.bundle.href }}" download style="background:#eef4fd;border-color:#cde2fb">
+    <span class="label">⬇ 첨부파일 모두 내려받기</span>
+    <span class="desc">그림·자막·컷 리스트 {{ today.bundle.count }}개 · {{ today.bundle.size }} (zip)</span>
+  </a>
+  {% endif %}
   {% for page in today.pages %}
   <a class="big {% if loop.first %}primary{% endif %}" href="latest/{{ page.href }}">
     <span class="step">{{ loop.index }}</span>

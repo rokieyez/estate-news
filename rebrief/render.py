@@ -82,12 +82,15 @@ class Renderer:
 
     def blog(self, post: BlogPost, clusters: list[Cluster],
              slot_files: dict[int, str] | None = None,
-             key_numbers: list | None = None, related: list[dict] | None = None) -> Path:
+             key_numbers: list | None = None, related: list[dict] | None = None,
+             cover: str = "") -> Path:
         blog_cfg = self.cfg.get("blog", {}) or {}
         return self._write(
             "blog.md",
             "blog.md.j2",
             post=post,
+            tags=self._tags(post),
+            cover=cover,
             lead_block=lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown)),
             tail_block=tail_block_markdown(post.closing_question, related),
             key_card=kn.card_markdown(key_numbers or []),
@@ -101,7 +104,7 @@ class Renderer:
 
     def blog_naver(self, post: BlogPost, slot_files: dict[int, str] | None = None,
                    filename: str = "blog-naver.html", key_numbers: list | None = None,
-                   related: list[dict] | None = None) -> Path:
+                   related: list[dict] | None = None, cover: str = "") -> Path:
         """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
         blog_cfg = self.cfg.get("blog", {}) or {}
         photo_links = {
@@ -122,8 +125,9 @@ class Renderer:
                 summary_lines=post.summary_lines,
                 closing_question=post.closing_question,
                 related=related,
+                cover=cover,
             ),
-            hashtags=format_hashtags(post.tags),
+            hashtags=format_hashtags(self._tags(post)),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
                 "write_url", "https://blog.naver.com/"
             ) or "https://blog.naver.com/",
@@ -256,6 +260,24 @@ class Renderer:
             self._write_image(img, cfg)
         return slot_files
 
+    def cover(self, post: BlogPost, key_numbers: list | None = None) -> str:
+        """글 맨 위에 올릴 표지 이미지. 네이버 검색 목록의 썸네일은 보통 본문 첫 이미지다.
+
+        돌려주는 값은 파일명(없으면 빈 문자열). 사람이 그 파일을 글 맨 위에 올린다.
+        """
+        cfg = self.cfg.get("images", {}) or {}
+        if not cfg.get("enabled", True) or not cfg.get("cover", True):
+            return ""
+        sub = (post.summary_lines or [""])[0]
+        badge = key_numbers[0].display if key_numbers else ""
+        img = images_mod.thumbnail(
+            post.title, sub=sub, badge=badge, size=(1200, 630),
+            channel=str((self.cfg.get("video", {}) or {}).get("channel_name", "") or ""),
+            date=self.date,
+        )
+        img.slug = "0-cover"
+        return self._write_image(img, cfg)
+
     def thumbnails(self, pack: VideoPack, key_numbers: list | None = None) -> list[Path]:
         """롱폼·쇼츠 표지. 제목 후보와 썸네일 문구는 대본 생성 때 이미 나와 있다.
         오늘의 첫 번째 핵심 수치가 있으면 모서리 배지로 붙인다."""
@@ -279,6 +301,15 @@ class Renderer:
             self._write_image(img, cfg, prefix="")
             paths.append(self.out_dir / f"{slug}.svg")
         return paths
+
+    def _tags(self, post: BlogPost) -> list[str]:
+        """모델 태그 + 글에 나온 지역 + 고정 태그로 네이버 30칸을 채운다."""
+        from .regions import find_regions
+
+        naver = (self.cfg.get("blog", {}) or {}).get("naver", {}) or {}
+        found = find_regions(f"{post.title}\n{post.body_markdown}", limit=4)
+        return expand_tags(post.tags, found, list(naver.get("fixed_tags", []) or []),
+                           limit=int(naver.get("tag_count", 30)))
 
     def _write_image(self, img, cfg: dict, prefix: str = "img-") -> str:
         """SVG 를 쓰고, 되면 PNG 도 쓴다. 본문에서 가리킬 파일명(PNG 우선)을 돌려준다."""
@@ -342,7 +373,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
                   photo_links: dict[int, list[tuple[str, str]]] | None = None,
                   highlight_min: int = 3, key_numbers: list | None = None,
                   summary_lines: list[str] | None = None, closing_question: str = "",
-                  related: list[dict] | None = None, outline: bool = True) -> str:
+                  related: list[dict] | None = None, outline: bool = True,
+                  cover: str = "") -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -383,7 +415,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
     html = highlight_repeated_numbers(html, highlight_min, {n.key for n in (key_numbers or [])})
     html = _IMAGE_SLOT.sub(slot, html)
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
-    head = lead_block_html(summary_lines, outline_from_markdown(body_markdown) if outline else [])
+    head = cover_block_html(cover) + lead_block_html(
+        summary_lines, outline_from_markdown(body_markdown) if outline else [])
     return head + kn.card_html(key_numbers or []) + html + tail_block_html(closing_question, related)
 
 
@@ -474,6 +507,17 @@ def _esc(text: str) -> str:
     from html import escape
 
     return escape(" ".join((text or "").split()))
+
+
+def cover_block_html(filename: str) -> str:
+    """표지 이미지 자리. 검색 결과 목록에 뜨는 썸네일이 되므로 본문 맨 위에 온다."""
+    if not filename:
+        return ""
+    return (
+        '<div class="imgslot has-file">📷 대표 이미지 — 검색 목록에 이 그림이 썸네일로 뜹니다'
+        f'<br><small>→ 파일 <b>{filename}</b> 을 <b>글 맨 위</b>에 올리고 상자는 지웁니다</small></div>'
+        f'<img class="preview nocopy" src="{filename}" alt="대표 이미지">'
+    )
 
 
 def lead_block_html(summary_lines: list[str] | None, outline: list[str] | None) -> str:
@@ -568,6 +612,30 @@ def place_images_markdown(body_markdown: str, slot_files: dict[int, str]) -> str
         return f"![{caption}]({filename})" if filename else match.group(0)
 
     return _IMAGE_SLOT_INLINE.sub(slot, body_markdown or "")
+
+
+def expand_tags(tags: list[str], regions: list[str] | None = None,
+                fixed: list[str] | None = None, limit: int = 30) -> list[str]:
+    """모델이 준 태그에 고정 태그와 지역 태그를 더해 칸을 채운다.
+
+    네이버 태그는 30개까지 등록된다. 남는 칸을 비워 둘 이유가 없다.
+    지역은 '송파구' 와 '송파구아파트' 두 벌로 넣는다 — 사람들이 둘 다 검색한다.
+    """
+    out: list[str] = []
+
+    def push(value: str) -> None:
+        cleaned = (value or "").strip().lstrip("#").replace(" ", "")
+        if cleaned and cleaned not in out and len(out) < limit:
+            out.append(cleaned)
+
+    for tag in tags or []:
+        push(tag)
+    for region in regions or []:
+        push(region)
+        push(f"{region}아파트")
+    for tag in fixed or []:
+        push(tag)
+    return out
 
 
 def format_hashtags(tags: list[str]) -> str:

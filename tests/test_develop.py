@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 from rebrief.models import (
     Article, Cluster, CaptionLine, DailyBrief, IssueBrief,
@@ -251,3 +252,95 @@ def test_related_posts_prefers_same_topic_and_skips_unpublished(cfg):
     assert [r["date"] for r in got] == ["2026-09-05", "2026-09-04"]     # 주제가 가까운 날이 먼저
     assert all(r["url"].startswith("https://") for r in got)
     assert isinstance(brief, DailyBrief)
+
+
+# ── 유입 2차: 지역명 · 표지 이미지 · 태그 30칸 ──────────────
+
+
+def test_region_finder_handles_particles_and_lookalikes():
+    from rebrief.regions import find_regions
+
+    assert find_regions("서울 25개구 중 22개구가 종부세 대상, 강북·금천·도봉 제외") == \
+        ["서울", "강북구", "금천구", "도봉구"]              # 구를 뗀 표기도 정식 이름으로, 나온 순서대로
+    assert find_regions("경기 화성과 용인 반도체 배후 수요") == ["화성", "용인"]   # 조사가 붙어도 찾는다
+    assert find_regions("성동구 아파트값 상승, 중구청 앞 상가는 공실") == ["성동구"]  # 중구청은 지역이 아니다
+    assert find_regions("동작 원리를 설명한 자료") == []       # 지역처럼 보이는 낱말은 뺀다
+    assert find_regions("잠실 아파트 신고가, 송파구 거래량 증가") == ["잠실", "송파구"]   # 글에 먼저 나온 순
+
+
+def test_expand_tags_fills_thirty_slots_with_regions():
+    from rebrief.render import expand_tags
+
+    tags = expand_tags(["종부세", " 부동산 ", "종부세"], ["송파구", "강남구"],
+                       ["부동산", "부동산뉴스", "아파트"], limit=30)
+    assert tags[:3] == ["종부세", "부동산", "송파구"]          # 모델 태그 → 지역 → 고정 순, 중복 제거
+    assert "송파구아파트" in tags and "강남구아파트" in tags    # 지역은 두 벌로
+    assert len(expand_tags([f"태그{i}" for i in range(40)], ["송파구"], [], limit=30)) == 30
+
+
+def test_blog_gets_cover_and_expanded_tags(cfg, tmp_path):
+    from rebrief.keynumbers import KeyNumber
+    from rebrief.models import BlogPost
+    from rebrief.render import Renderer
+
+    post = BlogPost(
+        title="송파구 종부세 대상 확대 전망", slug="s", meta_description="d",
+        focus_keyword="송파구 종부세", summary_lines=["첫 줄 요약입니다."],
+        tags=["종부세"], body_markdown="송파구 아파트 이야기입니다.\n\n## 송파구 종부세\n\n본문")
+    renderer = Renderer(cfg, tmp_path / "out", "2026-09-07")
+    cover = renderer.cover(post, [KeyNumber("22개구", "22개구", "종부세 대상")])
+    assert cover == "img-0-cover.svg"
+    svg = (tmp_path / "out" / cover).read_text(encoding="utf-8")
+    assert "송파구" in svg and ">22개구</text>" in svg      # 제목과 핵심 수치 배지
+
+    html = renderer.blog_naver(post, cover=cover).read_text(encoding="utf-8")
+    assert html.index("대표 이미지") < html.index("첫 줄 요약입니다")
+    assert "#송파구아파트" in html and "#부동산뉴스" in html   # 지역·고정 태그가 채워진다
+
+
+# ── 그래픽 카드 틀 · 첨부파일 zip ──────────────────────────
+
+
+def test_cards_share_one_frame_and_fit_inside():
+    from rebrief import images
+
+    ch = {"channel": "부동산 브리핑"}
+    card = images.stat_card({"label": "롯데건설 누적 수주액", "value": "4조원", "unit": "",
+                             "period": "2026년 누적", "context": "지난해보다 많음", "source": "비즈트리뷴"},
+                            "2026-09-07", ch)
+    assert "부동산 브리핑" in card.svg and "2026-09-07" in card.svg      # 머리말이 붙는다
+    assert card.svg.count(f'fill="{images.CARD}"') >= 1                   # 흰 카드 위에 그린다
+
+    # 각주가 카드 밖으로 나가지 않아야 한다 (예전엔 큰 숫자와 겹쳤다)
+    height = float(re.search(r'height="(\d+)"', card.svg).group(1))
+    ys = [float(m) for m in re.findall(r'<text[^>]*y="([\d.]+)"', card.svg)]
+    assert max(ys) < height - images.M
+
+
+def test_axis_ticks_are_round_numbers_and_cover_data():
+    from rebrief.images import nice_ticks
+
+    ticks = nice_ticks(-0.0744, 0.0344)
+    assert ticks == [-0.1, -0.05, 0.0, 0.05]          # 0.0344 같은 숫자를 축에 적지 않는다
+    assert min(ticks) <= -0.0744 and max(ticks) >= 0.0344   # 데이터가 눈금 밖으로 나가지 않는다
+    assert nice_ticks(0, 4200)[0] == 0
+
+
+def test_site_bundles_attachments_into_one_zip(cfg, tmp_path):
+    import zipfile
+
+    from rebrief.site import build_site
+
+    day = cfg.output_dir / "2026-09-07"
+    day.mkdir(parents=True)
+    (day / "brief.md").write_text("# 브리핑", encoding="utf-8")
+    (day / "img-1-stat-card.png").write_bytes(b"\x89PNG")
+    (day / "thumb-shorts.png").write_bytes(b"\x89PNG")
+    (day / "script-shorts.srt").write_text("1\n00:00:00,000 --> 00:00:02,000\n자막\n", encoding="utf-8")
+    (day / "blog.md").write_text("본문", encoding="utf-8")      # 문서는 첨부물이 아니다
+
+    dest = build_site(cfg, tmp_path / "site")
+    names = zipfile.ZipFile(dest / "2026-09-07" / "files.zip").namelist()
+    assert set(names) == {"img-1-stat-card.png", "thumb-shorts.png", "script-shorts.srt"}
+    assert "첨부파일 모두 내려받기" in (dest / "index.html").read_text(encoding="utf-8")
+    assert "files.zip" in (dest / "latest" / "images.html").read_text(encoding="utf-8")

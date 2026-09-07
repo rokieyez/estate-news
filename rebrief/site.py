@@ -286,6 +286,33 @@ def _build_weeks(env, source: Path, dest: Path) -> list[dict]:
     return weeks
 
 
+# 블로그에 올릴 때 실제로 쓰는 파일들 (문서가 아니라 '첨부물')
+ZIP_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg",
+             "script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv"]
+
+
+def _build_zip(dest: Path, name: str = "files.zip") -> dict | None:
+    """그림·자막·컷 리스트를 한 파일로 묶는다. 브라우저에서 링크 한 번으로 받게.
+
+    브라우저에서 자바스크립트로 묶지 않고 만들 때 미리 묶어 둔다 — 휴대폰에서도 확실히 받아진다.
+    """
+    import zipfile
+
+    files: list[Path] = []
+    for pattern in ZIP_GLOBS:
+        files += sorted(dest.glob(pattern))
+    files = [f for f in files if f.is_file()]
+    if not files:
+        return None
+    target = dest / name
+    with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as zf:
+        for f in files:
+            zf.write(f, f.name)
+    size = target.stat().st_size
+    return {"href": name, "count": len(files),
+            "size": f"{size / 1024 / 1024:.1f}MB" if size >= 1024 * 1024 else f"{size / 1024:.0f}KB"}
+
+
 def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
     dest.mkdir(parents=True, exist_ok=True)
     pages: list[dict] = []
@@ -314,10 +341,11 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
             shutil.copy2(day / filename, dest / filename)
 
     assets = _copy_assets(day, dest)
+    bundle = _build_zip(dest)
     if assets:
         # 그림 모아보기 페이지. 휴대폰에서 길게 눌러 저장하면 바로 블로그에 올릴 수 있다.
         html = env.get_template("site_images.html.j2").render(
-            date=day.name, images=assets,
+            date=day.name, images=assets, bundle=bundle,
         )
         (dest / "images.html").write_text(html, encoding="utf-8")
         pages.append({
@@ -325,7 +353,7 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
             "description": f"{len(assets)}장. 길게 눌러 저장 → 블로그에 올리기",
         })
 
-    entry = {"date": day.name, "pages": pages, "checklist": None}
+    entry = {"date": day.name, "pages": pages, "checklist": None, "bundle": bundle}
     cl = day / "checklist.json"
     if cl.exists():
         try:
@@ -355,6 +383,7 @@ def _copy_assets(day: Path, dest: Path) -> list[dict]:
 
 
 _ASSET_LABELS = {
+    "0-cover": "대표 이미지 (글 맨 위)",
     "district-map": "서울 자치구 도식",
     "index-comparison": "지수 비교",
     "stat-card": "수치 카드",
