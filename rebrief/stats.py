@@ -24,6 +24,8 @@ import requests
 log = logging.getLogger(__name__)
 
 DEAL_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptTradeDev/getRTMSDataSvcAptTradeDev"
+# 전월세는 자료가 따로라 포털에서 '아파트 전월세 실거래가' 를 한 번 더 활용신청해야 합니다.
+RENT_URL = "https://apis.data.go.kr/1613000/RTMSDataSvcAptRent/getRTMSDataSvcAptRent"
 REB_DATA_URL = "https://www.reb.or.kr/r-one/openapi/SttsApiTblData.do"
 REB_LIST_URL = "https://www.reb.or.kr/r-one/openapi/SttsApiTbl.do"
 
@@ -38,6 +40,11 @@ _FIELDS = {
     "dong": ("법정동", "umdNm"),
     "floor": ("층", "floor"),
     "seq": ("일련번호", "aptSeq"),      # 단지 고유번호. 예전 판에는 없어 이름+동으로 대신한다
+}
+# 전월세 응답도 한글 판·영문 판이 섞여 있어 둘 다 읽는다.
+_RENT_FIELDS = {
+    "deposit": ("보증금액", "보증금", "deposit"),
+    "monthly": ("월세금액", "월세", "monthlyRent"),
 }
 
 
@@ -128,6 +135,94 @@ def apt_trades(cfg, code: str, ym: str, *, rows: int = 1000) -> list[dict]:
         log.warning("실거래가를 가져오지 못했습니다(%s %s): %s", code, ym, type(exc).__name__)
         return []
     return parse_trades(resp.text)
+
+
+# ── 전월세 실거래와 전세가율 ─────────────────────────────────
+#
+# 지수로는 "전세가 매매보다 더 올랐다" 까지만 말할 수 있습니다. 실제 거래를 나란히 놓아야
+# "이 단지는 매매가의 몇 %에 전세가 나간다" 를 말할 수 있습니다.
+
+
+def parse_rents(xml_text: str) -> list[dict]:
+    """전월세 XML 을 거래 목록으로. 월세가 0 인 것만 순수 전세로 본다."""
+    try:
+        root = ET.fromstring(xml_text)
+    except ET.ParseError:
+        return []
+    if root.find(".//cmmMsgHeader") is not None:
+        return []
+    rows = []
+    for item in root.iter("item"):
+        deposit = _won(_text(item, _RENT_FIELDS["deposit"]))
+        if not deposit:
+            continue
+        try:
+            area = float(_text(item, _FIELDS["area"]) or 0)
+        except ValueError:
+            area = 0.0
+        name, dong = _text(item, _FIELDS["name"]), _text(item, _FIELDS["dong"])
+        y, m, d = (_text(item, _FIELDS[k]) for k in ("year", "month", "day"))
+        rows.append({
+            "name": name, "dong": dong,
+            "seq": _text(item, _FIELDS["seq"]) or f"{dong}|{name}",
+            "deposit": deposit,
+            "monthly": _won(_text(item, _RENT_FIELDS["monthly"])),
+            "area": round(area, 2),
+            "date": f"{y}-{int(m):02d}-{int(d):02d}" if y and m and d else "",
+        })
+    return rows
+
+
+def apt_rents(cfg, code: str, ym: str, *, rows: int = 1000) -> list[dict]:
+    """한 시군구의 한 달치 아파트 전월세 실거래. 키가 없거나 신청 전이면 빈 목록."""
+    key = deal_key()
+    if not key:
+        return []
+    try:
+        resp = _get(RENT_URL, params={
+            "serviceKey": key, "LAWD_CD": code, "DEAL_YMD": ym,
+            "pageNo": "1", "numOfRows": str(rows),
+        }, timeout=float(cfg.get("collect.timeout_seconds", 15)))
+        resp.raise_for_status()
+    except requests.RequestException as exc:
+        log.warning("전월세 실거래를 가져오지 못했습니다(%s %s): %s", code, ym, type(exc).__name__)
+        return []
+    return parse_rents(resp.text)
+
+
+def jeonse_ratio(trades: list[dict], rents: list[dict], *, min_pairs: int = 2) -> dict:
+    """같은 단지·같은 면적 칸의 전세 보증금 ÷ 매매가.
+
+    월세가 붙은 계약은 보증금이 낮아 섞으면 비율이 왜곡되므로 순수 전세만 씁니다.
+    한쪽만 있는 칸은 셀 수 없으니 뺍니다.
+    """
+    sale = _by_unit(trades)
+    pure = [r for r in rents if not r["monthly"]]
+    lease: dict[tuple[str, int], list[dict]] = {}
+    for r in pure:
+        lease.setdefault((r.get("seq", ""), area_bucket(r.get("area", 0))), []).append(r)
+
+    pairs = []
+    for key, deals in sale.items():
+        got = lease.get(key)
+        if not got:
+            continue
+        sale_avg = sum(d["amount"] for d in deals) / len(deals)
+        lease_avg = sum(d["deposit"] for d in got) / len(got)
+        if sale_avg <= 0:
+            continue
+        pairs.append({
+            "name": deals[0]["name"], "dong": deals[0]["dong"],
+            "area": deals[0]["area"], "sale": round(sale_avg), "lease": round(lease_avg),
+            "ratio": round(lease_avg / sale_avg * 100, 1),
+        })
+    if len(pairs) < min_pairs:
+        return {}
+    ratios = sorted(p["ratio"] for p in pairs)
+    mid = len(ratios) // 2
+    median = ratios[mid] if len(ratios) % 2 else round((ratios[mid - 1] + ratios[mid]) / 2, 1)
+    pairs.sort(key=lambda p: p["ratio"], reverse=True)
+    return {"median": median, "pairs": pairs, "count": len(pairs)}
 
 
 def summarize(rows: list[dict]) -> dict:
@@ -309,9 +404,14 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
         now, was = summarize(deals), summarize(by_month.get(before, []))
         if not now["count"] and not was["count"]:
             continue
-        rows.append({"name": name, "code": code, "now": now, "was": was,
-                     "focus": bool(item.get("focus")),
-                     "change": now["count"] - was["count"]})
+        row = {"name": name, "code": code, "now": now, "was": was,
+               "focus": bool(item.get("focus")),
+               "change": now["count"] - was["count"]}
+        if settings.get("jeonse", True):
+            ratio = jeonse_ratio(deals, apt_rents(cfg, code, ym))
+            if ratio:
+                row["jeonse"] = ratio
+        rows.append(row)
         picks += highlights(deals, history, district=name)
 
     if not rows:
@@ -322,6 +422,7 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
             "before": before, "before_label": month_label(before), "districts": rows,
             "highlights": picks[: int(settings.get("max_highlights", 5))],
             "focus": [r["name"] for r in rows if r["focus"]],
+            "jeonse": [{"name": r["name"], **r["jeonse"]} for r in rows if r.get("jeonse")],
             "history_months": months_back,
             "total": sum(r["now"]["count"] for r in rows),
             "total_before": sum(r["was"]["count"] for r in rows)}

@@ -993,3 +993,92 @@ def test_notification_carries_the_trade_numbers():
     plain = build_run_message(date="2026-09-07", headline="", issues=1, articles=10,
                               site_url="", warnings=[], llm_used=True)
     assert "🏢" not in plain
+
+
+# ── 전월세 실거래 · 전세가율 ─────────────────────────────────
+
+_RENT_OLD = """<response><body><items>
+<item><아파트>은마</아파트><보증금액> 60,000</보증금액><월세금액>0</월세금액>
+ <전용면적>84.43</전용면적><년>2026</년><월>7</월><일>5</일><법정동>대치동</법정동></item>
+<item><아파트>은마</아파트><보증금액>10,000</보증금액><월세금액>150</월세금액>
+ <전용면적>84.43</전용면적><년>2026</년><월>7</월><일>9</일><법정동>대치동</법정동></item>
+</items></body></response>"""
+
+_RENT_NEW = """<response><body><items>
+<item><aptNm>헬리오시티</aptNm><deposit>90,000</deposit><monthlyRent>0</monthlyRent>
+ <excluUseAr>84.99</excluUseAr><dealYear>2026</dealYear><dealMonth>7</dealMonth>
+ <dealDay>3</dealDay><umdNm>가락동</umdNm><aptSeq>11710-9</aptSeq></item>
+</items></body></response>"""
+
+
+def test_rent_parsing_handles_both_tag_styles():
+    from rebrief.stats import parse_rents
+
+    old = parse_rents(_RENT_OLD)
+    assert [r["deposit"] for r in old] == [600_000_000, 100_000_000]
+    assert old[0]["monthly"] == 0 and old[1]["monthly"] == 1_500_000
+    assert old[0]["seq"] == "대치동|은마"          # 예전 판에는 단지 번호가 없다
+
+    new = parse_rents(_RENT_NEW)
+    assert new[0]["deposit"] == 900_000_000 and new[0]["seq"] == "11710-9"
+    assert parse_rents(_ERR_XML) == []
+
+
+def test_jeonse_ratio_uses_pure_jeonse_only():
+    from rebrief.stats import jeonse_ratio
+
+    trades = [_deal("은마", 2_000_000_000, seq="A"), _deal("래미안", 1_000_000_000, seq="B")]
+    rents = [
+        {"name": "은마", "dong": "대치동", "seq": "A", "deposit": 1_200_000_000,
+         "monthly": 0, "area": 84.5, "date": "2026-07-05"},
+        # 월세가 붙은 계약은 보증금이 낮아 섞으면 비율이 무너진다
+        {"name": "은마", "dong": "대치동", "seq": "A", "deposit": 100_000_000,
+         "monthly": 1_500_000, "area": 84.5, "date": "2026-07-09"},
+        {"name": "래미안", "dong": "도곡동", "seq": "B", "deposit": 700_000_000,
+         "monthly": 0, "area": 84.5, "date": "2026-07-11"},
+    ]
+    got = jeonse_ratio(trades, rents)
+    assert got["count"] == 2 and got["median"] == 65.0
+    assert got["pairs"][0]["name"] == "래미안" and got["pairs"][0]["ratio"] == 70.0
+
+    # 짝지을 단지가 하나뿐이면 내놓지 않는다
+    assert jeonse_ratio(trades[:1], rents[:1]) == {}
+    assert jeonse_ratio(trades, []) == {}
+
+
+def test_video_prompt_carries_trade_numbers():
+    from rebrief.prompts import stats_context
+
+    text = stats_context({
+        "month_label": "2026년 7월", "before_label": "2026년 6월",
+        "total": 2230, "total_before": 2252,
+        "districts": [{"name": "노원구", "change": 50, "now": {"count": 723, "avg": 700000000}}],
+        "highlights": [{"kind": "신고가", "district": "성동구", "name": "벽산", "area": 84.8,
+                        "amount": 1_080_000_000, "before": 860_000_000, "pct": 25.6}]})
+    assert "노원구: 723건 (전달 대비 +50건), 평균 7.0억" in text
+    assert "[신고가] 성동구 벽산 84.8㎡ 10.8억" in text
+    assert "숫자를 바꾸지 말고 그대로 인용" in text
+    assert "지역 전체가 올랐다는 뜻이 아닙니다" in text     # 신고가를 과장해 읽지 않게
+    assert stats_context(None) == ""
+
+
+def test_warns_when_trade_data_goes_stale(cfg, tmp_path):
+    from rebrief.pipeline import RunResult, _warn_if_stats_stale
+    from rebrief.store import TradeLog
+
+    result = RunResult(date="2026-09-07", out_dir=tmp_path)
+    _warn_if_stats_stale(cfg, "2026-09-07", result, reason="키 없음")
+    assert "한 번도 받지 못했습니다" in result.warnings[0]
+
+    book = TradeLog(cfg.state_dir / "trades.json")
+    book.add("2026-09-06", {"month": "202607", "total": 10,
+                            "districts": [{"name": "강남구", "now": {"count": 10, "avg": 1}}]}, {})
+    book.save()
+
+    fresh = RunResult(date="2026-09-07", out_dir=tmp_path)
+    _warn_if_stats_stale(cfg, "2026-09-07", fresh, reason="키 없음")
+    assert fresh.warnings == []          # 하루 빠진 것은 흔한 일이라 알리지 않는다
+
+    late = RunResult(date="2026-09-11", out_dir=tmp_path)
+    _warn_if_stats_stale(cfg, "2026-09-11", late, reason="키 없음")
+    assert "5일째 받지 못했습니다" in late.warnings[0]

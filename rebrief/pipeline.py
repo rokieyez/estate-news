@@ -278,7 +278,7 @@ def _generate_with_llm(
         _record_titles(cfg, date_str, blog=[post.title])
 
     try:
-        pack = generator.generate_video(brief)
+        pack = generator.generate_video(brief, stats=stats_data)
     except LLMError as exc:
         log.error("영상 대본 생성 실패: %s", exc)
         result.warnings.append(f"영상 대본 생성 실패 — {exc}")
@@ -474,7 +474,10 @@ def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result,
     from . import stats as stats_mod
 
     settings = cfg.get("stats", {}) or {}
-    if not settings.get("enabled", True) or not stats_mod.deal_key():
+    if not settings.get("enabled", True):
+        return {}
+    if not stats_mod.deal_key():
+        _warn_if_stats_stale(cfg, date_str, result, reason="DATA_GO_KR_KEY 가 없습니다")
         return {}
     try:
         data = stats_mod.collect(cfg, date_str, focus=focus)
@@ -482,6 +485,9 @@ def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result,
     except Exception as exc:                       # 외부 자료가 바뀌어도 실행은 멈추지 않는다
         log.warning("통계 수집 실패: %s", exc)
         result.warnings.append(f"통계 수집 실패 — {type(exc).__name__}")
+        return {}
+    if not data:
+        _warn_if_stats_stale(cfg, date_str, result, reason="받아온 거래가 없습니다")
         return {}
     if data:
         _record_trades(cfg, date_str, data, series)
@@ -493,6 +499,29 @@ def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result,
         renderer.stats(data, series, history=history, history_region=region)
         log.info("실거래가 %d개 지역 집계", len(data["districts"]))
     return data
+
+
+def _warn_if_stats_stale(cfg: Config, date_str: str, result, *, reason: str,
+                         after_days: int = 3) -> None:
+    """실거래를 며칠째 못 받으면 알림에 한 줄 띄운다.
+
+    표가 조용히 빠지면 인증키가 막힌 것을 몇 주 뒤에야 안다. 하루 이틀은 흔한 일이라
+    사흘이 지난 뒤부터 알린다.
+    """
+    from datetime import date as _date
+
+    from .store import TradeLog
+
+    book = TradeLog(cfg.state_dir / "trades.json")
+    if not book.days:
+        result.warnings.append(f"실거래 자료를 아직 한 번도 받지 못했습니다 — {reason}")
+        return
+    try:
+        gap = (_date.fromisoformat(date_str) - _date.fromisoformat(max(book.days))).days
+    except ValueError:
+        return
+    if gap >= after_days:
+        result.warnings.append(f"실거래를 {gap}일째 받지 못했습니다 — {reason}")
 
 
 def _record_trades(cfg: Config, date_str: str, data: dict, series: dict) -> None:

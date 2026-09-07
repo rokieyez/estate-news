@@ -52,6 +52,31 @@
   <div class="tile"><div class="k">요약 실패일</div><div class="v {% if fail_days %}bad{% else %}ok{% endif %}">{{ fail_days }}</div><div class="s">data.json 없는 날</div></div>
 </div>
 
+{% if trade_bars %}
+<div class="card">
+  <h2>날마다 센 실거래 {% if trade_latest.month %}<span style="font-size:13px;color:#898781;font-weight:400">— {{ trade_latest.month }} 신고분</span>{% endif %}</h2>
+  {% if trade_stale >= 3 %}
+  <p class="s" style="color:#c0392b">⚠️ 실거래를 마지막으로 받은 지 {{ trade_stale }}일 지났습니다. 인증키나 자료 주소를 확인하세요.</p>
+  {% endif %}
+  <p class="s">같은 달이라도 신고가 늦게 들어와 집계일마다 값이 커집니다. 가격이 아니라 신고가 쌓이는 속도입니다.</p>
+  <div class="scroll">
+  <svg viewBox="0 0 {{ 40 + trade_bars|length * 26 }} 150" width="{{ 40 + trade_bars|length * 26 }}" height="150" role="img" aria-label="집계일별 실거래 건수 막대">
+    <line x1="34" y1="120" x2="{{ 36 + trade_bars|length * 26 }}" y2="120" stroke="#c3c2b7" stroke-width="1"/>
+    <text x="30" y="14" font-size="10" text-anchor="end" fill="#898781">{{ trade_bars|map(attribute='total')|max }}건</text>
+    {% for b in trade_bars %}
+    <rect x="{{ 38 + loop.index0 * 26 }}" y="{{ 120 - b.h }}" width="16" height="{{ b.h }}" rx="3" fill="#256abf"><title>{{ b.date }} {{ b.total }}건</title></rect>
+    {% if loop.index0 % 5 == 0 or loop.last %}<text x="{{ 46 + loop.index0 * 26 }}" y="136" font-size="9" text-anchor="middle" fill="#898781">{{ b.date[5:] }}</text>{% endif %}
+    {% endfor %}
+  </svg>
+  </div>
+</div>
+{% elif trade_stale >= 3 %}
+<div class="card">
+  <h2>날마다 센 실거래</h2>
+  <p class="s" style="color:#c0392b">⚠️ 실거래 자료가 아직 없습니다. 인증키(DATA_GO_KR_KEY)를 확인하세요.</p>
+</div>
+{% endif %}
+
 {% if cost_bars %}
 <div class="card">
   <h2>날짜별 비용</h2>

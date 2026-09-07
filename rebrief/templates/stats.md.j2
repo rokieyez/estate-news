@@ -30,6 +30,19 @@
 {% endfor %}
 {% endif %}
 
+{% if jeonse %}
+## 전세가율 (실제 거래로 계산)
+
+같은 단지·같은 면적에서 그달 **전세 보증금 ÷ 매매가**입니다. 월세가 붙은 계약은 뺐습니다.
+지수가 아니라 실제 거래라 단지마다 편차가 큽니다.
+
+| 지역 | 중앙값 | 견준 단지 수 | 가장 높은 곳 |
+| --- | ---: | ---: | --- |
+{% for j in jeonse %}
+| {{ j.name }} | {{ j.median }}% | {{ j.count }}곳 | {{ j.pairs[0].name }} {{ j.pairs[0].ratio }}% ({{ (j.pairs[0].sale / 100000000)|round(1) }}억 / 전세 {{ (j.pairs[0].lease / 100000000)|round(1) }}억) |
+{% endfor %}
+{% endif %}
+
 {% if index %}
 ## 한국부동산원 주간 가격지수 ({{ index.region }})
 

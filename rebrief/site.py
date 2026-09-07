@@ -226,12 +226,24 @@ def _policy_schedule(cfg: Config | None, days: list[Path]) -> list[dict]:
     return PolicyLog(cfg.state_dir / "policies.json").upcoming(after)
 
 
+def _stale_days(trades, today: str) -> int:
+    """마지막으로 실거래를 받은 날로부터 며칠 지났는지. 자료가 아예 없으면 -1."""
+    from datetime import date as _date
+
+    if not trades.days or not today:
+        return -1
+    try:
+        return (_date.fromisoformat(today) - _date.fromisoformat(max(trades.days))).days
+    except ValueError:
+        return -1
+
+
 def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest: Path,
                      limit: int = 30) -> None:
     """최근 N일의 수집·요약·그림·비용을 한 장에 모은다. 흩어진 로그를 보러 다니지 않게."""
     import json
 
-    from .store import CostLog, TitleLog
+    from .store import CostLog, TitleLog, TradeLog
 
     costs = CostLog(cfg.state_dir / "costs.json")
     by_date = costs.by_date()
@@ -277,6 +289,14 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
     cost_max = max((u for _, u in cost_rows), default=0.0) or 1.0
     cost_bars = [{"date": d, "usd": u, "h": round(100 * u / cost_max, 1)} for d, u in cost_rows]
 
+    # 날마다 센 실거래 건수. 신고가 늦게 들어와 같은 달도 값이 커지므로 '쌓이는 속도' 로 읽는다.
+    trades = TradeLog(cfg.state_dir / "trades.json")
+    trade_rows = [(d, e) for d, e in sorted(trades.days.items())][-30:]
+    trade_max = max((e.get("total", 0) for _, e in trade_rows), default=0) or 1
+    trade_bars = [{"date": d, "total": e.get("total", 0), "month": e.get("month", ""),
+                   "h": round(100 * e.get("total", 0) / trade_max, 1)} for d, e in trade_rows]
+    trade_latest = trade_rows[-1][1] if trade_rows else {}
+
     from datetime import date as _date
 
     from .store import failure_streak
@@ -290,6 +310,8 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
         feed_ok=feed_ok, feed_total=feed_total,
         fail_days=sum(1 for r in rows if not r["llm"]),
         cost_bars=cost_bars, cost_max=cost_max,
+        trade_bars=trade_bars, trade_latest=trade_latest,
+        trade_stale=_stale_days(trades, days[0].name if days else ""),
         title_types=TitleLog(cfg.state_dir / "titles.json").by_type(),
     )
     (dest / "dashboard.html").write_text(html, encoding="utf-8")

@@ -214,7 +214,35 @@ def build_policy_messages(docs: list) -> tuple[str, str]:
     return system, user
 
 
-def build_video_user(cfg: Config) -> str:
+def stats_context(stats: dict | None) -> str:
+    """영상 대본에 넘길 실거래 자료. 값은 프로그램이 센 것이라 그대로 인용하게 한다."""
+    if not stats or not stats.get("districts"):
+        return ""
+    rows = "\n".join(
+        f"- {r['name']}: {r['now']['count']}건 (전달 대비 {r['change']:+d}건), "
+        f"평균 {r['now']['avg'] / 100_000_000:.1f}억"
+        for r in stats["districts"][:5]
+    )
+    hot = "\n".join(
+        f"- [{h['kind']}] {h['district']} {h['name']} {h['area']}㎡ "
+        f"{h['amount'] / 100_000_000:.1f}억 (이전 {h['before'] / 100_000_000:.1f}억, {h['pct']:+.1f}%)"
+        for h in (stats.get("highlights") or [])[:5]
+    )
+    return f"""
+
+────────── 실거래 자료 ({stats.get('month_label', '')}) ──────────
+국토교통부 신고 자료를 우리가 직접 집계한 값입니다. **숫자를 바꾸지 말고 그대로 인용하세요.**
+전체 신고 매매 {stats.get('total', 0)}건 ({stats.get('before_label', '')} {stats.get('total_before', 0)}건)
+
+지역별
+{rows}
+{"" if not hot else "눈에 띄는 거래" + chr(10) + hot}
+※ 이 수치는 브리핑에 없는 자료입니다. 쓸 때는 "국토교통부 실거래가 신고 자료 기준" 이라고 밝히세요.
+※ 신고가는 '같은 단지 같은 면적의 지난 거래보다 높다' 는 뜻입니다. 지역 전체가 올랐다는 뜻이 아닙니다.
+──────────────────────────────────────"""
+
+
+def build_video_user(cfg: Config, stats: dict | None = None) -> str:
     video = cfg.get("video", {}) or {}
     shorts_sec = int(video.get("shorts_seconds", 60))
     long_min = float(video.get("longform_minutes", 8))
@@ -224,7 +252,8 @@ def build_video_user(cfg: Config) -> str:
     shorts_chars = int(shorts_sec / 60 * cpm)
     long_chars = int(long_min * cpm)
 
-    return f"""위 브리핑을 바탕으로 오늘 촬영할 영상 두 편의 제작 자료를 만드세요.
+    return f"""위 브리핑{"과 아래 실거래 자료" if stats else ""}를 바탕으로 오늘 촬영할 영상 두 편의 제작 자료를 만드세요.
+{stats_context(stats)}
 
 ■ 쇼츠 ({shorts_sec}초)
 - 브리핑에서 **가장 임팩트 있는 이슈 하나만** 고릅니다. 여러 개 담지 마세요.
