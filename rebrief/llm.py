@@ -116,11 +116,13 @@ class Usage:
         return [f"{d['kind']} ${d['usd']:.3f} ({d['model']})" for d in self.details]
 
     def summary(self) -> str:
-        shown = "+".join(self.models_used) if len(self.models_used) > 1 else self.model
+        # 호출마다 모델이 다르므로 **실제로 쓴 것**을 적는다. 설정값(self.model)을 적으면
+        # 브리핑·대본을 값싼 모델로 돌린 날에도 opus 로 돌린 것처럼 보인다.
+        shown = "+".join(self.models_used) if self.models_used else self.model
         return (
             f"{shown} · {self.calls}회 호출 · "
-            f"입력 {self.input_tokens:,} (캐시읽기 {self.cache_read_tokens:,}) / "
-            f"출력 {self.output_tokens:,} 토큰 · 약 ${self.estimated_usd:.3f}"
+            f"입력 {self.input_tokens:,} / 출력 {self.output_tokens:,} 토큰 · "
+            f"약 ${self.estimated_usd:.3f}"
         )
 
 
@@ -133,6 +135,9 @@ class ContentGenerator:
         # 영상 대본은 출력 토큰이 가장 많다. 값싼 모델로 돌리면 하루 비용이 눈에 띄게 준다.
         # 비워 두면 기본 모델을 그대로 쓴다. 강등(fallback)은 두 경우 모두 그대로 동작한다.
         self.script_model = str(cfg.get("llm.script_model", "") or "").strip() or self.model
+        # 브리핑은 새 글이 아니라 기사를 '정리' 하는 일이라 값싼 모델로도 됩니다.
+        # 출력 비용의 가장 큰 몫이 여기라(2026-09-07 실측 37%) 따로 고를 수 있게 두었습니다.
+        self.brief_model = str(cfg.get("llm.brief_model", "") or "").strip() or self.model
         self.max_tokens = int(cfg.get("llm.max_tokens", 16000))
         self.effort = str(cfg.get("llm.effort", "high"))
         self.fallback_model = str(cfg.get("llm.fallback_model", "") or "").strip()
@@ -150,13 +155,13 @@ class ContentGenerator:
             system=system,
             user=user,
             output_format=DailyBrief,
-            cache_system=True,
             kind="브리핑",
+            model=self.brief_model,
         )
         brief.date = brief.date or run_date
         return brief
 
-    # ── 2·3단계: 같은 system 블록을 공유해 캐시를 태운다 ────
+    # ── 2·3단계: 브리핑 결과를 그대로 넘겨 쓴다 ─────────────
 
     def generate_blog(self, brief: DailyBrief) -> BlogPost:
         from .regions import from_brief
@@ -167,7 +172,6 @@ class ContentGenerator:
             system=self._shared(brief),
             user=build_blog_user(self.cfg, regions),
             output_format=BlogPost,
-            cache_system=True,
             kind="블로그",
         )
 
@@ -177,7 +181,6 @@ class ContentGenerator:
             system=self._shared(brief),
             user=build_video_user(self.cfg, stats),
             output_format=VideoPack,
-            cache_system=True,
             kind="영상 대본",
             model=self.script_model,
         )
@@ -187,16 +190,14 @@ class ContentGenerator:
         system, user = build_policy_messages(docs)
         log.info("정책 원문 요약 중… (%d건)", len(docs))
         model = str(self.cfg.get("llm.policy_model", "") or "").strip() or self.script_model
-        return self._parse(system=system, user=user, output_format=PolicySummaries,
-                           cache_system=False, kind="정책 요약", model=model)
+        return self._parse(system=system, user=user, output_format=PolicySummaries, kind="정책 요약", model=model)
 
     # ── 주간 결산 (별도 system, 캐시 없음) ───────────────────
 
     def generate_weekly(self, days: list[dict], week_label: str) -> WeeklyReview:
         system, user = build_weekly_messages(self.cfg, days, week_label)
         log.info("주간 결산 생성 중… (%d일치)", len(days))
-        return self._parse(system=system, user=user, output_format=WeeklyReview, cache_system=False,
-                           kind="주간 결산")
+        return self._parse(system=system, user=user, output_format=WeeklyReview, kind="주간 결산")
 
     # ── 월간 결산 (별도 system, 캐시 없음) ───────────────────
 
@@ -204,8 +205,7 @@ class ContentGenerator:
                          trades: dict | None = None) -> MonthlyReview:
         system, user = build_monthly_messages(self.cfg, days, month_label, trades)
         log.info("월간 결산 생성 중… (%d일치)", len(days))
-        return self._parse(system=system, user=user, output_format=MonthlyReview, cache_system=False,
-                           kind="월간 결산")
+        return self._parse(system=system, user=user, output_format=MonthlyReview, kind="월간 결산")
 
     # ── 문장 고쳐 쓰기 (점검표 ❌ 자동 수정) ─────────────────
 
@@ -214,7 +214,7 @@ class ContentGenerator:
                   "다시 씁니다. 사실·숫자는 바꾸지 않습니다. 단정적 예측이나 투자 권유로 읽히지 않게 합니다."
                   + (f" 톤: {tone}" if tone else ""))
         user = f"금지 표현: {', '.join(phrases)}\n\n문장:\n{sentence}"
-        return self._parse(system=system, user=user, output_format=Rewrite, cache_system=False,
+        return self._parse(system=system, user=user, output_format=Rewrite,
                            kind="문장 고쳐쓰기").text.strip()
 
     def _shared(self, brief: DailyBrief) -> str:
@@ -224,18 +224,18 @@ class ContentGenerator:
 
     # ── 공통 호출 ────────────────────────────────────────────
 
-    def _parse(self, *, system: str, user: str, output_format, cache_system: bool,
+    def _parse(self, *, system: str, user: str, output_format,
                kind: str = "", model: str | None = None):
         """지정 모델로 부르고, 한도·장애면 대체 모델로 한 번 더 시도한다."""
         base = model or self.model
         try:
-            response, model = self._call(system, user, output_format, cache_system, base)
+            response, model = self._call(system, user, output_format, base)
         except _Retryable as exc:
             if not self.fallback_model or self.fallback_model == base:
                 raise LLMError(exc.message) from exc
             log.warning("%s — %s 로 다시 시도합니다.", exc.message, self.fallback_model)
             try:
-                response, model = self._call(system, user, output_format, cache_system, self.fallback_model)
+                response, model = self._call(system, user, output_format, self.fallback_model)
             except _Retryable as exc2:
                 raise LLMError(f"{exc.message} (대체 모델 {self.fallback_model} 도 실패: {exc2.message})") from exc2
             self.usage.notes.append(
@@ -257,13 +257,15 @@ class ContentGenerator:
             raise LLMError(f"{output_format.__name__} 형식으로 응답을 해석하지 못했습니다.")
         return parsed
 
-    def _call(self, system: str, user: str, output_format, cache_system: bool, model: str):
+    def _call(self, system: str, user: str, output_format, model: str):
+        # 접두사 캐싱을 걷어냈습니다 (2026-09-07, 실측).
+        #
+        # **구조화 출력의 스키마가 캐시 접두사에 포함됩니다.** 같은 스키마로 두 번 부르면
+        # 8,649토큰이 그대로 읽혔지만, 스키마만 바꾸자 캐시 읽기 0에 8,705토큰을 통째로
+        # 다시 썼습니다. 우리 호출은 브리핑·블로그·대본이 모두 스키마가 달라 애초에 공유가
+        # 불가능했습니다. 실제로 9월 7일 기록도 캐시 쓰기 20,814 · 읽기 0 이었습니다.
+        # 캐시 쓰기는 입력의 1.25배를 내므로, 읽히지 않는 캐시는 웃돈만 무는 셈입니다.
         system_blocks = [{"type": "text", "text": system}]
-        # 캐시는 모델마다 따로 잡힌다. 대본을 다른 모델로 돌리는 날 캐시를 또 쓰면 돈만 더 든다.
-        if cache_system and model == self.model:
-            # 접두사 캐싱: blog/video 호출이 같은 system 을 공유하므로
-            # 두 번째 호출부터 입력 토큰이 1/10 가격으로 처리된다.
-            system_blocks[0]["cache_control"] = {"type": "ephemeral"}
         kwargs = {
             "model": model,
             "max_tokens": self.max_tokens,

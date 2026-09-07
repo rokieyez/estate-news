@@ -55,7 +55,13 @@ def build_shared_context(cfg: Config, brief: DailyBrief) -> str:
     video = cfg.get("video", {}) or {}
     banned = video.get("banned_phrases", []) or []
 
-    brief_json = json.dumps(brief.model_dump(), ensure_ascii=False, indent=2)
+    # 주소는 빼고 넘긴다. 블로그·대본은 주소를 쓰지 않고, 글 끝의 '참고한 기사' 목록은
+    # 프로그램이 클러스터에서 직접 만든다. 넣어 봐야 세 호출의 입력만 불린다.
+    payload = brief.model_dump()
+    for issue in payload.get("issues", []):
+        issue.pop("source_urls", None)
+        issue.pop("source_ids", None)
+    brief_json = json.dumps(payload, ensure_ascii=False, indent=2)
 
     return f"""당신은 부동산 콘텐츠를 만드는 프로듀서입니다.
 채널명은 "{video.get('channel_name', '부동산 브리핑')}" 입니다.
@@ -92,7 +98,6 @@ def _blog_user_markdown(blog: dict) -> str:
 - 분량: 본문 {min_chars}~{max_chars}자
 - 구조: 도입(오늘 시장 한 문단) → 이슈별 H2 소제목 → 정리/체크포인트
 - 수치는 표(마크다운 테이블)로 정리하면 읽기 좋습니다. 수치가 2개 이상인 이슈는 표를 쓰세요.
-- 각 이슈 끝에 근거 기사 링크를 넣습니다.
 - 마지막에 '오늘의 체크포인트' 3줄 요약을 붙입니다.
 - title 은 검색해서 들어올 만한 제목으로 짓되, 과장하거나 낚지 않습니다.
 - 글 안에서 독자를 '여러분'으로 부르고, 존댓말로 씁니다.
@@ -179,7 +184,6 @@ def _blog_user_naver(cfg: Config, blog: dict, regions: list[str] | None = None) 
   자동 생성해 자리에 넣습니다). 현장 사진·화면 캡처처럼 수치가 아닌 자리는 빈 문자열로 둡니다.
   {image_slots}곳 중 적어도 한 곳은 수치 자리로 잡으세요.
   사진 자리에는 search_keywords 에 스톡 사진 사이트용 **영어 검색어** 2~4단어를 적습니다.
-- 각 이슈 끝에 근거 기사 링크를 붙입니다.
 - 표는 꼭 필요할 때 하나만 씁니다. 휴대폰에서 표는 가로로 잘립니다.
 - 독자를 '여러분'으로 부르고 존댓말로 씁니다. 딱딱한 보고서 문체는 피합니다.
 
@@ -267,19 +271,43 @@ def build_video_user(cfg: Config, stats: dict | None = None) -> str:
 - 발화 분량 합계 약 {long_chars}자.
 - sections 는 4~6개. 각 섹션 at 은 누적 타임코드로 매깁니다.
 - script 는 실제로 읽을 원고입니다. 구어체로, 한 문장을 짧게 씁니다. 개조식으로 쓰지 마세요.
-- broll 에는 그 구간에 필요한 자료화면을 적습니다. 직접 촬영할 것과 스톡으로 대체할 것을 구분해 주세요.
-- graphics 에는 자막 카드나 그래프로 만들 수치·문구를 적습니다. 브리핑 numbers 를 최대한 활용하세요.
-- thumbnail_texts 는 썸네일에 크게 박을 문구입니다. 12자 이내, 숫자를 넣으면 좋습니다.
-- description 에는 챕터 타임코드 목록과 출처 링크를 포함합니다.
+- broll 은 구간마다 **2개까지**. 짧은 명사구로 적고, 스톡으로 될 것은 '스톡:' 을 앞에 붙입니다.
+  나쁜 예: "관련 화면". 좋은 예: "스톡: 서울 아파트 단지 항공".
+- graphics 는 구간마다 **1~2개**. 자막 카드로 띄울 수치·문구만 짧게. 브리핑 numbers 를 씁니다.
+- thumbnail_texts 는 썸네일에 크게 박을 문구 **3개**입니다. 12자 이내, 숫자를 넣으면 좋습니다.
+- title_candidates 도 **3개**면 충분합니다. 서로 다른 각도로 지으세요.
 - outro 는 다음 문장으로 마무리합니다: "{cta}"
-- pinned_comment 에는 핵심 요약 3줄과 "투자 판단의 책임은 본인에게 있습니다" 취지의 문구를 넣습니다."""
+
+설명란과 고정 댓글은 쓰지 마세요. 챕터 타임코드도 출처 주소도 이미 우리가 가진 값이라
+프로그램이 만듭니다."""
 
 
 # ── 자료 직렬화 ──────────────────────────────────────────────
 
 
+ARTICLE_LIMIT = 6      # 이슈 하나에 넣어 줄 기사 수
+
+
+def article_ids(clusters: list[Cluster]) -> dict[str, str]:
+    """프롬프트에 붙일 기사 번호 → 실제 주소.
+
+    format_clusters 와 **같은 규칙**으로 번호를 매깁니다. 모델은 주소 대신 이 번호만
+    돌려주면 되고, 프로그램이 여기서 주소를 되찾습니다.
+    """
+    out: dict[str, str] = {}
+    for index, cluster in enumerate(clusters, start=1):
+        for n, article in enumerate(cluster.articles[:ARTICLE_LIMIT], start=1):
+            out[f"{index}-{n}"] = article.url
+    return out
+
+
 def format_clusters(clusters: list[Cluster]) -> str:
-    """클러스터를 프롬프트에 넣을 텍스트로 변환."""
+    """클러스터를 프롬프트에 넣을 텍스트로 변환.
+
+    기사 주소는 넣지 않고 **번호**만 붙입니다. 구글뉴스 주소는 한 개가 220자나 되는데,
+    모델은 그걸 읽고 그대로 되돌려 적을 뿐이라 오갈 때마다 값을 두 번 냅니다
+    (2026-09-07 브리핑 출력의 20%가 주소였습니다).
+    """
     blocks: list[str] = []
 
     for index, cluster in enumerate(clusters, start=1):
@@ -291,13 +319,12 @@ def format_clusters(clusters: list[Cluster]) -> str:
         )
 
         article_lines: list[str] = []
-        for article in cluster.articles[:6]:
+        for n, article in enumerate(cluster.articles[:ARTICLE_LIMIT], start=1):
             when = article.published.strftime("%m-%d %H:%M") if article.published else "시각미상"
             source = article.publisher or article.feed_name
             text = _truncate(article.best_text, 1200)
             article_lines.append(
-                f"* [{source} / {when}] {article.title}\n"
-                f"  URL: {article.url}\n"
+                f"* ({index}-{n}) [{source} / {when}] {article.title}\n"
                 f"  내용: {text or '(요약 없음)'}"
             )
 

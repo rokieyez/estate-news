@@ -236,6 +236,7 @@ def _generate_with_llm(
         return made
 
     result.llm_used = True
+    _fill_source_urls(brief, issues, result)
     checks = _verify_numbers(cfg, brief, issues, result)
     made.update(brief=brief, checks=checks)
     made["repeats"] = _repeat_topics(cfg, brief, date_str)
@@ -368,6 +369,35 @@ def _record_series(cfg: Config, brief, date_str: str) -> list[dict]:
     except OSError as exc:
         log.warning("수치 이력 기록 실패: %s", exc)
     return store.rows
+
+
+def _fill_source_urls(brief, issues, result) -> None:
+    """모델이 돌려준 기사 번호를 실제 주소로 바꿔 채운다.
+
+    모델에게 주소를 되돌려 적게 하면 값을 두 번 냅니다(들어갈 때·나올 때). 번호만 받고
+    여기서 되찾습니다. 못 알아본 번호가 있으면 조용히 넘기지 않고 사람에게 알립니다 —
+    근거가 비면 검산과 '이슈 선정 근거' 가 함께 비기 때문입니다.
+    """
+    from .prompts import article_ids
+
+    table = article_ids(issues)
+    missed = 0
+    for issue in brief.issues:
+        if not issue.source_ids:
+            # 번호를 하나도 못 받았으면 이미 들어 있는 주소를 지우지 않는다.
+            # 근거가 비면 검산과 '이슈 선정 근거' 가 함께 빈다.
+            continue
+        urls = []
+        for key in (issue.source_ids or []):
+            url = table.get(str(key).strip().strip("()"))
+            if url and url not in urls:
+                urls.append(url)
+            elif not url:
+                missed += 1
+        issue.source_urls = urls
+    if missed:
+        result.warnings.append(
+            f"근거 기사 번호 {missed}개를 알아보지 못했습니다. 그만큼 근거 목록이 비어 있습니다.")
 
 
 def _verify_numbers(cfg: Config, brief, issues: list[Cluster], result: RunResult) -> list:

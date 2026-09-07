@@ -193,6 +193,9 @@ class Renderer:
         return path
 
     def production_notes(self, brief: DailyBrief, pack: VideoPack) -> Path:
+        video = self.cfg.get("video", {}) or {}
+        blog = self.cfg.get("blog", {}) or {}
+        disclaimer = str(blog.get("disclaimer", "") or "")
         return self._write(
             "production-notes.md",
             "production_notes.md.j2",
@@ -201,6 +204,11 @@ class Renderer:
             l=pack.longform,
             date=self.date,
             datapoints=flatten_datapoints(brief),
+            # 설명란·고정 댓글은 모델이 아니라 여기서 만든다
+            description=youtube_description(
+                brief, pack, disclaimer=disclaimer,
+                cta=str(video.get("cta", "") or "")),
+            pinned=pinned_comment(brief, disclaimer),
         )
 
     def sources(
@@ -532,6 +540,54 @@ def highlight_repeated_numbers(html: str, min_count: int = 3, keys: set[str] | N
     for i in range(0, len(parts), 2):
         parts[i] = kn.NUM_TOKEN.sub(wrap, parts[i])
     return "".join(parts)
+
+
+
+def youtube_description(brief: "DailyBrief", pack: "VideoPack", *, disclaimer: str = "",
+                        cta: str = "", limit: int = 8) -> str:
+    """유튜브 설명란을 프로그램이 조립한다.
+
+    예전에는 모델에게 설명란 전문을 쓰게 했는데, 여기 들어갈 것은 **챕터 타임코드**와
+    **출처 주소** 뿐이고 둘 다 우리가 이미 가진 값입니다. 모델이 다시 쓰면 돈이 들고,
+    매번 형식이 조금씩 달라집니다.
+    """
+    lines: list[str] = []
+    if brief.headline:
+        lines += [brief.headline, ""]
+    if getattr(brief, "lead", ""):
+        lines += [brief.lead, ""]
+
+    lines.append("── 챕터 ──")
+    lines.append("00:00 콜드오픈")
+    for section in pack.longform.sections:
+        at = (section.at or "").strip()
+        lines.append(f"{at} {section.chapter}".strip())
+    lines.append("")
+
+    urls: list[str] = []
+    for issue in brief.issues:
+        for url in (issue.source_urls or []):
+            if url not in urls:
+                urls.append(url)
+    if urls:
+        lines.append("── 출처 ──")
+        lines += urls[:limit]
+        lines.append("")
+    if cta:
+        lines.append(cta)
+    if disclaimer:
+        lines.append(disclaimer)
+    return "\n".join(lines).strip() + "\n"
+
+
+def pinned_comment(brief: "DailyBrief", disclaimer: str = "") -> str:
+    """고정 댓글도 같은 이유로 프로그램이 만든다. 이슈 한 줄 요약 3개 + 주의 문구."""
+    lines = [f"· {i.one_liner}" for i in brief.issues[:3] if i.one_liner]
+    if not lines:
+        lines = [brief.headline] if brief.headline else []
+    if disclaimer:
+        lines += ["", disclaimer]
+    return "\n".join(lines)
 
 
 def explain_issues(brief: DailyBrief, clusters: list[Cluster], tz: str = "Asia/Seoul") -> list[str]:

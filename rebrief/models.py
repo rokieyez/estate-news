@@ -113,7 +113,13 @@ class IssueBrief(BaseModel):
     why_it_matters: str = Field(description="시청자에게 어떤 의미인지 2~3문장")
     who_is_affected: list[str] = Field(description="영향받는 집단. 예: '수도권 무주택 실수요자'")
     caution: str = Field(description="확정이 아니거나 해석이 갈리는 지점. 없으면 '없음'")
-    source_urls: list[str] = Field(description="근거 기사 URL")
+    # 모델은 **번호**만 돌려줍니다. 구글뉴스 주소는 한 개가 220자라, 읽히고 다시 적히며
+    # 값을 두 번 냅니다 (2026-09-07 브리핑 출력의 20%가 주소였습니다).
+    source_ids: list[str] = Field(default_factory=list,
+                                  description="근거 기사 번호. 자료에 붙은 (1-2) 같은 번호를 그대로")
+    # 아래는 프로그램이 번호로 채웁니다 — 검산·근거 표시·이슈 짝짓기가 주소를 씁니다.
+    source_urls: list[str] = Field(default_factory=list,
+                                   description="비워 두세요. 프로그램이 번호로 채웁니다")
 
 
 class DailyBrief(BaseModel):
@@ -202,20 +208,24 @@ class LongformSection(BaseModel):
     chapter: str = Field(description="챕터 제목")
     at: str = Field(description="시작 타임코드. 예: '01:20'")
     script: str = Field(description="실제로 읽을 대본. 구어체, 문장 짧게")
-    broll: list[str] = Field(description="이 구간에 필요한 자료화면·B롤 지시 2~4개")
-    graphics: list[str] = Field(description="자막 카드/그래픽으로 띄울 수치나 문구")
+    # B롤·그래픽은 편집자가 참고하는 메모라 많을수록 좋지가 않다. 여섯 구간이면 예전엔
+    # 최대 24개가 나왔다. 정말 필요한 것만 적게 해서 쓰는 글을 줄인다.
+    broll: list[str] = Field(description="이 구간에 꼭 필요한 자료화면 2개. 짧은 명사구로")
+    graphics: list[str] = Field(description="자막 카드로 띄울 수치나 문구 1~2개. 짧게")
 
 
 class LongformScript(BaseModel):
-    title_candidates: list[str] = Field(description="영상 제목 후보 5개")
-    thumbnail_texts: list[str] = Field(description="썸네일에 넣을 짧은 문구 5개. 각 12자 이내")
+    # 후보를 다섯 개씩 받아도 결국 하나만 고른다. 셋이면 충분하다.
+    title_candidates: list[str] = Field(description="영상 제목 후보 3개")
+    thumbnail_texts: list[str] = Field(description="썸네일에 넣을 짧은 문구 3개. 각 12자 이내")
     cold_open: str = Field(description="인트로 전 30초 후킹 멘트")
     sections: list[LongformSection]
     outro: str = Field(description="마무리 멘트 + CTA")
-    description: str = Field(description="유튜브 설명란 전문. 챕터 타임코드와 출처 포함")
     tags: list[str] = Field(description="유튜브 태그 10~15개")
-    pinned_comment: str = Field(description="고정 댓글로 쓸 요약 + 주의 문구")
     estimated_minutes: float = Field(description="예상 길이(분)")
+    # 설명란·고정 댓글은 모델에게 시키지 않습니다 (2026-09-07).
+    # 챕터 타임코드도 출처 주소도 우리가 이미 가진 값이라, 프로그램이 조립하면
+    # 매번 같은 형식이 나오고 모델이 쓰는 글도 그만큼 줍니다 → render.youtube_description()
 
 
 class VideoPack(BaseModel):

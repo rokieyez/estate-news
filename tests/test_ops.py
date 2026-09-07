@@ -135,7 +135,7 @@ def test_한도에_걸리면_대체_모델로_다시_시도한다(cfg, monkeypat
         return _Resp(BlogPost(title="t", slug="s", meta_description="m", tags=[], body_markdown="b"))
 
     gen, anthropic = _generator(cfg, monkeypatch, lambda m: behaviour(m))
-    post = gen._parse(system="s", user="u", output_format=BlogPost, cache_system=False)
+    post = gen._parse(system="s", user="u", output_format=BlogPost)
     assert post.title == "t" and calls == ["claude-opus-5", "claude-sonnet-5"]
     assert gen.usage.models_used == ["claude-sonnet-5"]
     assert any("claude-sonnet-5 로 생성" in n for n in gen.usage.notes)
@@ -154,7 +154,7 @@ def test_인증_오류는_강등하지_않는다(cfg, monkeypatch):
 
     gen, anthropic = _generator(cfg, monkeypatch, lambda m: behaviour(m))
     with pytest.raises(LLMError, match="유효하지"):
-        gen._parse(system="s", user="u", output_format=BlogPost, cache_system=False)
+        gen._parse(system="s", user="u", output_format=BlogPost)
     assert calls == ["claude-opus-5"]
 
 
@@ -167,7 +167,7 @@ def test_대체_모델도_실패하면_둘_다_적는다(cfg, monkeypatch):
 
     gen, anthropic = _generator(cfg, monkeypatch, lambda m: behaviour(m))
     with pytest.raises(LLMError, match="대체 모델 claude-sonnet-5 도 실패"):
-        gen._parse(system="s", user="u", output_format=BlogPost, cache_system=False)
+        gen._parse(system="s", user="u", output_format=BlogPost)
 
 
 class _FakeHTTP:

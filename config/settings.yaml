@@ -48,6 +48,11 @@ llm:
   # 비우면 위 model 을 그대로 씁니다.
   script_model: claude-sonnet-5
 
+  # 브리핑도 값싼 모델로. 새 글을 쓰는 게 아니라 기사를 '정리' 하는 일입니다.
+  # 2026-09-07 실측에서 출력 비용의 37%가 이 호출이었습니다. 품질이 눈에 띄게 떨어지면
+  # 이 줄을 비우세요 (비우면 위 model 을 그대로 씁니다).
+  brief_model: claude-sonnet-5
+
   policy_model: claude-haiku-4-5   # 정부 보도자료 3줄 요약용 (짧은 작업이라 가장 싼 모델로)
 
   fallback_model: claude-sonnet-5   # 한도·장애로 실패하면 이 모델로 한 번 더 (비우면 안 함)

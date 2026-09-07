@@ -83,7 +83,7 @@ def test_srt_and_cut_list(tmp_path):
     longform = LongformScript(
         title_candidates=["t"], thumbnail_texts=["x"], cold_open="여는 말",
         sections=[LongformSection(chapter="첫 챕터", at="01:20", script="대본", broll=["B롤"], graphics=["11%"])],
-        outro="끝", description="설명", tags=["t"], pinned_comment="댓글", estimated_minutes=8.0)
+        outro="끝", tags=["t"], estimated_minutes=8.0)
     chapters = longform_chapter_csv(longform).lstrip("﻿").strip().split("\r\n")
     assert "00:01:20:00" in chapters[1] and "첫 챕터" in chapters[1]
 
@@ -148,8 +148,7 @@ def test_long_captions_flags_overflowing_cuts():
         shorts=ShortsScript(title_candidates=["t"], hook="h", lines=lines, cta="c",
                             hashtags=["#x"], estimated_seconds=10),
         longform=LongformScript(title_candidates=["t"], thumbnail_texts=["x"], cold_open="o",
-                                sections=[], outro="e", description="d", tags=["t"],
-                                pinned_comment="p", estimated_minutes=8.0))
+                                sections=[], outro="e", tags=["t"], estimated_minutes=8.0))
     over = cl.long_captions(pack)
     assert len(over) == 1 and over[0].startswith("2컷 ·")
 
@@ -1466,3 +1465,95 @@ def test_district_grid_never_flips_north_or_east():
 
     # 한 칸에 두 구를 넣으면 하나가 가려진다
     assert len(set(pos.values())) == 25
+
+
+# ── 모델이 쓰는 글 줄이기 ────────────────────────────────────
+
+def test_source_ids_become_urls(cfg):
+    from types import SimpleNamespace
+
+    from rebrief.models import DailyBrief, IssueBrief
+    from rebrief.pipeline import RunResult, _fill_source_urls
+    from rebrief.prompts import article_ids, format_clusters
+
+    art = lambda n, url: SimpleNamespace(  # noqa: E731
+        title=f"기사{n}", url=url, publisher="한국경제", feed_name="f",
+        published=None, best_text="본문")
+    cluster = SimpleNamespace(
+        lead=art(1, "https://a.example/1"), size=2, publishers=["한국경제"],
+        categories=["세금·절세"],
+        articles=[art(1, "https://a.example/1"), art(2, "https://b.example/2")])
+    clusters = [cluster]
+
+    table = article_ids(clusters)
+    assert table == {"1-1": "https://a.example/1", "1-2": "https://b.example/2"}
+    text = format_clusters(clusters)
+    assert "(1-1)" in text and "(1-2)" in text
+    assert "https://" not in text            # 주소는 프롬프트에 넣지 않는다
+
+    brief = DailyBrief(
+        date="2026-09-07", headline="h", lead="l", market_temperature="m", tomorrow_watch=[],
+        issues=[IssueBrief(title="t", one_liner="o", category="세금·절세", what_happened=["a"],
+                           numbers=[], why_it_matters="w", who_is_affected=["x"], caution="없음",
+                           source_ids=["1-2", "(1-1)", "9-9"])])
+    result = RunResult(date="2026-09-07", out_dir=cfg.output_dir)
+    _fill_source_urls(brief, clusters, result)
+    assert brief.issues[0].source_urls == ["https://b.example/2", "https://a.example/1"]
+    assert "1개를 알아보지 못했습니다" in result.warnings[0]   # 9-9 는 없는 번호
+
+    # 번호를 하나도 못 받으면 이미 있는 주소를 지우지 않는다 (근거가 통째로 비면 검산도 빈다)
+    keep = DailyBrief(
+        date="2026-09-07", headline="h", lead="l", market_temperature="m", tomorrow_watch=[],
+        issues=[IssueBrief(title="t", one_liner="o", category="세금·절세", what_happened=["a"],
+                           numbers=[], why_it_matters="w", who_is_affected=["x"], caution="없음",
+                           source_urls=["https://a.example/1"])])
+    _fill_source_urls(keep, clusters, RunResult(date="2026-09-07", out_dir=cfg.output_dir))
+    assert keep.issues[0].source_urls == ["https://a.example/1"]
+
+
+def test_youtube_description_is_assembled_not_written():
+    from rebrief.models import (DailyBrief, IssueBrief, LongformScript, LongformSection,
+                                ShortsScript, VideoPack)
+    from rebrief.render import pinned_comment, youtube_description
+
+    brief = DailyBrief(
+        date="2026-09-07", headline="종부세와 공급, 두 축", lead="오늘의 흐름입니다.",
+        market_temperature="보합", tomorrow_watch=[],
+        issues=[IssueBrief(title="종부세", one_liner="종부세가 22개 구로 번집니다",
+                           category="세금·절세", what_happened=["a"], numbers=[],
+                           why_it_matters="w", who_is_affected=["1주택자"], caution="없음",
+                           source_urls=["https://a.example/1", "https://a.example/1"])])
+    pack = VideoPack(
+        shorts=ShortsScript(title_candidates=["t"], hook="h", lines=[], cta="c",
+                            hashtags=["#부동산"], estimated_seconds=45),
+        longform=LongformScript(
+            title_candidates=["t1", "t2", "t3"], thumbnail_texts=["a", "b", "c"],
+            cold_open="콜드오픈", outro="아웃트로", tags=["부동산"], estimated_minutes=8.0,
+            sections=[LongformSection(chapter="종부세 확대", at="01:10", script="s",
+                                      broll=["스톡: 아파트 항공"], graphics=["22개 구"])]))
+
+    text = youtube_description(brief, pack, disclaimer="투자 판단은 본인 책임입니다.",
+                               cta="구독 부탁드립니다.")
+    assert "00:00 콜드오픈" in text and "01:10 종부세 확대" in text
+    assert text.count("https://a.example/1") == 1        # 같은 주소는 한 번만
+    assert "구독 부탁드립니다." in text and "투자 판단은 본인 책임입니다." in text
+
+    assert pinned_comment(brief, "주의") == "· 종부세가 22개 구로 번집니다\n\n주의"
+    # 모델은 더 이상 설명란·고정 댓글을 쓰지 않는다
+    assert not hasattr(pack.longform, "description")
+    assert not hasattr(pack.longform, "pinned_comment")
+
+
+def test_brief_uses_its_own_model_and_no_cache(cfg, monkeypatch):
+    import inspect
+
+    from rebrief import llm as llm_mod
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "테스트용-가짜-키")
+    cfg.settings["llm"]["brief_model"] = "claude-sonnet-5"
+    gen = llm_mod.ContentGenerator(cfg)
+    assert gen.brief_model == "claude-sonnet-5" and gen.model != gen.brief_model
+
+    # 캐시는 걷어냈다 — 구조화 출력 스키마가 접두사에 들어가 호출마다 새로 쓰이기만 했다
+    src = inspect.getsource(llm_mod)
+    assert "cache_control" not in src and "cache_system" not in src
