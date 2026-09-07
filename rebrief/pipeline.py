@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from dataclasses import dataclass, field
 from datetime import date as date_cls
@@ -15,7 +16,7 @@ from . import keynumbers
 from .llm import ContentGenerator, LLMError, Usage
 from .models import Article, Cluster
 from .prompts import build_prompt_pack
-from .rank import score_clusters, select_issues
+from .rank import quiet_day, score_clusters, select_issues
 from .render import RenderStats, Renderer, explain_issues, update_index
 from .linkcheck import check_links
 from . import policy as policy_mod
@@ -37,6 +38,7 @@ class RunResult:
     llm_used: bool = False
     warnings: list[str] = field(default_factory=list)
     stats: dict = field(default_factory=dict)      # 실거래 집계 (알림·요약에 쓴다)
+    quiet: bool = False                            # 한산해서 일부러 안 만든 날 (실패가 아니다)
 
 
 def local_now(cfg: Config) -> datetime:
@@ -130,6 +132,18 @@ def run(
     # 오늘 이슈에 나온 지역을 먼저 보게 해서 글과 표가 같은 곳을 가리키게 한다.
     stats_data = _collect_stats(cfg, renderer, date_str, result, focus=_focus_regions(issues))
     result.stats = stats_data or {}
+    # 한산한 날은 억지로 만들지 않는다. 통계는 그대로 받아 두었으니 그 페이지는 남는다.
+    quiet, quiet_why = quiet_day(cfg, clusters, issues)
+    if quiet and want_llm:
+        want_llm = False
+        result.quiet = True
+        result.warnings.append(quiet_why)
+        renderer._write_raw("quiet.json", json.dumps(
+            {"date": date_str, "reason": quiet_why,
+             "top_size": max((c.size for c in (issues or clusters)), default=0),
+             "clusters": len(clusters)}, ensure_ascii=False, indent=2) + "\n")
+        log.info("쉬어 가는 날로 판정: %s", quiet_why)
+
     artifacts: dict = {}
     if want_llm and issues:
         artifacts = _generate_with_llm(cfg, renderer, issues, date_str, result, model=model,
@@ -142,6 +156,7 @@ def run(
         renderer.brief_fallback(issues, stats)
         renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
     renderer.checklist(result, artifacts, link_status)
+    _record_quality(cfg, date_str, renderer, artifacts, result)
 
     # 6) 이력 저장
     seen.mark(articles, date_cls.fromisoformat(date_str))
@@ -269,7 +284,8 @@ def _generate_with_llm(
                         1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
         cover = renderer.cover(post, keys)          # 검색 목록 썸네일이 될 표지
         made["cover"] = cover
-        policies = _collect_policies(cfg, renderer, date_str, generator, result)
+        policies = _collect_policies(cfg, renderer, date_str, generator, result,
+                                     stats=stats_data)
         made["policies"] = policies
         stats_image = (renderer.stats_images or {}).get("volume", "")
         renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover,
@@ -400,6 +416,33 @@ def _fill_source_urls(brief, issues, result) -> None:
             f"근거 기사 번호 {missed}개를 알아보지 못했습니다. 그만큼 근거 목록이 비어 있습니다.")
 
 
+def _record_quality(cfg: Config, date_str: str, renderer, artifacts: dict,
+                    result: RunResult) -> None:
+    """그날 결과가 얼마나 멀쩡했는지 장부에 남긴다.
+
+    비용은 날마다 재면서 품질은 눈으로 보고 흘려보냈습니다. 모델을 값싼 것으로 내리거나
+    프롬프트를 고친 날, 무엇이 나빠졌는지 견줄 기준이 있어야 합니다.
+    """
+    from .store import QualityLog
+
+    post = artifacts.get("post")
+    try:
+        book = QualityLog(cfg.state_dir / "quality.json")
+        book.add(
+            date_str,
+            checklist=getattr(renderer, "checklist_summary", {}),
+            checks=artifacts.get("checks") or [],
+            models=list(getattr(result.usage, "models_used", []) or []),
+            blog_chars=len(getattr(post, "body_markdown", "") or ""),
+            issues=result.issues,
+            usd=float(getattr(result.usage, "estimated_usd", 0.0) or 0.0),
+        )
+        book.prune()
+        book.save()
+    except OSError as exc:
+        log.warning("품질 기록 실패: %s", exc)
+
+
 def _verify_numbers(cfg: Config, brief, issues: list[Cluster], result: RunResult) -> list:
     """브리핑 수치를 기사 원문과 대조한다. 미확인이 있으면 경고에 올린다."""
     if not cfg.get("verify.numbers", True):
@@ -470,7 +513,8 @@ def _budget_guard(cfg: Config, result: RunResult) -> str | None:
     return None
 
 
-def _collect_policies(cfg: Config, renderer: Renderer, date_str: str, generator, result) -> list:
+def _collect_policies(cfg: Config, renderer: Renderer, date_str: str, generator, result,
+                      stats: dict | None = None) -> list:
     """정부 보도자료를 찾아 3줄로 줄이고 원본 파일을 받아 둔다. 실패해도 실행은 계속한다."""
     settings = cfg.get("policy", {}) or {}
     if not settings.get("enabled", True):
@@ -503,7 +547,7 @@ def _collect_policies(cfg: Config, renderer: Renderer, date_str: str, generator,
             log.warning("정책 요약 실패, 부처 요약을 그대로 씁니다: %s", exc)
 
     _link_policies(cfg, docs, date_str)
-    path = renderer.policy(docs)
+    path = renderer.policy(docs, stats)
     if path:
         log.info("정책 원문 %d건 정리", len(docs))
     return docs

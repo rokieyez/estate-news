@@ -1557,3 +1557,118 @@ def test_brief_uses_its_own_model_and_no_cache(cfg, monkeypatch):
     # 캐시는 걷어냈다 — 구조화 출력 스키마가 접두사에 들어가 호출마다 새로 쓰이기만 했다
     src = inspect.getsource(llm_mod)
     assert "cache_control" not in src and "cache_system" not in src
+
+
+# ── 품질 장부 · 쉬어 가는 날 · 시점 표시 · 정책↔실거래 · 결산 그림 ──
+
+def test_quality_log_compares_before_and_after(tmp_path):
+    from types import SimpleNamespace
+
+    from rebrief.store import QualityLog
+
+    book = QualityLog(tmp_path / "quality.json")
+    check = lambda s: SimpleNamespace(status=s)  # noqa: E731
+    for day, ok, unver in (("2026-09-01", 8, 0), ("2026-09-02", 8, 1),
+                           ("2026-09-03", 6, 3), ("2026-09-04", 6, 3)):
+        book.add(day, checklist={"ok": ok, "warn": 1, "fail": 0},
+                 checks=[check("확인")] * 5 + [check("미확인")] * unver,
+                 models=["claude-sonnet-5"], blog_chars=1800, issues=4, usd=0.3)
+    book.save()
+
+    again = QualityLog(tmp_path / "quality.json")
+    assert len(again.recent()) == 4
+    assert again.recent()[-1]["unverified"] == 3
+
+    diff = again.compare(days=2)
+    assert diff["days"] == 2 and diff["before_days"] == 2
+    assert diff["ok"]["now"] == 6.0 and diff["ok"]["was"] == 8.0
+    assert diff["ok"]["change"] == -2.0          # 값싼 모델로 내린 날 이렇게 드러난다
+    assert diff["unverified"]["change"] == 2.5
+    # 하루치뿐이면 견줄 게 없으니 아무 말도 하지 않는다
+    assert QualityLog(tmp_path / "none.json").compare() == {}
+
+
+def test_quiet_day_needs_a_story_several_outlets_carried(cfg):
+    from types import SimpleNamespace
+
+    from rebrief.rank import quiet_day
+
+    cfg.settings["run"]["quiet_day"] = {"enabled": True, "min_top_size": 3, "min_covered": 2}
+    small = [SimpleNamespace(size=1), SimpleNamespace(size=1)]
+    busy = [SimpleNamespace(size=7), SimpleNamespace(size=1)]
+    two = [SimpleNamespace(size=2), SimpleNamespace(size=2)]
+
+    quiet, why = quiet_day(cfg, small, small)
+    assert quiet and "여러 매체가 함께 다룬 이야기가 없습니다" in why
+    assert quiet_day(cfg, busy, busy) == (False, "")
+    assert quiet_day(cfg, two, two)[0] is False     # 2곳이 다룬 이슈가 둘이면 그냥 만든다
+    assert quiet_day(cfg, [], [])[0] is True
+
+    # 꺼 두면 어떤 날도 쉬지 않는다 (판정이 애매하면 만드는 쪽으로 기운다)
+    cfg.settings["run"]["quiet_day"] = {"enabled": False}
+    assert quiet_day(cfg, small, small) == (False, "")
+
+
+def test_quiet_days_are_not_counted_as_failures(tmp_path):
+    from datetime import date
+
+    from rebrief.store import failure_streak
+
+    out = tmp_path / "output"
+    for day in ("2026-09-01", "2026-09-02", "2026-09-03", "2026-09-04"):
+        (out / day).mkdir(parents=True)
+    (out / "2026-09-01" / "data.json").write_text("{}", encoding="utf-8")
+    (out / "2026-09-03" / "quiet.json").write_text("{}", encoding="utf-8")   # 일부러 쉰 날
+
+    # 9/4 실패 · 9/3 쉼(안 셈) · 9/2 실패 · 9/1 성공에서 멈춤
+    assert failure_streak(out, date(2026, 9, 4)) == 2
+    # 쉰 날만 있으면 연속 실패는 0 이다 — 조용한 이틀로 경보가 울리면 안 된다
+    (out / "2026-09-04" / "quiet.json").write_text("{}", encoding="utf-8")
+    (out / "2026-09-02" / "quiet.json").write_text("{}", encoding="utf-8")
+    assert failure_streak(out, date(2026, 9, 4)) == 0
+
+
+def test_articles_say_when_their_numbers_are_from():
+    from rebrief.render import asof_block_html, asof_note
+
+    plain = asof_note("2026-09-08")
+    assert plain == "이 글은 2026년 9월 8일 기준으로 정리한 내용입니다."
+    with_stats = asof_note("2026-09-08", {"month_label": "2026년 7월"})
+    assert "실거래 수치는 2026년 7월 신고분입니다." in with_stats
+    assert "2026년 9월 8일" in asof_block_html("2026-09-08")
+
+
+def test_policy_docs_carry_the_district_numbers():
+    from types import SimpleNamespace
+
+    from rebrief.render import policy_region_links
+
+    docs = [SimpleNamespace(news_id="1", title="노원구 일대 공공재개발 후보지 선정",
+                            lead="", summary=["노원구가 후보지에 들었습니다."]),
+            SimpleNamespace(news_id="2", title="항공 안전 대책", lead="", summary=[])]
+    stats = {"month_label": "2026년 7월",
+             "districts": [{"name": "노원구", "change": 50,
+                            "now": {"count": 723, "avg": 700_000_000}}],
+             "jeonse": [{"name": "노원구", "median": 54.8, "count": 128}]}
+    links = policy_region_links(docs, stats)
+    assert set(links) == {"1"}                    # 부동산과 무관한 발표에는 붙이지 않는다
+    line = links["1"][0]
+    assert "노원구" in line and "723건(+50건)" in line and "전세가율 54.8%" in line
+    assert policy_region_links(docs, {}) == {}    # 통계가 없으면 조용히 넘어간다
+
+
+def test_recaps_reuse_the_daily_stats_images(cfg, tmp_path):
+    from rebrief.render import copy_stats_images
+
+    day = cfg.output_dir / "2026-09-05"
+    day.mkdir(parents=True)
+    (day / "img-stats-map.png").write_bytes(b"PNG")
+    (day / "img-stats-volume.png").write_bytes(b"PNG")
+
+    out = tmp_path / "weekly"
+    out.mkdir()
+    made = copy_stats_images(cfg, out, "2026-09-07")     # 이틀 거슬러 올라가 찾는다
+    assert made["map"] == "img-stats-map.png" and made["from"] == "2026-09-05"
+    assert (out / "img-stats-map.png").exists()
+    assert "jeonse_map" not in made                      # 없는 그림은 넣지 않는다
+    assert copy_stats_images(cfg, out, "2026-08-01") == {}

@@ -13,6 +13,16 @@
 {% endfor %}
 
 [정책브리핑에서 원문 보기]({{ d.url }})
+{% if links.get(d.news_id) %}
+
+**이 발표에 나온 지역, 우리가 센 실거래**
+
+{% for line in links[d.news_id] %}
+- {{ line }}
+{% endfor %}
+
+<small>국토교통부 실거래가 신고 자료를 직접 집계했습니다. 발표문의 수치가 아닙니다.</small>
+{% endif %}
 {% if d.schedule %}
 
 **앞으로 일정**

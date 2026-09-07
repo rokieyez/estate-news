@@ -246,6 +246,7 @@ def _notify_result(cfg, result) -> None:
         stats=getattr(result, "stats", None),
         usd=float(getattr(result.usage, "estimated_usd", 0) or 0) if result.usage else 0.0,
         krw_per_usd=float(cfg.get("llm.krw_per_usd", 1400)),
+        quiet=bool(getattr(result, "quiet", False)),
     )
     print("📨 텔레그램 알림 " + ("전송" if send_telegram(text) else "실패"))
 

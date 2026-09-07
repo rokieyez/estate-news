@@ -43,7 +43,8 @@ def make_env() -> Environment:
 
 class Renderer:
     def __init__(self, cfg: Config, out_dir: Path, date_str: str):
-        self.stats_images: dict[str, str] = {}   # 실거래가 그림 (블로그에서 다시 쓴다)
+        self.stats_images: dict[str, str] = {}
+        self.checklist_summary: dict = {}   # 실거래가 그림 (블로그에서 다시 쓴다)
         self.cfg = cfg
         self.out_dir = out_dir
         self.date = date_str
@@ -93,7 +94,8 @@ class Renderer:
             post=post,
             tags=self._tags(post),
             cover=cover,
-            lead_block=lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown))
+            lead_block=asof_block_markdown(self.date, stats)
+                       + lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown))
                        + terms_block_markdown(self._terms(post)),
             tail_block=takeaways_block_markdown(post.takeaways)
                        + stats_block_markdown(stats, stats_image)
@@ -139,6 +141,7 @@ class Renderer:
                 policies=policies,
                 stats=stats,
                 stats_image=stats_image,
+                date=self.date,
             ),
             hashtags=format_hashtags(self._tags(post)),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
@@ -394,11 +397,16 @@ class Renderer:
         return self._write("stats.md", "stats.md.j2", index=index_table(series or {}),
                            images=files, history_region=history_region, **payload)
 
-    def policy(self, docs: list) -> Path | None:
-        """정부 발표 원문 3줄 요약 + 원본 파일. 없으면 파일을 만들지 않는다."""
+    def policy(self, docs: list, stats: dict | None = None) -> Path | None:
+        """정부 발표 원문 3줄 요약 + 원본 파일. 없으면 파일을 만들지 않는다.
+
+        발표문에 나온 자치구가 우리 실거래 표에도 있으면 그 지역 수치를 함께 붙입니다.
+        "대책이 나온 뒤 그 동네 거래가 어떤가" 는 우리만 낼 수 있는 값입니다.
+        """
         if not docs:
             return None
-        return self._write("policy.md", "policy.md.j2", docs=docs, date=self.date)
+        return self._write("policy.md", "policy.md.j2", docs=docs, date=self.date,
+                           links=policy_region_links(docs, stats))
 
     def prompt_pack(self, text: str) -> Path:
         return self._write_raw("prompt-pack.md", text)
@@ -425,6 +433,7 @@ class Renderer:
             "items": [{"key": i.key, "level": i.level, "title": i.title, "detail": i.detail, "lines": i.lines}
                       for i in items],
         }, ensure_ascii=False, indent=2) + "\n")
+        self.checklist_summary = summary          # 품질 장부가 읽어 간다
         return self._write("checklist.md", "checklist.md.j2", date=self.date, items=items, summary=summary)
 
     # ── 내부 ─────────────────────────────────────────────────
@@ -455,7 +464,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
                   related: list[dict] | None = None, outline: bool = True,
                   cover: str = "", terms: list[tuple[str, str]] | None = None,
                   takeaways: list[str] | None = None, policies: list | None = None,
-                  stats: dict | None = None, stats_image: str = "") -> str:
+                  stats: dict | None = None, stats_image: str = "",
+                  date: str = "") -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -496,7 +506,10 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
     html = highlight_repeated_numbers(html, highlight_min, {n.key for n in (key_numbers or [])})
     html = _IMAGE_SLOT.sub(slot, html)
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
+    # 언제 기준인지 맨 위에. 반년 뒤 검색으로 들어온 사람에게는 이 한 줄이 없으면
+    # 지난 수치가 '지금 값' 으로 읽힙니다.
     head = (cover_block_html(cover)
+            + (asof_block_html(date, stats) if date else "")
             + lead_block_html(summary_lines, outline_from_markdown(body_markdown) if outline else [])
             + terms_block_html(terms or []))
     return (head + kn.card_html(key_numbers or []) + html
@@ -885,6 +898,69 @@ def tail_block_html(closing_question: str = "", related: list[dict] | None = Non
             f'<ul style="margin:8px 0 0;padding-left:18px">{rows}</ul></div>'
         )
     return "".join(parts)
+
+
+
+
+def policy_region_links(docs: list, stats: dict | None = None) -> dict:
+    """발표문에 나온 자치구 → 그 지역 실거래 한 줄. 겹치는 게 없으면 빈 표.
+
+    정책과 통계가 한 페이지에 있으면서 서로 모르는 게 이상해서 이었습니다.
+    수치는 프로그램이 그대로 옮깁니다 — 모델을 거치면 대조할 원문이 없습니다.
+    """
+    rows = {r["name"]: r for r in (stats or {}).get("districts", [])}
+    jeonse = {j["name"]: j for j in (stats or {}).get("jeonse", [])}
+    if not rows:
+        return {}
+    from .regions import find_regions
+
+    out: dict[str, list[str]] = {}
+    label = (stats or {}).get("month_label", "")
+    for doc in docs:
+        text = " ".join(filter(None, [getattr(doc, "title", ""), getattr(doc, "lead", ""),
+                                      " ".join(getattr(doc, "summary", []) or [])]))
+        lines = []
+        for name in find_regions(text, limit=3):
+            row = rows.get(name)
+            if not row:
+                continue
+            bit = (f"{name} — {label} 신고 매매 {row['now']['count']}건"
+                   f"({row['change']:+d}건), 평균 {row['now']['avg'] / 100_000_000:.1f}억")
+            got = jeonse.get(name)
+            if got:
+                bit += f", 전세가율 {got['median']}%"
+            lines.append(bit)
+        if lines:
+            out[getattr(doc, "news_id", "")] = lines
+    return out
+
+
+def asof_note(date: str, stats: dict | None = None) -> str:
+    """이 글의 숫자가 **언제 기준**인지 한 줄.
+
+    우리 목표는 검색 유입입니다. 반년 뒤에 들어온 사람에게는 7월 수치가 '지금 값' 으로
+    읽힙니다. 글 자체가 시점을 밝히지 않으면 읽는 사람이 알 길이 없습니다.
+    실거래는 신고 기한 때문에 글 날짜보다 두 달쯤 앞선 달이라 따로 적어 줍니다.
+    """
+    try:
+        year, month, day = date.split("-")
+        when = f"{year}년 {int(month)}월 {int(day)}일"
+    except (ValueError, AttributeError):
+        when = date
+    line = f"이 글은 {when} 기준으로 정리한 내용입니다."
+    label = (stats or {}).get("month_label", "")
+    if label:
+        line += f" 실거래 수치는 {label} 신고분입니다."
+    return line
+
+
+def asof_block_html(date: str, stats: dict | None = None) -> str:
+    return ('<p style="margin:0 0 14px;font-size:14px;color:#767676">'
+            f'{_esc(asof_note(date, stats))}</p>')
+
+
+def asof_block_markdown(date: str, stats: dict | None = None) -> str:
+    return f"*{asof_note(date, stats)}*\n"
 
 
 def lead_block_markdown(summary_lines: list[str] | None, outline: list[str] | None) -> str:
@@ -1300,3 +1376,37 @@ def _cost_section(cfg: Config) -> list[str]:
 
 def _now() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M")
+
+
+def copy_stats_images(cfg, out_dir: Path, upto: str, *, back: int = 40) -> dict[str, str]:
+    """결산 폴더에 그날의 실거래 그림을 복사해 온다.
+
+    결산에는 표만 있고 그림이 없었습니다. 같은 달 수치를 그린 그림을 이미 날마다 만들고
+    있으니 새로 그릴 것 없이 가져다 씁니다. `upto` 부터 거꾸로 훑어 **가장 최근에 만든**
+    그림을 씁니다 — 통계가 없는 날도 있기 때문입니다.
+    """
+    import shutil
+    from datetime import date as _date
+    from datetime import timedelta as _td
+
+    try:
+        last = _date.fromisoformat(upto)
+    except ValueError:
+        return {}
+    wanted = {"map": "img-stats-map.png", "jeonse_map": "img-stats-map-jeonse.png",
+              "volume": "img-stats-volume.png"}
+    for i in range(back):
+        day = cfg.output_dir / (last - _td(days=i)).isoformat()
+        if not (day / wanted["map"]).exists() and not (day / wanted["volume"]).exists():
+            continue
+        made: dict[str, str] = {}
+        for key, name in wanted.items():
+            src = day / name
+            if src.exists():
+                shutil.copy2(src, out_dir / name)
+                made[key] = name
+        if made:
+            made["from"] = day.name
+            return made
+    return {}
+

@@ -287,7 +287,7 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
     """최근 N일의 수집·요약·그림·비용을 한 장에 모은다. 흩어진 로그를 보러 다니지 않게."""
     import json
 
-    from .store import CostLog, TitleLog, TradeLog
+    from .store import CostLog, QualityLog, TitleLog, TradeLog
 
     costs = CostLog(cfg.state_dir / "costs.json")
     by_date = costs.by_date()
@@ -362,8 +362,20 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
         trade_stale=_stale_days(trades, days[0].name if days else ""),
         title_types=TitleLog(cfg.state_dir / "titles.json").by_type(),
         storage=_storage_use(cfg, len(days)),
+        quality=QualityLog(cfg.state_dir / "quality.json").recent(30),
+        quality_diff=QualityLog(cfg.state_dir / "quality.json").compare(),
     )
     (dest / "dashboard.html").write_text(html, encoding="utf-8")
+
+
+def _age_days(day: str) -> int:
+    """그 글이 며칠 전 것인지. 못 읽으면 0(배지를 달지 않는다)."""
+    from datetime import date as _date
+
+    try:
+        return max((_date.today() - _date.fromisoformat(day)).days, 0)
+    except ValueError:
+        return 0
 
 
 def _storage_use(cfg: Config, days: int) -> dict:
@@ -466,6 +478,7 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
             html = env.get_template("site_page.html.j2").render(
                 title=label,
                 date=day.name,
+                age_days=_age_days(day.name),
                 body_html=md_to_html(source_file.read_text(encoding="utf-8")),
                 meta=meta_tags(
                     site_base(cfg),

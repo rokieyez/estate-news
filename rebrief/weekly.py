@@ -19,7 +19,7 @@ from .config import Config
 from .llm import ContentGenerator, LLMError, Usage
 from .models import BlogPost, WeeklyReview
 from .prompts import build_weekly_prompt_pack
-from .render import Renderer, update_index
+from .render import Renderer, copy_stats_images, update_index
 from .store import CostLog
 
 log = logging.getLogger(__name__)
@@ -167,6 +167,7 @@ def _render_weekly(cfg: Config, renderer: Renderer, review: WeeklyReview, result
         "weekly.md", "weekly.md.j2",
         review=review, week=result.week, start=result.start, end=result.end,
         trades=_weekly_trades(cfg, result.end),
+        stats_images=copy_stats_images(cfg, renderer.out_dir, result.end),
         category=(cfg.get("blog", {}) or {}).get("category", "부동산"),
         disclaimer=(cfg.get("blog", {}) or {}).get("disclaimer", ""),
     )

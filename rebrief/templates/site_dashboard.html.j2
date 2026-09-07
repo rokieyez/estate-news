@@ -53,6 +53,43 @@
   <div class="tile"><div class="k">요약 실패일</div><div class="v {% if fail_days %}bad{% else %}ok{% endif %}">{{ fail_days }}</div><div class="s">data.json 없는 날</div></div>
 </div>
 
+{% if quality %}
+<div class="card">
+  <h2>결과 품질 <span style="font-size:13px;color:#898781;font-weight:400">— 점검표와 숫자 검산, 최근 {{ quality|length }}일</span></h2>
+  <p style="color:#52514e;font-size:13px;margin:0 0 12px">
+    모델이나 프롬프트를 바꾼 날 무엇이 나빠졌는지 보려고 날마다 쌓습니다.
+    <b>확인</b>은 브리핑 수치가 기사 원문에서 그대로 발견된 건수입니다.</p>
+{% if quality_diff %}
+  <p style="margin:0 0 12px;font-size:13px">
+    최근 {{ quality_diff.days }}일 vs 그 앞 {{ quality_diff.before_days }}일 —
+    점검표 통과 {{ quality_diff.ok.now }} <span class="muted">({{ '%+.2f'|format(quality_diff.ok.change) }})</span> ·
+    경고 {{ quality_diff.warn.now }} <span class="muted">({{ '%+.2f'|format(quality_diff.warn.change) }})</span> ·
+    미확인 수치 {{ quality_diff.unverified.now }} <span class="muted">({{ '%+.2f'|format(quality_diff.unverified.change) }})</span> ·
+    본문 {{ quality_diff.blog_chars.now|round|int }}자 <span class="muted">({{ '%+.0f'|format(quality_diff.blog_chars.change) }})</span>
+  </p>
+{% endif %}
+  <div class="scroll">
+  <table>
+    <thead><tr><th>날짜</th><th class="num">통과</th><th class="num">경고</th><th class="num">실패</th><th class="num">확인</th><th class="num">미확인</th><th class="num">본문</th><th>모델</th></tr></thead>
+    <tbody>
+    {% for q in quality|reverse %}
+      <tr>
+        <td>{{ q.date }}</td>
+        <td class="num ok">{{ q.ok }}</td>
+        <td class="num">{{ q.warn }}</td>
+        <td class="num {% if q.fail %}bad{% endif %}">{{ q.fail }}</td>
+        <td class="num">{{ q.verified }}</td>
+        <td class="num {% if q.unverified %}bad{% endif %}">{{ q.unverified }}</td>
+        <td class="num">{{ q.blog_chars }}자</td>
+        <td class="muted">{{ q.models|join('+')|replace('claude-', '') }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endif %}
+
 {% if trade_bars %}
 <div class="card">
   <h2>날마다 센 실거래 {% if trade_latest.month %}<span style="font-size:13px;color:#898781;font-weight:400">— {{ trade_latest.month }} 신고분</span>{% endif %}</h2>

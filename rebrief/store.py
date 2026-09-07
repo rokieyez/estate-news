@@ -572,8 +572,87 @@ def previous_blog_bodies(output_dir: Path, run_date: str, days: int = 3) -> list
 # ── 연속 실패 ────────────────────────────────────────────────
 
 
+
+class QualityLog:
+    """날마다 '결과가 얼마나 멀쩡했나' 를 쌓는 장부 (state/quality.json).
+
+    비용은 이미 날마다 재는데 **품질은 그날 눈으로 보고 흘려보냈습니다.** 값싼 모델로 내리거나
+    프롬프트를 고친 날 무엇이 나빠졌는지 견줄 기준이 없었습니다. 점검표 통과 수와 숫자 검산
+    결과는 이미 만들고 있으니 남기기만 하면 됩니다.
+
+    같은 날 다시 돌리면 덮어씁니다 — 하루의 최종 상태가 알고 싶은 것이라서.
+    """
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.days: dict[str, dict] = {}
+        if path.exists():
+            try:
+                self.days = json.loads(path.read_text(encoding="utf-8")).get("days", {})
+            except (json.JSONDecodeError, OSError):
+                self.days = {}
+
+    def add(self, run_date: str, *, checklist: dict | None = None, checks: list | None = None,
+            models: list[str] | None = None, blog_chars: int = 0, issues: int = 0,
+            usd: float = 0.0) -> dict:
+        from .verify import NO_TEXT, NOT_FOUND, VERIFIED
+
+        tally = {VERIFIED: 0, NOT_FOUND: 0, NO_TEXT: 0}
+        for check in checks or []:
+            status = getattr(check, "status", "")
+            if status in tally:
+                tally[status] += 1
+        summary = checklist or {}
+        entry = {
+            "ok": int(summary.get("ok", 0)), "warn": int(summary.get("warn", 0)),
+            "fail": int(summary.get("fail", 0)),
+            "verified": tally[VERIFIED], "unverified": tally[NOT_FOUND],
+            "no_text": tally[NO_TEXT],
+            "models": list(models or []), "blog_chars": int(blog_chars),
+            "issues": int(issues), "usd": round(float(usd), 4),
+        }
+        self.days[run_date] = entry
+        return entry
+
+    def recent(self, limit: int = 30) -> list[dict]:
+        return [{"date": d, **e} for d, e in sorted(self.days.items())][-limit:]
+
+    def compare(self, days: int = 7) -> dict:
+        """최근 며칠과 그 앞 며칠을 견준다. 모델·프롬프트를 바꾼 뒤 무엇이 달라졌는지 본다."""
+        rows = [{"date": d, **e} for d, e in sorted(self.days.items())]
+        if len(rows) < 2:
+            return {}
+        recent, before = rows[-days:], rows[-days * 2:-days]
+        if not before:
+            return {}
+
+        def avg(group: list[dict], key: str) -> float:
+            return round(sum(r.get(key, 0) for r in group) / len(group), 2) if group else 0.0
+
+        out = {"days": len(recent), "before_days": len(before)}
+        for key in ("ok", "warn", "fail", "verified", "unverified", "blog_chars", "usd"):
+            now, was = avg(recent, key), avg(before, key)
+            out[key] = {"now": now, "was": was, "change": round(now - was, 2)}
+        return out
+
+    def prune(self, keep: int = 120) -> None:
+        if len(self.days) > keep:
+            self.days = dict(sorted(self.days.items())[-keep:])
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        self.path.write_text(
+            json.dumps({"updated_at": datetime.now().isoformat(timespec="seconds"),
+                        "days": self.days}, ensure_ascii=False, indent=2) + "\n",
+            encoding="utf-8")
+
+
 def failure_streak(output_dir: Path, today: date | None = None, lookback: int = 14) -> int:
-    """오늘부터 거꾸로, 요약(data.json)이 없는 날이 몇 일 연속인지. 폴더 자체가 없는 날도 실패로 센다."""
+    """오늘부터 거꾸로, 요약(data.json)이 없는 날이 몇 일 연속인지. 폴더 자체가 없는 날도 실패로 센다.
+
+    단 **일부러 쉰 날(quiet.json)은 실패가 아닙니다.** 한산해서 안 만든 날까지 세면
+    조용한 이틀만으로 '2일 연속 실패' 경보가 울립니다.
+    """
     today = today or date.today()
     # 프로젝트가 시작되기 전 날짜까지 실패로 세면 첫날부터 '14일 연속' 이 된다.
     existing = [p.name for p in output_dir.iterdir() if p.is_dir() and _parse_date(p.name)] if output_dir.exists() else []
@@ -585,6 +664,8 @@ def failure_streak(output_dir: Path, today: date | None = None, lookback: int = 
         d = (today - timedelta(days=i)).isoformat()
         if d < earliest or (output_dir / d / "data.json").exists():
             break
+        if (output_dir / d / "quiet.json").exists():
+            continue          # 쉬어 간 날은 세지 않고 그 앞날을 계속 본다
         streak += 1
     return streak
 

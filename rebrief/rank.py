@@ -96,3 +96,33 @@ def _recency(cluster: Cluster, now: datetime, lookback_hours: int) -> float:
     newest = max(times)
     hours = (now - newest).total_seconds() / 3600
     return max(0.0, min(1.0, 1.0 - hours / lookback_hours))
+
+
+def quiet_day(cfg: Config, clusters: list[Cluster], issues: list[Cluster]) -> tuple[bool, str]:
+    """오늘이 '쉬어도 되는 날' 인지 판정한다.
+
+    부동산 뉴스가 없는 날에도 우리는 이슈 다섯 개를 억지로 채웁니다. 그런 날 글은 대개
+    한 매체만 다룬 잔뉴스로 채워지고, 매일 같은 틀로 쓰는 자동 생성 글이라 유사문서로
+    몰릴 위험이 커집니다. **비용보다 이쪽이 더 큰 이유입니다.**
+
+    기준은 하나뿐입니다 — **여러 매체가 함께 다룬 이야기가 하나도 없으면** 조용한 날입니다.
+    큰 사건이면 반드시 여러 곳이 받아씁니다. 판정이 애매하면 만드는 쪽으로 기웁니다
+    (안 만든 날은 되돌릴 수 없지만, 만든 글은 안 올리면 그만입니다).
+    """
+    settings = (cfg.get("run", {}) or {}).get("quiet_day", {}) or {}
+    if not settings.get("enabled", False):
+        return False, ""
+    min_top = int(settings.get("min_top_size", 3))
+    pool = issues or clusters
+    if not pool:
+        return True, "오늘 다룰 이슈가 하나도 없습니다."
+    top = max((c.size for c in pool), default=0)
+    if top >= min_top:
+        return False, ""
+    covered = sum(1 for c in pool if c.size >= 2)
+    if covered >= int(settings.get("min_covered", 2)):
+        return False, ""
+    return True, (
+        f"여러 매체가 함께 다룬 이야기가 없습니다 (가장 많이 보도된 이슈가 {top}건, "
+        f"기준 {min_top}건). 오늘은 쉬어도 되는 날로 보고 글을 만들지 않았습니다."
+    )

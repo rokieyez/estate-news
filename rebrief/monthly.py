@@ -26,7 +26,7 @@ from .config import Config
 from .llm import ContentGenerator, LLMError, Usage
 from .models import BlogPost, MonthlyReview
 from .prompts import build_monthly_prompt_pack
-from .render import Renderer, update_index
+from .render import Renderer, copy_stats_images, update_index
 from .store import CostLog, TradeLog
 
 log = logging.getLogger(__name__)
@@ -153,6 +153,7 @@ def _render_monthly(cfg: Config, renderer: Renderer, review: MonthlyReview,
         "monthly.md", "monthly.md.j2",
         review=review, month=result.month, month_label=month_title(result.month),
         days=result.days, trades=trades,
+        stats_images=copy_stats_images(cfg, renderer.out_dir, f"{result.month}-28"),
         category=(cfg.get("blog", {}) or {}).get("category", "부동산"),
         disclaimer=(cfg.get("blog", {}) or {}).get("disclaimer", ""),
     )

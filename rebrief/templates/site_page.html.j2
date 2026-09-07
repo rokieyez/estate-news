@@ -59,6 +59,13 @@
   <span>{{ date }} · {{ title }}</span>
 </div>
 <div class="wrap">
+{% if age_days|default(0, true) >= 30 %}
+  {# 검색으로 들어온 사람은 이 글이 언제 것인지 모른다. 지난 수치를 지금 값으로 읽는 걸 막는다. #}
+  <div class="card" style="background:#fffaf0;border:1px solid #eadfc2;color:#6b5a2e;margin-bottom:14px">
+    <b>{{ age_days }}일 전 글입니다.</b> 여기 적힌 수치는 그때 기준입니다.
+    <a href="../latest/brief.html" style="color:#0068c3">최신 브리핑 보기</a>
+  </div>
+{% endif %}
   <div class="card">
 {{ body_html|safe }}
   </div>

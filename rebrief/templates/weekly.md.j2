@@ -36,6 +36,26 @@ description: "{{ review.meta_description }}"
 {% endfor %}
 {% endif %}
 
+{% if stats_images.get('map') %}
+
+## 실거래 지도
+
+![자치구별 거래 건수]({{ stats_images['map'] }})
+{% if stats_images.get('jeonse_map') %}
+
+![자치구별 전세가율]({{ stats_images['jeonse_map'] }})
+{% endif %}
+
+<small>{{ stats_images['from'] }} 집계본입니다. 실제 지형이 아닌 위치 도식이고, 칸 안의 숫자가 실제 값입니다.</small>
+{% elif stats_images.get('volume') %}
+
+## 실거래 그림
+
+![지역별 거래 건수]({{ stats_images['volume'] }})
+
+<small>{{ stats_images['from'] }} 집계본입니다.</small>
+{% endif %}
+
 *국토교통부 실거래가 신고 자료를 날마다 직접 집계한 값입니다. 해제 신고분은 뺐습니다.*
 {% endif %}
 
