@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  아침 브리핑 깨우미. 깃허브 예약이 이 저장소에서 안 돌아 맥이 대신 깨웁니다.
+
+  설치:  cp scripts/net.rokiz.estate-news.daily.plist ~/Library/LaunchAgents/
+         launchctl bootstrap gui/$(id -u) ~/Library/LaunchAgents/net.rokiz.estate-news.daily.plist
+  확인:  launchctl print gui/$(id -u)/net.rokiz.estate-news.daily | head
+  해제:  launchctl bootout gui/$(id -u)/net.rokiz.estate-news.daily
+
+  두 번 깨우는 이유: 06:45 이 어떤 이유로든 실패해도 07:25 가 받아 줍니다.
+  이미 오늘 것이 있으면 워크플로가 24초 만에 스스로 끝내므로 돈이 들지 않습니다.
+  맥이 잠들어 있었으면 깨어날 때 놓친 것을 한 번 돌려줍니다.
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>net.rokiz.estate-news.daily</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>__SCRIPT__</string>
+    </array>
+
+    <key>StartCalendarInterval</key>
+    <array>
+        <dict><key>Hour</key><integer>6</integer><key>Minute</key><integer>45</integer></dict>
+        <dict><key>Hour</key><integer>7</integer><key>Minute</key><integer>25</integer></dict>
+    </array>
+
+    <key>RunAtLoad</key>
+    <false/>
+
+    <key>StandardErrorPath</key>
+    <string>__HOME__/Library/Logs/estate-news-wake.err.log</string>
+</dict>
+</plist>
