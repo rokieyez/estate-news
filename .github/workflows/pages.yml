@@ -18,7 +18,6 @@ on:
     # 기본 브랜치에서만 배포합니다. 브랜치 이름을 바꾸면 여기도 고쳐야 합니다.
     branches:
       - main
-      - claude/real-estate-blog-automation-gwtgjb
     paths:
       - "output/**"
       - "rebrief/**"

@@ -17,7 +17,7 @@
 | 항목 | 값 |
 | --- | --- |
 | 저장소 | `rokieyez/estate-news` — 2026-09-06 에 `rokiz` 에서 이름 변경 |
-| 기본 브랜치 | `claude/real-estate-blog-automation-gwtgjb` |
+| 기본 브랜치 | `main` (2026-09-08 에 `claude/real-estate-blog-automation-gwtgjb` 에서 바꿈) |
 | **도메인** | **`rokiz.net` 은 사용자가 직접 구매한 개인 도메인입니다.** |
 | 사이트 주소 | `https://www.rokiz.net/estate-news/` (커스텀 도메인) |
 | 대체 주소 | `https://rokieyez.github.io/estate-news/` — 동일하게 열림 |
