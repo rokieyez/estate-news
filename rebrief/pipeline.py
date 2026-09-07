@@ -136,6 +136,7 @@ def run(
         renderer.brief_fallback(issues, stats)
         renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
     renderer.checklist(result, artifacts, link_status)
+    _collect_stats(cfg, renderer, date_str, result)   # 통계는 모델과 무관하므로 항상 시도한다
 
     # 6) 이력 저장
     seen.mark(articles, date_cls.fromisoformat(date_str))
@@ -262,7 +263,6 @@ def _generate_with_llm(
         made["cover"] = cover
         policies = _collect_policies(cfg, renderer, date_str, generator, result)
         made["policies"] = policies
-        _collect_stats(cfg, renderer, date_str, result)
         renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover,
                       policies=policies)
         if str(cfg.get("blog.platform", "naver")).lower() == "naver":
