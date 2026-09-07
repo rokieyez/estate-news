@@ -2,12 +2,13 @@
 
 기사 193건 · 매체 102곳 · 피드 10/10개 정상
 
+링크 점검 31개 중 전부 정상
 
 ---
 
 ## 1. "집값 매년 11% 오르면 2030년 서울 22개구 종부세권"
 
-`정책·규제 · 가격동향 · 지역이슈` · 보도 5건 · 점수 14.45
+`정책·규제 · 가격동향 · 지역이슈` · 보도 5건 · 점수 13.22
 
 - [metroseoul.co.kr] ["집값 매년 11% 오르면 2030년 서울 22개구 종부세권"](https://news.google.com/rss/articles/CBMiYEFVX3lxTFAyS2p2VXZrUWg2NzQ5M3A5OUNvMU5oX3VRZTh4OFg3dkFSLUJOQnpRakp4ZjloZkstdFZ6dHNKVG1MQ2k0aUVmbUJyTDNmT0pVVmREQXpwUUdOOU1sSXNUUA?oc=5) — 09-06 06:07
 - [천지일보] [집값 안 꺾이면 2030년 서울 대부분 종부세 낸다](https://news.google.com/rss/articles/CBMiakFVX3lxTE16Z0x2WFEzRDVLUFBwaHlROWk3QnZnMzZCX3l5aVhLZnRUUjRQMnk3dGdrQXFJRjhjR0xPQzVoR2RDX0VrMjVldVlneDVURVA5Mk9rUm1IbVVnc0UtRmo0Qm5VS3JrWlhXbGc?oc=5) — 09-06 06:00
@@ -16,13 +17,13 @@
 - [조선비즈·부동산] [집값 상승 이어지면 종부세 비강남권 확산… 2030년 서울 22개구 과세](https://biz.chosun.com/real_estate/real_estate_general/2026/09/06/4U6CGY5P5JC37DE73C7GHWGK3Q) — 09-06 00:45
 ## 2. 전월세난 다급해진 정부…기업형 임대사업자 종부세부담 줄인다
 
-`정책·규제 · 전월세·임대` · 보도 2건 · 점수 12.69
+`정책·규제 · 전월세·임대` · 보도 2건 · 점수 11.25
 
 - [매일경제·부동산] [전월세난 다급해진 정부…기업형 임대사업자 종부세부담 줄인다](https://www.mk.co.kr/news/realestate/12145604) — 09-06 10:53
 - [매일경제·부동산] [기업형 임대사업자 … 종부세부담 줄인다](https://www.mk.co.kr/news/realestate/12145565) — 09-06 08:59
 ## 3. 롯데건설, 도곡우성 재건축 수주…정비사업 수주액 4조원 돌파
 
-`공급·정비사업 · 지역이슈` · 보도 22건 · 점수 12.47
+`공급·정비사업 · 지역이슈` · 보도 22건 · 점수 11.17
 
 - [네이트] [롯데건설, 도곡우성 재건축 수주…정비사업 수주액 4조원 돌파](https://news.google.com/rss/articles/CBMiU0FVX3lxTE1uTUlFRkh6bm9sdW5UbkFndUU3NFJiSDZZbGc2ekJ0NlEtejlxLVE3RE4tMXdESG14bGVCVnlkeUpvQTU2LUlNUU00TXZNZkZqY2lB?oc=5) — 09-06 07:28
 - [한국면세뉴스] [롯데건설, 도곡우성 재건축 품었다…도시정비 수주 4조원 넘어](https://news.google.com/rss/articles/CBMiakFVX3lxTE5IM1o3eUd6WXlQSEpILWswTUdtME9qczF2VlZRVHIwNWN5MV9CTXVMcmRpWTlJMGtmQm1oeTJ2aER3Q0lnWm9mT196TjFGQ3p5X1RSenhIanFyZ1JRMVFnUHkwQ0pJU3VGOHc?oc=5) — 09-06 05:55
@@ -46,16 +47,16 @@
 - [네이트] [롯데건설, 도곡우성 재건축 수주…올해 도시정비 4조 돌파](https://news.google.com/rss/articles/CBMieEFVX3lxTFAwMUZPNFJ6TGI4NnVDd0F1NVNaMmpZS0hSM3JsR3paRkZpYXBMcTJycHp2bFpQU1k1TjI2QWFLQU1TTi1jSko4QVdOQ1JacHdZcmRyRjhvOGFzaHV4dUpLWGx3QzYwOC00VmFVcEd2TnZxN21IQ1o2ZQ?oc=5) — 09-06 00:45
 - [나눔경제뉴스] [롯데건설, 도곡우성아파트 재건축 수주…올해 도시정비사업 4조 원 돌파](https://news.google.com/rss/articles/CBMibEFVX3lxTFBiZHRyWENxNWpVdTJicUkzYkVQNW9MNlMtZDJzNGlMYmIxLWdBUmtNenJpV0Z3TVdxUjdaY2trZk1MMUJDWUhQMk8xN0xsNG5uaE9XUndlc2IwMFZ0RGlEbG90aDhnLVF4U0RWcw?oc=5) — 09-06 00:42
 - [아시아투데이] [롯데건설, 4000억원 규모 서울 ‘도곡우성’ 재건축 수주…누적 4조 돌파](https://news.google.com/rss/articles/CBMibkFVX3lxTE1CZlVtNnU3d25rdnozUmNSQ0tia1RnaWpfYkdhSklaeWRCTy02QTR3aGNrMHg5MmxsbFk4RWpfTTNETklhWlY0Z1RBV1diT25tNVVkM1V6TDBKc3A3aVVpV2M4S3lMT1VhVmkzajJR?oc=5) — 09-06 00:33
-## 4. 임대주택 공급 3년새 81% 뚝 …'기업형 임대' 늘려 전월세난 대응
+## 4. “강남 부자들만 내는 줄 알았는데”…종부세, 서울 22개구로 번지나
 
-`정책·규제 · 전월세·임대 · 세금·절세` · 보도 1건 · 점수 11.49
-
-- [매일경제·부동산] [임대주택 공급 3년새 81% 뚝 …'기업형 임대' 늘려 전월세난 대응](https://www.mk.co.kr/news/realestate/12145496) — 09-06 08:31
-## 5. “강남 부자들만 내는 줄 알았는데”…종부세, 서울 22개구로 번지나
-
-`정책·규제 · 가격동향 · 지역이슈` · 보도 1건 · 점수 11.40
+`정책·규제 · 가격동향 · 지역이슈` · 보도 1건 · 점수 10.49
 
 - [매일경제·부동산] [“강남 부자들만 내는 줄 알았는데”…종부세, 서울 22개구로 번지나](https://www.mk.co.kr/news/realestate/12145209) — 09-06 00:11
+## 5. 임대주택 공급 3년새 81% 뚝 …'기업형 임대' 늘려 전월세난 대응
+
+`정책·규제 · 전월세·임대 · 세금·절세` · 보도 1건 · 점수 10.14
+
+- [매일경제·부동산] [임대주택 공급 3년새 81% 뚝 …'기업형 임대' 늘려 전월세난 대응](https://www.mk.co.kr/news/realestate/12145496) — 09-06 08:31
 ---
 
 ## 이슈로 선정되지 않은 기사 (40건)

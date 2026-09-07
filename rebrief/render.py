@@ -945,11 +945,20 @@ def asof_note(date: str, stats: dict | None = None) -> str:
     읽힙니다. 글 자체가 시점을 밝히지 않으면 읽는 사람이 알 길이 없습니다.
     실거래는 신고 기한 때문에 글 날짜보다 두 달쯤 앞선 달이라 따로 적어 줍니다.
     """
-    try:
-        year, month, day = date.split("-")
-        when = f"{year}년 {int(month)}월 {int(day)}일"
-    except (ValueError, AttributeError):
-        when = date
+    # 하루치 글은 '2026-09-08', 결산은 '2026-08'·'2026-W36' 로 들어온다.
+    # 그대로 두면 "이 글은 2026-W36 기준으로" 라는 사람 말이 아닌 문장이 나온다.
+    when = str(date or "")
+    m = re.fullmatch(r"(\d{4})-(\d{2})-(\d{2})", when)
+    if m:
+        when = f"{m[1]}년 {int(m[2])}월 {int(m[3])}일"
+    elif re.fullmatch(r"(\d{4})-(\d{2})", when):
+        year, month = when.split("-")
+        when = f"{year}년 {int(month)}월"
+    elif re.fullmatch(r"(\d{4})-W(\d{2})", when):
+        year, week = when.split("-W")
+        when = f"{year}년 {int(week)}주차"
+    if not when:
+        return ""
     line = f"이 글은 {when} 기준으로 정리한 내용입니다."
     label = (stats or {}).get("month_label", "")
     if label:

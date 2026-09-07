@@ -41,9 +41,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_collect = sub.add_parser("collect", help="수집만 실행")
     p_collect.add_argument("--date", help="저장 날짜 (기본: 오늘)")
 
-    p_render = sub.add_parser("render", help="저장된 원본으로 재생성")
+    p_render = sub.add_parser("render", help="저장된 원본으로 재생성 (모델을 다시 부름 — 돈이 듭니다)")
     p_render.add_argument("--date", help="대상 날짜 (기본: 오늘)")
-    p_render.add_argument("--no-llm", action="store_true", help="요약·대본 생성을 건너뜀")
+    p_render.add_argument("--no-llm", action="store_true",
+                          help="모델을 부르지 않고 그림·틀만 다시 만듦 (돈이 들지 않음)")
 
     sub.add_parser("site", help="휴대폰에서 볼 사이트 만들기 (site/)")
 
@@ -169,6 +170,12 @@ def _cmd_collect(cfg, args) -> int:
 def _cmd_render(cfg, args) -> int:
     date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
     use_llm = False if args.no_llm else None
+    if use_llm is not False and cfg.llm_enabled:
+        # 이 명령은 이름만 보면 '다시 그리기' 같지만 **모델을 3번 새로 부릅니다.**
+        # 그림이나 틀만 고쳤을 때 무심코 돌리면 하루치 값이 그대로 또 나갑니다
+        # (실제로 그렇게 0.42달러를 썼습니다). 부르기 전에 얼마인지 먼저 말해 줍니다.
+        print(f"! 모델을 다시 부릅니다 ({date_str}). 예상 {_typical_cost_note(cfg)}")
+        print("  글은 그대로 두고 그림·틀만 다시 만들려면 --no-llm 을 붙이세요.")
     try:
         result = rerender(cfg, date_str, use_llm=use_llm)
     except FileNotFoundError as exc:
@@ -177,6 +184,17 @@ def _cmd_render(cfg, args) -> int:
         return 1
     _report(result)
     return 0
+
+
+def _typical_cost_note(cfg) -> str:
+    """최근 실행들의 가운뎃값을 '약 0.42달러(590원)' 꼴로. 기록이 없으면 모른다고 말한다."""
+    from .store import CostLog
+
+    usd = CostLog(cfg.state_dir / "costs.json").typical("daily")
+    if not usd:
+        return "비용 (아직 기록이 없어 얼마인지 모릅니다)"
+    krw = int(usd * float(cfg.get("llm.krw_per_usd", 1400) or 1400))
+    return f"약 {usd:.2f}달러({krw:,}원)"
 
 
 def _cmd_notify(cfg, args) -> int:

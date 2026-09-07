@@ -1758,3 +1758,122 @@ def test_supply_chart_says_what_kind_of_number_it_is():
     # 넉 달이 안 되면 추이라고 부를 수 없다
     assert images.supply_line({"name": "미분양", "rows": rows[:3]}, "2026-09-07") is None
     assert images.supply_line({}, "2026-09-07") is None
+
+
+# ── 점검(감사)에서 찾아 고친 것들 ────────────────────────────
+
+
+def test_blog_length_is_counted_the_way_the_prompt_asks():
+    """분량은 **공백을 포함해** 센다. 프롬프트가 그렇게 부탁하기 때문이다.
+
+    예전에는 공백을 빼고 세면서 여유도 ±20% 였다. 한국어 본문은 공백이 20%쯤이라
+    두 실수가 정확히 상쇄돼, 목표의 3분의 2밖에 안 되는 글도 '통과'로 나왔다.
+    """
+    from rebrief import checklist as cl
+    from rebrief.config import load_config
+    from rebrief.models import BlogPost
+
+    cfg = load_config()
+    lo = int((cfg.get("blog", {}) or {}).get("min_chars", 1800))
+
+    def verdict(text):
+        items = cl.build(cfg, post=BlogPost(title="t", slug="s", meta_description="m",
+                                            tags=["a"], body_markdown=text))
+        return next(i for i in items if i.key == "blog_len")
+
+    # 공백이 20%인, 목표에 딱 맞는 글 — 통과해야 한다
+    body = ("가나다라 " * (lo // 5))[:lo]
+    assert len(body) == lo and verdict(body).level == cl.OK
+
+    # 목표의 4분의 3짜리 글 — 예전 셈법이면 놓쳤다
+    short = body[: int(lo * 0.75)]
+    assert verdict(short).level == cl.WARN
+    assert f"{len(short):,}자" in verdict(short).title
+
+
+def test_rerender_also_records_quality(cfg, monkeypatch):
+    """`render` 로 다시 만든 날도 품질 장부에 남는다 (실행 경로에만 있었다)."""
+    from rebrief import pipeline
+    from rebrief.store import QualityLog
+    from tests.test_pipeline import FakeGenerator
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
+    pipeline.run(cfg, run_date="2026-09-06", use_llm=True)
+
+    book = QualityLog(cfg.state_dir / "quality.json")
+    book.days.pop("2026-09-06", None)          # 장부를 비우고 다시 만들어 본다
+    book.save()
+
+    pipeline.rerender(cfg, "2026-09-06", use_llm=True)
+    again = QualityLog(cfg.state_dir / "quality.json")
+    entry = again.days.get("2026-09-06", {})
+    assert entry.get("ok", 0) >= 1 and entry.get("blog_chars", 0) > 0
+
+
+def test_asof_note_speaks_month_and_week_like_a_person():
+    """결산 글에는 '2026-W36' 이 아니라 '2026년 36주차' 라고 적힌다."""
+    from rebrief.render import asof_note
+
+    assert asof_note("2026-09-08").startswith("이 글은 2026년 9월 8일 기준")
+    assert asof_note("2026-08").startswith("이 글은 2026년 8월 기준")
+    assert asof_note("2026-W36").startswith("이 글은 2026년 36주차 기준")
+    assert asof_note("") == ""                  # 날짜가 없으면 아무 말도 하지 않는다
+    assert "2026년 7월" in asof_note("2026-09-08", {"month_label": "2026년 7월"})
+
+
+def test_render_command_says_it_will_cost_money(cfg, monkeypatch, capsys):
+    """`render` 는 이름과 달리 모델을 다시 부른다. 부르기 전에 얼마인지 말해 준다."""
+    from types import SimpleNamespace
+
+    from rebrief import cli
+    from rebrief.llm import Usage
+    from rebrief.store import CostLog
+
+    book = CostLog(cfg.state_dir / "costs.json")
+    cfg.state_dir.mkdir(parents=True, exist_ok=True)
+    book.record("2026-09-06", Usage(model="claude-opus-5", calls=3, input_tokens=1,
+                                    output_tokens=1, _usd=0.4209))
+    book.save()
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+
+    args = SimpleNamespace(date="2026-01-01", no_llm=False)
+    assert cli._cmd_render(cfg, args) == 1            # 원본이 없어 실패하지만 경고는 이미 나왔다
+    said = capsys.readouterr().out
+    assert "모델을 다시 부릅니다" in said and "0.42달러" in said and "589원" in said
+    assert "--no-llm" in said
+
+    # --no-llm 은 돈이 들지 않으므로 아무 말도 하지 않는다
+    cli._cmd_render(cfg, SimpleNamespace(date="2026-01-01", no_llm=True))
+    assert "모델을 다시 부릅니다" not in capsys.readouterr().out
+
+
+def test_quality_table_backfills_but_does_not_invent_numbers(cfg, tmp_path):
+    """장부가 없던 날도 점검표에서 되살리되, 되살릴 수 없는 값은 0 인 척하지 않는다."""
+    from rebrief.site import build_site
+    from rebrief.store import QualityLog
+
+    for day, ok in (("2026-09-05", 9), ("2026-09-06", 7)):
+        out = cfg.output_dir / day
+        out.mkdir(parents=True)
+        (out / "brief.md").write_text("# b", encoding="utf-8")
+        (out / "checklist.json").write_text(json.dumps(
+            {"date": day, "summary": {"ok": ok, "warn": 1, "fail": 0}, "items": []}), encoding="utf-8")
+
+    # 장부에 한 날만 제대로 들어 있다
+    book = QualityLog(cfg.state_dir / "quality.json")
+    book.add("2026-09-06", checklist={"ok": 7, "warn": 1, "fail": 0}, models=["claude-opus-5"],
+             blog_chars=1850, issues=5, usd=0.42)
+    book.save()
+
+    html = (build_site(cfg, tmp_path / "site") / "dashboard.html").read_text(encoding="utf-8")
+    assert "결과 품질" in html
+    assert "1,850자" in html or "1850자" in html          # 장부가 있는 날은 그대로
+    assert "기록 없음" in html                            # 되살린 날은 없다고 말한다
+
+    # 되살린 날은 '무엇이 달라졌나' 평균에서 빠진다 (0 이 섞이면 거짓 개선이 된다)
+    filled = QualityLog(cfg.state_dir / "quality.json")
+    filled.backfill(cfg.output_dir)
+    assert filled.days["2026-09-05"]["backfilled"] is True
+    assert filled.days["2026-09-06"]["blog_chars"] == 1850   # 장부가 이긴다
+    assert filled.compare(days=1) == {}                      # 견줄 진짜 날이 하나뿐

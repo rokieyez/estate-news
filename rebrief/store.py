@@ -618,8 +618,12 @@ class QualityLog:
         return [{"date": d, **e} for d, e in sorted(self.days.items())][-limit:]
 
     def compare(self, days: int = 7) -> dict:
-        """최근 며칠과 그 앞 며칠을 견준다. 모델·프롬프트를 바꾼 뒤 무엇이 달라졌는지 본다."""
-        rows = [{"date": d, **e} for d, e in sorted(self.days.items())]
+        """최근 며칠과 그 앞 며칠을 견준다. 모델·프롬프트를 바꾼 뒤 무엇이 달라졌는지 본다.
+
+        되살린 날(backfilled)은 뺍니다 — 검산 건수와 본문 길이를 되살릴 수 없어 0으로
+        채워 두었는데, 그걸 그대로 평균에 넣으면 '미확인이 줄었다' 는 거짓말이 됩니다.
+        """
+        rows = [{"date": d, **e} for d, e in sorted(self.days.items()) if not e.get("backfilled")]
         if len(rows) < 2:
             return {}
         recent, before = rows[-days:], rows[-days * 2:-days]
@@ -634,6 +638,36 @@ class QualityLog:
             now, was = avg(recent, key), avg(before, key)
             out[key] = {"now": now, "was": was, "change": round(now - was, 2)}
         return out
+
+    def backfill(self, output_dir: Path) -> int:
+        """장부에 없는 날을 산출물 폴더에서 되살린다. 되살린 날 수를 돌려준다.
+
+        장부(state/)는 저장소에 커밋되지만 checklist.json 은 output/ 에 이미 날마다 남습니다.
+        장부가 없던 시절의 날이나, 장부 파일을 잃은 경우에도 표가 비지 않게 합니다.
+        이미 장부에 있는 날은 건드리지 않습니다 — 장부 쪽이 더 자세하니까.
+        """
+        if not output_dir.exists():
+            return 0
+        found = 0
+        for day_dir in sorted(output_dir.iterdir()):
+            day = day_dir.name
+            if not (day_dir.is_dir() and _parse_date(day)) or day in self.days:
+                continue
+            try:
+                summary = json.loads((day_dir / "checklist.json").read_text(encoding="utf-8")).get("summary", {})
+            except (OSError, json.JSONDecodeError):
+                continue
+            self.days[day] = {
+                "ok": int(summary.get("ok", 0)), "warn": int(summary.get("warn", 0)),
+                "fail": int(summary.get("fail", 0)),
+                # 검산 건수·본문 길이·쓴 모델은 되살릴 길이 없다. 0 으로 두되 표에는
+                # '기록 없음' 으로 나오게 표시해 둔다 — 0 건으로 읽히면 거짓말이 된다.
+                "verified": 0, "unverified": 0, "no_text": 0,
+                "models": [], "issues": 0, "usd": 0.0, "blog_chars": 0,
+                "backfilled": True,
+            }
+            found += 1
+        return found
 
     def prune(self, keep: int = 120) -> None:
         if len(self.days) > keep:

@@ -171,9 +171,13 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
 
     # 4) 블로그 분량·태그·이미지 자리
     if post is not None:
-        n = len(re.sub(r"\s", "", post.body_markdown))
+        # 프롬프트가 "본문 1,200~2,000자" 로 부탁하므로 **같은 방식으로** 셉니다.
+        # 예전에는 공백을 빼고 셌는데, 한국어는 공백이 20%쯤이라 1,200자로 쓴 글이
+        # 960자로 잡혔습니다. ±20% 여유가 그 차이를 메워 주는 바람에 정말 짧은 글도
+        # 통과했습니다 (2026-09-08 실측: 960자 글이 ok 로 나왔음).
+        n = len(post.body_markdown or "")
         lo, hi = int(blog.get("min_chars", 1800)), int(blog.get("max_chars", 3500))
-        if n < lo * 0.8 or n > hi * 1.2:
+        if n < lo * 0.9 or n > hi * 1.1:
             items.append(Item("blog_len", WARN, f"블로그 본문 {n:,}자 (목표 {lo:,}~{hi:,})",
                               "너무 짧으면 검색 노출이 약하고, 너무 길면 휴대폰에서 이탈합니다."))
         else:

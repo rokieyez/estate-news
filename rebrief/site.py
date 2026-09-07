@@ -291,6 +291,10 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
 
     costs = CostLog(cfg.state_dir / "costs.json")
     by_date = costs.by_date()
+    # 품질 장부는 산출물 폴더로 한 번 메운다 — 장부가 생기기 전 날이나 장부를 잃은 경우에도
+    # 표가 비지 않게. 되살린 값은 저장하지 않는다 (그때그때 산출물에서 다시 읽으면 된다).
+    book_quality = QualityLog(cfg.state_dir / "quality.json")
+    book_quality.backfill(cfg.output_dir)
     krw = float(cfg.get("llm.krw_per_usd", 1400))
     first_page = {b["date"]: (b["pages"][0]["href"] if b["pages"] else "") for b in built}
 
@@ -362,8 +366,8 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
         trade_stale=_stale_days(trades, days[0].name if days else ""),
         title_types=TitleLog(cfg.state_dir / "titles.json").by_type(),
         storage=_storage_use(cfg, len(days)),
-        quality=QualityLog(cfg.state_dir / "quality.json").recent(30),
-        quality_diff=QualityLog(cfg.state_dir / "quality.json").compare(),
+        quality=book_quality.recent(30),
+        quality_diff=book_quality.compare(),
     )
     (dest / "dashboard.html").write_text(html, encoding="utf-8")
 

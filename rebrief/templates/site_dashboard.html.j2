@@ -78,10 +78,16 @@
         <td class="num ok">{{ q.ok }}</td>
         <td class="num">{{ q.warn }}</td>
         <td class="num {% if q.fail %}bad{% endif %}">{{ q.fail }}</td>
+        {% if q.get('backfilled') %}
+        {# 장부가 생기기 전 날 — 산출물에서 점검표만 되살렸다. 없는 값을 0으로 보이면 안 된다 #}
+        <td class="num muted" colspan="3" title="장부가 생기기 전 날이라 점검표만 남아 있습니다">기록 없음</td>
+        <td class="muted">—</td>
+        {% else %}
         <td class="num">{{ q.verified }}</td>
         <td class="num {% if q.unverified %}bad{% endif %}">{{ q.unverified }}</td>
         <td class="num">{{ q.blog_chars }}자</td>
         <td class="muted">{{ q.models|join('+')|replace('claude-', '') }}</td>
+        {% endif %}
       </tr>
     {% endfor %}
     </tbody>

@@ -214,6 +214,7 @@ def rerender(cfg: Config, run_date: str, *, use_llm: bool | None = None) -> RunR
         renderer.brief_fallback(issues, stats)
         renderer.prompt_pack(build_prompt_pack(cfg, issues, run_date))
     renderer.checklist(result, artifacts, link_status)
+    _record_quality(cfg, run_date, renderer, artifacts, result)
 
     _record_cost(cfg, result)
     index = update_index(cfg)
