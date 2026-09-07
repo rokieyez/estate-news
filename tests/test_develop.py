@@ -1310,6 +1310,7 @@ def test_monthly_review_writes_article(cfg, monkeypatch):
                 next_month_watch=["9월 국회"], tags=["부동산"])
 
     monkeypatch.setattr(monthly_mod, "ContentGenerator", FakeGenerator)
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "테스트용-가짜-키")   # 호출은 FakeGenerator 가 받는다
     result = monthly_mod.run_monthly(cfg, month="2026-08", use_llm=True)
     assert result.llm_used and not result.skipped
     text = (result.out_dir / "monthly.md").read_text(encoding="utf-8")

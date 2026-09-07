@@ -35,11 +35,14 @@ class FakeResponse:
 
 
 # .env 에 실제 인증키가 있으면 load_config() 가 환경변수로 올린다. 그러면 테스트가
-# 진짜 서버를 부르려 든다. 선택 기능 키는 매 테스트 시작 때 비워 둔다 —
+# 진짜 서버를 부르려 든다. 인증키는 매 테스트 시작 때 비워 둔다 —
 # 필요한 테스트는 스스로 monkeypatch.setenv 로 넣는다.
+#
+# ANTHROPIC_API_KEY 까지 비우는 이유: 이 키가 있고 없고에 따라 cfg.llm_enabled 가 달라져
+# **로컬은 통과하고 러너는 실패하는** 시험이 생긴다 (실제로 월간 결산 시험이 그랬다).
 @pytest.fixture(autouse=True)
 def _no_optional_keys(monkeypatch):
-    for name in ("DATA_GO_KR_KEY", "REB_API_KEY"):
+    for name in ("DATA_GO_KR_KEY", "REB_API_KEY", "ANTHROPIC_API_KEY"):
         monkeypatch.delenv(name, raising=False)
 
 
