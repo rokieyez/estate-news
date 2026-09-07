@@ -484,6 +484,120 @@ GENERATORS = SPECIFIC + FALLBACK
 # ── 조립 ─────────────────────────────────────────────────────
 
 
+# ── 실거래가 그림 (정부 통계에서 직접 받은 값) ──────────────
+#
+# 뉴스에서 뽑은 수치가 아니라 우리가 직접 센 값이라, 각주에 출처와 집계 방식을 반드시 적습니다.
+
+
+def trade_volume_bar(data: dict, date: str, extra: dict | None = None) -> "Image | None":
+    """지역별 아파트 매매 거래 건수. 전달과의 차이를 막대 옆에 함께 적는다."""
+    rows = [r for r in (data.get("districts") or []) if r["now"]["count"]][:8]
+    if len(rows) < 2:
+        return None
+    label = data.get("month_label", "")
+    title = f"{label} 아파트 매매 거래 건수"
+    sub = f"{data.get('before_label', '')} 대비 · 신고분 기준"
+    notes = [
+        "※ 국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다.",
+        f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계",
+    ]
+    w = 1000
+    row_h = 60
+    content = len(rows) * row_h + 30
+    h = card_height(w, title, sub, content, notes)
+    p, g = frame_open(w, h, title=title, subtitle=sub, channel=_channel(extra), date=date)
+    x, y, inner = g["x"], g["top"], g["inner"]
+
+    name_w = 96
+    bx = x + name_w
+    bw = inner - name_w - 150
+    top = max(r["now"]["count"] for r in rows)
+    scale = bw / top if top else 0
+
+    for i, r in enumerate(rows):
+        by = y + i * row_h
+        width = r["now"]["count"] * scale
+        p.append(f'<text x="{bx - 18}" y="{by + 32}" font-size="21" text-anchor="end" '
+                 f'fill="{INK_2}">{esc(r["name"])}</text>')
+        p.append(f'<path d="{bar_path(bx, by, max(width, 3), 44)}" fill="{BLUE}"/>')
+        p.append(f'<text x="{bx + width + 16:g}" y="{by + 32}" font-size="24" '
+                 f'font-weight="700" fill="{INK}">{r["now"]["count"]}건</text>')
+        change = r["change"]
+        if change:
+            cx = bx + width + 16 + text_width(f'{r["now"]["count"]}건', 24) + 14
+            p.append(f'<text x="{cx:g}" y="{by + 32}" font-size="20" '
+                     f'fill="{GOOD if change > 0 else CRITICAL}">'
+                     f'{"▲" if change > 0 else "▼"}{abs(change)}</text>')
+    p.append(f'<line x1="{bx}" y1="{y - 8}" x2="{bx}" y2="{y + len(rows) * row_h - 8}" '
+             f'stroke="{BASELINE}" stroke-width="2"/>')
+    frame_close(p, notes, g)
+    return Image("stats-volume", "\n".join(p), title)
+
+
+def price_index_line(series: list[dict], date: str, extra: dict | None = None) -> "Image | None":
+    """한국부동산원 주간 아파트 매매가격지수 추이."""
+    points = [s for s in series if s.get("value") is not None]
+    if len(points) < 3:
+        return None
+    region = points[0].get("region", "") or "전국"
+    title = f"주간 아파트 매매가격지수 · {region}"
+    sub = f"{points[0].get('when') or points[0]['time']} ~ {points[-1].get('when') or points[-1]['time']}"
+    change = points[-1]["value"] - points[0]["value"]
+    notes = [
+        "※ 한국부동산원이 매주 발표하는 지수입니다. 값 자체가 가격이 아니라 기준 시점 대비 상대값입니다.",
+        f"출처: 한국부동산원 R-ONE · {date} 조회",
+    ]
+    w, plot_h = 1000, 300
+    h = card_height(w, title, sub, plot_h + 96, notes)
+    p, g = frame_open(w, h, title=title, subtitle=sub, channel=_channel(extra), date=date)
+    x, y, inner = g["x"], g["top"], g["inner"]
+
+    values = [s["value"] for s in points]
+    ticks = nice_ticks(min(values), max(values))
+    lo, hi = ticks[0], ticks[-1]
+    axis_w = 74
+    px, pw = x + axis_w, inner - axis_w
+    py = y + 54
+
+    def sy(v: float) -> float:
+        return py + plot_h - (v - lo) / (hi - lo) * plot_h
+
+    for t in ticks:
+        ty = sy(t)
+        p.append(f'<line x1="{px}" y1="{ty:g}" x2="{px + pw}" y2="{ty:g}" '
+                 f'stroke="{GRID}" stroke-width="1"/>')
+        p.append(f'<text x="{px - 14}" y="{ty + 6:g}" font-size="18" text-anchor="end" '
+                 f'fill="{MUTED}">{t:g}</text>')
+
+    step = pw / max(len(points) - 1, 1)
+    coords = [(px + i * step, sy(v)) for i, v in enumerate(values)]
+    p.append('<polyline fill="none" stroke="' + BLUE + '" stroke-width="3" '
+             'stroke-linejoin="round" points="'
+             + " ".join(f"{cx:.1f},{cy:.1f}" for cx, cy in coords) + '"/>')
+    for cx, cy in coords:
+        p.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="5" fill="{BLUE}" '
+                 f'stroke="{CARD}" stroke-width="2"/>')
+
+    # 처음과 끝만 값을 적는다. 모든 점에 숫자를 붙이면 읽히지 않는다.
+    for idx, anchor in ((0, "start"), (len(points) - 1, "end")):
+        cx, cy = coords[idx]
+        p.append(f'<text x="{cx:.1f}" y="{cy - 18:.1f}" font-size="22" font-weight="700" '
+                 f'text-anchor="{anchor}" fill="{INK}">{values[idx]:.2f}</text>')
+    for idx, anchor in ((0, "start"), (len(points) - 1, "end")):
+        cx = coords[idx][0]
+        when = points[idx].get("when") or points[idx]["time"]
+        p.append(f'<text x="{cx:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
+                 f'text-anchor="{anchor}" fill="{MUTED}">{esc(when)}</text>')
+
+    p.append(f'<text x="{x}" y="{y + 30}" font-size="26" font-weight="700" '
+             f'fill="{GOOD if change > 0 else (CRITICAL if change < 0 else INK)}">'
+             f'{"▲" if change > 0 else ("▼" if change < 0 else "―")} {abs(change):.2f}'
+             f'<tspan font-size="20" font-weight="500" fill="{INK_2}"> '
+             f'{len(points)}주 동안</tspan></text>')
+    frame_close(p, notes, g)
+    return Image("stats-index", "\n".join(p), title)
+
+
 def build(datapoints: list[dict], date: str, headline: str = "", limit: int = 3,
           history: list[dict] | None = None) -> list[Image]:
     """수치 목록에서 그릴 수 있는 그림을 최대 limit 개 만든다.

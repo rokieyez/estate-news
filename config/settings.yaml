@@ -106,7 +106,9 @@ stats:
   #   실거래가  — 공공데이터포털에서 '아파트 매매 실거래가' 신청 → 환경변수 DATA_GO_KR_KEY
   #   부동산원  — www.reb.or.kr 열린자료 인증키 신청 → 환경변수 REB_API_KEY
   enabled: true
-  max_districts: 8          # 한 번에 볼 시군구 수 (한 곳당 요청 2번: 지난달·전달)
+  max_districts: 8          # 한 번에 볼 시군구 수
+  history_months: 6         # 신고가를 가릴 때 견줄 지난 달 수 (한 곳당 요청 = 1 + 이 수)
+  max_highlights: 5         # 글에 실을 눈에 띄는 거래 수
   # 시군구 코드는 법정동코드 앞 5자리입니다. 다른 지역을 보려면 이 목록만 고치세요.
   districts:
     - {name: 강남구, code: "11680"}

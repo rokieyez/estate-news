@@ -43,6 +43,7 @@ def make_env() -> Environment:
 
 class Renderer:
     def __init__(self, cfg: Config, out_dir: Path, date_str: str):
+        self.stats_images: dict[str, str] = {}   # 실거래가 그림 (블로그에서 다시 쓴다)
         self.cfg = cfg
         self.out_dir = out_dir
         self.date = date_str
@@ -83,7 +84,8 @@ class Renderer:
     def blog(self, post: BlogPost, clusters: list[Cluster],
              slot_files: dict[int, str] | None = None,
              key_numbers: list | None = None, related: list[dict] | None = None,
-             cover: str = "", policies: list | None = None) -> Path:
+             cover: str = "", policies: list | None = None,
+             stats: dict | None = None, stats_image: str = "") -> Path:
         blog_cfg = self.cfg.get("blog", {}) or {}
         return self._write(
             "blog.md",
@@ -94,6 +96,7 @@ class Renderer:
             lead_block=lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown))
                        + terms_block_markdown(self._terms(post)),
             tail_block=takeaways_block_markdown(post.takeaways)
+                       + stats_block_markdown(stats, stats_image)
                        + policy_block_markdown(policies)
                        + tail_block_markdown(post.closing_question, related),
             key_card=kn.card_markdown(key_numbers or []),
@@ -108,7 +111,8 @@ class Renderer:
     def blog_naver(self, post: BlogPost, slot_files: dict[int, str] | None = None,
                    filename: str = "blog-naver.html", key_numbers: list | None = None,
                    related: list[dict] | None = None, cover: str = "",
-                   policies: list | None = None) -> Path:
+                   policies: list | None = None, stats: dict | None = None,
+                   stats_image: str = "") -> Path:
         """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
         blog_cfg = self.cfg.get("blog", {}) or {}
         photo_links = {
@@ -133,6 +137,8 @@ class Renderer:
                 terms=self._terms(post),
                 takeaways=post.takeaways,
                 policies=policies,
+                stats=stats,
+                stats_image=stats_image,
             ),
             hashtags=format_hashtags(self._tags(post)),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
@@ -336,10 +342,20 @@ class Renderer:
         return svg.name
 
     def stats(self, data: dict, series: list | None = None) -> Path | None:
-        """실거래가 집계표. 자료가 없으면 파일을 만들지 않는다."""
+        """실거래가 집계표와 그림. 자료가 없으면 아무것도 만들지 않는다."""
         if not data or not data.get("districts"):
             return None
-        return self._write("stats.md", "stats.md.j2", series=series or [], **data)
+        cfg = self.cfg.get("images", {}) or {}
+        files: dict[str, str] = {}
+        if cfg.get("enabled", True):
+            extra = {"channel": str((self.cfg.get("video", {}) or {}).get("channel_name", "") or "")}
+            for key, img in (("volume", images_mod.trade_volume_bar(data, self.date, extra)),
+                             ("index", images_mod.price_index_line(series or [], self.date, extra))):
+                if img:
+                    files[key] = self._write_image(img, cfg)
+        self.stats_images = files
+        return self._write("stats.md", "stats.md.j2", series=series or [],
+                           images=files, **data)
 
     def policy(self, docs: list) -> Path | None:
         """정부 발표 원문 3줄 요약 + 원본 파일. 없으면 파일을 만들지 않는다."""
@@ -401,7 +417,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
                   summary_lines: list[str] | None = None, closing_question: str = "",
                   related: list[dict] | None = None, outline: bool = True,
                   cover: str = "", terms: list[tuple[str, str]] | None = None,
-                  takeaways: list[str] | None = None, policies: list | None = None) -> str:
+                  takeaways: list[str] | None = None, policies: list | None = None,
+                  stats: dict | None = None, stats_image: str = "") -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -446,7 +463,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
             + lead_block_html(summary_lines, outline_from_markdown(body_markdown) if outline else [])
             + terms_block_html(terms or []))
     return (head + kn.card_html(key_numbers or []) + html
-            + takeaways_block_html(takeaways) + policy_block_html(policies)
+            + takeaways_block_html(takeaways)
+            + stats_block_html(stats, stats_image) + policy_block_html(policies)
             + tail_block_html(closing_question, related))
 
 
@@ -622,6 +640,75 @@ def policy_block_html(docs: list | None) -> str:
     return ('<div style="margin:24px 0 0;padding:14px 16px;background-color:#f7f8fa">'
             '<b>오늘 나온 정부 발표 원문</b>'
             '<ul style="margin:8px 0 0;padding-left:18px">' + "".join(rows) + "</ul></div>")
+
+
+def _eok(amount: float) -> str:
+    """원 단위를 '12.5억' 으로. 글에서 읽기 쉬운 단위는 억이다."""
+    return f"{amount / 100_000_000:.1f}억"
+
+
+def stats_block_html(data: dict | None, image: str = "") -> str:
+    """직접 센 실거래 숫자. 모델이 지어낼 수 없게 프로그램이 값을 그대로 넣는다."""
+    if not data or not data.get("districts"):
+        return ""
+    rows = data["districts"][:3]
+    top = " · ".join(
+        f'{_esc(r["name"])} {r["now"]["count"]}건'
+        f'({"+" if r["change"] >= 0 else ""}{r["change"]})'
+        for r in rows
+    )
+    parts = [
+        '<div style="margin:28px 0 0;padding:16px 18px;background-color:#f7f8fa">',
+        f'<b>직접 센 숫자 — {_esc(data.get("month_label", ""))} 아파트 실거래</b>',
+        f'<p style="margin:10px 0 0">서울 {len(data["districts"])}개 구에서 신고된 매매는 '
+        f'<b>{data["total"]}건</b>입니다. '
+        f'{_esc(data.get("before_label", ""))} {data["total_before"]}건과 견주면 '
+        f'{data["total"] - data["total_before"]:+d}건입니다.</p>',
+        f'<p style="margin:8px 0 0;font-size:15px;color:#555555">거래가 많은 곳: {top}</p>',
+    ]
+    hot = [h for h in (data.get("highlights") or []) if h["kind"] == "신고가"][:2]
+    if hot:
+        items = "".join(
+            f'<li>{_esc(h["district"])} {_esc(h["name"])} {h["area"]}㎡ — '
+            f'{_eok(h["amount"])} (이전 최고 {_eok(h["before"])}, {h["pct"]:+.1f}%)</li>'
+            for h in hot
+        )
+        parts.append('<p style="margin:12px 0 4px"><b>이번 달 신고가</b></p>'
+                     f'<ul style="margin:0;padding-left:18px;font-size:15px">{items}</ul>')
+    if image:
+        parts.append(f'<img class="preview nocopy" src="{_esc(image)}" alt="지역별 거래 건수" '
+                     'style="max-width:100%;margin-top:12px">')
+        parts.append('<p style="margin:6px 0 0;font-size:13px;color:#888888">'
+                     f'→ 그림 파일 <b>{_esc(image)}</b> 을 이 자리에 올리세요</p>')
+    parts.append('<p style="margin:12px 0 0;font-size:13px;color:#888888">'
+                 '국토교통부 실거래가 신고 자료를 직접 집계했습니다. '
+                 '해제(계약 취소) 신고분은 뺐습니다.</p></div>')
+    return "".join(parts)
+
+
+def stats_block_markdown(data: dict | None, image: str = "") -> str:
+    """보관용 blog.md 에도 같은 내용을 남긴다."""
+    if not data or not data.get("districts"):
+        return ""
+    rows = data["districts"][:3]
+    top = " · ".join(f'{r["name"]} {r["now"]["count"]}건({r["change"]:+d})' for r in rows)
+    lines = [
+        f'\n**직접 센 숫자 — {data.get("month_label", "")} 아파트 실거래**\n',
+        f'서울 {len(data["districts"])}개 구 신고 매매 **{data["total"]}건** '
+        f'({data.get("before_label", "")} {data["total_before"]}건, '
+        f'{data["total"] - data["total_before"]:+d}건)',
+        f'\n거래가 많은 곳: {top}\n',
+    ]
+    hot = [h for h in (data.get("highlights") or []) if h["kind"] == "신고가"][:2]
+    if hot:
+        lines.append("\n이번 달 신고가\n")
+        lines += [f'- {h["district"]} {h["name"]} {h["area"]}㎡ — {_eok(h["amount"])} '
+                  f'(이전 최고 {_eok(h["before"])}, {h["pct"]:+.1f}%)' for h in hot]
+        lines.append("")
+    if image:
+        lines.append(f'\n![지역별 거래 건수]({image})\n')
+    lines.append("*국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제 신고분은 뺐습니다.*\n")
+    return "\n".join(lines)
 
 
 def policy_block_markdown(docs: list | None) -> str:

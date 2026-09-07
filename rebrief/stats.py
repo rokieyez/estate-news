@@ -37,6 +37,7 @@ _FIELDS = {
     "day": ("일", "dealDay"),
     "dong": ("법정동", "umdNm"),
     "floor": ("층", "floor"),
+    "seq": ("일련번호", "aptSeq"),      # 단지 고유번호. 예전 판에는 없어 이름+동으로 대신한다
 }
 
 
@@ -99,9 +100,11 @@ def parse_trades(xml_text: str) -> list[dict]:
         except ValueError:
             area = 0.0
         y, m, d = (_text(item, _FIELDS[k]) for k in ("year", "month", "day"))
+        name, dong = _text(item, _FIELDS["name"]), _text(item, _FIELDS["dong"])
         rows.append({
-            "name": _text(item, _FIELDS["name"]),
-            "dong": _text(item, _FIELDS["dong"]),
+            "name": name,
+            "dong": dong,
+            "seq": _text(item, _FIELDS["seq"]) or f"{dong}|{name}",
             "amount": amount,
             "area": round(area, 2),
             "floor": _text(item, _FIELDS["floor"]),
@@ -137,6 +140,72 @@ def summarize(rows: list[dict]) -> dict:
     top = max(rows, key=lambda r: r["amount"])
     return {"count": len(rows), "avg": sum(amounts) // len(amounts),
             "median": median, "top": top}
+
+
+# ── 눈에 띄는 거래 고르기 ────────────────────────────────────
+#
+# 같은 단지라도 면적이 다르면 값이 딴판이라 함께 셀 수 없습니다. 전용면적을 5㎡ 칸으로
+# 나눠 같은 칸끼리만 비교합니다. 지난 거래가 너무 적으면 '신고가' 라 부를 근거가 약해
+# 최소 건수를 둡니다.
+
+AREA_STEP = 5.0
+
+
+def area_bucket(area: float) -> int:
+    """전용면적을 5㎡ 칸으로. 84.43㎡ 과 84.99㎡ 는 같은 칸으로 본다."""
+    try:
+        return int(round(float(area) / AREA_STEP) * AREA_STEP)
+    except (TypeError, ValueError):
+        return 0
+
+
+def _by_unit(rows: list[dict]) -> dict[tuple[str, int], list[dict]]:
+    out: dict[tuple[str, int], list[dict]] = {}
+    for r in rows:
+        out.setdefault((r.get("seq", ""), area_bucket(r.get("area", 0))), []).append(r)
+    return out
+
+
+def highlights(current: list[dict], history: list[dict], *, district: str = "",
+               limit: int = 5, jump: float = 8.0, min_prior: int = 2) -> list[dict]:
+    """이번 달 거래 가운데 신고가와 큰 변동만 골라낸다.
+
+    · 신고가 — 같은 단지·같은 면적 칸에서 지난 거래를 모두 넘어선 값
+    · 급변  — 같은 칸의 이번 달 평균이 지난 평균과 크게 벌어진 경우
+    지난 거래가 `min_prior` 건 미만이면 비교할 근거가 없다고 보고 뺍니다.
+    """
+    past = _by_unit(history)
+    found: list[dict] = []
+    for key, deals in _by_unit(current).items():
+        prior = past.get(key, [])
+        if len(prior) < min_prior:
+            continue
+        prior_max = max(d["amount"] for d in prior)
+        prior_avg = sum(d["amount"] for d in prior) / len(prior)
+        top = max(deals, key=lambda d: d["amount"])
+
+        if top["amount"] > prior_max:
+            found.append({
+                "kind": "신고가", "district": district, "name": top["name"],
+                "dong": top["dong"], "area": top["area"], "floor": top["floor"],
+                "amount": top["amount"], "before": prior_max, "date": top["date"],
+                "pct": round((top["amount"] / prior_max - 1) * 100, 1) if prior_max else 0.0,
+                "prior_count": len(prior),
+            })
+            continue
+
+        now_avg = sum(d["amount"] for d in deals) / len(deals)
+        pct = (now_avg / prior_avg - 1) * 100 if prior_avg else 0.0
+        if len(deals) >= 2 and abs(pct) >= jump:
+            found.append({
+                "kind": "급등" if pct > 0 else "급락", "district": district,
+                "name": top["name"], "dong": top["dong"], "area": top["area"],
+                "floor": "", "amount": round(now_avg), "before": round(prior_avg),
+                "date": top["date"], "pct": round(pct, 1), "prior_count": len(prior),
+            })
+    # 신고가를 먼저, 그다음 변동 폭이 큰 순서로
+    found.sort(key=lambda r: (r["kind"] != "신고가", -abs(r["pct"])))
+    return found[:limit]
 
 
 def prev_month(ym: str) -> str:
@@ -182,22 +251,39 @@ def collect(cfg, run_date: str) -> dict:
         return {}
     ym = month_of(run_date)
     before = prev_month(ym)
-    rows = []
+    # 신고가를 가리려면 지난 거래가 있어야 한다. 몇 달치를 더 받아 비교 바탕으로 쓴다.
+    months_back = max(int(settings.get("history_months", 6)), 1)
+    past_months = []
+    cursor = before
+    for _ in range(months_back):
+        past_months.append(cursor)
+        cursor = prev_month(cursor)
+
+    rows, picks = [], []
     for item in districts[: int(settings.get("max_districts", 8))]:
         code, name = str(item.get("code", "")), str(item.get("name", ""))
         if not code:
             continue
-        now = summarize(apt_trades(cfg, code, ym))
-        was = summarize(apt_trades(cfg, code, before))
+        deals = apt_trades(cfg, code, ym)
+        # 달마다 따로 담아 둔다. 전달 비교는 그 달 응답을 그대로 쓰고,
+        # 신고가 비교에는 지난 달들을 전부 합쳐 쓴다.
+        by_month = {month: apt_trades(cfg, code, month) for month in past_months}
+        history = [d for deals_of_month in by_month.values() for d in deals_of_month]
+        now, was = summarize(deals), summarize(by_month.get(before, []))
         if not now["count"] and not was["count"]:
             continue
         rows.append({"name": name, "code": code, "now": now, "was": was,
                      "change": now["count"] - was["count"]})
+        picks += highlights(deals, history, district=name)
+
     if not rows:
         return {}
     rows.sort(key=lambda r: r["now"]["count"], reverse=True)
+    picks.sort(key=lambda r: (r["kind"] != "신고가", -abs(r["pct"])))
     return {"month": ym, "month_label": month_label(ym),
             "before": before, "before_label": month_label(before), "districts": rows,
+            "highlights": picks[: int(settings.get("max_highlights", 5))],
+            "history_months": months_back,
             "total": sum(r["now"]["count"] for r in rows),
             "total_before": sum(r["was"]["count"] for r in rows)}
 

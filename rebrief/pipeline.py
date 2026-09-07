@@ -125,9 +125,12 @@ def run(
     model = _budget_guard(cfg, result) if want_llm else None
     if want_llm and model == "":
         want_llm = False                      # 월 예산 초과
+    # 통계를 먼저 받는다 — 블로그 글 안에 이 숫자를 넣기 때문이다 (모델과는 무관).
+    stats_data = _collect_stats(cfg, renderer, date_str, result)
     artifacts: dict = {}
     if want_llm and issues:
-        artifacts = _generate_with_llm(cfg, renderer, issues, date_str, result, model=model)
+        artifacts = _generate_with_llm(cfg, renderer, issues, date_str, result, model=model,
+                                       stats_data=stats_data)
     else:
         if use_llm is not False and not cfg.api_key:
             result.warnings.append(
@@ -136,7 +139,6 @@ def run(
         renderer.brief_fallback(issues, stats)
         renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
     renderer.checklist(result, artifacts, link_status)
-    _collect_stats(cfg, renderer, date_str, result)   # 통계는 모델과 무관하므로 항상 시도한다
 
     # 6) 이력 저장
     seen.mark(articles, date_cls.fromisoformat(date_str))
@@ -210,6 +212,7 @@ def _generate_with_llm(
     date_str: str,
     result: RunResult,
     model: str | None = None,
+    stats_data: dict | None = None,
 ) -> dict:
     """LLM 3단계 생성. 중간에 실패해도 거기까지 만든 건 남긴다.
 
@@ -263,11 +266,12 @@ def _generate_with_llm(
         made["cover"] = cover
         policies = _collect_policies(cfg, renderer, date_str, generator, result)
         made["policies"] = policies
+        stats_image = (renderer.stats_images or {}).get("volume", "")
         renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover,
-                      policies=policies)
+                      policies=policies, stats=stats_data, stats_image=stats_image)
         if str(cfg.get("blog.platform", "naver")).lower() == "naver":
             renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover,
-                                policies=policies)
+                                policies=policies, stats=stats_data, stats_image=stats_image)
         _record_titles(cfg, date_str, blog=[post.title])
 
     try:

@@ -796,3 +796,110 @@ def test_reb_series_falls_back_to_sample_when_key_rejected(cfg, monkeypatch):
                         run_date="2026-09-07")
     assert [r["value"] for r in rows] == [100.73]
     assert "KEY" in calls[0] and "KEY" not in calls[-1]     # 키로 먼저, 안 되면 견본으로
+
+
+# ── 눈에 띄는 거래 · 글에 넣기 ───────────────────────────────
+
+def _deal(name, amount, area=84.5, date="2026-07-10", seq="11680-1"):
+    return {"name": name, "dong": "대치동", "seq": seq, "amount": amount,
+            "area": area, "floor": "5", "date": date}
+
+
+def test_highlights_need_enough_history_and_same_size():
+    from rebrief.stats import area_bucket, highlights
+
+    assert area_bucket(84.43) == area_bucket(84.99) == 85     # 5㎡ 칸으로 묶는다
+    assert area_bucket(59.9) != area_bucket(84.5)
+
+    history = [_deal("은마", 2_000_000_000), _deal("은마", 2_100_000_000),
+               _deal("은마", 2_200_000_000)]
+    rows = highlights([_deal("은마", 2_600_000_000)], history, district="강남구")
+    assert len(rows) == 1
+    assert rows[0]["kind"] == "신고가" and rows[0]["pct"] == 18.2
+    assert rows[0]["before"] == 2_200_000_000 and rows[0]["district"] == "강남구"
+
+    # 지난 거래가 1건뿐이면 '신고가' 라 부를 근거가 약하다
+    assert highlights([_deal("은마", 9_000_000_000)], history[:1]) == []
+
+    # 같은 단지라도 면적 칸이 다르면 견주지 않는다
+    small = [_deal("은마", 1_000_000_000, area=59.9) for _ in range(3)]
+    assert highlights([_deal("은마", 2_600_000_000)], small) == []
+
+
+def test_highlights_report_big_average_moves():
+    from rebrief.stats import highlights
+
+    history = [_deal("래미안", 1_000_000_000), _deal("래미안", 1_020_000_000)]
+    current = [_deal("래미안", 1_180_000_000), _deal("래미안", 1_200_000_000)]
+    rows = highlights(current, history)
+    assert rows[0]["kind"] == "신고가"        # 최고가를 넘었으면 신고가가 먼저다
+
+    # 최고가는 못 넘었지만 평균이 크게 내린 경우
+    down = [_deal("래미안", 850_000_000), _deal("래미안", 860_000_000)]
+    rows = highlights(down, history)
+    assert rows[0]["kind"] == "급락" and rows[0]["pct"] < -8
+
+
+def test_stats_block_goes_into_both_blog_files():
+    from rebrief.render import stats_block_html, stats_block_markdown
+
+    data = {
+        "month_label": "2026년 7월", "before_label": "2026년 6월",
+        "total": 2230, "total_before": 2252,
+        "districts": [
+            {"name": "노원구", "change": 50, "now": {"count": 723, "avg": 700000000}},
+            {"name": "강서구", "change": 18, "now": {"count": 387, "avg": 980000000}},
+            {"name": "송파구", "change": 30, "now": {"count": 308, "avg": 2260000000}},
+            {"name": "은평구", "change": 25, "now": {"count": 283, "avg": 910000000}},
+        ],
+        "highlights": [
+            {"kind": "신고가", "district": "성동구", "name": "벽산", "area": 84.8,
+             "amount": 1_080_000_000, "before": 860_000_000, "pct": 25.6},
+            {"kind": "급락", "district": "노원구", "name": "상계주공", "area": 41.3,
+             "amount": 400_000_000, "before": 450_000_000, "pct": -11.1},
+        ],
+    }
+    html = stats_block_html(data, image="img-stats-volume.png")
+    assert "직접 센 숫자 — 2026년 7월" in html
+    assert "<b>2230건</b>" in html and "-22건" in html
+    assert "노원구 723건(+50)" in html
+    assert "벽산" in html and "10.8억" in html and "+25.6%" in html
+    assert "상계주공" not in html                    # 신고가만 싣는다
+    assert 'class="preview nocopy"' in html          # 미리보기는 복사에서 빠진다
+
+    md = stats_block_markdown(data, image="img-stats-volume.png")
+    assert "**2230건**" in md and "![지역별 거래 건수](img-stats-volume.png)" in md
+    assert stats_block_html(None) == "" and stats_block_markdown({}) == ""
+
+
+def test_pipeline_puts_trade_numbers_into_the_post(cfg, monkeypatch):
+    """실거래가 자료가 있으면 블로그 글 안에 그 숫자가 들어가야 한다."""
+    from tests.test_pipeline import FakeGenerator, RUN_DATE
+
+    from rebrief import pipeline
+    from rebrief import stats as S
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setenv("DATA_GO_KR_KEY", "테스트키")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
+    monkeypatch.setitem(cfg.settings, "stats", {
+        "enabled": True, "max_districts": 1, "history_months": 2, "reb_statbl_id": "",
+        "districts": [{"name": "강남구", "code": "11680"}]})
+
+    class Resp:
+        def __init__(self, text): self.text = text
+        def raise_for_status(self): pass
+
+    def fake_get(url, params=None, **kw):
+        return Resp(_NEW_XML if params["DEAL_YMD"].endswith("07") else _OLD_XML)
+
+    monkeypatch.setattr(S, "_get", fake_get)
+
+    result = pipeline.run(cfg, run_date=RUN_DATE, use_llm=True)
+    assert not result.warnings, result.warnings
+
+    out = cfg.output_dir / RUN_DATE
+    naver = (out / "blog-naver.html").read_text(encoding="utf-8")
+    md = (out / "blog.md").read_text(encoding="utf-8")
+    assert "직접 센 숫자" in naver and "직접 센 숫자" in md
+    assert (out / "stats.md").exists()

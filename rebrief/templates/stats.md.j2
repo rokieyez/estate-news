@@ -7,11 +7,28 @@
 **{{ month_label }} 전체 {{ total }}건** · {{ before_label }} {{ total_before }}건{% if total_before %} ({{ '%+d'|format(total - total_before) }}건){% endif %}
 
 
+{% if images.get('volume') %}
+![지역별 거래 건수]({{ images['volume'] }})
+
+{% endif %}
 | 지역 | 거래 건수 | 전달 대비 | 평균 거래가 | 가장 비싼 거래 |
 | --- | ---: | ---: | ---: | --- |
 {% for d in districts %}
 | {{ d.name }} | {{ d.now.count }}건 | {{ '%+d'|format(d.change) }} | {{ (d.now.avg / 100000000)|round(1) }}억 | {% if d.now.top %}{{ d.now.top.name }} {{ (d.now.top.amount / 100000000)|round(1) }}억 ({{ d.now.top.area }}㎡){% else %}—{% endif %} |
 {% endfor %}
+
+{% if highlights %}
+## 눈에 띄는 거래
+
+지난 {{ history_months }}개월 거래와 견줘 값이 크게 움직인 것만 골랐습니다.
+같은 단지·같은 면적끼리만 비교했고, 지난 거래가 2건 미만이면 뺐습니다.
+
+| 구분 | 지역 | 단지 | 면적 | 이번 | 이전 | 차이 |
+| --- | --- | --- | ---: | ---: | ---: | ---: |
+{% for h in highlights %}
+| {{ h.kind }} | {{ h.district }} | {{ h.name }} | {{ h.area }}㎡ | {{ (h.amount / 100000000)|round(1) }}억 | {{ (h.before / 100000000)|round(1) }}억 | {{ '%+.1f'|format(h.pct) }}% |
+{% endfor %}
+{% endif %}
 
 {% if series %}
 ## 한국부동산원 주간 아파트 매매가격지수 ({{ series[0].region }})
@@ -19,6 +36,10 @@
 {{ series[0].when }} {{ series[0].value|round(2) }} → **{{ series[-1].when }} {{ series[-1].value|round(2) }}**
 ({{ '%+.2f'|format(series[-1].value - series[0].value) }})
 
+{% if images.get('index') %}
+![주간 매매가격지수]({{ images['index'] }})
+
+{% endif %}
 | 기준일 | 지수 |
 | --- | ---: |
 {% for s in series %}
