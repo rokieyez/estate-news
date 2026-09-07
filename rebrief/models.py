@@ -223,6 +223,19 @@ class VideoPack(BaseModel):
     longform: LongformScript
 
 
+class PolicySummary(BaseModel):
+    """정부 보도자료 한 건을 배경지식 없는 사람이 읽을 3줄로."""
+
+    news_id: str = Field(description="입력에 주어진 번호를 그대로")
+    lines: list[str] = Field(
+        description="3줄. 각 줄은 마침표로 끝나는 완결된 문장(45자 내외). 무엇이 · 숫자 · 누구에게 영향")
+    who: str = Field(default="", description="이 발표가 특히 상관있는 사람. 예: '전세 임차인'. 없으면 빈 문자열")
+
+
+class PolicySummaries(BaseModel):
+    items: list[PolicySummary]
+
+
 # ── 주간 결산 (Claude 구조화 출력) ──────────────────────────
 
 

@@ -18,6 +18,7 @@ from .prompts import build_prompt_pack
 from .rank import score_clusters, select_issues
 from .render import RenderStats, Renderer, explain_issues, update_index
 from .linkcheck import check_links
+from . import policy as policy_mod
 from .related import related_posts
 from .store import (CostLog, SeenStore, SeriesStore, load_raw, previous_blog_bodies,
                     recent_topics, save_raw)
@@ -259,9 +260,13 @@ def _generate_with_llm(
                         1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
         cover = renderer.cover(post, keys)          # 검색 목록 썸네일이 될 표지
         made["cover"] = cover
-        renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover)
+        policies = _collect_policies(cfg, renderer, date_str, generator, result)
+        made["policies"] = policies
+        renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover,
+                      policies=policies)
         if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-            renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover)
+            renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover,
+                                policies=policies)
         _record_titles(cfg, date_str, blog=[post.title])
 
     try:
@@ -406,6 +411,44 @@ def _budget_guard(cfg: Config, result: RunResult) -> str | None:
     return None
 
 
+def _collect_policies(cfg: Config, renderer: Renderer, date_str: str, generator, result) -> list:
+    """정부 보도자료를 찾아 3줄로 줄이고 원본 파일을 받아 둔다. 실패해도 실행은 계속한다."""
+    settings = cfg.get("policy", {}) or {}
+    if not settings.get("enabled", True):
+        return []
+    try:
+        docs = policy_mod.fetch(cfg, date_str,
+                                days=int(settings.get("lookback_days", 2)),
+                                limit=int(settings.get("max_docs", 3)))
+    except Exception as exc:                      # 외부 사이트 구조가 바뀌어도 실행은 멈추지 않는다
+        log.warning("정책 원문 수집 실패: %s", exc)
+        result.warnings.append(f"정책 원문 수집 실패 — {type(exc).__name__}")
+        return []
+    if not docs:
+        return []
+
+    # 본문은 첨부 PDF 안에만 있으므로 먼저 받아 두고 그 글로 요약한다
+    for doc in docs:
+        policy_mod.download(doc, renderer.out_dir / "policy", cfg)
+        doc.summary = policy_mod.extractive_summary(doc)
+    if generator is not None:
+        try:
+            summaries = generator.summarize_policies(docs)
+            by_id = {s.news_id: s for s in summaries.items}
+            for doc in docs:
+                got = by_id.get(doc.news_id)
+                if got and got.lines:
+                    doc.summary = [" ".join(l.split()) for l in got.lines[:3]]
+                    doc.who = getattr(got, "who", "")
+        except LLMError as exc:
+            log.warning("정책 요약 실패, 부처 요약을 그대로 씁니다: %s", exc)
+
+    path = renderer.policy(docs)
+    if path:
+        log.info("정책 원문 %d건 정리", len(docs))
+    return docs
+
+
 def _repeat_topics(cfg: Config, brief, run_date: str, threshold: float = 0.5) -> list[dict]:
     """오늘 이슈가 최근 며칠 안에 이미 다룬 주제인지 본다. 제목 2-gram Dice 로 비교한다."""
     from datetime import date as _date
@@ -490,7 +533,8 @@ def _autofix_banned(cfg: Config, renderer: Renderer, made: dict, issues: list[Cl
             cover = made.get("cover", "")
             renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover)
             if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-                renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover)
+                renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover,
+                                    policies=made.get("policies") or [])
     if pack is not None:
         changed = False
         for line in pack.shorts.lines:

@@ -189,6 +189,31 @@ def _blog_user_naver(cfg: Config, blog: dict, regions: list[str] | None = None) 
 - 띄어쓰기 없이 붙여 씁니다. # 기호는 빼고 단어만 담으세요.{region_rule}"""
 
 
+def build_policy_messages(docs: list) -> tuple[str, str]:
+    """정부 보도자료 요약. 원문에 없는 말을 보태지 않는 것이 가장 중요하다."""
+    system = (
+        "당신은 정부 보도자료를 일반 독자용으로 줄이는 편집자입니다.\n"
+        "규칙:\n"
+        "- 주어진 요약문에 있는 사실만 씁니다. 배경지식으로 보태거나 해석하지 마세요.\n"
+        "- 숫자와 날짜는 그대로 옮깁니다.\n"
+        "- 전문 용어는 쉬운 말로 바꾸되 뜻이 달라지면 안 됩니다.\n"
+        "- **각 줄은 그 자체로 끝나는 완결된 문장**입니다. 한 문장을 세 줄로 쪼개지 마세요.\n"
+        "- 한 줄 45자 내외, 존댓말, 단정적 전망 금지.\n"
+        "- 1줄: 무엇이 발표됐는지 / 2줄: 숫자나 기준 / 3줄: 누구에게 어떤 영향인지."
+    )
+    blocks = []
+    for d in docs:
+        summary = " / ".join(d.summary or [])
+        block = f"[번호 {d.news_id}] ({d.dept} · {d.date})\n제목: {d.title}\n부처 요약: {summary}"
+        body = " ".join((getattr(d, "body", "") or "").split())[:1500]
+        if body:
+            block += f"\n보도자료 본문(첨부 문서에서 뽑음): {body}"
+        blocks.append(block)
+    user = ("아래 보도자료를 각각 3줄로 줄여 주세요. 번호(news_id)를 그대로 돌려주세요.\n\n"
+            + "\n\n".join(blocks))
+    return system, user
+
+
 def build_video_user(cfg: Config) -> str:
     video = cfg.get("video", {}) or {}
     shorts_sec = int(video.get("shorts_seconds", 60))

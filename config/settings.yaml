@@ -48,6 +48,8 @@ llm:
   # 비우면 위 model 을 그대로 씁니다.
   script_model: claude-sonnet-5
 
+  policy_model: claude-haiku-4-5   # 정부 보도자료 3줄 요약용 (짧은 작업이라 가장 싼 모델로)
+
   fallback_model: claude-sonnet-5   # 한도·장애로 실패하면 이 모델로 한 번 더 (비우면 안 함)
   monthly_budget_usd: 0     # 월 예산(달러). 0 이면 제한 없음. 80% 넘으면 fallback_model 로, 넘으면 건너뜀
   budget_soft_ratio: 0.8
@@ -96,6 +98,21 @@ video:
     - "확실한 수익"
     - "추천 종목"
   cta: "도움이 되셨다면 구독과 알림 설정 부탁드립니다."
+
+# 정부 정책 원문 — 정책브리핑(korea.kr) 보도자료에서 부동산 관련 발표를 찾아
+# 3줄 요약과 원본 파일(HWP·PDF) 링크를 함께 남깁니다.
+policy:
+  enabled: true
+  lookback_days: 2          # 며칠 전 발표까지 볼지
+  max_docs: 3               # 하루에 실을 최대 건수
+  download: true            # 원본 파일을 내려받아 함께 보관 (끄면 링크만)
+  max_file_mb: 5            # 이보다 큰 첨부는 건너뜁니다 (원본 파일은 매일 저장소에 쌓입니다)
+  max_files_per_doc: 1      # 한 건당 받을 파일 수 (PDF 우선). 늘리면 저장소가 빨리 커집니다
+  list_pages: 4             # 목록을 몇 장까지 넘겨볼지 (한 장에 20건)
+  # 부처 이름 표기가 바뀌기도 하므로(기획재정부↔재정경제부) 제목에 부동산 말이 있으면 부처와 무관하게 싣습니다
+  departments: [국토교통부, 기획재정부, 재정경제부, 금융위원회, 국세청, 행정안전부, 법무부]
+  keywords: [부동산, 주택, 아파트, 전세, 월세, 임대, 청약, 분양, 종부세, 종합부동산세,
+             재건축, 재개발, 정비사업, 공시가격, 주택공급, 대출, LTV, DSR, 전세사기]
 
 blog:
   # 발행 플랫폼. 글의 문체와 산출 파일이 달라집니다.

@@ -31,6 +31,7 @@ PAGES = [
     ("script-shorts.md", "쇼츠 대본", "60초. 자막과 화면 지시 포함"),
     ("script-longform.md", "롱폼 대본", "8분. 챕터와 자료화면 포함"),
     ("production-notes.md", "제작 메모", "제목·썸네일·태그·촬영 목록"),
+    ("policy.md", "정부 발표 원문", "보도자료 3줄 요약과 원본 파일"),
     ("sources.md", "기사 원문", "근거가 된 기사 링크"),
 ]
 EXTRA_FILES = ["script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv", "data.json"]
@@ -288,7 +289,8 @@ def _build_weeks(env, source: Path, dest: Path) -> list[dict]:
 
 # 블로그에 올릴 때 실제로 쓰는 파일들 (문서가 아니라 '첨부물')
 ZIP_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg",
-             "script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv"]
+             "script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv",
+             "policy/*"]      # 정부 보도자료 원본(HWP·PDF)도 함께 묶는다
 
 
 def _build_zip(dest: Path, name: str = "files.zip") -> dict | None:
@@ -301,6 +303,7 @@ def _build_zip(dest: Path, name: str = "files.zip") -> dict | None:
     files: list[Path] = []
     for pattern in ZIP_GLOBS:
         files += sorted(dest.glob(pattern))
+    files = [f for f in files if f.name != name]
     files = [f for f in files if f.is_file()]
     if not files:
         return None
@@ -339,6 +342,9 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
     for filename in EXTRA_FILES:
         if (day / filename).exists():
             shutil.copy2(day / filename, dest / filename)
+
+    if (day / "policy").is_dir():      # 정부 보도자료 원본 파일
+        shutil.copytree(day / "policy", dest / "policy", dirs_exist_ok=True)
 
     assets = _copy_assets(day, dest)
     bundle = _build_zip(dest)

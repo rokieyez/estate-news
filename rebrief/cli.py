@@ -68,6 +68,11 @@ def build_parser() -> argparse.ArgumentParser:
     t_log.add_argument("--views", type=int, help="조회수")
     t_log.add_argument("--title", help="후보에 없는 제목을 썼다면")
 
+    p_policy = sub.add_parser("policy", help="정부 정책 보도자료 원문 찾기 (요약·원본 파일)")
+    p_policy.add_argument("--date", help="기준 날짜 (기본: 오늘)")
+    p_policy.add_argument("--days", type=int, help="며칠 전까지 볼지")
+    p_policy.add_argument("--no-llm", action="store_true", help="부처 요약을 그대로 씁니다")
+
     p_pub = sub.add_parser("publish", help="네이버에 올린 글 주소를 기록 (사이트에 '발행함' 으로 표시)")
     p_pub.add_argument("--date", help="날짜 (기본: 오늘)")
     p_pub.add_argument("--url", default="", help="발행한 글 주소")
@@ -105,6 +110,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_titles(cfg, args)
     if args.command == "publish":
         return _cmd_publish(cfg, args)
+    if args.command == "policy":
+        return _cmd_policy(cfg, args)
     return 1
 
 
@@ -277,6 +284,46 @@ def _cmd_titles(cfg, args) -> int:
     return 0
 
 
+def _cmd_policy(cfg, args) -> int:
+    from . import policy as policy_mod
+    from .render import Renderer
+
+    date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
+    settings = cfg.get("policy", {}) or {}
+    docs = policy_mod.fetch(cfg, date_str,
+                            days=int(args.days or settings.get("lookback_days", 2)),
+                            limit=int(settings.get("max_docs", 3)))
+    if not docs:
+        print("해당 기간에 부동산 관련 정부 발표를 찾지 못했습니다.")
+        return 0
+    renderer = Renderer(cfg, cfg.output_dir / date_str, date_str)
+    for doc in docs:
+        policy_mod.download(doc, renderer.out_dir / "policy", cfg)
+        doc.summary = policy_mod.extractive_summary(doc)
+    if not args.no_llm and cfg.api_key:
+        from .llm import ContentGenerator, LLMError
+
+        try:
+            summaries = ContentGenerator(cfg).summarize_policies(docs)
+            by_id = {s.news_id: s for s in summaries.items}
+            for doc in docs:
+                got = by_id.get(doc.news_id)
+                if got and got.lines:
+                    doc.summary, doc.who = [" ".join(l.split()) for l in got.lines[:3]], got.who
+        except LLMError as exc:
+            print(f"요약 실패, 부처 요약을 그대로 씁니다: {exc}", file=sys.stderr)
+
+    path = renderer.policy(docs)
+    for doc in docs:
+        print(f"\n[{doc.dept}] {doc.title}")
+        for line in doc.summary:
+            print(f"  · {line}")
+        for f in doc.files:
+            print(f"  📎 {f['name']}" + ("  (내려받음)" if f.get("file") else f"  {f['url']}"))
+    print(f"\n저장 → {path}" if path else "")
+    return 0
+
+
 def _cmd_publish(cfg, args) -> int:
     from .store import PublishLog
 
@@ -345,7 +392,28 @@ def _cmd_doctor(cfg, verbose: bool = False) -> int:
             print(f"  - id: {feed_id}  →  enabled: false")
         print("\n(일시적 문제일 수 있으니 한 번 더 돌려보고 판단하세요.)")
 
+    _report_policy_source(cfg)
     return 0
+
+
+def _report_policy_source(cfg) -> None:
+    """정부 발표 원문(정책브리핑)이 살아 있는지 함께 본다. 여기서 실패해도 doctor 는 실패가 아니다."""
+    from . import policy as policy_mod
+
+    print("\n정부 발표 원문 (정책브리핑)")
+    if not (cfg.get("policy", {}) or {}).get("enabled", True):
+        print("  ⏸  꺼져 있습니다 — config/settings.yaml 의 policy.enabled 를 true 로 두면 켜집니다.")
+        return
+    ok, total, hits, error = policy_mod.check_source(cfg)
+    if not ok:
+        reason = error or "목록에서 글을 하나도 찾지 못했습니다 (화면 구조가 바뀌었을 수 있음)"
+        print(f"  ❌  {reason}")
+        print(f"      확인할 주소: {policy_mod.LIST_URL}")
+        return
+    print(f"  ✅  최근 보도자료 {total}건 중 부동산 관련 {hits}건")
+    if hits == 0:
+        print("      오늘은 관련 발표가 없을 수 있습니다. 계속 0건이면 settings.yaml 의")
+        print("      policy.keywords / policy.departments 를 넓혀 보세요.")
 
 
 # ── 출력 ─────────────────────────────────────────────────────

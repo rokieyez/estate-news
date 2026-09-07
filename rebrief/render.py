@@ -83,7 +83,7 @@ class Renderer:
     def blog(self, post: BlogPost, clusters: list[Cluster],
              slot_files: dict[int, str] | None = None,
              key_numbers: list | None = None, related: list[dict] | None = None,
-             cover: str = "") -> Path:
+             cover: str = "", policies: list | None = None) -> Path:
         blog_cfg = self.cfg.get("blog", {}) or {}
         return self._write(
             "blog.md",
@@ -94,6 +94,7 @@ class Renderer:
             lead_block=lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown))
                        + terms_block_markdown(self._terms(post)),
             tail_block=takeaways_block_markdown(post.takeaways)
+                       + policy_block_markdown(policies)
                        + tail_block_markdown(post.closing_question, related),
             key_card=kn.card_markdown(key_numbers or []),
             body_markdown=place_images_markdown(post.body_markdown, slot_files or {}),
@@ -106,7 +107,8 @@ class Renderer:
 
     def blog_naver(self, post: BlogPost, slot_files: dict[int, str] | None = None,
                    filename: str = "blog-naver.html", key_numbers: list | None = None,
-                   related: list[dict] | None = None, cover: str = "") -> Path:
+                   related: list[dict] | None = None, cover: str = "",
+                   policies: list | None = None) -> Path:
         """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
         blog_cfg = self.cfg.get("blog", {}) or {}
         photo_links = {
@@ -130,6 +132,7 @@ class Renderer:
                 cover=cover,
                 terms=self._terms(post),
                 takeaways=post.takeaways,
+                policies=policies,
             ),
             hashtags=format_hashtags(self._tags(post)),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
@@ -332,6 +335,12 @@ class Renderer:
                 return png.name
         return svg.name
 
+    def policy(self, docs: list) -> Path | None:
+        """정부 발표 원문 3줄 요약 + 원본 파일. 없으면 파일을 만들지 않는다."""
+        if not docs:
+            return None
+        return self._write("policy.md", "policy.md.j2", docs=docs, date=self.date)
+
     def prompt_pack(self, text: str) -> Path:
         return self._write_raw("prompt-pack.md", text)
 
@@ -386,7 +395,7 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
                   summary_lines: list[str] | None = None, closing_question: str = "",
                   related: list[dict] | None = None, outline: bool = True,
                   cover: str = "", terms: list[tuple[str, str]] | None = None,
-                  takeaways: list[str] | None = None) -> str:
+                  takeaways: list[str] | None = None, policies: list | None = None) -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -431,7 +440,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
             + lead_block_html(summary_lines, outline_from_markdown(body_markdown) if outline else [])
             + terms_block_html(terms or []))
     return (head + kn.card_html(key_numbers or []) + html
-            + takeaways_block_html(takeaways) + tail_block_html(closing_question, related))
+            + takeaways_block_html(takeaways) + policy_block_html(policies)
+            + tail_block_html(closing_question, related))
 
 
 _HL_STYLE = "background-color:#fff59d"
@@ -588,6 +598,35 @@ def takeaways_block_markdown(takeaways: list[str] | None) -> str:
     if not takeaways:
         return ""
     return "**그래서 나는?**\n\n" + "\n".join(f"- {t}" for t in takeaways[:3]) + "\n"
+
+
+def policy_block_html(docs: list | None) -> str:
+    """블로그 끝에 붙는 정부 발표 원문 링크. 글은 짧게 두고 링크만 건다."""
+    if not docs:
+        return ""
+    rows = []
+    for d in docs:
+        files = " · ".join(f'<a href="{_esc(f["url"])}">{_esc(f["name"])[:40]}</a>' for f in (d.files or [])[:2])
+        rows.append(
+            f'<li style="margin-bottom:8px"><a href="{_esc(d.url)}">{_esc(d.title)}</a>'
+            f' <span style="color:#888888;font-size:13px">({_esc(d.dept)} {_esc(d.date)})</span>'
+            + (f'<br><span style="font-size:13px">첨부 {files}</span>' if files else "")
+            + "</li>"
+        )
+    return ('<div style="margin:24px 0 0;padding:14px 16px;background-color:#f7f8fa">'
+            '<b>오늘 나온 정부 발표 원문</b>'
+            '<ul style="margin:8px 0 0;padding-left:18px">' + "".join(rows) + "</ul></div>")
+
+
+def policy_block_markdown(docs: list | None) -> str:
+    """보관용 blog.md 에도 같은 원문 링크를 남긴다."""
+    if not docs:
+        return ""
+    rows = []
+    for d in docs:
+        files = " · ".join(f"[{f['name'][:40]}]({f['url']})" for f in (d.files or [])[:2])
+        rows.append(f"- [{d.title}]({d.url}) ({d.dept} {d.date})" + (f"\n  - 첨부 {files}" if files else ""))
+    return "\n**오늘 나온 정부 발표 원문**\n\n" + "\n".join(rows) + "\n"
 
 
 def tail_block_html(closing_question: str = "", related: list[dict] | None = None) -> str:

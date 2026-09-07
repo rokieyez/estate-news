@@ -392,3 +392,98 @@ def test_checklist_flags_sprawling_shape_and_missing_takeaways(cfg):
                      body_markdown="집값 이야기\n\n## 집값 흐름\n\n내용\n\n## 그 밖의 오늘 소식\n\n- 한 줄")
     ok = {i.key: i for i in cl.build(cfg, post=tight)}
     assert ok["shape"].level == cl.OK and "takeaways" not in ok
+
+
+# ── 정부 정책 원문 (정책브리핑) ────────────────────────────
+
+_LIST_HTML = """
+<ul>
+<li><a href="/briefing/pressReleaseView.do?newsId=111&amp;pageIndex=1">
+  <span class="text"><strong>8월중 전세사기피해자등 658건 추가 결정</strong>
+  <span class="lead">- 위원회 3회 개최- 누적 40,936건 결정</span>
+  <span class="source"><span>2026.09.07</span><span>국토교통부</span></span></span></a></li>
+<li><a href="/briefing/pressReleaseView.do?newsId=222&amp;pageIndex=1">
+  <span class="text"><strong>아프리카 기상 협력 연수</strong>
+  <span class="lead">- 15개국 공무원 대상</span>
+  <span class="source"><span>2026.09.07</span><span>기상청</span></span></span></a></li>
+</ul>
+"""
+
+_VIEW_HTML = """
+<div class="view_cont">"이 자료는 국토교통부의 보도자료를 전재하여 제공함을 알려드립니다."</div>
+<div class="file">첨부파일
+  <span>260908(조간) 전세사기피해자 결정.hwpx</span>
+  <a href="/common/download.do?fileId=1&amp;tblKey=GMN">내려받기</a>
+  <span>260908(조간) 전세사기피해자 결정.pdf</span>
+  <a href="/common/download.do?fileId=2&amp;tblKey=GMN">내려받기</a>
+</div>
+<div class="article_footer">공유</div>
+"""
+
+
+def test_policy_list_and_detail_parsing():
+    from rebrief.policy import parse_detail, parse_list
+
+    docs = parse_list(_LIST_HTML)
+    assert [d.news_id for d in docs] == ["111", "222"]
+    first = docs[0]
+    assert first.title == "8월중 전세사기피해자등 658건 추가 결정"      # 제목만, 요약이 섞이지 않는다
+    assert first.dept == "국토교통부" and first.date == "2026-09-07"
+    assert "누적 40,936건" in first.lead
+
+    body, files = parse_detail(_VIEW_HTML)
+    assert body == ""                                                   # '전재하여 제공' 안내는 본문이 아니다
+    assert [f["name"] for f in files] == ["260908(조간) 전세사기피해자 결정.hwpx",
+                                          "260908(조간) 전세사기피해자 결정.pdf"]
+    assert files[0]["url"].startswith("https://www.korea.kr/common/download.do?fileId=1")
+
+
+def test_policy_keeps_real_estate_and_drops_the_rest(cfg, monkeypatch):
+    from rebrief import policy as P
+
+    pages = {"1": _LIST_HTML}
+
+    class Resp:
+        def __init__(self, text): self.text = text
+        def raise_for_status(self): pass
+
+    def fake_get(url, params=None, **kw):
+        if "pressReleaseList" in url:
+            return Resp(pages.get((params or {}).get("pageIndex"), ""))
+        return Resp(_VIEW_HTML)
+
+    monkeypatch.setattr(P, "_get", fake_get)
+    docs = P.fetch(cfg, "2026-09-07", days=1, limit=5)
+    assert [d.title for d in docs] == ["8월중 전세사기피해자등 658건 추가 결정"]   # 기상 연수는 뺀다
+    assert len(docs[0].files) == 2
+
+
+def test_policy_summary_uses_document_bullets_not_boilerplate():
+    from rebrief.policy import PolicyDoc, doc_chunks, extractive_summary
+
+    doc = PolicyDoc("1", "제목", "국토교통부", "2026-09-07", "u",
+                    lead="제목 관련 보도자료 내용입니다. 자세한 내용은 첨부파일을 참고하시기 바랍니다.")
+    doc.body = ("보도시점 배포 즉시 2026. 9. 7. 제목입니다 "
+                "□ 국토교통부는 8월 한 달간 위원회를 3회 열어 658건을 결정하였다. "
+                "ㅇ 누적 40,936건이 결정되었으며 피해주택 10,718호를 매입하였다.")
+    lines = extractive_summary(doc)
+    assert len(lines) == 2 and "658건" in lines[0] and "40,936건" in lines[1]
+    assert "보도시점" not in " ".join(lines)          # 머리말은 요약에 들어가지 않는다
+    assert doc_chunks("□ 짧음 ㅇ " + "가" * 30)[0].startswith("가")
+
+
+def test_policy_block_appears_in_both_blog_files():
+    from rebrief.policy import PolicyDoc
+    from rebrief.render import policy_block_html, policy_block_markdown
+
+    doc = PolicyDoc("1", "전세사기피해자 658건 추가 결정", "국토교통부", "2026-09-07",
+                    "https://www.korea.kr/briefing/pressReleaseView.do?newsId=1")
+    doc.files = [{"name": "보도자료.pdf", "url": "https://www.korea.kr/common/download.do?fileId=2"}]
+
+    md = policy_block_markdown([doc])
+    assert "[전세사기피해자 658건 추가 결정](https://www.korea.kr/briefing/" in md
+    assert "첨부 [보도자료.pdf](https://www.korea.kr/common/download.do?fileId=2)" in md
+
+    html = policy_block_html([doc])
+    assert "오늘 나온 정부 발표 원문" in html and "보도자료.pdf</a>" in html
+    assert policy_block_markdown([]) == "" and policy_block_html(None) == ""

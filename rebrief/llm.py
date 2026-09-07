@@ -12,10 +12,11 @@ from dataclasses import dataclass, field
 import anthropic
 
 from .config import Config
-from .models import BlogPost, Cluster, DailyBrief, Rewrite, VideoPack, WeeklyReview
+from .models import BlogPost, Cluster, DailyBrief, PolicySummaries, Rewrite, VideoPack, WeeklyReview
 from .prompts import (
     build_blog_user,
     build_brief_messages,
+    build_policy_messages,
     build_shared_context,
     build_video_user,
     build_weekly_messages,
@@ -178,6 +179,14 @@ class ContentGenerator:
             kind="영상 대본",
             model=self.script_model,
         )
+
+    def summarize_policies(self, docs: list) -> PolicySummaries:
+        """정부 보도자료 여러 건을 한 번의 호출로 3줄씩. 값싼 모델로 충분하다."""
+        system, user = build_policy_messages(docs)
+        log.info("정책 원문 요약 중… (%d건)", len(docs))
+        model = str(self.cfg.get("llm.policy_model", "") or "").strip() or self.script_model
+        return self._parse(system=system, user=user, output_format=PolicySummaries,
+                           cache_system=False, kind="정책 요약", model=model)
 
     # ── 주간 결산 (별도 system, 캐시 없음) ───────────────────
 

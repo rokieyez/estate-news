@@ -1,0 +1,32 @@
+# 정부 발표 원문 — {{ date }}
+
+부동산 관련 정부 보도자료입니다. 요약은 부처가 낸 자료를 3줄로 줄인 것이고,
+**원본 파일**을 함께 두었으니 글에 쓸 때는 원문을 한 번 확인하세요.
+
+{% for d in docs %}
+## {{ loop.index }}. {{ d.title }}
+
+`{{ d.dept }}` · {{ d.date }}{% if d.who %} · 관련: {{ d.who }}{% endif %}
+
+{% for line in d.summary %}
+- {{ line }}
+{% endfor %}
+
+[정책브리핑에서 원문 보기]({{ d.url }})
+{% if d.files %}
+
+**첨부 문서**
+
+{% for f in d.files %}
+{% if f.get('file') %}
+- [{{ f.name }}](policy/{{ f.get('file') }}) · [정책브리핑에서 받기]({{ f.url }})
+{% else %}
+- [{{ f.name }}]({{ f.url }})
+{% endif %}
+{% endfor %}
+{% endif %}
+
+{% endfor %}
+---
+
+*출처: 대한민국 정책브리핑(korea.kr). 각 부처 보도자료를 그대로 옮긴 것이며, 해석은 덧붙이지 않았습니다.*
