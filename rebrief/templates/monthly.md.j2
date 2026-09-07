@@ -1,0 +1,72 @@
+---
+title: "{{ review.title }}"
+slug: "{{ review.slug }}"
+month: {{ month }}
+days: {{ days }}
+category: "{{ category }}"
+tags: [{% for t in review.tags %}"{{ t }}"{% if not loop.last %}, {% endif %}{% endfor %}]
+description: "{{ review.meta_description }}"
+---
+
+**{{ month_label }} 다섯 줄**
+
+{% for line in review.month_lines %}
+{{ loop.index }}. {{ line }}
+{% endfor %}
+
+{{ review.body_markdown }}
+{% if review.turning_points %}
+
+## 흐름이 바뀐 지점
+
+{% for t in review.turning_points %}
+- {{ t }}
+{% endfor %}
+{% endif %}
+{% if trades %}
+
+## {{ month_label }}에 확정된 실거래 (직접 집계)
+
+신고 기한이 계약 후 30일이라 확정된 달은 지금보다 앞섭니다.
+아래는 **{{ trades.month_label }}** 신고분이고, {{ month_label }} 동안 우리가 날마다 센 값의 마지막입니다.
+
+{{ trades.month_label }} 신고된 아파트 매매는 **{{ '{:,}'.format(trades.total) }}건**입니다.
+{% if trades.total_change %}이달에만 {{ '{:+,}'.format(trades.total_change) }}건이 더 신고됐습니다 — 가격이 아니라 신고가 쌓인 속도입니다.{% endif %}
+
+
+| 지역 | 거래 건수 | 평균 거래가 |
+| --- | ---: | ---: |
+{% for d in trades.districts %}
+| {{ d.name }} | {{ d.count }}건 | {{ (d.avg / 100000000)|round(1) }}억 |
+{% endfor %}
+{% if trades.jeonse %}
+
+| 지역 | 전세가율 | 견준 단지 수 |
+| --- | ---: | ---: |
+{% for j in trades.jeonse %}
+| {{ j.name }} | {{ j.median }}% | {{ j.count }}곳 |
+{% endfor %}
+{% endif %}
+{% if trades.index %}
+
+주간 가격지수({{ trades['from'] }} → {{ trades.to }})
+{% for name, v in trades.index.items() %}
+- {{ name }} {{ v.value|round(2) }}{% if v.change is not none %} ({{ '%+.2f'|format(v.change) }}){% endif %}
+{% endfor %}
+{% endif %}
+
+
+*국토교통부 실거래가 신고 자료를 날마다 직접 집계한 값입니다. 해제 신고분은 뺐습니다.*
+{% endif %}
+{% if review.next_month_watch %}
+
+## 다음 달 볼 것
+
+{% for w in review.next_month_watch %}
+- {{ w }}
+{% endfor %}
+{% endif %}
+
+---
+
+*{{ month_label }} 브리핑 {{ days }}일치를 묶은 결산입니다.{% if disclaimer %} {{ disclaimer }}{% endif %}*

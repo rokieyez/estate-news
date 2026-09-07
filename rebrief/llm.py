@@ -12,13 +12,15 @@ from dataclasses import dataclass, field
 import anthropic
 
 from .config import Config
-from .models import BlogPost, Cluster, DailyBrief, PolicySummaries, Rewrite, VideoPack, WeeklyReview
+from .models import (BlogPost, Cluster, DailyBrief, MonthlyReview, PolicySummaries, Rewrite,
+                     VideoPack, WeeklyReview)
 from .prompts import (
     build_blog_user,
     build_brief_messages,
     build_policy_messages,
     build_shared_context,
     build_video_user,
+    build_monthly_messages,
     build_weekly_messages,
 )
 
@@ -195,6 +197,15 @@ class ContentGenerator:
         log.info("주간 결산 생성 중… (%d일치)", len(days))
         return self._parse(system=system, user=user, output_format=WeeklyReview, cache_system=False,
                            kind="주간 결산")
+
+    # ── 월간 결산 (별도 system, 캐시 없음) ───────────────────
+
+    def generate_monthly(self, days: list[dict], month_label: str,
+                         trades: dict | None = None) -> MonthlyReview:
+        system, user = build_monthly_messages(self.cfg, days, month_label, trades)
+        log.info("월간 결산 생성 중… (%d일치)", len(days))
+        return self._parse(system=system, user=user, output_format=MonthlyReview, cache_system=False,
+                           kind="월간 결산")
 
     # ── 문장 고쳐 쓰기 (점검표 ❌ 자동 수정) ─────────────────
 

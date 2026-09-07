@@ -451,3 +451,99 @@ next_week_watch, tags)
 {user}
 """
 
+
+def build_monthly_messages(cfg: Config, days: list[dict], month_label_: str,
+                           trades: dict | None = None) -> tuple[str, str]:
+    """한 달치 브리핑 + 그달 확정된 실거래를 묶어 월간 결산을 부탁한다.
+
+    주간과 다른 점은 두 가지입니다. 하나는 **우리가 직접 센 실거래**를 함께 넘긴다는 것,
+    다른 하나는 날짜가 아니라 **무엇이 언제 바뀌었는지**를 묻는다는 것입니다. 한 달이면
+    같은 이슈가 열 번도 나오므로 나열하면 읽히지 않습니다.
+    """
+    video = cfg.get("video", {}) or {}
+    blog = cfg.get("blog", {}) or {}
+    banned = video.get("banned_phrases", []) or []
+    naver = blog.get("naver", {}) or {}
+    tag_count = int(naver.get("tag_count", 20))
+    min_chars = int(blog.get("monthly_min_chars", 2000))
+    max_chars = int(blog.get("monthly_max_chars", 4000))
+
+    compact = [
+        {
+            "date": d["date"],
+            "headline": d.get("headline", ""),
+            "issues": [{"title": i.get("title"), "category": i.get("category"),
+                        "numbers": i.get("numbers", [])}
+                       for i in d.get("issues", [])[:3]],
+        }
+        for d in days
+    ]
+    trade_note = ""
+    if trades:
+        trade_note = f"""
+
+────────── 우리가 직접 센 실거래 (JSON) ──────────
+{json.dumps(trades, ensure_ascii=False, indent=1)}
+──────────────────────────────────────
+이 수치는 국토교통부 실거래가 신고 자료를 우리가 직접 집계한 것입니다. 기사에서 온 값이
+아니므로 **숫자를 바꾸지 말고 그대로 인용**하세요. 신고 기한 때문에 확정된 달이 이달보다
+두 달쯤 앞섭니다 — 어느 달 수치인지 반드시 밝혀 쓰세요."""
+
+    system = f"""당신은 부동산 콘텐츠를 만드는 프로듀서입니다.
+채널명은 "{video.get('channel_name', '부동산 브리핑')}" 입니다.
+
+시청자: {video.get('audience', '부동산에 관심 있는 일반 시청자')}
+톤앤매너: {video.get('tone', '차분하고 정확한 정보 전달')}
+
+지켜야 할 것:
+- 아래 한 달치 브리핑과 실거래 수치에 있는 사실만 씁니다. 없는 내용을 채워 넣지 마세요.
+- 다음 표현은 쓰지 마세요: {', '.join(banned) if banned else '(없음)'}
+- 단정적 예측 대신 근거와 전망 주체를 밝힙니다.
+- 모든 출력은 한국어입니다.
+
+────────── {month_label_} 브리핑 모음 (JSON, 날짜순) ──────────
+{json.dumps(compact, ensure_ascii=False, indent=1)}
+──────────────────────────────────────{trade_note}"""
+
+    user = f"""위 한 달치 자료로 **월간 결산 글** 한 편을 완성하세요. 네이버 블로그에 올립니다.
+
+■ month_lines
+- 이달을 다섯 줄로 요약합니다. 각 줄 40자 이내, 가능하면 숫자를 넣습니다.
+- 날짜 순이 아니라 **중요한 순**입니다.
+
+■ turning_points
+- 이달 안에서 **흐름이 바뀐 지점**을 2~4개 집습니다. "언제부터 무엇이 달라졌다" 형태로 씁니다.
+- 한 달 내내 같은 이야기였다면 그렇게 쓰세요. 없는 전환점을 만들지 마세요.
+
+■ 본문 (body_markdown)
+- 분량 {min_chars}~{max_chars}자. 한 문단 2~3문장, 문단 사이 빈 줄.
+- 첫 문단에 결론(이달 시장을 한 문장으로)을 씁니다.
+- `##` 소제목 4~6개. **날짜별이 아니라 주제별**로 묶습니다.
+- 실거래 수치를 넘겨받았다면 소제목 하나를 통째로 거기에 씁니다. 표로 정리하세요.
+- 마지막 소제목은 '다음 달 볼 것'으로 하고 next_month_watch 와 같은 내용을 넣습니다.
+- 독자를 '여러분'으로 부르고 존댓말로 씁니다.
+
+■ 태그 (tags)
+- {tag_count}개. 띄어쓰기 없이, # 기호 없이 단어만."""
+    return system, user
+
+
+def build_monthly_prompt_pack(cfg: Config, days: list[dict], month_label_: str,
+                              trades: dict | None = None) -> str:
+    """API 키가 없을 때 챗봇에 붙여넣을 수 있게 두 메시지를 하나의 문서로 묶는다."""
+    system, user = build_monthly_messages(cfg, days, month_label_, trades)
+    return f"""# {month_label_} 월간 결산 — 프롬프트 팩
+
+API 키가 없어 자동 생성을 건너뛰었습니다. 아래를 통째로 복사해 챗봇에 붙여넣으면 같은 결과를
+얻을 수 있습니다. (MonthlyReview 형식: title, slug, meta_description, month_lines, body_markdown,
+turning_points, next_month_watch, tags)
+
+---
+
+{system}
+
+---
+
+{user}
+"""
+

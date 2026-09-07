@@ -358,6 +358,7 @@ class Renderer:
                                                           self.date, extra)),
                 ("jeonse", images_mod.jeonse_history_line(jeonse_history or [], history_region,
                                                           self.date, extra)),
+                ("map", images_mod.district_choropleth(data, self.date, extra)),
             )
             for key, img in made:
                 if img:
@@ -367,8 +368,11 @@ class Renderer:
         import json as _json
 
         self._write_raw("stats.json", _json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+        # 템플릿은 StrictUndefined 라 빠진 항목이 있으면 바로 터진다. 예전에 모은 자료도
+        # 그릴 수 있게 새로 생긴 항목의 기본값을 먼저 깔아 둔다.
+        payload = {"rent": [], "sizes": [], "map": {}, **data}
         return self._write("stats.md", "stats.md.j2", index=index_table(series or {}),
-                           images=files, history_region=history_region, **data)
+                           images=files, history_region=history_region, **payload)
 
     def policy(self, docs: list) -> Path | None:
         """정부 발표 원문 3줄 요약 + 원본 파일. 없으면 파일을 만들지 않는다."""
@@ -1114,12 +1118,29 @@ def update_index(cfg: Config) -> Path | None:
         )
 
     lines += _weekly_section(out_dir)
+    lines += _monthly_section(out_dir)
     lines += _titles_section(cfg)
     lines += _cost_section(cfg)
 
     path = out_dir / "INDEX.md"
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     return path
+
+
+def _monthly_section(out_dir: Path) -> list[str]:
+    monthly = out_dir / "monthly"
+    if not monthly.exists():
+        return []
+    months = sorted((p for p in monthly.iterdir() if p.is_dir()), reverse=True)
+    if not months:
+        return []
+    lines = ["", "## 월간 결산", "", "| 달 | 결산 | 네이버 HTML | 원자료 |", "| --- | --- | --- | --- |"]
+    for mo in months:
+        def cell(filename: str, label: str, mo: Path = mo) -> str:
+            return f"[{label}](monthly/{mo.name}/{filename})" if (mo / filename).exists() else "—"
+        lines.append(f"| **{mo.name}** | {cell('monthly.md', '결산')} | "
+                     f"{cell('monthly-naver.html', 'HTML')} | {cell('data.json', 'JSON')} |")
+    return lines
 
 
 def _weekly_section(out_dir: Path) -> list[str]:

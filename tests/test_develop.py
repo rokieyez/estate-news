@@ -1197,3 +1197,132 @@ def test_search_index_includes_trade_stats(tmp_path):
     assert "노원구 전세가율" in labels and "노원구 거래" in labels
     assert "성동구 벽산 신고가" in labels
     assert "2,230건" in entry["one_liner"]
+
+
+# ── 월세 구성 · 면적대 · 자치구 지도 · 월간 결산 ──────────────
+
+def test_rent_mix_counts_renewals_but_prices_only_new():
+    from rebrief.stats import rent_mix
+
+    rents = [
+        {"deposit": 500_000_000, "monthly": 0, "contract": "신규"},
+        {"deposit": 700_000_000, "monthly": 0, "contract": "신규"},
+        {"deposit": 100_000_000, "monthly": 800_000, "contract": "신규"},
+        {"deposit": 300_000_000, "monthly": 0, "contract": "갱신"},   # 종전 조건 — 시세가 아니다
+    ]
+    mix = rent_mix(rents)
+    assert mix["total"] == 4 and mix["renew_count"] == 1
+    assert mix["monthly_count"] == 1 and mix["monthly_share"] == 25.0
+    # 갱신(3억)을 섞었다면 5억이 됐을 값. 신규 둘의 가운뎃값이라 6억이어야 한다.
+    assert mix["jeonse_deposit"] == 600_000_000
+    assert mix["jeonse_count"] == 2
+    assert mix["rent_monthly"] == 800_000
+    assert rent_mix([]) == {}
+
+
+def test_size_bands_split_at_60_85_135():
+    from rebrief.stats import size_band, size_change, size_mix
+
+    assert (size_band(60), size_band(60.1)) == ("소형", "중형")
+    assert (size_band(85), size_band(85.1)) == ("중형", "중대형")
+    assert (size_band(135), size_band(135.1)) == ("중대형", "대형")
+
+    now = size_mix([{"area": 59, "amount": 500_000_000},
+                    {"area": 84, "amount": 900_000_000},
+                    {"area": 84, "amount": 1_100_000_000}])
+    assert [b["band"] for b in now] == ["소형", "중형", "중대형", "대형"]
+    assert now[1]["count"] == 2 and now[1]["share"] == 66.7
+    assert now[1]["avg"] == 1_000_000_000
+
+    was = size_mix([{"area": 59, "amount": 400_000_000}])
+    merged = size_change(now, was)
+    assert merged[0]["was_share"] == 100.0 and merged[0]["share_change"] == -66.7
+    # 전달 자료가 없으면 비교를 비워 둔다 (0 으로 두면 '전달엔 없었다' 로 잘못 읽힌다)
+    assert size_change(now, [])[0]["was_share"] is None
+    assert size_mix([]) == []
+
+
+def test_choropleth_needs_most_of_seoul():
+    from rebrief import images
+
+    names = [gu if gu.endswith("구") else f"{gu}구"
+             for row in images.SEOUL_LAYOUT for gu in row.values()]
+    half = {n: 100 for n in names[:10]}
+    assert images.district_choropleth({"month_label": "2026년 7월", "map": half}, "2026-09-07") is None
+
+    full = {n: 40 + i * 30 for i, n in enumerate(names)}
+    img = images.district_choropleth({"month_label": "2026년 7월", "map": full}, "2026-09-07")
+    assert img is not None and img.slug == "stats-map"
+    # 색만으로 구분하지 않는다 — 칸마다 숫자가 적혀 있어야 한다
+    assert f"{full['노원구']:,}" in img.svg and "자료 없음" not in img.svg
+    assert images.BLUE_RAMP[-1] in img.svg
+
+
+def test_monthly_review_skips_thin_months(cfg):
+    from rebrief.monthly import collect_month, prev_month_of, run_monthly
+
+    assert prev_month_of("2026-09-07") == "2026-08"
+    assert prev_month_of("2026-01-03") == "2025-12"
+
+    for day in ("2026-08-03", "2026-08-04"):
+        out = cfg.output_dir / day
+        out.mkdir(parents=True)
+        (out / "data.json").write_text('{"headline": "테스트"}', encoding="utf-8")
+    assert [d["date"] for d in collect_month(cfg, "2026-08")] == ["2026-08-03", "2026-08-04"]
+    assert collect_month(cfg, "2026-07") == []
+
+    result = run_monthly(cfg, month="2026-08", use_llm=False)
+    assert result.skipped and not result.files
+    assert "2일치" in result.warnings[0]
+
+
+def test_monthly_review_writes_article(cfg, monkeypatch):
+    from rebrief import monthly as monthly_mod
+    from rebrief.models import MonthlyReview
+    from rebrief.store import TradeLog
+
+    for day in range(1, 13):
+        out = cfg.output_dir / f"2026-08-{day:02d}"
+        out.mkdir(parents=True)
+        (out / "data.json").write_text('{"headline": "테스트", "issues": []}', encoding="utf-8")
+
+    book = TradeLog(cfg.state_dir / "trades.json")
+    book.add("2026-08-28", {"month": "202606", "total": 2252,
+                            "districts": [{"name": "노원구", "now": {"count": 673, "avg": 7e8}}],
+                            "jeonse": [{"name": "노원구", "median": 54.8, "count": 120}],
+                            "highlights": []}, {})
+    book.save()
+    assert monthly_mod.month_trades(cfg, "2026-08")["month_label"] == "2026년 6월"
+    assert monthly_mod.month_trades(cfg, "2026-05") == {}
+
+    class FakeGenerator:
+        def __init__(self, _cfg):
+            from rebrief.llm import Usage
+
+            self.usage = Usage(cfg)
+
+        def generate_monthly(self, days, label, trades=None):
+            assert trades and trades["total"] == 2252     # 장부를 그대로 넘겨야 한다
+            return MonthlyReview(
+                title="2026년 8월 부동산 결산", slug="2026-08", meta_description="여덟 달째 정리",
+                month_lines=["한 줄"] * 5, body_markdown="## 소제목\n\n본문.\n",
+                turning_points=["8월 12일부터 달라졌습니다"],
+                next_month_watch=["9월 국회"], tags=["부동산"])
+
+    monkeypatch.setattr(monthly_mod, "ContentGenerator", FakeGenerator)
+    result = monthly_mod.run_monthly(cfg, month="2026-08", use_llm=True)
+    assert result.llm_used and not result.skipped
+    text = (result.out_dir / "monthly.md").read_text(encoding="utf-8")
+    assert "2026년 6월 신고된 아파트 매매는 **2,252건**" in text   # 확정 달을 밝혀 쓴다
+    assert "노원구 | 54.8%" in text and "흐름이 바뀐 지점" in text
+    assert (result.out_dir / "monthly-naver.html").exists()
+
+
+def test_sitemap_keeps_the_period_folder(cfg, tmp_path):
+    from rebrief.site import _build_sitemap
+
+    periods = [{"week": "2026-08", "dir": "monthly",
+                "pages": [{"href": "monthly.html", "label": "결산 읽기"}]}]
+    _build_sitemap(cfg, [], periods, tmp_path)
+    xml = (tmp_path / "sitemap.xml").read_text(encoding="utf-8")
+    assert "/monthly/2026-08/monthly.html" in xml

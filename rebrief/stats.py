@@ -231,11 +231,104 @@ def jeonse_ratio(trades: list[dict], rents: list[dict], *, min_pairs: int = 2) -
         })
     if len(pairs) < min_pairs:
         return {}
-    ratios = sorted(p["ratio"] for p in pairs)
-    mid = len(ratios) // 2
-    median = ratios[mid] if len(ratios) % 2 else round((ratios[mid - 1] + ratios[mid]) / 2, 1)
+    median = round(_median([p["ratio"] for p in pairs]), 1)
     pairs.sort(key=lambda p: p["ratio"], reverse=True)
     return {"median": median, "pairs": pairs, "count": len(pairs)}
+
+
+def _median(values: list[float]) -> float:
+    """가운뎃값. 빈 목록이면 0."""
+    if not values:
+        return 0.0
+    xs = sorted(values)
+    mid = len(xs) // 2
+    return float(xs[mid]) if len(xs) % 2 else (xs[mid - 1] + xs[mid]) / 2
+
+
+def rent_mix(rents: list[dict]) -> dict:
+    """전월세 계약을 월세 낀 것과 순수 전세로 갈라 센다.
+
+    전세가율은 순수 전세만 쓰므로 월세 계약은 계산에서 버려집니다. 그런데 '전세가 월세로
+    바뀌는 중' 은 그 자체가 기사에 매일 나오는 이야기라, 버리는 대신 비중과 시세를 남깁니다.
+    호출은 늘지 않습니다 — 전세가율을 내려고 이미 받아 둔 응답을 한 번 더 볼 뿐입니다.
+
+    비중은 갱신까지 **전부** 셉니다(실제로 맺어진 계약 구성이 궁금한 것이므로). 반대로
+    보증금·월세의 가운뎃값은 **신규만** 봅니다 — 갱신은 종전 조건을 따라가 시세가 아닙니다.
+    """
+    if not rents:
+        return {}
+    fresh = [r for r in rents if r.get("contract") != "갱신"]
+    monthly = [r for r in rents if r["monthly"]]
+    monthly_fresh = [r for r in fresh if r["monthly"]]
+    jeonse_fresh = [r for r in fresh if not r["monthly"]]
+    return {
+        "total": len(rents),
+        "monthly_count": len(monthly),
+        "monthly_share": round(len(monthly) / len(rents) * 100, 1),
+        "renew_count": sum(1 for r in rents if r.get("contract") == "갱신"),
+        "jeonse_deposit": round(_median([r["deposit"] for r in jeonse_fresh])),
+        "jeonse_count": len(jeonse_fresh),
+        "rent_deposit": round(_median([r["deposit"] for r in monthly_fresh])),
+        "rent_monthly": round(_median([r["monthly"] for r in monthly_fresh])),
+        "rent_count": len(monthly_fresh),
+    }
+
+
+# ── 면적대별 ────────────────────────────────────────────────
+#
+# 같은 구라도 소형만 팔리는 달과 대형만 팔리는 달은 평균가가 딴판입니다. 평균가 하나만
+# 보면 "값이 올랐다" 와 "비싼 것만 팔렸다" 를 구별할 수 없어 면적대를 나눠 함께 냅니다.
+# 경계 60·85·135㎡ 는 전용면적 기준이고, 85㎡ 는 국민주택규모입니다.
+
+SIZE_BANDS: tuple[tuple[str, float, float], ...] = (
+    ("소형", 0.0, 60.0),
+    ("중형", 60.0, 85.0),
+    ("중대형", 85.0, 135.0),
+    ("대형", 135.0, float("inf")),
+)
+
+
+def size_change(now: list[dict], was: list[dict]) -> list[dict]:
+    """이번 달 면적대별 구성에 전달 비중을 나란히 붙인다. 전달 자료가 없으면 그대로 둔다."""
+    before = {r["band"]: r for r in was}
+    out = []
+    for row in now:
+        prior = before.get(row["band"])
+        out.append({**row,
+                    "was_share": prior["share"] if prior else None,
+                    "share_change": round(row["share"] - prior["share"], 1) if prior else None})
+    return out
+
+
+def size_band(area: float) -> str:
+    """전용면적 → 면적대 이름. 60㎡ 정확히면 '소형'(이하 기준)."""
+    try:
+        value = float(area)
+    except (TypeError, ValueError):
+        return ""
+    for name, lo, hi in SIZE_BANDS:
+        if lo < value <= hi or (lo == 0.0 and value <= hi):
+            return name
+    return ""
+
+
+def size_mix(rows: list[dict]) -> list[dict]:
+    """거래를 면적대로 갈라 건수·비중·평균가. 거래가 없으면 빈 목록."""
+    if not rows:
+        return []
+    buckets: dict[str, list[dict]] = {name: [] for name, _, _ in SIZE_BANDS}
+    for r in rows:
+        band = size_band(r.get("area", 0))
+        if band:
+            buckets[band].append(r)
+    total = sum(len(v) for v in buckets.values())
+    if not total:
+        return []
+    return [{"band": name, "count": len(v),
+             "share": round(len(v) / total * 100, 1),
+             "avg": sum(d["amount"] for d in v) // len(v) if v else 0}
+            for name, _, _ in SIZE_BANDS
+            for v in [buckets[name]]]
 
 
 def summarize(rows: list[dict]) -> dict:
@@ -405,6 +498,8 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
         cursor = prev_month(cursor)
 
     rows, picks = [], []
+    all_now: list[dict] = []      # 면적대 합계용. 구별로 나눈 것과 별개로 전체도 낸다.
+    all_was: list[dict] = []
     for item in districts:
         code, name = str(item.get("code", "")), str(item.get("name", ""))
         if not code:
@@ -421,10 +516,17 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
                "focus": bool(item.get("focus")),
                "change": now["count"] - was["count"]}
         if settings.get("jeonse", True):
-            ratio = jeonse_ratio(deals, apt_rents(cfg, code, ym))
+            # 응답을 한 번만 받아 전세가율과 월세 구성에 함께 쓴다 (호출을 늘리지 않으려고).
+            rents = apt_rents(cfg, code, ym)
+            ratio = jeonse_ratio(deals, rents)
             if ratio:
                 ratio["pairs"] = ratio["pairs"][:5]
                 row["jeonse"] = ratio
+            mix = rent_mix(rents)
+            if mix:
+                row["rent"] = mix
+        all_now += deals
+        all_was += by_month.get(before, [])
         rows.append(row)
         picks += highlights(deals, history, district=name)
 
@@ -440,9 +542,29 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
             "jeonse": [{"name": r["name"], **r["jeonse"],
                         "pairs": r["jeonse"]["pairs"][:5]}
                        for r in rows if r.get("jeonse")],
+            "rent": [{"name": r["name"], **r["rent"]} for r in rows if r.get("rent")],
+            "sizes": size_change(size_mix(all_now), size_mix(all_was)),
+            "map": district_counts(cfg, ym) if settings.get("map", True) else {},
             "history_months": months_back,
             "total": sum(r["now"]["count"] for r in rows),
             "total_before": sum(r["was"]["count"] for r in rows)}
+
+
+def district_counts(cfg, ym: str) -> dict:
+    """서울 25개 구 전부의 그 달 거래 건수. 지도 한 장을 채우기 위한 가벼운 한 바퀴.
+
+    표에 올리는 8개 구는 지난 달들과 전월세까지 받지만, 여기서는 **그 달 한 번씩**만
+    부릅니다(25회). 빠진 칸이 열일곱이나 되는 지도는 읽을 값이 없어서, 지도를 그릴 거면
+    스물다섯을 다 채워야 합니다.
+    """
+    if not deal_key():
+        return {}
+    counts: dict[str, int] = {}
+    for name, code in SEOUL_CODES.items():
+        deals = apt_trades(cfg, code, ym)
+        if deals:
+            counts[name] = len(deals)
+    return counts
 
 
 # ── 한국부동산원 ─────────────────────────────────────────────

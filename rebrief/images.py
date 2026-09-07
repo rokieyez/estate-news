@@ -33,6 +33,10 @@ GRID = "#e1e0d9"        # 눈금선 (가는 선)
 BLUE = "#256abf"        # 파랑 step500 — 흰 글씨 대비 5.39:1
 BLUE_SOFT = "#cde2fb"   # 파랑 step100
 ORANGE = "#a9560a"      # 두 번째 계열색. 파랑↔주황은 색각 이상에서도 구분된다
+# 크기를 나타내는 단계색. 한 가지 색의 옅음→짙음이라 순서가 저절로 읽힌다(무지개는 안 된다).
+# 앞 넷은 검정 글씨(대비 6.7:1 이상), 뒤 둘은 흰 글씨(5.4:1 이상)를 얹는다.
+BLUE_RAMP = ("#eaf2fe", "#cde2fb", "#9dc6f5", "#5a9ae4", "#256abf", "#173f77")
+RAMP_INK = (INK, INK, INK, INK, "#ffffff", "#ffffff")
 CRITICAL = "#d03b3b"
 GOOD = "#006300"
 # 맥(Apple SD Gothic Neo) → 리눅스 러너(Noto Sans CJK KR, 워크플로에서 설치) → 그 외 순서.
@@ -533,6 +537,91 @@ def trade_volume_bar(data: dict, date: str, extra: dict | None = None) -> "Image
              f'stroke="{BASELINE}" stroke-width="2"/>')
     frame_close(p, notes, g)
     return Image("stats-volume", "\n".join(p), title)
+
+
+
+def _quantile_bins(values: list[float], groups: int = 5) -> list[float]:
+    """값을 같은 수씩 나누는 경계. 다섯 칸에 구가 고르게 들어가게.
+
+    값 범위를 그냥 5등분하면 거래가 몰린 한두 구 때문에 나머지 스물이 전부 맨 아래 칸에
+    들어가 지도가 한 가지 색이 됩니다. 대신 순위로 나누고, 각 칸의 실제 값 범위를 범례에
+    적어 무엇을 나눈 것인지 보이게 합니다.
+    """
+    xs = sorted(values)
+    if not xs:
+        return []
+    return [xs[min(int(len(xs) * i / groups), len(xs) - 1)] for i in range(1, groups)]
+
+
+def district_choropleth(data: dict, date: str, extra: dict | None = None) -> "Image | None":
+    """서울 자치구 도식에 거래 건수를 색 농담으로 칠한다.
+
+    스물다섯 칸이 다 차야 지도로 읽히므로, 절반만 있으면 그리지 않습니다.
+    색만으로 구분하지 않도록 칸마다 숫자를 함께 적습니다.
+    """
+    counts = {k: v for k, v in (data.get("map") or {}).items() if v}
+    if len(counts) < 18:
+        return None
+    label = data.get("month_label", "")
+    title = f"{label} 서울 자치구별 아파트 매매 거래"
+    sub = "신고분 기준 · 해제분 제외"
+    notes = [
+        "※ 실제 지형이 아닌 위치 도식입니다. 칸의 크기는 면적·인구와 무관합니다.",
+        "※ 색은 다섯 칸에 구가 고르게 들어가도록 순위로 나눴습니다. 칸마다 실제 건수를 적었습니다.",
+        f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계",
+    ]
+
+    tw, th, gap = 128, 92, 10
+    ramp = BLUE_RAMP[1:]                    # 맨 옅은 단계는 '자료 없음' 과 헷갈려 뺀다
+    inks = RAMP_INK[1:]
+    edges = _quantile_bins(list(counts.values()), len(ramp))
+
+    def step(value: float) -> int:
+        for i, edge in enumerate(edges):
+            if value <= edge:
+                return i
+        return len(ramp) - 1
+
+    w = (M + P) * 2 + 6 * tw + 5 * gap
+    rows = len(SEOUL_LAYOUT)
+    content = 62 + rows * (th + gap) - gap
+    h = card_height(w, title, sub, content, notes)
+    p, g = frame_open(w, h, title=title, subtitle=sub, channel=_channel(extra), date=date)
+    x, y = g["x"], g["top"]
+
+    # 범례 — 단계마다 그 칸에 실제로 들어간 값의 범위를 적는다
+    lo = min(counts.values())
+    bounds = [lo] + edges + [max(counts.values())]
+    lw = g["inner"] / len(ramp)
+    for i, color in enumerate(ramp):
+        lx = x + i * lw
+        p.append(f'<rect x="{lx:g}" y="{y - 16}" width="26" height="18" rx="4" fill="{color}"/>')
+        left, right = bounds[i] + (1 if i else 0), bounds[i + 1]
+        span = f"{left:,}~{right:,}" if right > left else f"{left:,}"
+        p.append(f'<text x="{lx + 33:g}" y="{y - 1}" font-size="17" fill="{INK_2}">{esc(span)}건</text>')
+
+    map_top = y + 62
+    for r, row in enumerate(SEOUL_LAYOUT):
+        for c, gu in row.items():
+            name = gu if gu.endswith("구") else f"{gu}구"
+            gx, gy = x + c * (tw + gap), map_top + r * (th + gap)
+            value = counts.get(name)
+            if value is None:
+                p.append(f'<rect x="{gx}" y="{gy}" width="{tw}" height="{th}" rx="10" '
+                         f'fill="{SURFACE}" stroke="{BASELINE}" stroke-width="2" stroke-dasharray="6 4"/>')
+                p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 - 2:g}" font-size="22" '
+                         f'text-anchor="middle" fill="{INK_2}">{gu}</text>')
+                p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 + 24:g}" font-size="17" '
+                         f'text-anchor="middle" fill="{MUTED}">자료 없음</text>')
+                continue
+            i = step(value)
+            p.append(f'<rect x="{gx}" y="{gy}" width="{tw}" height="{th}" rx="10" fill="{ramp[i]}"/>')
+            p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 - 4:g}" font-size="22" '
+                     f'text-anchor="middle" fill="{inks[i]}">{gu}</text>')
+            p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 + 26:g}" font-size="25" '
+                     f'font-weight="700" text-anchor="middle" fill="{inks[i]}">{value:,}</text>')
+    frame_close(p, notes, g)
+    return Image("stats-map", "\n".join(p), title)
 
 
 def price_index_line(series: dict, date: str, extra: dict | None = None) -> "Image | None":

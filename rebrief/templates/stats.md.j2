@@ -17,6 +17,28 @@
 | {{ d.name }} | {{ d.now.count }}건 | {{ '%+d'|format(d.change) }} | {{ (d.now.avg / 100000000)|round(1) }}억 | {% if d.now.top %}{{ d.now.top.name }} {{ (d.now.top.amount / 100000000)|round(1) }}억 ({{ d.now.top.area }}㎡){% else %}—{% endif %} |
 {% endfor %}
 
+{% if images.get('map') %}
+## 서울 전체 지도
+
+표에 올린 곳 말고 **스물다섯 개 구 전부**를 한 번씩 세어 칠했습니다.
+색은 순위로 다섯 칸에 나눈 것이라, 짙다고 두 배가 아닙니다. 칸 안의 숫자를 보세요.
+
+![자치구별 거래 건수]({{ images['map'] }})
+
+{% endif %}
+{% if sizes %}
+## 어떤 크기가 팔렸나
+
+평균 거래가 하나만 보면 **값이 오른 것**과 **비싼 것만 팔린 것**을 구별할 수 없습니다.
+전용면적으로 갈라 보면 갈립니다. 85㎡ 가 국민주택규모입니다.
+
+| 면적대 | 전용면적 | 거래 건수 | 비중 | {{ before_label }} 비중 | 평균 거래가 |
+| --- | --- | ---: | ---: | ---: | ---: |
+{% for b in sizes %}
+| {{ b.band }} | {{ '60㎡ 이하' if b.band == '소형' else ('60~85㎡' if b.band == '중형' else ('85~135㎡' if b.band == '중대형' else '135㎡ 초과')) }} | {{ b.count }}건 | {{ b.share }}% | {% if b.was_share is not none %}{{ b.was_share }}% ({{ '%+.1f'|format(b.share_change) }}%p){% else %}—{% endif %} | {% if b.avg %}{{ (b.avg / 100000000)|round(1) }}억{% else %}—{% endif %} |
+{% endfor %}
+{% endif %}
+
 {% if highlights %}
 ## 눈에 띄는 거래
 
@@ -41,6 +63,19 @@
 | --- | ---: | ---: | --- |
 {% for j in jeonse %}
 | {{ j.name }} | {{ j.median }}% | {{ j.count }}곳 | {{ j.pairs[0].name }} {{ j.pairs[0].ratio }}% ({{ (j.pairs[0].sale / 100000000)|round(1) }}억 / 전세 {{ (j.pairs[0].lease / 100000000)|round(1) }}억) |
+{% endfor %}
+{% endif %}
+
+{% if rent %}
+## 전세와 월세의 비율
+
+전세가율에서 뺀 월세 계약도 그 자체로 자료입니다. **비중**은 갱신까지 전부 셌고,
+**보증금·월세 가운뎃값**은 신규 계약만 봤습니다 — 갱신은 종전 조건을 따라가 시세가 아닙니다.
+
+| 지역 | 전월세 계약 | 월세 낀 계약 | 신규 전세 보증금 | 신규 월세 (보증금 / 월) |
+| --- | ---: | ---: | ---: | --- |
+{% for r in rent %}
+| {{ r.name }} | {{ r.total }}건 | {{ r.monthly_count }}건 ({{ r.monthly_share }}%) | {% if r.jeonse_deposit %}{{ (r.jeonse_deposit / 100000000)|round(2) }}억{% else %}—{% endif %} | {% if r.rent_count %}{% if r.rent_deposit >= 100000000 %}{{ (r.rent_deposit / 100000000)|round(2) }}억{% else %}{{ (r.rent_deposit / 10000)|round|int }}만원{% endif %} / {{ (r.rent_monthly / 10000)|round|int }}만원{% else %}—{% endif %} |
 {% endfor %}
 {% endif %}
 

@@ -82,6 +82,17 @@
           }
         ],
         "count": 128
+      },
+      "rent": {
+        "total": 1302,
+        "monthly_count": 607,
+        "monthly_share": 46.6,
+        "renew_count": 635,
+        "jeonse_deposit": 330000000,
+        "jeonse_count": 332,
+        "rent_deposit": 40000000,
+        "rent_monthly": 800000,
+        "rent_count": 335
       }
     },
     {
@@ -162,6 +173,17 @@
           }
         ],
         "count": 71
+      },
+      "rent": {
+        "total": 1255,
+        "monthly_count": 517,
+        "monthly_share": 41.2,
+        "renew_count": 781,
+        "jeonse_deposit": 480480000,
+        "jeonse_count": 231,
+        "rent_deposit": 72720000,
+        "rent_monthly": 720000,
+        "rent_count": 243
       }
     },
     {
@@ -242,6 +264,17 @@
           }
         ],
         "count": 75
+      },
+      "rent": {
+        "total": 1384,
+        "monthly_count": 629,
+        "monthly_share": 45.4,
+        "renew_count": 678,
+        "jeonse_deposit": 775000000,
+        "jeonse_count": 372,
+        "rent_deposit": 201600000,
+        "rent_monthly": 1500000,
+        "rent_count": 334
       }
     },
     {
@@ -276,7 +309,64 @@
         }
       },
       "focus": false,
-      "change": 25
+      "change": 25,
+      "jeonse": {
+        "median": 55.6,
+        "pairs": [
+          {
+            "name": "대경홈타운",
+            "dong": "대조동",
+            "area": 13.79,
+            "sale": 120000000,
+            "lease": 94000000,
+            "ratio": 78.3
+          },
+          {
+            "name": "갈현1단지e-편한세상",
+            "dong": "구산동",
+            "area": 84.62,
+            "sale": 627500000,
+            "lease": 485000000,
+            "ratio": 77.3
+          },
+          {
+            "name": "경남아너스빌",
+            "dong": "구산동",
+            "area": 84.99,
+            "sale": 584500000,
+            "lease": 450000000,
+            "ratio": 77.0
+          },
+          {
+            "name": "은평뉴타운 제각말 푸르지오(5-4단지)",
+            "dong": "진관동",
+            "area": 84.89,
+            "sale": 880000000,
+            "lease": 650000000,
+            "ratio": 73.9
+          },
+          {
+            "name": "은평신사두산위브2차",
+            "dong": "신사동",
+            "area": 84.99,
+            "sale": 820000000,
+            "lease": 600000000,
+            "ratio": 73.2
+          }
+        ],
+        "count": 45
+      },
+      "rent": {
+        "total": 765,
+        "monthly_count": 333,
+        "monthly_share": 43.5,
+        "renew_count": 317,
+        "jeonse_deposit": 450060000,
+        "jeonse_count": 218,
+        "rent_deposit": 101880000,
+        "rent_monthly": 495000,
+        "rent_count": 230
+      }
     },
     {
       "name": "강남구",
@@ -356,6 +446,17 @@
           }
         ],
         "count": 44
+      },
+      "rent": {
+        "total": 1357,
+        "monthly_count": 726,
+        "monthly_share": 53.5,
+        "renew_count": 643,
+        "jeonse_deposit": 900000000,
+        "jeonse_count": 288,
+        "rent_deposit": 200000000,
+        "rent_monthly": 1700000,
+        "rent_count": 426
       }
     },
     {
@@ -436,6 +537,17 @@
           }
         ],
         "count": 39
+      },
+      "rent": {
+        "total": 746,
+        "monthly_count": 361,
+        "monthly_share": 48.4,
+        "renew_count": 341,
+        "jeonse_deposit": 690000000,
+        "jeonse_count": 198,
+        "rent_deposit": 100000000,
+        "rent_monthly": 1370000,
+        "rent_count": 207
       }
     },
     {
@@ -516,6 +628,17 @@
           }
         ],
         "count": 33
+      },
+      "rent": {
+        "total": 1066,
+        "monthly_count": 494,
+        "monthly_share": 46.3,
+        "renew_count": 467,
+        "jeonse_deposit": 880700000,
+        "jeonse_count": 272,
+        "rent_deposit": 300000000,
+        "rent_monthly": 1500000,
+        "rent_count": 327
       }
     },
     {
@@ -596,6 +719,17 @@
           }
         ],
         "count": 31
+      },
+      "rent": {
+        "total": 601,
+        "monthly_count": 257,
+        "monthly_share": 42.8,
+        "renew_count": 281,
+        "jeonse_deposit": 720000000,
+        "jeonse_count": 164,
+        "rent_deposit": 140220000,
+        "rent_monthly": 1940000,
+        "rent_count": 156
       }
     }
   ],
@@ -810,6 +944,53 @@
       "count": 75
     },
     {
+      "name": "은평구",
+      "median": 55.6,
+      "pairs": [
+        {
+          "name": "대경홈타운",
+          "dong": "대조동",
+          "area": 13.79,
+          "sale": 120000000,
+          "lease": 94000000,
+          "ratio": 78.3
+        },
+        {
+          "name": "갈현1단지e-편한세상",
+          "dong": "구산동",
+          "area": 84.62,
+          "sale": 627500000,
+          "lease": 485000000,
+          "ratio": 77.3
+        },
+        {
+          "name": "경남아너스빌",
+          "dong": "구산동",
+          "area": 84.99,
+          "sale": 584500000,
+          "lease": 450000000,
+          "ratio": 77.0
+        },
+        {
+          "name": "은평뉴타운 제각말 푸르지오(5-4단지)",
+          "dong": "진관동",
+          "area": 84.89,
+          "sale": 880000000,
+          "lease": 650000000,
+          "ratio": 73.9
+        },
+        {
+          "name": "은평신사두산위브2차",
+          "dong": "신사동",
+          "area": 84.99,
+          "sale": 820000000,
+          "lease": 600000000,
+          "ratio": 73.2
+        }
+      ],
+      "count": 45
+    },
+    {
       "name": "강남구",
       "median": 38.8,
       "pairs": [
@@ -998,6 +1179,165 @@
       "count": 31
     }
   ],
+  "rent": [
+    {
+      "name": "노원구",
+      "total": 1302,
+      "monthly_count": 607,
+      "monthly_share": 46.6,
+      "renew_count": 635,
+      "jeonse_deposit": 330000000,
+      "jeonse_count": 332,
+      "rent_deposit": 40000000,
+      "rent_monthly": 800000,
+      "rent_count": 335
+    },
+    {
+      "name": "강서구",
+      "total": 1255,
+      "monthly_count": 517,
+      "monthly_share": 41.2,
+      "renew_count": 781,
+      "jeonse_deposit": 480480000,
+      "jeonse_count": 231,
+      "rent_deposit": 72720000,
+      "rent_monthly": 720000,
+      "rent_count": 243
+    },
+    {
+      "name": "송파구",
+      "total": 1384,
+      "monthly_count": 629,
+      "monthly_share": 45.4,
+      "renew_count": 678,
+      "jeonse_deposit": 775000000,
+      "jeonse_count": 372,
+      "rent_deposit": 201600000,
+      "rent_monthly": 1500000,
+      "rent_count": 334
+    },
+    {
+      "name": "은평구",
+      "total": 765,
+      "monthly_count": 333,
+      "monthly_share": 43.5,
+      "renew_count": 317,
+      "jeonse_deposit": 450060000,
+      "jeonse_count": 218,
+      "rent_deposit": 101880000,
+      "rent_monthly": 495000,
+      "rent_count": 230
+    },
+    {
+      "name": "강남구",
+      "total": 1357,
+      "monthly_count": 726,
+      "monthly_share": 53.5,
+      "renew_count": 643,
+      "jeonse_deposit": 900000000,
+      "jeonse_count": 288,
+      "rent_deposit": 200000000,
+      "rent_monthly": 1700000,
+      "rent_count": 426
+    },
+    {
+      "name": "마포구",
+      "total": 746,
+      "monthly_count": 361,
+      "monthly_share": 48.4,
+      "renew_count": 341,
+      "jeonse_deposit": 690000000,
+      "jeonse_count": 198,
+      "rent_deposit": 100000000,
+      "rent_monthly": 1370000,
+      "rent_count": 207
+    },
+    {
+      "name": "서초구",
+      "total": 1066,
+      "monthly_count": 494,
+      "monthly_share": 46.3,
+      "renew_count": 467,
+      "jeonse_deposit": 880700000,
+      "jeonse_count": 272,
+      "rent_deposit": 300000000,
+      "rent_monthly": 1500000,
+      "rent_count": 327
+    },
+    {
+      "name": "성동구",
+      "total": 601,
+      "monthly_count": 257,
+      "monthly_share": 42.8,
+      "renew_count": 281,
+      "jeonse_deposit": 720000000,
+      "jeonse_count": 164,
+      "rent_deposit": 140220000,
+      "rent_monthly": 1940000,
+      "rent_count": 156
+    }
+  ],
+  "sizes": [
+    {
+      "band": "소형",
+      "count": 1060,
+      "share": 47.5,
+      "avg": 893207830,
+      "was_share": 44.7,
+      "share_change": 2.8
+    },
+    {
+      "band": "중형",
+      "count": 848,
+      "share": 38.0,
+      "avg": 1503100825,
+      "was_share": 38.7,
+      "share_change": -0.7
+    },
+    {
+      "band": "중대형",
+      "count": 243,
+      "share": 10.9,
+      "avg": 2150740740,
+      "was_share": 12.1,
+      "share_change": -1.2
+    },
+    {
+      "band": "대형",
+      "count": 79,
+      "share": 3.5,
+      "avg": 4074683544,
+      "was_share": 4.5,
+      "share_change": -1.0
+    }
+  ],
+  "map": {
+    "종로구": 40,
+    "중구": 74,
+    "용산구": 68,
+    "성동구": 98,
+    "광진구": 78,
+    "동대문구": 221,
+    "중랑구": 501,
+    "성북구": 321,
+    "강북구": 131,
+    "도봉구": 268,
+    "노원구": 723,
+    "은평구": 283,
+    "서대문구": 236,
+    "마포구": 139,
+    "양천구": 222,
+    "강서구": 387,
+    "구로구": 355,
+    "금천구": 124,
+    "영등포구": 252,
+    "동작구": 237,
+    "관악구": 193,
+    "서초구": 131,
+    "강남구": 161,
+    "송파구": 308,
+    "강동구": 261
+  },
   "history_months": 6,
   "total": 2230,
   "total_before": 2252

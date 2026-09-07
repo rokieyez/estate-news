@@ -251,6 +251,19 @@ class WeeklyReview(BaseModel):
     tags: list[str] = Field(description="태그 목록")
 
 
+class MonthlyReview(BaseModel):
+    """한 달치 브리핑에 그달 확정된 실거래를 얹은 결산 글."""
+
+    title: str = Field(description="블로그 제목. 'N월 부동산' 이 들어가면 좋다. 25~35자")
+    slug: str = Field(description="영문 소문자 하이픈 슬러그")
+    meta_description: str = Field(description="검색결과 설명문. 80~120자")
+    month_lines: list[str] = Field(description="이달을 다섯 줄로. 각 줄 40자 이내, 숫자 포함")
+    body_markdown: str = Field(description="마크다운 본문. 날짜 순이 아니라 주제 순으로 묶는다")
+    turning_points: list[str] = Field(description="이달 흐름이 바뀐 지점 2~4개. 무엇이 언제 바뀌었는지")
+    next_month_watch: list[str] = Field(description="다음 달에 볼 일정·지표 2~4개")
+    tags: list[str] = Field(description="태그 목록")
+
+
 class Rewrite(BaseModel):
     """금지 표현이 든 문장 하나를 고쳐 쓴 결과."""
 

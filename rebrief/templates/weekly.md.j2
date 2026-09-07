@@ -19,7 +19,7 @@ description: "{{ review.meta_description }}"
 
 ## 이번 주 실거래 (직접 집계)
 
-{{ trades.month }} 신고된 아파트 매매는 **{{ '{:,}'.format(trades.total) }}건**입니다.
+{{ trades.month_label }} 신고된 아파트 매매는 **{{ '{:,}'.format(trades.total) }}건**입니다.
 {% if trades.total_change %}이번 주에만 {{ '{:+,}'.format(trades.total_change) }}건이 더 신고됐습니다.{% endif %}
 
 

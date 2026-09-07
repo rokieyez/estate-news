@@ -67,7 +67,10 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
         newest = dest / built[0]["date"]
         shutil.copytree(newest, dest / "latest")
 
-    weeks = _build_weeks(env, source / "weekly", dest / "weekly")
+    weeks = _build_periods(env, source / "weekly", dest / "weekly",
+                           stem="weekly", title="주간 결산")
+    months = _build_periods(env, source / "monthly", dest / "monthly",
+                            stem="monthly", title="월간 결산")
     _build_dashboard(env, cfg, days, built, dest)
     _build_search(env, days, built, dest)
     upcoming = _build_upcoming(env, days, dest, cfg=cfg)
@@ -94,6 +97,7 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
         days=built,
         today=built[0] if built else None,
         weeks=weeks,
+        months=months,
         has_dashboard=bool(days),
         has_search=any((d / "data.json").exists() for d in days),
         upcoming=upcoming,
@@ -103,7 +107,7 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
     (dest / "index.html").write_text(index, encoding="utf-8")
 
     _build_feed(cfg, built, dest)
-    _build_sitemap(cfg, built, weeks, dest)
+    _build_sitemap(cfg, built, weeks + months, dest)
 
     _write_pwa(dest, channel=(cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑"),
                png=bool((cfg.get("images", {}) or {}).get("png", True)))
@@ -357,33 +361,38 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
     (dest / "dashboard.html").write_text(html, encoding="utf-8")
 
 
-def _build_weeks(env, source: Path, dest: Path) -> list[dict]:
-    """output/weekly/<주차>/ 를 사이트로 옮긴다. 최신 주가 앞."""
+def _build_periods(env, source: Path, dest: Path, *, stem: str, title: str) -> list[dict]:
+    """output/<stem>/<이름>/ 을 사이트로 옮긴다. 최신이 앞.
+
+    주간·월간이 폴더 이름과 파일 이름만 다르고 나머지가 같아 한 함수로 씁니다.
+    """
     if not source.exists():
         return []
-    weeks: list[dict] = []
-    for week_dir in sorted((p for p in source.iterdir() if p.is_dir()), reverse=True):
-        md = week_dir / "weekly.md"
-        naver = week_dir / "weekly-naver.html"
+    periods: list[dict] = []
+    for period_dir in sorted((p for p in source.iterdir() if p.is_dir()), reverse=True):
+        md = period_dir / f"{stem}.md"
+        naver = period_dir / f"{stem}-naver.html"
         if not md.exists() and not naver.exists():
             continue
-        target = dest / week_dir.name
+        target = dest / period_dir.name
         target.mkdir(parents=True, exist_ok=True)
-        entry = {"week": week_dir.name, "pages": []}
+        # dir 는 사이트에서의 폴더 이름. 사이트맵이 주소를 만들 때 쓴다
+        # (예전에는 이 값이 없어 weekly/ 가 빠진 주소가 사이트맵에 실렸다).
+        entry = {"week": period_dir.name, "dir": dest.name, "pages": []}
         if naver.exists():
             shutil.copy2(naver, target / naver.name)
             entry["pages"].append({"href": naver.name, "label": "네이버 블로그 글"})
-        for png in sorted(week_dir.glob("img-*.png")):
+        for png in sorted(period_dir.glob("img-*.png")):
             shutil.copy2(png, target / png.name)
         if md.exists():
             html = env.get_template("site_page.html.j2").render(
-                title="주간 결산", date=week_dir.name,
+                title=title, date=period_dir.name,
                 body_html=md_to_html(md.read_text(encoding="utf-8")),
             )
-            (target / "weekly.html").write_text(html, encoding="utf-8")
-            entry["pages"].append({"href": "weekly.html", "label": "결산 읽기"})
-        weeks.append(entry)
-    return weeks
+            (target / f"{stem}.html").write_text(html, encoding="utf-8")
+            entry["pages"].append({"href": f"{stem}.html", "label": "결산 읽기"})
+        periods.append(entry)
+    return periods
 
 
 # 블로그에 올릴 때 실제로 쓰는 파일들 (문서가 아니라 '첨부물')
@@ -709,9 +718,11 @@ def _build_sitemap(cfg: Config, built: list[dict], weeks: list[dict], dest: Path
     for entry in built:
         for page in entry["pages"]:
             urls.append((f"{base}{entry['date']}/{page['href']}", entry["date"]))
-    for week in weeks:
-        for page in week["pages"]:
-            urls.append((f"{base}{week['week']}/{page['href']}", ""))
+    for period in weeks:
+        folder = period.get("dir", "")
+        prefix = f"{folder}/" if folder else ""
+        for page in period["pages"]:
+            urls.append((f"{base}{prefix}{period['week']}/{page['href']}", ""))
     body = "".join(
         "<url><loc>" + _xml_escape(u) + "</loc>"
         + (f"<lastmod>{d}</lastmod>" if d else "")

@@ -130,6 +130,19 @@
   </ul>
 </details>
 {% endif %}
+{% if months %}
+<details open>
+  <summary>월간 결산 ({{ months|length }}달)</summary>
+  <ul class="past">
+    {% for w in months %}
+    <li>
+      <a href="monthly/{{ w.week }}/{{ w.pages[0].href }}">{{ w.week }}</a>
+      <span class="files">· {% for pg in w.pages %}<a href="monthly/{{ w.week }}/{{ pg.href }}">{{ pg.label }}</a>{% if not loop.last %} / {% endif %}{% endfor %}</span>
+    </li>
+    {% endfor %}
+  </ul>
+</details>
+{% endif %}
 
 {% if has_dashboard %}
 <p style="text-align:center;margin:18px 0 0">

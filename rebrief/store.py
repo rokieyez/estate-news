@@ -378,6 +378,11 @@ class PublishLog:
 TRADES_FILE = "trades.json"
 
 
+def _month_label(ym: str) -> str:
+    """'202606' → '2026년 6월'. 못 읽으면 원문 그대로."""
+    return f"{ym[:4]}년 {int(ym[4:6])}월" if len(ym) == 6 and ym.isdigit() else ym
+
+
 class TradeLog:
     """날마다 집계한 실거래 결과를 남긴다. 며칠 쌓이면 우리가 만든 추이가 된다.
 
@@ -452,11 +457,16 @@ class TradeLog:
                                "change": round(value - before, 2) if before is not None else None}
         return {
             "from": first_day, "to": last_day, "month": latest.get("month", ""),
+            # '202606' 을 그대로 글에 실으면 읽히지 않는다. 사람이 읽는 이름도 함께 낸다.
+            "month_label": _month_label(latest.get("month", "")),
             "total": latest.get("total", 0),
             "total_change": latest.get("total", 0) - first.get("total", 0) if len(rows) > 1 else 0,
             "districts": sorted(
                 ({"name": n, **v} for n, v in (latest.get("districts") or {}).items()),
                 key=lambda r: r.get("count", 0), reverse=True)[:5],
+            "jeonse": sorted(
+                ({"name": n, **v} for n, v in (latest.get("jeonse") or {}).items()),
+                key=lambda r: r.get("median", 0), reverse=True)[:5],
             "index": index,
             "days": len(rows),
         }

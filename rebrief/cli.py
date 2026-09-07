@@ -6,6 +6,7 @@
     python -m rebrief doctor       RSS 피드가 살아있는지 점검
     python -m rebrief notify       실행 결과를 텔레그램으로 보내기 (토큰이 있을 때)
     python -m rebrief weekly       지난 7일치를 묶은 주간 결산 글
+    python -m rebrief monthly      지난달 한 달치를 묶은 월간 결산 글
     python -m rebrief titles       제목 후보 보기 / 실제로 고른 것과 조회수 기록
 """
 
@@ -56,6 +57,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_weekly = sub.add_parser("weekly", help="지난 7일치를 묶은 주간 결산 글")
     p_weekly.add_argument("--end", help="결산 마지막 날짜 (기본: 오늘, YYYY-MM-DD)")
     p_weekly.add_argument("--no-llm", action="store_true", help="글 생성을 건너뛰고 프롬프트 팩만")
+
+    p_monthly = sub.add_parser("monthly", help="지난달 한 달치를 묶은 월간 결산 글")
+    p_monthly.add_argument("--month", help="결산할 달 (기본: 지난달, YYYY-MM)")
+    p_monthly.add_argument("--no-llm", action="store_true", help="글 생성을 건너뛰고 프롬프트 팩만")
 
     p_titles = sub.add_parser("titles", help="제목 후보 보기 / 고른 것과 조회수 기록")
     t_sub = p_titles.add_subparsers(dest="titles_cmd", required=True)
@@ -111,6 +116,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_notify(cfg, args)
     if args.command == "weekly":
         return _cmd_weekly(cfg, args)
+    if args.command == "monthly":
+        return _cmd_monthly(cfg, args)
     if args.command == "titles":
         return _cmd_titles(cfg, args)
     if args.command == "publish":
@@ -262,6 +269,28 @@ def _cmd_weekly(cfg, args) -> int:
             print(f"  · {w}")
     print()
     return 0 if result.files else 1
+
+
+def _cmd_monthly(cfg, args) -> int:
+    from .monthly import month_title, run_monthly
+
+    result = run_monthly(cfg, month=args.month, use_llm=False if args.no_llm else None)
+    print(f"\n📅 {month_title(result.month)} 결산  ·  브리핑 {result.days}일치")
+    if result.files:
+        print(f"\n생성된 파일 ({len(result.files)}개)")
+        for path in result.files:
+            print(f"  · {path}")
+    if result.usage and result.usage.calls:
+        print(f"\n💰 {result.usage.summary()}")
+        for line in result.usage.by_kind():
+            print(f"  · {line}")
+    if result.warnings:
+        print("\n⚠️  확인이 필요한 사항")
+        for w in result.warnings:
+            print(f"  · {w}")
+    print()
+    # 자료가 모자라 일부러 안 만든 것은 실패가 아니다 (워크플로가 빨갛게 되면 안 된다)
+    return 0 if (result.files or result.skipped) else 1
 
 
 def _cmd_titles(cfg, args) -> int:
