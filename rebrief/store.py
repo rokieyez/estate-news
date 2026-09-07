@@ -281,14 +281,6 @@ class TitleLog:
         entry["type"] = title_type(entry["title"])
         return entry
 
-    def picked_title(self, run_date: str, kind: str = "blog") -> str:
-        """그날 실제로 고른 제목. 아직 안 골랐으면 첫 후보를 쓴다."""
-        entry = (self.days.get(run_date, {}) or {}).get(kind, {}) or {}
-        if entry.get("title"):
-            return str(entry["title"])
-        cands = entry.get("candidates") or []
-        return str(cands[0]) if cands else ""
-
     def picked(self) -> list[dict]:
         rows = []
         for d, kinds in sorted(self.days.items(), reverse=True):

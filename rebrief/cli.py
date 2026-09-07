@@ -77,11 +77,6 @@ def build_parser() -> argparse.ArgumentParser:
     p_stats.add_argument("--date", help="기준 날짜 (기본: 오늘)")
     p_stats.add_argument("--tables", nargs="?", const="", help="부동산원 통계표 번호 찾기 (낱말로 검색)")
 
-    p_idx = sub.add_parser("indexed", help="네이버에 올린 글이 검색에 걸리는지 확인")
-    p_idx.add_argument("--date", help="기준 날짜 (기본: 오늘)")
-    p_idx.add_argument("--days", type=int, default=7, help="며칠 전까지 볼지")
-    p_idx.add_argument("--notify", action="store_true", help="안 걸린 글이 있으면 텔레그램으로")
-
     p_pub = sub.add_parser("publish", help="네이버에 올린 글 주소를 기록 (사이트에 '발행함' 으로 표시)")
     p_pub.add_argument("--date", help="날짜 (기본: 오늘)")
     p_pub.add_argument("--url", default="", help="발행한 글 주소")
@@ -121,8 +116,6 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_publish(cfg, args)
     if args.command == "policy":
         return _cmd_policy(cfg, args)
-    if args.command == "indexed":
-        return _cmd_indexed(cfg, args)
     if args.command == "stats":
         return _cmd_stats(cfg, args)
     return 1
@@ -386,30 +379,6 @@ def _cmd_stats(cfg, args) -> int:
     return 0
 
 
-def _cmd_indexed(cfg, args) -> int:
-    from . import indexcheck
-
-    date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
-    if not indexcheck.configured():
-        print("NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 이 없어 건너뜁니다.")
-        print("네이버 개발자센터에서 '검색' API 를 신청하면 발급됩니다 (글쓰기 API 가 아니라 검색용입니다).")
-        return 0
-
-    result = indexcheck.run(cfg, date_str, days_back=int(args.days))
-    if not result["checked"]:
-        print("확인할 발행 기록이 없습니다. `python -m rebrief publish --date … --url …` 로 주소를 먼저 남기세요.")
-        return 0
-    print(f"확인 {result['checked']}건 · 검색에 나옴 {result['indexed']}건")
-    for row in result["missing"]:
-        print(f"  ⚠️  {row['date']} ({row['days']}일째 안 걸림) {row['title'][:40]}")
-    if args.notify and result["missing"]:
-        from .notify import send_telegram
-
-        text = indexcheck.build_message(result, str(cfg.get("site.url", "") or ""))
-        print("알림을 보냈습니다." if send_telegram(text) else "알림을 보내지 못했습니다.")
-    return 0
-
-
 def _cmd_publish(cfg, args) -> int:
     from .store import PublishLog
 
@@ -485,7 +454,7 @@ def _cmd_doctor(cfg, verbose: bool = False) -> int:
 
 def _report_keys(cfg) -> None:
     """선택 기능에 필요한 인증키가 있는지 한눈에. 없다고 실패는 아니다."""
-    from . import indexcheck, stats
+    from . import stats
 
     print("\n선택 기능 인증키")
     rows = [
@@ -493,8 +462,6 @@ def _report_keys(cfg) -> None:
          "공공데이터포털에서 '아파트 매매 실거래가' 신청"),
         ("부동산원 지수", bool(stats.reb_key()), "REB_API_KEY",
          "www.reb.or.kr 열린자료에서 인증키 신청"),
-        ("검색 노출 확인", indexcheck.configured(), "NAVER_CLIENT_ID / NAVER_CLIENT_SECRET",
-         "네이버 개발자센터에서 '검색' API 신청"),
     ]
     for label, ok, name, how in rows:
         if ok:

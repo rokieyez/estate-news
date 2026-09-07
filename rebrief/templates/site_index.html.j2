@@ -78,7 +78,7 @@
 </a>
 {% endif %}
 <div class="today">
-  <div class="date">{{ today.date }}{% if today.published %} · <b style="color:#03c75a">발행함</b>{% if today.published.url %} <a href="{{ today.published.url }}" style="color:#0068c3">글 보기</a>{% endif %}{% if today.published.indexed is defined %}{% if today.published.indexed %} · 검색 노출됨{% else %} · <b style="color:#c0392b">검색에 아직 없음</b>{% endif %}{% endif %}{% endif %}</div>
+  <div class="date">{{ today.date }}{% if today.published %} · <b style="color:#03c75a">발행함</b>{% if today.published.url %} <a href="{{ today.published.url }}" style="color:#0068c3">글 보기</a>{% endif %}{% endif %}</div>
   <h2>오늘 할 일</h2>
 
   {% if today.bundle %}

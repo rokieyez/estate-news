@@ -39,7 +39,7 @@ class FakeResponse:
 # 필요한 테스트는 스스로 monkeypatch.setenv 로 넣는다.
 @pytest.fixture(autouse=True)
 def _no_optional_keys(monkeypatch):
-    for name in ("DATA_GO_KR_KEY", "REB_API_KEY", "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET"):
+    for name in ("DATA_GO_KR_KEY", "REB_API_KEY"):
         monkeypatch.delenv(name, raising=False)
 
 
