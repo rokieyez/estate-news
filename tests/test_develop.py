@@ -1082,3 +1082,47 @@ def test_warns_when_trade_data_goes_stale(cfg, tmp_path):
     late = RunResult(date="2026-09-11", out_dir=tmp_path)
     _warn_if_stats_stale(cfg, "2026-09-11", late, reason="키 없음")
     assert "5일째 받지 못했습니다" in late.warnings[0]
+
+
+def test_jeonse_ratio_drops_renewal_contracts():
+    """갱신 계약은 종전 보증금을 따라가 시세보다 낮다 — 섞으면 비율이 내려간다."""
+    from rebrief.stats import jeonse_ratio
+
+    trades = [_deal("은마", 2_000_000_000, seq="A")]
+    base = {"name": "은마", "dong": "대치동", "seq": "A", "area": 84.5,
+            "monthly": 0, "date": "2026-07-05"}
+    rents = [
+        {**base, "deposit": 1_000_000_000, "contract": "신규"},
+        {**base, "deposit": 1_000_000_000, "contract": "신규"},
+        {**base, "deposit": 200_000_000, "contract": "갱신"},   # 오래전 보증금
+    ]
+    got = jeonse_ratio(trades, rents, min_pairs=1)
+    assert got["pairs"][0]["ratio"] == 50.0        # 갱신을 섞었다면 36.7% 가 됐다
+
+
+def test_trade_pages_are_followed_to_the_end(cfg, monkeypatch):
+    """한 쪽에 1000건이 상한이라 거래가 많은 구는 넘겨 받아야 한다."""
+    from rebrief import stats as S
+
+    monkeypatch.setenv("DATA_GO_KR_KEY", "테스트키")
+    asked = []
+
+    def page_xml(count: int, total: int) -> str:
+        items = "".join(
+            f"<item><aptNm>단지{i}</aptNm><dealAmount>100,000</dealAmount>"
+            f"<excluUseAr>84.0</excluUseAr><dealYear>2026</dealYear><dealMonth>7</dealMonth>"
+            f"<dealDay>1</dealDay></item>" for i in range(count))
+        return f"<response><body><items>{items}</items>" \
+               f"<totalCount>{total}</totalCount></body></response>"
+
+    class Resp:
+        def __init__(self, text): self.text = text
+        def raise_for_status(self): pass
+
+    def fake_get(url, params=None, **kw):
+        asked.append(params["pageNo"])
+        return Resp(page_xml(1000 if params["pageNo"] == "1" else 359, 1359))
+
+    monkeypatch.setattr(S, "_get", fake_get)
+    rows = S.apt_trades(cfg, "11680", "202607")
+    assert len(rows) == 1359 and asked == ["1", "2"]     # 두 쪽이면 충분하다

@@ -698,6 +698,13 @@ def stats_block_html(data: dict | None, image: str = "") -> str:
         f'{data["total"] - data["total_before"]:+d}건입니다.</p>',
         f'<p style="margin:8px 0 0;font-size:15px;color:#555555">거래가 많은 곳: {top}</p>',
     ]
+    jeonse = (data.get("jeonse") or [])[:1]
+    if jeonse:
+        j = jeonse[0]
+        parts.append(
+            f'<p style="margin:10px 0 0;font-size:15px;color:#555555">'
+            f'{_esc(j["name"])} 전세가율(전세 보증금 ÷ 매매가)은 가운뎃값 <b>{j["median"]}%</b>입니다. '
+            f'같은 단지·같은 면적 {j["count"]}곳을 견줬습니다.</p>')
     hot = [h for h in (data.get("highlights") or []) if h["kind"] == "신고가"][:2]
     if hot:
         items = "".join(
@@ -731,6 +738,11 @@ def stats_block_markdown(data: dict | None, image: str = "") -> str:
         f'{data["total"] - data["total_before"]:+d}건)',
         f'\n거래가 많은 곳: {top}\n',
     ]
+    jeonse = (data.get("jeonse") or [])[:1]
+    if jeonse:
+        j = jeonse[0]
+        lines.append(f'\n{j["name"]} 전세가율 가운뎃값 **{j["median"]}%** '
+                     f'(같은 단지·같은 면적 {j["count"]}곳)\n')
     hot = [h for h in (data.get("highlights") or []) if h["kind"] == "신고가"][:2]
     if hot:
         lines.append("\n이번 달 신고가\n")

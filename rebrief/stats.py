@@ -45,6 +45,7 @@ _FIELDS = {
 _RENT_FIELDS = {
     "deposit": ("보증금액", "보증금", "deposit"),
     "monthly": ("월세금액", "월세", "monthlyRent"),
+    "contract": ("계약구분", "contractType"),
 }
 
 
@@ -120,21 +121,42 @@ def parse_trades(xml_text: str) -> list[dict]:
     return rows
 
 
-def apt_trades(cfg, code: str, ym: str, *, rows: int = 1000) -> list[dict]:
-    """한 시군구(5자리 코드)의 한 달치 아파트 매매 실거래. 키가 없으면 빈 목록."""
+def _fetch_pages(cfg, url: str, code: str, ym: str, parse, label: str,
+                 rows: int = 1000, max_pages: int = 6) -> list[dict]:
+    """전체 건수를 채울 때까지 쪽을 넘긴다.
+
+    한 쪽에 1000건이 상한이라 거래가 많은 구는 그냥 부르면 잘린다 (강남구 7월 전월세는
+    1,359건이라 359건이 빠졌다). totalCount 를 보고 필요한 만큼만 더 받는다.
+    """
     key = deal_key()
     if not key:
         return []
-    try:
-        resp = _get(DEAL_URL, params={
-            "serviceKey": key, "LAWD_CD": code, "DEAL_YMD": ym,
-            "pageNo": "1", "numOfRows": str(rows),
-        }, timeout=float(cfg.get("collect.timeout_seconds", 15)))
-        resp.raise_for_status()
-    except requests.RequestException as exc:
-        log.warning("실거래가를 가져오지 못했습니다(%s %s): %s", code, ym, type(exc).__name__)
-        return []
-    return parse_trades(resp.text)
+    out: list[dict] = []
+    for page in range(1, max_pages + 1):
+        try:
+            resp = _get(url, params={
+                "serviceKey": key, "LAWD_CD": code, "DEAL_YMD": ym,
+                "pageNo": str(page), "numOfRows": str(rows),
+            }, timeout=float(cfg.get("collect.timeout_seconds", 15)))
+            resp.raise_for_status()
+        except requests.RequestException as exc:
+            log.warning("%s를 가져오지 못했습니다(%s %s): %s", label, code, ym, type(exc).__name__)
+            break
+        got = parse(resp.text)
+        out += got
+        try:
+            total = int(ET.fromstring(resp.text).findtext(".//totalCount") or 0)
+        except ET.ParseError:
+            break
+        # 걸러 낸 건(해제 신고 등)이 있어 len(out) 과 total 이 정확히 같지는 않다.
+        if not got or page * rows >= total:
+            break
+    return out
+
+
+def apt_trades(cfg, code: str, ym: str, *, rows: int = 1000) -> list[dict]:
+    """한 시군구(5자리 코드)의 한 달치 아파트 매매 실거래. 키가 없으면 빈 목록."""
+    return _fetch_pages(cfg, DEAL_URL, code, ym, parse_trades, "실거래가", rows)
 
 
 # ── 전월세 실거래와 전세가율 ─────────────────────────────────
@@ -167,6 +189,7 @@ def parse_rents(xml_text: str) -> list[dict]:
             "seq": _text(item, _FIELDS["seq"]) or f"{dong}|{name}",
             "deposit": deposit,
             "monthly": _won(_text(item, _RENT_FIELDS["monthly"])),
+            "contract": _text(item, _RENT_FIELDS["contract"]),
             "area": round(area, 2),
             "date": f"{y}-{int(m):02d}-{int(d):02d}" if y and m and d else "",
         })
@@ -175,29 +198,19 @@ def parse_rents(xml_text: str) -> list[dict]:
 
 def apt_rents(cfg, code: str, ym: str, *, rows: int = 1000) -> list[dict]:
     """한 시군구의 한 달치 아파트 전월세 실거래. 키가 없거나 신청 전이면 빈 목록."""
-    key = deal_key()
-    if not key:
-        return []
-    try:
-        resp = _get(RENT_URL, params={
-            "serviceKey": key, "LAWD_CD": code, "DEAL_YMD": ym,
-            "pageNo": "1", "numOfRows": str(rows),
-        }, timeout=float(cfg.get("collect.timeout_seconds", 15)))
-        resp.raise_for_status()
-    except requests.RequestException as exc:
-        log.warning("전월세 실거래를 가져오지 못했습니다(%s %s): %s", code, ym, type(exc).__name__)
-        return []
-    return parse_rents(resp.text)
+    return _fetch_pages(cfg, RENT_URL, code, ym, parse_rents, "전월세 실거래", rows)
 
 
 def jeonse_ratio(trades: list[dict], rents: list[dict], *, min_pairs: int = 2) -> dict:
     """같은 단지·같은 면적 칸의 전세 보증금 ÷ 매매가.
 
     월세가 붙은 계약은 보증금이 낮아 섞으면 비율이 왜곡되므로 순수 전세만 씁니다.
+    갱신 계약도 뺍니다 — 종전 보증금을 따라가 시세보다 낮습니다 (강남구 7월 실측에서
+    갱신을 섞으면 34.7%, 신규만 보면 38.8% 로 4%p 넘게 차이가 났습니다).
     한쪽만 있는 칸은 셀 수 없으니 뺍니다.
     """
     sale = _by_unit(trades)
-    pure = [r for r in rents if not r["monthly"]]
+    pure = [r for r in rents if not r["monthly"] and r.get("contract") != "갱신"]
     lease: dict[tuple[str, int], list[dict]] = {}
     for r in pure:
         lease.setdefault((r.get("seq", ""), area_bucket(r.get("area", 0))), []).append(r)
