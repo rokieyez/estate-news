@@ -14,12 +14,15 @@
 {% endfor %}
 
 {% if series %}
-## 한국부동산원 지수 추이
+## 한국부동산원 주간 아파트 매매가격지수 ({{ series[0].region }})
 
-| 시점 | 값 |
+{{ series[0].when }} {{ series[0].value|round(2) }} → **{{ series[-1].when }} {{ series[-1].value|round(2) }}**
+({{ '%+.2f'|format(series[-1].value - series[0].value) }})
+
+| 기준일 | 지수 |
 | --- | ---: |
 {% for s in series %}
-| {{ s.time }} | {{ s.value }} |
+| {{ s.when or s.time }} | {{ s.value|round(2) }} |
 {% endfor %}
 {% endif %}
 

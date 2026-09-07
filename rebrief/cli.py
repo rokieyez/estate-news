@@ -368,7 +368,9 @@ def _cmd_stats(cfg, args) -> int:
         return 1
     settings = cfg.get("stats", {}) or {}
     series = stats_mod.reb_series(cfg, str(settings.get("reb_statbl_id", "") or ""),
-                                  str(settings.get("reb_cycle", "WK") or "WK"))
+                                  str(settings.get("reb_cycle", "WK") or "WK"),
+                                  count=int(settings.get("reb_weeks", 12)),
+                                  run_date=date_str)
     renderer = Renderer(cfg, cfg.output_dir / date_str, date_str)
     path = renderer.stats(data, series)
     print(f"{data['month']} 전체 {data['total']}건 (전달 {data['total_before']}건)")

@@ -117,9 +117,14 @@ stats:
     - {name: 노원구, code: "11350"}
     - {name: 강서구, code: "11500"}
     - {name: 은평구, code: "11380"}
-  # 부동산원 통계표 번호. `python -m rebrief stats --tables 아파트` 로 찾아 적으세요.
-  reb_statbl_id: ""
+  # 부동산원 통계표 번호. reb.or.kr 의 '통계코드 검색' 에서 찾은 값입니다.
+  #   T244183132827305  (주) 아파트 매매가격지수   ← 지금 쓰는 것
+  #   T247713133046872  (주) 아파트 전세가격지수
+  #   A_2024_00062      (월) 아파트 중위매매가격
+  reb_statbl_id: "T244183132827305"
   reb_cycle: "WK"           # WK 주간 · MM 월간
+  reb_region_id: "50001"    # 50001 = 전국. 지역을 주면 서버가 걸러 줍니다
+  reb_weeks: 12             # 몇 주(달)치를 볼지
 
 policy:
   enabled: true

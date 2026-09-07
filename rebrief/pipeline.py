@@ -461,7 +461,9 @@ def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result) -> di
     try:
         data = stats_mod.collect(cfg, date_str)
         series = stats_mod.reb_series(cfg, str(settings.get("reb_statbl_id", "") or ""),
-                                      str(settings.get("reb_cycle", "WK") or "WK"))
+                                      str(settings.get("reb_cycle", "WK") or "WK"),
+                                      count=int(settings.get("reb_weeks", 12)),
+                                      run_date=date_str)
     except Exception as exc:                       # 외부 자료가 바뀌어도 실행은 멈추지 않는다
         log.warning("통계 수집 실패: %s", exc)
         result.warnings.append(f"통계 수집 실패 — {type(exc).__name__}")

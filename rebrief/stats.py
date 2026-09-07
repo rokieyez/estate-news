@@ -250,30 +250,90 @@ def _reb_rows(data) -> list[dict]:
     return []
 
 
-def reb_series(cfg, statbl_id: str, cycle: str = "WK", count: int = 12) -> list[dict]:
-    """통계표 하나의 최근 값들. (시점, 값) 만 남깁니다."""
-    key = reb_key()
-    if not key or not statbl_id:
-        return []
+def week_id(d: date) -> str:
+    """'2026-08-31' → '202636'. 부동산원 주간 통계의 시점 표기와 같은 ISO 주차."""
+    year, week, _ = d.isocalendar()
+    return f"{year}{week:02d}"
+
+
+def reb_period(run_date: str, cycle: str, weeks: int = 12) -> tuple[str, str]:
+    """조회할 시작·끝 시점. 주간이면 주차, 월간이면 연월."""
     try:
-        resp = _get(REB_DATA_URL, params={
-            "KEY": key, "STATBL_ID": statbl_id, "DTACYCLE_CD": cycle,
-            "Type": "json", "pIndex": "1", "pSize": str(max(count, 1)),
-        }, timeout=float(cfg.get("collect.timeout_seconds", 15)))
-        resp.raise_for_status()
-        data = resp.json()
-    except (requests.RequestException, ValueError) as exc:
-        log.warning("부동산원 통계 실패: %s", type(exc).__name__)
+        end = date.fromisoformat(run_date)
+    except ValueError:
+        end = date.today()
+    if cycle.upper() == "WK":
+        return week_id(end - timedelta(weeks=weeks)), week_id(end)
+    ym = f"{end.year}{end.month:02d}"
+    start = ym
+    for _ in range(max(weeks // 4, 1)):
+        start = prev_month(start)
+    return start, ym
+
+
+def reb_series(cfg, statbl_id: str, cycle: str = "WK", count: int = 12,
+               region_id: str = "", run_date: str = "") -> list[dict]:
+    """통계표 하나의 최근 값들. (시점, 값) 만 남깁니다.
+
+    인증키가 없어도 견본으로 한 장에 5건씩 받을 수 있어, 키 없이도 최근 추이는 나옵니다.
+    키가 거부되면(승인 대기·오타) 견본으로 물러납니다 — 아무것도 안 나오는 것보다 낫습니다.
+    지역(CLS_ID)을 주면 서버가 걸러 주므로 훨씬 적게 받습니다.
+    """
+    if not statbl_id:
         return []
-    out = []
-    for row in _reb_rows(data):
-        when = str(row.get("WRTTIME_IDTFR_ID", "") or "")
-        raw = row.get("DTA_VAL", "")
+    settings = cfg.get("stats", {}) or {}
+    region_id = region_id or str(settings.get("reb_region_id", "") or "")
+    when = run_date or date.today().isoformat()
+    timeout = float(cfg.get("collect.timeout_seconds", 15))
+
+    key = reb_key()
+    if key:
+        rows = _reb_fetch(statbl_id, cycle, count, region_id, when, key, timeout)
+        if rows:
+            return rows
+        log.warning("부동산원 인증키가 받아들여지지 않아 견본 자료로 대신합니다.")
+    return _reb_fetch(statbl_id, cycle, count, region_id, when, "", timeout)
+
+
+def _reb_fetch(statbl_id: str, cycle: str, count: int, region_id: str,
+               run_date: str, key: str, timeout: float) -> list[dict]:
+    # 인증키가 없으면 한 번에 5건까지만 주는데, 그 5건은 요청 구간의 앞쪽이다.
+    # 그래서 구간 자체를 최근 5주로 좁혀야 '최근' 자료가 들어온다.
+    span = count if key else min(count, 5)
+    start, end = reb_period(run_date, cycle, span)
+    params = {"STATBL_ID": statbl_id, "DTACYCLE_CD": cycle.upper(), "Type": "json",
+              "START_WRTTIME": start, "END_WRTTIME": end,
+              "pSize": "100" if key else "5"}
+    if key:
+        params["KEY"] = key
+    if region_id:
+        params["CLS_ID"] = region_id
+
+    # 시점 하나에 값 하나. 인증키가 없으면 서버가 쪽 넘김을 무시하고 같은 자료를 되돌려주므로,
+    # 새 시점이 하나도 안 늘면 거기서 멈춘다 (안 그러면 같은 줄만 쌓인다).
+    seen: dict[str, dict] = {}
+    for page in range(1, 12):
         try:
-            value = float(str(raw).replace(",", ""))
-        except (TypeError, ValueError):
-            continue
-        out.append({"time": when, "value": value,
-                    "region": str(row.get("CLS_NM", "") or "")})
-    out.sort(key=lambda r: r["time"])
-    return out
+            resp = _get(REB_DATA_URL, params={**params, "pIndex": str(page)}, timeout=timeout)
+            resp.raise_for_status()
+            data = resp.json()
+        except (requests.RequestException, ValueError) as exc:
+            log.warning("부동산원 통계 실패: %s", type(exc).__name__)
+            break
+        rows = _reb_rows(data)
+        if not rows:
+            break
+        before = len(seen)
+        for row in rows:
+            try:
+                value = float(str(row.get("DTA_VAL", "")).replace(",", ""))
+            except (TypeError, ValueError):
+                continue
+            stamp = str(row.get("WRTTIME_IDTFR_ID", "") or "")
+            seen.setdefault(stamp, {"time": stamp, "value": value,
+                                    "region": str(row.get("CLS_NM", "") or ""),
+                                    "when": str(row.get("WRTTIME_DESC", "") or "")})
+        if len(seen) == before or len(seen) >= count:
+            break
+    out = sorted(seen.values(), key=lambda r: r["time"])
+    return out[-count:]

@@ -34,6 +34,15 @@ class FakeResponse:
             raise requests.HTTPError(f"HTTP {self.status_code}")
 
 
+# .env 에 실제 인증키가 있으면 load_config() 가 환경변수로 올린다. 그러면 테스트가
+# 진짜 서버를 부르려 든다. 선택 기능 키는 매 테스트 시작 때 비워 둔다 —
+# 필요한 테스트는 스스로 monkeypatch.setenv 로 넣는다.
+@pytest.fixture(autouse=True)
+def _no_optional_keys(monkeypatch):
+    for name in ("DATA_GO_KR_KEY", "REB_API_KEY", "NAVER_CLIENT_ID", "NAVER_CLIENT_SECRET"):
+        monkeypatch.delenv(name, raising=False)
+
+
 @pytest.fixture
 def feed_bytes() -> bytes:
     """발행 시각을 '방금'으로 채운 RSS 본문."""
@@ -51,6 +60,7 @@ def cfg(tmp_path: Path) -> Config:
     settings["run"]["skip_recent_days"] = 0
     settings.setdefault("images", {})["png"] = False   # 테스트는 브라우저를 띄우지 않는다
     settings["collect"]["check_links"] = False        # 링크 점검은 별도 테스트에서 스텁으로
+    settings.setdefault("stats", {})["enabled"] = False  # 정부 통계는 개별 테스트에서만 켠다
 
     # 피드는 픽스처 하나만 쓴다.
     sources = yaml.safe_load(yaml.safe_dump(real.sources, allow_unicode=True))

@@ -800,3 +800,74 @@ def test_stats_skips_cancelled_deals_and_incomplete_months():
     assert month_of("2026-09-07") == "202607"       # 8월은 아직 차는 중
     assert month_of("2026-10-01") == "202608"       # 8월 신고 기한이 지났다
     assert month_of("2026-01-05") == "202511"       # 해를 넘어가도 맞아야 한다
+
+
+def test_reb_series_asks_for_recent_periods_and_dedupes(cfg, monkeypatch):
+    """인증키가 없으면 서버가 쪽 넘김을 무시하므로, 구간을 좁히고 중복을 걸러야 한다."""
+    from rebrief import stats as S
+
+    monkeypatch.delenv("REB_API_KEY", raising=False)
+    asked = []
+
+    class Resp:
+        def raise_for_status(self): pass
+        def json(self):
+            return {"SttsApiTblData": [{"head": []}, {"row": [
+                {"WRTTIME_IDTFR_ID": "202634", "DTA_VAL": 100.5, "CLS_NM": "전국",
+                 "WRTTIME_DESC": "2026-08-17"},
+                {"WRTTIME_IDTFR_ID": "202635", "DTA_VAL": "100.64", "CLS_NM": "전국",
+                 "WRTTIME_DESC": "2026-08-24"},
+            ]}]}
+
+    def fake_get(url, params=None, **kw):
+        asked.append(params)
+        return Resp()
+
+    monkeypatch.setattr(S, "_get", fake_get)
+    rows = S.reb_series(cfg, "T244183132827305", "WK", count=12, region_id="50001",
+                        run_date="2026-09-07")
+    assert [r["time"] for r in rows] == ["202634", "202635"]     # 같은 줄이 쌓이지 않는다
+    assert rows[1]["value"] == 100.64 and rows[0]["when"] == "2026-08-17"
+
+    first = asked[0]
+    assert first["pSize"] == "5" and "KEY" not in first          # 키가 없으면 견본 크기
+    assert first["CLS_ID"] == "50001" and first["DTACYCLE_CD"] == "WK"
+    # 견본은 구간의 앞쪽 5건만 주므로 최근 5주만 요청해야 최신 값이 온다
+    assert first["START_WRTTIME"] == "202632" and first["END_WRTTIME"] == "202637"
+    assert len(asked) == 2                                       # 새 시점이 없으면 멈춘다
+
+
+def test_week_id_matches_reb_numbering():
+    from datetime import date
+
+    from rebrief.stats import week_id
+
+    assert week_id(date(2026, 8, 31)) == "202636"    # 실제 응답의 WRTTIME_IDTFR_ID 와 같다
+    assert week_id(date(2026, 5, 11)) == "202620"
+
+
+def test_reb_series_falls_back_to_sample_when_key_rejected(cfg, monkeypatch):
+    """승인 대기 중인 키로도 최근 추이는 보여야 한다."""
+    from rebrief import stats as S
+
+    monkeypatch.setenv("REB_API_KEY", "아직-승인-안-된-키")
+    calls = []
+
+    class Resp:
+        def __init__(self, payload): self._p = payload
+        def raise_for_status(self): pass
+        def json(self): return self._p
+
+    def fake_get(url, params=None, **kw):
+        calls.append(params)
+        if "KEY" in params:                       # 인증 실패 응답
+            return Resp({"RESULT": {"CODE": "ERROR-290", "MESSAGE": "인증키가 유효하지 않습니다"}})
+        return Resp({"SttsApiTblData": [{"head": []}, {"row": [
+            {"WRTTIME_IDTFR_ID": "202636", "DTA_VAL": 100.73, "CLS_NM": "전국",
+             "WRTTIME_DESC": "2026-08-31"}]}]})
+
+    monkeypatch.setattr(S, "_get", fake_get)
+    rows = S.reb_series(cfg, "T244183132827305", "WK", count=12, region_id="50001",
+                        run_date="2026-09-07")
+    assert [r["value"] for r in rows] == [100.73]
+    assert "KEY" in calls[0] and "KEY" not in calls[-1]     # 키로 먼저, 안 되면 견본으로
