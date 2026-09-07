@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 import re
 
+import pytest
+
 from rebrief.models import (
     Article, Cluster, CaptionLine, DailyBrief, IssueBrief,
     LongformScript, LongformSection, ShortsScript, VideoPack,
@@ -1877,3 +1879,80 @@ def test_quality_table_backfills_but_does_not_invent_numbers(cfg, tmp_path):
     assert filled.days["2026-09-05"]["backfilled"] is True
     assert filled.days["2026-09-06"]["blog_chars"] == 1850   # 장부가 이긴다
     assert filled.compare(days=1) == {}                      # 견줄 진짜 날이 하나뿐
+
+
+# ── 응답이 잘렸을 때 (2026-09-08 아침 실패) ──────────────────
+
+
+def test_truncated_response_becomes_a_normal_error(cfg, monkeypatch):
+    """한도에 걸려 잘린 응답은 LLMError 가 된다. 그대로 두면 파이프라인 밖까지 샌다.
+
+    구조화 출력은 SDK 안에서 검사되므로 잘린 JSON 은 pydantic.ValidationError 로 납니다.
+    anthropic 예외가 아니라서 아무도 잡지 않고, 2026-09-08 아침에는 그 탓에 **이미 만들어
+    돈까지 낸 브리핑·블로그가 통째로 버려졌습니다.**
+    """
+    import pydantic
+
+    from rebrief.llm import ContentGenerator, LLMError
+    from rebrief.models import VideoPack
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    gen = ContentGenerator(cfg)
+
+    def boom(**kwargs):
+        raise pydantic.ValidationError.from_exception_data(
+            "VideoPack", [{"type": "json_invalid", "loc": (), "input": "{...",
+                           "ctx": {"error": "EOF while parsing a string at line 1 column 2728"}}])
+
+    monkeypatch.setattr(gen.client.messages, "parse", boom)
+    with pytest.raises(LLMError) as caught:
+        gen._call("s", "u", VideoPack, "claude-sonnet-5", 16000)
+    assert "잘렸습니다" in str(caught.value) and "16000" in str(caught.value)
+
+
+def test_script_call_gets_its_own_bigger_budget(cfg, monkeypatch):
+    """영상 대본만 한도를 크게 쓴다 — 출력이 가장 크고 생각 토큰까지 나눠 쓰기 때문."""
+    from rebrief.llm import ContentGenerator
+    from rebrief.models import DailyBrief
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    gen = ContentGenerator(cfg)
+    assert gen.script_max_tokens > gen.max_tokens
+
+    seen: list[int] = []
+
+    def spy(**kwargs):
+        seen.append(kwargs["max_tokens"])
+        raise RuntimeError("여기까지만 본다")
+
+    monkeypatch.setattr(gen.client.messages, "parse", spy)
+    brief = DailyBrief(date="2026-09-08", headline="h", lead="l", issues=[],
+                       market_temperature="m", tomorrow_watch=[])
+    for call in (lambda: gen.generate_blog(brief), lambda: gen.generate_video(brief)):
+        with pytest.raises(RuntimeError):
+            call()
+    assert seen == [gen.max_tokens, gen.script_max_tokens]   # 블로그는 기본, 대본은 큰 쪽
+
+
+def test_run_survives_a_truncated_script(cfg, monkeypatch):
+    """대본이 잘려도 브리핑·블로그는 남는다. 이미 돈을 낸 산출물을 버리지 않는다."""
+    import pydantic
+
+    from rebrief import pipeline
+    from tests.test_pipeline import FakeGenerator
+
+    class TruncatedScript(FakeGenerator):
+        def generate_video(self, brief, stats=None):
+            raise pydantic.ValidationError.from_exception_data(
+                "VideoPack", [{"type": "json_invalid", "loc": (), "input": "{...",
+                               "ctx": {"error": "EOF while parsing a string at line 1 column 2728"}}])
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", TruncatedScript)
+
+    # 지금은 ValidationError 가 밖으로 새어 실행 전체가 죽는다 — 그러면 안 된다.
+    result = pipeline.run(cfg, run_date="2026-09-06", use_llm=True)
+    out = cfg.output_dir / "2026-09-06"
+    assert (out / "brief.md").exists() and (out / "blog.md").exists()
+    assert not (out / "script-longform.md").exists()
+    assert any("영상 대본" in w for w in result.warnings)

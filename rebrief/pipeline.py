@@ -244,8 +244,8 @@ def _generate_with_llm(
 
     try:
         brief = generator.generate_brief(issues, date_str)
-    except LLMError as exc:
-        log.error("브리핑 생성 실패: %s", exc)
+    except Exception as exc:                     # LLMError 만 잡으면 뜻밖의 예외에 그날치가 통째로 없다
+        log.error("브리핑 생성 실패: %s", exc, exc_info=not isinstance(exc, LLMError))
         result.warnings.append(f"브리핑 생성 실패 — {exc}")
         renderer.brief_fallback(issues, _stats_from_clusters(issues))
         renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
@@ -267,8 +267,8 @@ def _generate_with_llm(
     post = None
     try:
         post = generator.generate_blog(brief)
-    except LLMError as exc:
-        log.error("블로그 생성 실패: %s", exc)
+    except Exception as exc:                     # 위와 같은 이유 — 브리핑은 이미 돈을 내고 만들었다
+        log.error("블로그 생성 실패: %s", exc, exc_info=not isinstance(exc, LLMError))
         result.warnings.append(f"블로그 생성 실패 — {exc}")
 
     slot_files = renderer.images(brief, history=history, post=post)
@@ -298,8 +298,11 @@ def _generate_with_llm(
 
     try:
         pack = generator.generate_video(brief, stats=stats_data)
-    except LLMError as exc:
-        log.error("영상 대본 생성 실패: %s", exc)
+    except Exception as exc:
+        # 대본은 마지막이자 가장 덜 중요한 산출물입니다. 여기서 무엇이 터지든
+        # **이미 돈을 내고 만든 브리핑과 블로그까지 버릴 이유는 없습니다.**
+        # (2026-09-08 아침: 잘린 JSON 이 ValidationError 로 새어 실행 전체가 죽었습니다.)
+        log.error("영상 대본 생성 실패: %s", exc, exc_info=not isinstance(exc, LLMError))
         result.warnings.append(f"영상 대본 생성 실패 — {exc}")
         return made
 

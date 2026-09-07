@@ -51,6 +51,10 @@ llm:
   model: claude-opus-5      # 바꾸려면: claude-sonnet-5 (더 저렴), claude-haiku-4-5
   effort: high              # low | medium | high | xhigh | max
   max_tokens: 16000
+  # 영상 대본만 한도를 크게. 출력이 가장 크고 생각 토큰까지 같은 한도를 나눠 씁니다.
+  # 2026-09-08 아침 실행이 16,000 에 걸려 JSON 이 문장 중간에서 잘렸습니다.
+  # 상한일 뿐이라 올려도 실제로 쓴 만큼만 돈이 나갑니다.
+  script_max_tokens: 32000
   timeout_seconds: 600
   krw_per_usd: 1400         # INDEX.md 비용 표시에 쓰는 환율 (대략값)
   # 영상 대본만 다른(값싼) 모델로. 출력 토큰이 가장 많은 호출이라 하루 비용이 크게 준다.

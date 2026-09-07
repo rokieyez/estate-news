@@ -10,6 +10,7 @@ import logging
 from dataclasses import dataclass, field
 
 import anthropic
+import pydantic
 
 from .config import Config
 from .models import (BlogPost, Cluster, DailyBrief, MonthlyReview, PolicySummaries, Rewrite,
@@ -139,6 +140,11 @@ class ContentGenerator:
         # 출력 비용의 가장 큰 몫이 여기라(2026-09-07 실측 37%) 따로 고를 수 있게 두었습니다.
         self.brief_model = str(cfg.get("llm.brief_model", "") or "").strip() or self.model
         self.max_tokens = int(cfg.get("llm.max_tokens", 16000))
+        # 영상 대본만 한도를 크게 잡습니다. 출력이 가장 크고(2026-09-07 실측 14,557토큰),
+        # adaptive thinking 의 생각 토큰까지 같은 한도를 나눠 쓰기 때문입니다. 2026-09-08
+        # 실행이 바로 이 한도에 걸려 JSON 이 문장 중간에서 잘렸습니다.
+        # 한도는 상한일 뿐이라 올려도 실제로 쓴 만큼만 돈이 나갑니다.
+        self.script_max_tokens = int(cfg.get("llm.script_max_tokens", 0) or 0) or self.max_tokens
         self.effort = str(cfg.get("llm.effort", "high"))
         self.fallback_model = str(cfg.get("llm.fallback_model", "") or "").strip()
         timeout = float(cfg.get("llm.timeout_seconds", 600))
@@ -183,6 +189,7 @@ class ContentGenerator:
             output_format=VideoPack,
             kind="영상 대본",
             model=self.script_model,
+            max_tokens=self.script_max_tokens,
         )
 
     def summarize_policies(self, docs: list) -> PolicySummaries:
@@ -225,17 +232,18 @@ class ContentGenerator:
     # ── 공통 호출 ────────────────────────────────────────────
 
     def _parse(self, *, system: str, user: str, output_format,
-               kind: str = "", model: str | None = None):
+               kind: str = "", model: str | None = None, max_tokens: int | None = None):
         """지정 모델로 부르고, 한도·장애면 대체 모델로 한 번 더 시도한다."""
         base = model or self.model
         try:
-            response, model = self._call(system, user, output_format, base)
+            response, model = self._call(system, user, output_format, base, max_tokens)
         except _Retryable as exc:
             if not self.fallback_model or self.fallback_model == base:
                 raise LLMError(exc.message) from exc
             log.warning("%s — %s 로 다시 시도합니다.", exc.message, self.fallback_model)
             try:
-                response, model = self._call(system, user, output_format, self.fallback_model)
+                response, model = self._call(system, user, output_format, self.fallback_model,
+                                             max_tokens)
             except _Retryable as exc2:
                 raise LLMError(f"{exc.message} (대체 모델 {self.fallback_model} 도 실패: {exc2.message})") from exc2
             self.usage.notes.append(
@@ -249,7 +257,8 @@ class ContentGenerator:
             raise LLMError(f"모델이 응답을 거부했습니다 (사유: {getattr(detail, 'category', '미상')}).")
         if response.stop_reason == "max_tokens":
             self.usage.notes.append(
-                f"{output_format.__name__} 응답이 max_tokens({self.max_tokens})에 걸려 잘렸을 수 있습니다."
+                f"{output_format.__name__} 응답이 max_tokens({max_tokens or self.max_tokens})에 "
+                "걸려 잘렸을 수 있습니다."
             )
 
         parsed = getattr(response, "parsed_output", None)
@@ -257,7 +266,8 @@ class ContentGenerator:
             raise LLMError(f"{output_format.__name__} 형식으로 응답을 해석하지 못했습니다.")
         return parsed
 
-    def _call(self, system: str, user: str, output_format, model: str):
+    def _call(self, system: str, user: str, output_format, model: str,
+              max_tokens: int | None = None):
         # 접두사 캐싱을 걷어냈습니다 (2026-09-07, 실측).
         #
         # **구조화 출력의 스키마가 캐시 접두사에 포함됩니다.** 같은 스키마로 두 번 부르면
@@ -268,7 +278,7 @@ class ContentGenerator:
         system_blocks = [{"type": "text", "text": system}]
         kwargs = {
             "model": model,
-            "max_tokens": self.max_tokens,
+            "max_tokens": max_tokens or self.max_tokens,
             "system": system_blocks,
             "messages": [{"role": "user", "content": user}],
             "output_format": output_format,
@@ -276,6 +286,16 @@ class ContentGenerator:
         kwargs.update(self._reasoning_kwargs(model))
         try:
             return self.client.messages.parse(**kwargs), model
+        except pydantic.ValidationError as exc:
+            # 구조화 출력은 SDK 안에서 바로 검사되므로, 응답이 한도에 걸려 잘리면
+            # 여기서 ValidationError 가 납니다. anthropic 예외가 아니라서 그대로 두면
+            # 파이프라인 밖까지 새어 나가 **이미 만들어 둔 브리핑·블로그까지 버려집니다.**
+            # (2026-09-08 아침 실행이 실제로 그렇게 통째로 실패했습니다.)
+            hint = "잘렸습니다" if "EOF while parsing" in str(exc) else "형식이 맞지 않습니다"
+            raise LLMError(
+                f"{output_format.__name__} 응답이 {hint} "
+                f"(max_tokens={kwargs['max_tokens']}). 한도를 올리거나 분량을 줄이세요."
+            ) from exc
         except anthropic.AuthenticationError as exc:
             raise LLMError("ANTHROPIC_API_KEY 가 유효하지 않습니다.") from exc
         except anthropic.RateLimitError as exc:
