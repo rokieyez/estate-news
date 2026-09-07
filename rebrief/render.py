@@ -335,6 +335,12 @@ class Renderer:
                 return png.name
         return svg.name
 
+    def stats(self, data: dict, series: list | None = None) -> Path | None:
+        """실거래가 집계표. 자료가 없으면 파일을 만들지 않는다."""
+        if not data or not data.get("districts"):
+            return None
+        return self._write("stats.md", "stats.md.j2", series=series or [], **data)
+
     def policy(self, docs: list) -> Path | None:
         """정부 발표 원문 3줄 요약 + 원본 파일. 없으면 파일을 만들지 않는다."""
         if not docs:

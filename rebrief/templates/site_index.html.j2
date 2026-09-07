@@ -9,6 +9,8 @@
 <meta name="apple-mobile-web-app-title" content="브리핑">
 <meta name="theme-color" content="#256abf">
 <title>{{ channel }}</title>
+{{ meta|default('', true)|safe }}
+{% if has_feed %}<link rel="alternate" type="application/rss+xml" title="새 브리핑 받아보기" href="feed.xml">{% endif %}
 <style>
   :root { color-scheme: light; }
   * { box-sizing: border-box; }
@@ -76,7 +78,7 @@
 </a>
 {% endif %}
 <div class="today">
-  <div class="date">{{ today.date }}{% if today.published %} · <b style="color:#03c75a">발행함</b>{% if today.published.url %} <a href="{{ today.published.url }}" style="color:#0068c3">글 보기</a>{% endif %}{% endif %}</div>
+  <div class="date">{{ today.date }}{% if today.published %} · <b style="color:#03c75a">발행함</b>{% if today.published.url %} <a href="{{ today.published.url }}" style="color:#0068c3">글 보기</a>{% endif %}{% if today.published.indexed is defined %}{% if today.published.indexed %} · 검색 노출됨{% else %} · <b style="color:#c0392b">검색에 아직 없음</b>{% endif %}{% endif %}{% endif %}</div>
   <h2>오늘 할 일</h2>
 
   {% if today.bundle %}
@@ -139,6 +141,7 @@
 
 <footer>
   이 페이지는 발행 전 초안입니다. 숫자는 기사 원문과 대조해 주세요.
+  {% if has_feed %}<br><a href="feed.xml" style="color:#8b9096">구독 주소(RSS)</a>{% endif %}
 </footer>
 
 </div>

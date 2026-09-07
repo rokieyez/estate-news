@@ -55,6 +55,8 @@ class PolicyDoc:
     files: list[dict] = field(default_factory=list)
     body: str = ""
     who: str = ""          # 이 발표가 특히 상관있는 사람 (모델이 채운다)
+    schedule: list[dict] = field(default_factory=list)   # 앞으로의 일정 (시행일·입법예고 마감 등)
+    follow_ups: list[dict] = field(default_factory=list)  # 같은 정책의 지난 발표
 
     @property
     def has_file(self) -> bool:
@@ -286,6 +288,87 @@ def doc_chunks(body: str) -> list[str]:
             continue
         out.append(re.sub(r"<[^>]{0,40}>", " ", part).strip())
     return [" ".join(o.split()) for o in out if o]
+
+
+# ── 언제 시행되나 ────────────────────────────────────────────
+#
+# 보도자료에는 "10월 1일부터 시행", "9월 30일까지 입법예고" 같은 앞으로의 일정이 섞여 있습니다.
+# 날짜만 뽑으면 통계표의 숫자까지 걸려들므로, 날짜 둘레에 일정을 뜻하는 낱말이 있을 때만 싣습니다.
+
+_SCHED_WORDS = ("시행", "입법예고", "행정예고", "공포", "접수", "신청", "마감", "설명회",
+                "공모", "발표", "적용", "실시", "개통", "지정", "공고", "착공", "준공")
+_D_KOREAN = re.compile(r"(?:(\d{4})년\s*)?(\d{1,2})월\s*(\d{1,2})일")
+_D_DOT = re.compile(r"['’](\d{2})\.\s?(\d{1,2})\.\s?(\d{1,2})\.")
+_D_MONTH = re.compile(r"(?:(\d{4})년\s*)?(\d{1,2})월\s*중")
+_WINDOW = 70          # 날짜 앞뒤로 볼 글자 수
+
+
+def _iso(year: int | None, month: int, day: int, base: date) -> str:
+    """연도가 없으면 기준일로 미룬다. 이미 두 달 넘게 지난 달이면 내년으로 본다."""
+    try:
+        if year is None:
+            guess = date(base.year, month, day)
+            if (base - guess).days > 60:
+                guess = date(base.year + 1, month, day)
+            return guess.isoformat()
+        return date(year, month, day).isoformat()
+    except ValueError:                        # 2월 30일 같은 오탈자
+        return ""
+
+
+_BOUNDARY = "□ㅇ○◇\n"
+
+
+def _clause(text: str, start: int, end: int) -> tuple[int, int]:
+    """날짜가 들어 있는 한 문장의 시작·끝 위치. 부처 문서의 □·ㅇ 표시와 '~다.' 를 경계로 본다."""
+    left = max((text.rfind(ch, 0, start) for ch in _BOUNDARY), default=-1)
+    stop = text.rfind("다. ", 0, start)
+    left = max(left, stop + 2 if stop >= 0 else -1)
+    right_marks = [text.find(ch, end) for ch in _BOUNDARY]
+    stop = text.find("다.", end)
+    right_marks.append(stop + 2 if stop >= 0 else -1)
+    rights = [r for r in right_marks if r >= 0]
+    return left + 1, (min(rights) if rights else len(text))
+
+
+def schedule_items(doc: PolicyDoc, run_date: str, limit: int = 4) -> list[dict]:
+    """문서에서 앞으로의 일정만 뽑는다. 지나간 날짜와 통계표의 숫자는 뺀다."""
+    try:
+        base = date.fromisoformat(run_date)
+    except ValueError:
+        base = date.today()
+    text = " ".join(((doc.body or "") + " " + (doc.lead or "")).split())
+    hits: dict[tuple[str, str], dict] = {}
+
+    for pattern in (_D_KOREAN, _D_DOT, _D_MONTH):
+        for m in pattern.finditer(text):
+            g = m.groups()
+            if pattern is _D_MONTH:
+                iso = _iso(int(g[0]) if g[0] else None, int(g[1]), 1, base)
+            elif pattern is _D_DOT:
+                iso = _iso(2000 + int(g[0]), int(g[1]), int(g[2]), base)
+            else:
+                iso = _iso(int(g[0]) if g[0] else None, int(g[1]), int(g[2]), base)
+            if not iso or iso < base.isoformat():
+                continue
+
+            left, right = _clause(text, m.start(), m.end())
+            clause = text[left:right].strip(" ·-")
+            # 일정을 뜻하는 낱말은 날짜 뒤에 온다 ("10월 1일부터 시행"). 없으면 앞쪽도 본다.
+            after, before = text[m.end():right], text[left:m.start()]
+            word = (next((w for w in _SCHED_WORDS if w in after), "")
+                    or next((w for w in _SCHED_WORDS if w in before), ""))
+            if not word:
+                continue
+            # 같은 문장·같은 성격이면 한 줄로 묶고 늦은 날짜를 남긴다 (기간은 마감일이 중요하다)
+            key = (clause[:28], word)
+            row = {"date": iso, "kind": word, "text": _clip(clause, 90),
+                   "title": doc.title, "url": doc.url}
+            if key not in hits or iso > hits[key]["date"]:
+                hits[key] = row
+
+    rows = sorted(hits.values(), key=lambda r: (r["date"], r["kind"]))
+    return rows[:limit]
 
 
 def download(doc: PolicyDoc, dest: Path, cfg: Config) -> list[str]:

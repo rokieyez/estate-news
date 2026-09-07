@@ -487,3 +487,287 @@ def test_policy_block_appears_in_both_blog_files():
     html = policy_block_html([doc])
     assert "오늘 나온 정부 발표 원문" in html and "보도자료.pdf</a>" in html
     assert policy_block_markdown([]) == "" and policy_block_html(None) == ""
+
+
+# ── 공유 카드·구독 피드 ──────────────────────────────────────
+
+def test_share_card_tags_and_feed(cfg, tmp_path):
+    import xml.etree.ElementTree as ET
+
+    from rebrief import site as S
+
+    base = S.site_base(cfg)
+    tags = S.meta_tags(base, title="오늘의 브리핑", description="설명 줄",
+                       path="2026-09-07/brief.html", image="2026-09-07/img-0-cover.png",
+                       image_size=(1200, 630), published="2026-09-07", channel="부동산 브리핑")
+    assert f'<meta property="og:image" content="{base}2026-09-07/img-0-cover.png">' in tags
+    assert '<meta property="og:image:width" content="1200">' in tags
+    assert '"@type": "NewsArticle"' in tags and '"datePublished": "2026-09-07"' in tags
+    assert 'og:type" content="article"' in tags
+    # 주소가 없는 설정에서도 태그는 나오되 이미지는 빼야 한다 (상대 주소 카드는 깨진다)
+    plain = S.meta_tags("", title="제목", image="a.png")
+    assert "og:image" not in plain and 'twitter:card" content="summary"' in plain
+
+    dest = tmp_path / "site"
+    dest.mkdir()
+    built = [{"date": "2026-09-07", "headline": "종부세 확대 전망", "description": "한 줄 설명",
+              "pages": [{"href": "blog-naver.html"}, {"href": "brief.html"}]}]
+    S._build_feed(cfg, built, dest)
+    S._build_sitemap(cfg, built, [], dest)
+    root = ET.parse(dest / "feed.xml").getroot()
+    item = root.find("./channel/item")
+    assert item.findtext("title") == "종부세 확대 전망"
+    assert item.findtext("link").endswith("/2026-09-07/brief.html")     # 읽는 페이지로 건다
+    assert item.findtext("pubDate") == "Mon, 07 Sep 2026 07:00:00 +0900"
+    assert ET.parse(dest / "sitemap.xml").getroot().find(
+        "{http://www.sitemaps.org/schemas/sitemap/0.9}url") is not None
+    assert "Sitemap:" in (dest / "robots.txt").read_text(encoding="utf-8")
+
+
+def test_feed_date_is_not_localised(monkeypatch):
+    """컴퓨터 언어 설정이 한국어여도 구독기가 읽는 영문 날짜가 나와야 한다."""
+    import locale
+
+    from rebrief.site import _rfc822
+
+    try:
+        locale.setlocale(locale.LC_TIME, "ko_KR.UTF-8")
+    except locale.Error:
+        pass
+    try:
+        assert _rfc822("2026-01-01") == "Thu, 01 Jan 2026 07:00:00 +0900"
+        assert _rfc822("엉터리") == ""
+    finally:
+        locale.setlocale(locale.LC_TIME, "C")
+
+
+# ── 정책 일정·후속 발표 ──────────────────────────────────────
+
+def test_policy_schedule_picks_future_dates_only():
+    from rebrief.policy import PolicyDoc, schedule_items
+
+    doc = PolicyDoc("1", "주택공급규칙 개정", "국토교통부", "2026-09-07", "u")
+    doc.body = ("□ 국토교통부는 개정안을 9월 15일부터 10월 24일까지 입법예고한다. "
+                "ㅇ 개정안은 2026년 12월 1일부터 시행된다. "
+                "ㅇ 지난 8월 5일 발표한 대책의 후속이며 총 1,798건을 심의하였다.")
+    rows = schedule_items(doc, "2026-09-07")
+    dates = [(r["date"], r["kind"]) for r in rows]
+    assert ("2026-10-24", "입법예고") in dates      # 기간은 마감일을 남긴다
+    assert ("2026-12-01", "시행") in dates
+    assert all(r["date"] >= "2026-09-07" for r in rows)   # 8월 5일은 지나갔다
+    assert "1,798" not in " ".join(r["text"] for r in rows) or len(rows) == 2
+
+    # 일정 낱말이 없는 숫자 나열은 걸리지 않는다
+    plain = PolicyDoc("2", "통계", "국토교통부", "2026-09-07", "u")
+    plain.body = "ㅇ 12월 1일 기준 누계는 40,936건이며 10월 24일 기준 1,798건이다."
+    assert schedule_items(plain, "2026-09-07") == []
+
+
+def test_policy_log_links_follow_ups(tmp_path):
+    from rebrief.policy import PolicyDoc
+    from rebrief.store import PolicyLog
+
+    book = PolicyLog(tmp_path / "policies.json")
+    first = PolicyDoc("1", "주택공급 규칙 개정안 입법예고", "국토교통부", "2026-09-01", "u1")
+    book.add(first, "2026-09-01", [{"date": "2026-12-01", "kind": "시행", "text": "시행한다",
+                                    "title": first.title, "url": "u1"}])
+    later = PolicyDoc("2", "주택공급 규칙 개정안 시행", "국토교통부", "2026-09-07", "u2")
+    other = PolicyDoc("3", "전세사기피해자 결정", "국토교통부", "2026-09-07", "u3")
+
+    assert [f["news_id"] for f in book.follow_ups(later)] == ["1"]
+    assert book.follow_ups(other) == []                    # 다른 정책은 이어 붙이지 않는다
+    assert book.follow_ups(first) == []                    # 자기 자신은 뺀다
+
+    assert [i["date"] for i in book.upcoming("2026-09-07")] == ["2026-12-01"]
+    assert book.upcoming("2027-01-01") == []               # 지나간 일정은 안 싣는다
+
+    book.save()
+    assert PolicyLog(tmp_path / "policies.json").docs.keys() == {"1"}
+
+
+# ── 네이버 검색 노출 확인 ────────────────────────────────────
+
+def test_index_check_finds_my_post(monkeypatch):
+    from rebrief import indexcheck as I
+
+    monkeypatch.setenv("NAVER_CLIENT_ID", "id")
+    monkeypatch.setenv("NAVER_CLIENT_SECRET", "secret")
+
+    class Resp:
+        def __init__(self, payload): self._p = payload
+        def raise_for_status(self): pass
+        def json(self): return self._p
+
+    sent = {}
+
+    def fake_get(url, params=None, headers=None, **kw):
+        sent["query"] = (params or {}).get("query")
+        sent["id"] = (headers or {}).get("X-Naver-Client-Id")
+        return Resp({"items": [
+            {"link": "https://blog.naver.com/other/222222222222"},
+            {"link": "https://m.blog.naver.com/rokiz/223456789012"},
+        ]})
+
+    monkeypatch.setattr(I, "_get", fake_get)
+
+    # 모바일 주소로 검색돼도 내가 올린 PC 주소와 같은 글로 본다
+    got = I.check_post("종부세 확대 전망", "https://blog.naver.com/rokiz/223456789012")
+    assert got == {"indexed": True, "rank": 2, "checked": True}
+    assert sent["query"] == "종부세 확대 전망" and sent["id"] == "id"
+
+    미노출 = I.check_post("종부세 확대 전망", "https://blog.naver.com/rokiz/999999999999")
+    assert 미노출 == {"indexed": False, "rank": None, "checked": True}
+
+    assert I.post_id("https://blog.naver.com/PostView.naver?logNo=223456789012") == "223456789012"
+    assert I.post_id("https://example.com/no-number") == ""
+
+
+def test_index_check_without_key_is_not_a_failure(cfg, monkeypatch, tmp_path):
+    """키가 없을 때 '노출 안 됨' 으로 잘못 기록하면 안 된다."""
+    from rebrief import indexcheck as I
+
+    monkeypatch.delenv("NAVER_CLIENT_ID", raising=False)
+    monkeypatch.delenv("NAVER_CLIENT_SECRET", raising=False)
+    assert I.check_post("제목", "https://blog.naver.com/rokiz/1") == {
+        "indexed": False, "rank": None, "checked": False}
+    result = I.run(cfg, "2026-09-07")
+    assert result["skipped"] is True and result["missing"] == []
+    assert I.build_message(result) == ""
+
+
+def test_index_check_warns_only_after_a_few_days(cfg, monkeypatch):
+    from rebrief import indexcheck as I
+    from rebrief.store import PublishLog, TitleLog
+
+    book = PublishLog(cfg.state_dir / "published.json")
+    book.record("2026-09-01", url="https://blog.naver.com/rokiz/111111111111")
+    book.record("2026-09-07", url="https://blog.naver.com/rokiz/222222222222")
+    book.save()
+    titles = TitleLog(cfg.state_dir / "titles.json")
+    titles.record_candidates("2026-09-01", "blog", ["오래된 글"])
+    titles.record_candidates("2026-09-07", "blog", ["오늘 글"])
+    titles.save()
+
+    monkeypatch.setenv("NAVER_CLIENT_ID", "id")
+    monkeypatch.setenv("NAVER_CLIENT_SECRET", "secret")
+    monkeypatch.setattr(I, "check_post",
+                        lambda title, url, **kw: {"indexed": False, "rank": None, "checked": True})
+
+    result = I.run(cfg, "2026-09-07", days_back=10, warn_after=3)
+    assert result["checked"] == 2
+    # 오늘 올린 글은 아직 안 걸려도 정상이라 알리지 않는다
+    assert [r["date"] for r in result["missing"]] == ["2026-09-01"]
+    assert "6일째" in I.build_message(result)
+
+
+# ── 정부 통계 직접 받기 ──────────────────────────────────────
+
+_OLD_XML = """<response><body><items>
+<item><아파트>은마</아파트><거래금액> 285,000</거래금액><전용면적>84.43</전용면적>
+ <년>2026</년><월>8</월><일>5</일><법정동> 대치동</법정동><층>5</층></item>
+<item><아파트>래미안</아파트><거래금액>190,000</거래금액><전용면적>59.9</전용면적>
+ <년>2026</년><월>8</월><일>12</일><법정동>도곡동</법정동><층>12</층></item>
+</items></body></response>"""
+
+_NEW_XML = """<response><body><items>
+<item><aptNm>헬리오시티</aptNm><dealAmount>230,000</dealAmount><excluUseAr>84.99</excluUseAr>
+ <dealYear>2026</dealYear><dealMonth>8</dealMonth><dealDay>3</dealDay>
+ <umdNm>가락동</umdNm><floor>7</floor></item>
+</items></body></response>"""
+
+_ERR_XML = """<OpenAPI_ServiceResponse><cmmMsgHeader>
+<errMsg>SERVICE_KEY_IS_NOT_REGISTERED_ERROR</errMsg></cmmMsgHeader></OpenAPI_ServiceResponse>"""
+
+
+def test_trade_parsing_handles_both_tag_styles():
+    from rebrief.stats import parse_trades, summarize
+
+    old = parse_trades(_OLD_XML)
+    assert [r["name"] for r in old] == ["은마", "래미안"]
+    assert old[0]["amount"] == 2_850_000_000            # 285,000만원 → 28.5억
+    assert old[0]["area"] == 84.43 and old[0]["date"] == "2026-08-05"
+    assert old[0]["dong"] == "대치동"                    # 앞뒤 공백은 지운다
+
+    new = parse_trades(_NEW_XML)
+    assert new[0]["name"] == "헬리오시티" and new[0]["amount"] == 2_300_000_000
+
+    assert parse_trades(_ERR_XML) == []                 # 키 오류를 거래 0건으로 읽지 않는다
+    assert parse_trades("망가진 XML") == []
+
+    got = summarize(old)
+    assert got["count"] == 2 and got["avg"] == 2_375_000_000
+    assert got["top"]["name"] == "은마"
+    assert summarize([]) == {"count": 0, "avg": 0, "median": 0, "top": None}
+
+
+def test_stats_collect_compares_with_previous_month(cfg, monkeypatch, tmp_path):
+    from rebrief import stats as S
+    from rebrief.render import Renderer
+
+    monkeypatch.setenv("DATA_GO_KR_KEY", "테스트키")
+    calls = []
+
+    class Resp:
+        def __init__(self, text): self.text = text
+        def raise_for_status(self): pass
+
+    def fake_get(url, params=None, **kw):
+        calls.append((params["LAWD_CD"], params["DEAL_YMD"]))
+        return Resp(_OLD_XML if params["DEAL_YMD"] == "202608" else _NEW_XML)
+
+    monkeypatch.setattr(S, "_get", fake_get)
+    monkeypatch.setitem(cfg.settings, "stats", {
+        "enabled": True, "max_districts": 2,
+        "districts": [{"name": "강남구", "code": "11680"}, {"name": "송파구", "code": "11710"}]})
+
+    data = S.collect(cfg, "2026-09-07")
+    assert data["month"] == "202608" and data["before"] == "202607"   # 신고 기한 때문에 지난달
+    assert ("11680", "202608") in calls and ("11680", "202607") in calls
+    assert data["total"] == 4 and data["districts"][0]["change"] == 1
+
+    path = Renderer(cfg, tmp_path, "2026-09-07").stats(data)
+    body = path.read_text(encoding="utf-8")
+    assert "| 강남구 | 2건 | +1 | 23.8억 |" in body.replace("  ", " ") or "23.8억" in body
+    assert "은마" in body and "실거래가로 본 2026년 8월" in body
+
+    monkeypatch.delenv("DATA_GO_KR_KEY")
+    assert S.collect(cfg, "2026-09-07") == {}          # 키가 없으면 아무것도 하지 않는다
+
+
+def test_reb_rows_survives_shape_changes():
+    from rebrief.stats import _reb_rows
+
+    assert _reb_rows({"RESULT": {"CODE": "ERROR-290"}}) == []
+    wrapped = {"SttsApiTblData": [{"head": []}, {"row": [{"DTA_VAL": "101.2"}]}]}
+    assert _reb_rows(wrapped) == [{"DTA_VAL": "101.2"}]
+    assert _reb_rows({"없음": 1}) == []
+
+
+def test_upcoming_page_shows_policy_dates(cfg, tmp_path):
+    """정부 발표에서 뽑은 시행일이 '이번 주 볼 것' 에 실려야 한다."""
+    import json
+
+    from rebrief.site import _build_upcoming, make_env
+
+    (cfg.state_dir).mkdir(parents=True, exist_ok=True)
+    (cfg.state_dir / "policies.json").write_text(json.dumps({"docs": {"1": {
+        "title": "주택공급규칙 개정", "schedule": [
+            {"date": "2026-12-01", "kind": "시행", "text": "12월 1일부터 시행된다",
+             "title": "주택공급규칙 개정", "url": "https://www.korea.kr/x"},
+            {"date": "2026-01-01", "kind": "시행", "text": "지나간 일정",
+             "title": "옛 발표", "url": "https://www.korea.kr/y"}],
+    }}}, ensure_ascii=False), encoding="utf-8")
+
+    day = cfg.output_dir / "2026-09-07"
+    day.mkdir(parents=True, exist_ok=True)
+    (day / "data.json").write_text(json.dumps({"tomorrow_watch": ["금통위 발표 확인"]}),
+                                   encoding="utf-8")
+
+    dest = tmp_path / "site"
+    dest.mkdir()
+    count = _build_upcoming(make_env(), [day], dest, cfg=cfg)
+    html = (dest / "upcoming.html").read_text(encoding="utf-8")
+    assert count == 2
+    assert "2026-12-01" in html and "https://www.korea.kr/x" in html
+    assert "지나간 일정" not in html          # 오늘보다 이전 일정은 싣지 않는다
+    assert "금통위 발표 확인" in html          # 브리핑에서 나온 확인거리도 그대로

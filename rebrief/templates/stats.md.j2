@@ -1,0 +1,27 @@
+# 실거래가로 본 {{ month_label }}
+
+정부가 받은 **아파트 매매 신고 자료**를 그대로 집계한 것입니다. 기사에 실린 수치가 아니라
+국토교통부 실거래가 자료를 직접 받아 셌습니다. 신고 기한이 30일이라 지난달을 봅니다.
+
+**{{ month_label }} 전체 {{ total }}건** · {{ before_label }} {{ total_before }}건{% if total_before %} ({{ '%+d'|format(total - total_before) }}건){% endif %}
+
+| 지역 | 거래 건수 | 전달 대비 | 평균 거래가 | 가장 비싼 거래 |
+| --- | ---: | ---: | ---: | --- |
+{% for d in districts %}
+| {{ d.name }} | {{ d.now.count }}건 | {{ '%+d'|format(d.change) }} | {{ (d.now.avg / 100000000)|round(1) }}억 | {% if d.now.top %}{{ d.now.top.name }} {{ (d.now.top.amount / 100000000)|round(1) }}억 ({{ d.now.top.area }}㎡){% else %}—{% endif %} |
+{% endfor %}
+
+{% if series %}
+## 한국부동산원 지수 추이
+
+| 시점 | 값 |
+| --- | ---: |
+{% for s in series %}
+| {{ s.time }} | {{ s.value }} |
+{% endfor %}
+{% endif %}
+
+---
+
+*출처: 국토교통부 실거래가 공개시스템(공공데이터포털){% if series %}, 한국부동산원 R-ONE{% endif %}.
+평균은 그 달 신고분의 단순 평균이며 면적·층을 보정하지 않았습니다.*

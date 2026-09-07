@@ -32,6 +32,7 @@ PAGES = [
     ("script-longform.md", "롱폼 대본", "8분. 챕터와 자료화면 포함"),
     ("production-notes.md", "제작 메모", "제목·썸네일·태그·촬영 목록"),
     ("policy.md", "정부 발표 원문", "보도자료 3줄 요약과 원본 파일"),
+    ("stats.md", "실거래가 통계", "정부 신고 자료를 직접 집계한 표"),
     ("sources.md", "기사 원문", "근거가 된 기사 링크"),
 ]
 EXTRA_FILES = ["script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv", "data.json"]
@@ -69,7 +70,7 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
     weeks = _build_weeks(env, source / "weekly", dest / "weekly")
     _build_dashboard(env, cfg, days, built, dest)
     _build_search(env, days, built, dest)
-    upcoming = _build_upcoming(env, days, dest)
+    upcoming = _build_upcoming(env, days, dest, cfg=cfg)
 
     from .store import PublishLog
 
@@ -77,7 +78,19 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
     for entry in built:
         entry["published"] = published.get(entry["date"])
 
+    today_entry = built[0] if built else {}
     index = env.get_template("site_index.html.j2").render(
+        meta=meta_tags(
+            site_base(cfg),
+            title=str((cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑")),
+            description=(today_entry.get("description")
+                         or "매일 아침 부동산 뉴스를 정리해 블로그 글과 영상 대본으로 만듭니다."),
+            image=(f"{today_entry['date']}/{today_entry['image']}"
+                   if today_entry.get("image") else ""),
+            image_size=today_entry.get("size"),
+            channel=str((cfg.get("video", {}) or {}).get("channel_name", "") or ""),
+        ),
+        has_feed=bool(site_base(cfg)),
         days=built,
         today=built[0] if built else None,
         weeks=weeks,
@@ -88,6 +101,9 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
         channel=(cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑"),
     )
     (dest / "index.html").write_text(index, encoding="utf-8")
+
+    _build_feed(cfg, built, dest)
+    _build_sitemap(cfg, built, weeks, dest)
 
     _write_pwa(dest, channel=(cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑"),
                png=bool((cfg.get("images", {}) or {}).get("png", True)))
@@ -157,8 +173,9 @@ def _build_search(env, days: list[Path], built: list[dict], dest: Path) -> None:
     (dest / "search.html").write_text(html, encoding="utf-8")
 
 
-def _build_upcoming(env, days: list[Path], dest: Path, limit: int = 7) -> int:
-    """브리핑마다 나온 '내일 볼 것' 을 모아 한 장으로. 같은 말은 한 번만 싣는다."""
+def _build_upcoming(env, days: list[Path], dest: Path, limit: int = 7,
+                    cfg: Config | None = None) -> int:
+    """브리핑마다 나온 '내일 볼 것' 과 정부 발표의 시행일을 한 장에 모은다."""
     import json
 
     from .cluster import similarity
@@ -177,16 +194,36 @@ def _build_upcoming(env, days: list[Path], dest: Path, limit: int = 7) -> int:
             if not text or any(similarity(text, r["text"]) >= 0.7 for r in rows):
                 continue
             rows.append({"text": text, "date": day.name})
-    if not rows:
+    schedule = _policy_schedule(cfg, days)
+    if not rows and not schedule:
         return 0
-    lines = ["# 이번 주 볼 것", "", "브리핑마다 나온 '내일 확인할 것' 을 모았습니다. 같은 말은 한 번만 실었습니다.", ""]
-    lines += [f"- {r['text']}  \n  <small>{r['date']} 브리핑에서</small>" for r in rows]
+    lines = ["# 이번 주 볼 것", ""]
+    if schedule:
+        lines += ["## 정부 발표에 적힌 날짜", "",
+                  "보도자료 원문에서 뽑은 일정입니다. 그날 무슨 일이 있는지 미리 적어 둡니다.", ""]
+        lines += [f"- **{it['date']}** ({it['kind']}) — [{it['title']}]({it['url']})  "
+                  f"\n  <small>{it['text']}</small>" for it in schedule]
+        lines.append("")
+    if rows:
+        lines += ["## 브리핑에서 나온 확인거리", "",
+                  "브리핑마다 나온 '내일 확인할 것' 을 모았습니다. 같은 말은 한 번만 실었습니다.", ""]
+        lines += [f"- {r['text']}  \n  <small>{r['date']} 브리핑에서</small>" for r in rows]
     html = env.get_template("site_page.html.j2").render(
         title="이번 주 볼 것", date=days[0].name if days else "",
         body_html=md_to_html("\n".join(lines)),
     )
     (dest / "upcoming.html").write_text(html, encoding="utf-8")
-    return len(rows)
+    return len(rows) + len(schedule)
+
+
+def _policy_schedule(cfg: Config | None, days: list[Path]) -> list[dict]:
+    """정부 발표에서 뽑아 둔 앞으로의 일정. 오늘 이후만."""
+    if cfg is None:
+        return []
+    from .store import PolicyLog
+
+    after = days[0].name if days else datetime.now().strftime("%Y-%m-%d")
+    return PolicyLog(cfg.state_dir / "policies.json").upcoming(after)
 
 
 def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest: Path,
@@ -319,6 +356,7 @@ def _build_zip(dest: Path, name: str = "files.zip") -> dict | None:
 def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
     dest.mkdir(parents=True, exist_ok=True)
     pages: list[dict] = []
+    info = day_summary(day)          # 공유 카드에 쓸 제목·설명·이미지
 
     for filename, label, description in PAGES:
         source_file = day / filename
@@ -334,6 +372,16 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
                 title=label,
                 date=day.name,
                 body_html=md_to_html(source_file.read_text(encoding="utf-8")),
+                meta=meta_tags(
+                    site_base(cfg),
+                    title=f"{info['headline'] or label} — {day.name}",
+                    description=info["description"],
+                    path=f"{day.name}/{href}",
+                    image=f"{day.name}/{info['image']}" if info["image"] else "",
+                    image_size=info["size"],
+                    published=day.name,
+                    channel=str((cfg.get("video", {}) or {}).get("channel_name", "") or ""),
+                ),
             )
             (dest / href).write_text(html, encoding="utf-8")
 
@@ -359,7 +407,9 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
             "description": f"{len(assets)}장. 길게 눌러 저장 → 블로그에 올리기",
         })
 
-    entry = {"date": day.name, "pages": pages, "checklist": None, "bundle": bundle}
+    entry = {"date": day.name, "pages": pages, "checklist": None, "bundle": bundle,
+             "headline": info["headline"], "description": info["description"],
+             "image": info["image"], "size": info["size"]}
     cl = day / "checklist.json"
     if cl.exists():
         try:
@@ -418,3 +468,197 @@ def md_to_html(text: str) -> str:
         text or "", extensions=["tables", "sane_lists"], output_format="html"
     ))
     return _CHECKED.sub(lambda m: "<li>☑ " if m.group(1).lower() == "x" else "<li>☐ ", html)
+
+
+# ── 공유 카드·검색엔진·구독 피드 ───────────────────────────────
+#
+# 카카오톡·트위터에 주소를 붙이면 미리보기 카드가 뜨고(og:*), 검색엔진이 글의
+# 제목·날짜를 구조로 읽으며(JSON-LD), 구독기가 새 글을 받아 갑니다(feed.xml).
+# 전부 정적 파일이라 서버는 필요 없습니다.
+
+
+def site_base(cfg: Config) -> str:
+    """설정된 사이트 주소를 항상 슬래시로 끝나게 다듬는다. 없으면 빈 문자열."""
+    url = str(cfg.get("site.url", "") or "").strip()
+    return (url.rstrip("/") + "/") if url else ""
+
+
+def _xml_escape(text: str) -> str:
+    return (str(text).replace("&", "&amp;").replace("<", "&lt;")
+            .replace(">", "&gt;").replace('"', "&quot;"))
+
+
+def meta_tags(base: str, *, title: str, description: str = "", path: str = "",
+              image: str = "", image_size: tuple[int, int] | None = None,
+              published: str = "", channel: str = "") -> str:
+    """공유 카드용 태그 묶음. base 가 비어 있으면 상대 주소라도 넣어 둔다."""
+    url = base + path.lstrip("/")
+    tags = [f'<meta name="description" content="{_esc_attr(description)}">'] if description else []
+    if url:
+        tags.append(f'<link rel="canonical" href="{_esc_attr(url)}">')
+    tags += [
+        '<meta property="og:type" content="' + ("article" if published else "website") + '">',
+        f'<meta property="og:title" content="{_esc_attr(title)}">',
+        f'<meta property="og:site_name" content="{_esc_attr(channel or title)}">',
+        '<meta property="og:locale" content="ko_KR">',
+    ]
+    if description:
+        tags.append(f'<meta property="og:description" content="{_esc_attr(description)}">')
+    if url:
+        tags.append(f'<meta property="og:url" content="{_esc_attr(url)}">')
+    if image:
+        # 카드 이미지는 상대 주소를 받아 주지 않는 곳이 많아 전체 주소로만 넣는다
+        full = image if image.startswith("http") else (base + image.lstrip("/") if base else "")
+        if full:
+            tags.append(f'<meta property="og:image" content="{_esc_attr(full)}">')
+            if image_size:                     # 실제 크기와 다르게 적으면 카드가 잘린다
+                tags += [f'<meta property="og:image:width" content="{image_size[0]}">',
+                         f'<meta property="og:image:height" content="{image_size[1]}">']
+            tags += ['<meta name="twitter:card" content="summary_large_image">',
+                     f'<meta name="twitter:image" content="{_esc_attr(full)}">']
+        else:
+            tags.append('<meta name="twitter:card" content="summary">')
+    else:
+        tags.append('<meta name="twitter:card" content="summary">')
+    tags.append(f'<meta name="twitter:title" content="{_esc_attr(title)}">')
+    if description:
+        tags.append(f'<meta name="twitter:description" content="{_esc_attr(description)}">')
+    if published:
+        payload = {
+            "@context": "https://schema.org", "@type": "NewsArticle",
+            "headline": title[:110], "datePublished": published, "dateModified": published,
+            "inLanguage": "ko-KR",
+        }
+        if description:
+            payload["description"] = description
+        if url:
+            payload["url"] = url
+            payload["mainEntityOfPage"] = url
+        if image and base:
+            payload["image"] = [base + image.lstrip("/")]
+        if channel:
+            payload["publisher"] = {"@type": "Organization", "name": channel}
+        import json as _json
+
+        body = _json.dumps(payload, ensure_ascii=False).replace("</", "<\\/")
+        tags.append(f'<script type="application/ld+json">{body}</script>')
+    return "\n".join(tags)
+
+
+def _esc_attr(text: str) -> str:
+    """따옴표 속에 들어갈 문자열. 줄바꿈은 공백으로 눕힌다."""
+    return _xml_escape(" ".join(str(text).split()))
+
+
+def day_summary(day: Path) -> dict:
+    """그날 data.json 에서 카드에 쓸 제목·설명·이미지를 뽑는다."""
+    import json
+
+    info = {"headline": "", "description": "", "image": "", "size": None}
+    path = day / "data.json"
+    if path.exists():
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError):
+            data = {}
+        info["headline"] = str(data.get("headline", "") or "")
+        lines = [str(i.get("one_liner", "") or "") for i in data.get("issues", [])]
+        info["description"] = _trim(" · ".join(x for x in lines if x), 150)
+    # 카드 이미지는 가로로 넓은 것부터. 크기를 함께 적어야 카드가 잘리지 않는다.
+    for name, size in (("img-0-cover.png", (1200, 630)), ("thumb-longform.png", (1280, 720))):
+        if (day / name).exists():
+            info["image"], info["size"] = name, size
+            break
+    return info
+
+
+def _trim(text: str, limit: int) -> str:
+    """길면 자르되 낱말 중간에서 끊지 않는다."""
+    flat = " ".join(str(text).split())
+    if len(flat) <= limit:
+        return flat
+    cut = flat[:limit]
+    mark = max(cut.rfind(" · "), cut.rfind(". "), cut.rfind(" "))
+    return (cut[:mark] if mark > limit * 0.5 else cut).rstrip(" ·.,") + "…"
+
+
+_WDAY = ("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
+_MONTH = ("Jan", "Feb", "Mar", "Apr", "May", "Jun",
+          "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
+
+
+def _rfc822(date_str: str) -> str:
+    """구독기가 읽는 날짜 형식. 요일·달 이름을 직접 적는다 —
+    strftime 은 컴퓨터의 언어 설정에 따라 한글을 내보낼 수 있다."""
+    try:
+        d = datetime.strptime(date_str, "%Y-%m-%d")
+    except ValueError:
+        return ""
+    return (f"{_WDAY[d.weekday()]}, {d.day:02d} {_MONTH[d.month - 1]} {d.year} "
+            "07:00:00 +0900")          # 브리핑이 나오는 한국 시간 오전 7시
+
+
+def _build_feed(cfg: Config, built: list[dict], dest: Path, limit: int = 20) -> None:
+    """구독기(RSS)용 feed.xml. 주소가 설정돼 있지 않으면 만들지 않는다 — 상대 주소는 구독기가 못 읽는다."""
+    base = site_base(cfg)
+    if not base or not built:
+        return
+    channel = (cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑")
+    items = []
+    for entry in built[:limit]:
+        date_str = entry["date"]
+        hrefs = [p["href"] for p in entry["pages"]]
+        # 구독자가 읽을 페이지를 건다. 붙여넣기용 화면은 버튼만 잔뜩이라 뒤로 미룬다.
+        href = next((h for h in ("brief.html", "blog.html") if h in hrefs),
+                    hrefs[0] if hrefs else "brief.html")
+        link = f"{base}{date_str}/{href}"
+        title = entry.get("headline") or f"{date_str} 부동산 브리핑"
+        stamp = _rfc822(date_str)
+        if not stamp:
+            continue
+        items.append(
+            "<item>"
+            f"<title>{_xml_escape(title)}</title>"
+            f"<link>{_xml_escape(link)}</link>"
+            f"<guid isPermaLink=\"true\">{_xml_escape(link)}</guid>"
+            f"<pubDate>{stamp}</pubDate>"
+            f"<description>{_xml_escape(entry.get('description') or title)}</description>"
+            "</item>"
+        )
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<rss version="2.0"><channel>'
+        f"<title>{_xml_escape(channel)}</title>"
+        f"<link>{_xml_escape(base)}</link>"
+        "<description>매일 아침 부동산 뉴스 브리핑</description>"
+        "<language>ko</language>"
+        + "".join(items) +
+        "</channel></rss>\n"
+    )
+    (dest / "feed.xml").write_text(xml, encoding="utf-8")
+
+
+def _build_sitemap(cfg: Config, built: list[dict], weeks: list[dict], dest: Path) -> None:
+    """검색엔진이 훑을 주소 목록. 새 글을 더 빨리 찾아갑니다."""
+    base = site_base(cfg)
+    if not base:
+        return
+    urls = [(base, "")]
+    for entry in built:
+        for page in entry["pages"]:
+            urls.append((f"{base}{entry['date']}/{page['href']}", entry["date"]))
+    for week in weeks:
+        for page in week["pages"]:
+            urls.append((f"{base}{week['week']}/{page['href']}", ""))
+    body = "".join(
+        "<url><loc>" + _xml_escape(u) + "</loc>"
+        + (f"<lastmod>{d}</lastmod>" if d else "")
+        + "</url>"
+        for u, d in urls
+    )
+    (dest / "sitemap.xml").write_text(
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">' + body + "</urlset>\n",
+        encoding="utf-8")
+    (dest / "robots.txt").write_text(
+        f"User-agent: *\nAllow: /\nSitemap: {base}sitemap.xml\n", encoding="utf-8")

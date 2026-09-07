@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-title" content="브리핑">
 <meta name="theme-color" content="#256abf">
 <title>{{ title }} — {{ date }}</title>
+{{ meta|default('', true)|safe }}
 <style>
   :root { color-scheme: light; }
   * { box-sizing: border-box; }

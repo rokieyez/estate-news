@@ -281,6 +281,14 @@ class TitleLog:
         entry["type"] = title_type(entry["title"])
         return entry
 
+    def picked_title(self, run_date: str, kind: str = "blog") -> str:
+        """그날 실제로 고른 제목. 아직 안 골랐으면 첫 후보를 쓴다."""
+        entry = (self.days.get(run_date, {}) or {}).get(kind, {}) or {}
+        if entry.get("title"):
+            return str(entry["title"])
+        cands = entry.get("candidates") or []
+        return str(cands[0]) if cands else ""
+
     def picked(self) -> list[dict]:
         rows = []
         for d, kinds in sorted(self.days.items(), reverse=True):
@@ -359,6 +367,69 @@ class PublishLog:
     def save(self) -> None:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         payload = {"updated_at": datetime.now().isoformat(timespec="seconds"), "days": self.days}
+        self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+POLICIES_FILE = "policies.json"
+
+
+class PolicyLog:
+    """지금까지 실은 정부 발표를 기억한다. 같은 정책의 후속 발표를 이어 주고, 앞으로의 일정을 모은다."""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.docs: dict[str, dict] = {}
+        if path.exists():
+            try:
+                self.docs = json.loads(path.read_text(encoding="utf-8")).get("docs", {}) or {}
+            except (json.JSONDecodeError, OSError):
+                self.docs = {}
+
+    def add(self, doc, run_date: str, schedule: list[dict] | None = None) -> None:
+        self.docs[str(doc.news_id)] = {
+            "title": doc.title, "dept": doc.dept, "date": doc.date or run_date,
+            "url": doc.url, "summary": list(doc.summary or [])[:3],
+            "schedule": list(schedule or []), "seen_on": run_date,
+        }
+
+    def follow_ups(self, doc, threshold: float = 0.45, limit: int = 3) -> list[dict]:
+        """제목이 비슷한 지난 발표. 같은 정책이 며칠에 걸쳐 여러 번 나오는 걸 이어 준다."""
+        from .cluster import similarity
+
+        found = []
+        for news_id, row in self.docs.items():
+            if news_id == str(doc.news_id):
+                continue
+            score = similarity(doc.title, row.get("title", ""))
+            if score >= threshold:
+                found.append({**row, "news_id": news_id, "score": round(score, 3)})
+        found.sort(key=lambda r: (r.get("date", ""), r["score"]), reverse=True)
+        return found[:limit]
+
+    def upcoming(self, after: str, limit: int = 8) -> list[dict]:
+        """오늘 이후의 일정만 날짜순으로. 같은 날 같은 내용은 한 번만."""
+        rows, seen = [], set()
+        for row in self.docs.values():
+            for item in row.get("schedule", []) or []:
+                when = str(item.get("date", ""))
+                key = (when, str(item.get("text", ""))[:24])
+                if when < after or key in seen:
+                    continue
+                seen.add(key)
+                rows.append(item)
+        rows.sort(key=lambda r: r["date"])
+        return rows[:limit]
+
+    def prune(self, keep: int = 120) -> None:
+        """오래된 것부터 버린다. 장부가 끝없이 커지지 않게."""
+        if len(self.docs) <= keep:
+            return
+        ordered = sorted(self.docs.items(), key=lambda kv: kv[1].get("seen_on", ""), reverse=True)
+        self.docs = dict(ordered[:keep])
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"updated_at": datetime.now().isoformat(timespec="seconds"), "docs": self.docs}
         self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 

@@ -1,0 +1,48 @@
+name: 검색 노출 확인
+
+# 네이버에 올린 글이 검색에 걸리는지 매일 확인합니다.
+# Secrets 에 NAVER_CLIENT_ID / NAVER_CLIENT_SECRET 이 없으면 아무것도 하지 않고 끝납니다.
+# 사흘이 지나도 검색에 안 나오면 텔레그램으로 알려 줍니다(텔레그램 설정이 있을 때).
+on:
+  schedule:
+    - cron: "10 3 * * *"      # 12:10 KST — 오전 발행분이 색인될 시간을 준다
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "며칠 전까지 볼지 (기본 7)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
+      - name: 확인
+        env:
+          NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+          NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+          IN_DAYS: ${{ inputs.days }}
+        run: |
+          set -- indexed --notify
+          [ -n "$IN_DAYS" ] && set -- "$@" --days "$IN_DAYS"
+          python -m rebrief "$@"
+      - name: 커밋
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state
+          git diff --staged --quiet && exit 0
+          git commit -m "검색 노출 확인 기록"
+          git pull --rebase origin "${GITHUB_REF_NAME}" && git push

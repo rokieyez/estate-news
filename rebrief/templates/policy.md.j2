@@ -13,6 +13,22 @@
 {% endfor %}
 
 [정책브리핑에서 원문 보기]({{ d.url }})
+{% if d.schedule %}
+
+**앞으로 일정**
+
+{% for it in d.schedule %}
+- **{{ it.date }}** — {{ it.kind }} · {{ it.text }}
+{% endfor %}
+{% endif %}
+{% if d.follow_ups %}
+
+**같은 정책의 지난 발표**
+
+{% for f in d.follow_ups %}
+- [{{ f.title }}]({{ f.url }}) <small>{{ f.date }}</small>
+{% endfor %}
+{% endif %}
 {% if d.files %}
 
 **첨부 문서**

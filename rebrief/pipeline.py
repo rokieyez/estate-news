@@ -262,6 +262,7 @@ def _generate_with_llm(
         made["cover"] = cover
         policies = _collect_policies(cfg, renderer, date_str, generator, result)
         made["policies"] = policies
+        _collect_stats(cfg, renderer, date_str, result)
         renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover,
                       policies=policies)
         if str(cfg.get("blog.platform", "naver")).lower() == "naver":
@@ -443,10 +444,45 @@ def _collect_policies(cfg: Config, renderer: Renderer, date_str: str, generator,
         except LLMError as exc:
             log.warning("정책 요약 실패, 부처 요약을 그대로 씁니다: %s", exc)
 
+    _link_policies(cfg, docs, date_str)
     path = renderer.policy(docs)
     if path:
         log.info("정책 원문 %d건 정리", len(docs))
     return docs
+
+
+def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result) -> dict:
+    """정부 통계를 직접 받아 표로 만든다. 키가 없거나 실패해도 실행은 계속한다."""
+    from . import stats as stats_mod
+
+    settings = cfg.get("stats", {}) or {}
+    if not settings.get("enabled", True) or not stats_mod.deal_key():
+        return {}
+    try:
+        data = stats_mod.collect(cfg, date_str)
+        series = stats_mod.reb_series(cfg, str(settings.get("reb_statbl_id", "") or ""),
+                                      str(settings.get("reb_cycle", "WK") or "WK"))
+    except Exception as exc:                       # 외부 자료가 바뀌어도 실행은 멈추지 않는다
+        log.warning("통계 수집 실패: %s", exc)
+        result.warnings.append(f"통계 수집 실패 — {type(exc).__name__}")
+        return {}
+    if data:
+        renderer.stats(data, series)
+        log.info("실거래가 %d개 지역 집계", len(data["districts"]))
+    return data
+
+
+def _link_policies(cfg: Config, docs: list, date_str: str) -> None:
+    """앞으로의 일정을 뽑고, 같은 정책의 지난 발표를 이어 붙이고, 장부에 남긴다."""
+    from .store import PolicyLog
+
+    book = PolicyLog(cfg.state_dir / "policies.json")
+    for doc in docs:
+        doc.schedule = policy_mod.schedule_items(doc, date_str)
+        doc.follow_ups = book.follow_ups(doc)      # 장부에 넣기 전에 봐야 자기 자신이 안 걸린다
+        book.add(doc, date_str, doc.schedule)
+    book.prune()
+    book.save()
 
 
 def _repeat_topics(cfg: Config, brief, run_date: str, threshold: float = 0.5) -> list[dict]:
