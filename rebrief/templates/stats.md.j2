@@ -132,6 +132,29 @@
 가격 변화가 아니라 신고가 쌓이는 속도를 보는 그림입니다.
 {% endif %}
 
+{% if supply %}
+## 공급 쪽 숫자 (앞으로 나올 물량)
+
+여기까지의 숫자는 전부 **팔린 것**이었습니다. 이 절은 반대쪽입니다.
+미분양은 다 짓고도 안 팔린 재고이고, 인허가·착공은 **1~2년 뒤 공급**을 말합니다.
+
+| 항목 | 시점 | 값 | 전달 대비 | 성질 |
+| --- | --- | ---: | ---: | --- |
+{% for it in supply %}
+| {{ it.name }} | {{ it.latest_label }} | {{ '{:,.0f}'.format(it.latest) }}{{ it.unit }} | {% if it.before is not none %}{{ '{:+,.0f}'.format(it.latest - it.before) }}{% else %}—{% endif %} | {% if it.mode == 'stock' %}재고{% elif it.mode == 'cumulative' %}그 달치(누계에서 되돌림){% else %}그 달 실적{% endif %} |
+{% endfor %}
+
+{% for it in supply %}{% if it.note %}
+- **{{ it.name }}** — {{ it.note }}.
+{% endif %}{% endfor %}
+
+{% if images.get('supply') %}
+![{{ supply[0].name }} 추이]({{ images['supply'] }})
+
+{% endif %}
+발표가 두세 달 늦습니다. 거래·가격 수치와 시점이 다르니 견줄 때 주의하세요.
+
+{% endif %}
 {% if warnings %}
 ## 확인이 필요한 값
 
@@ -145,6 +168,6 @@
 
 ---
 
-*출처: 국토교통부 실거래가 공개시스템(공공데이터포털){% if index %}, 한국부동산원 R-ONE{% endif %}.
+*출처: 국토교통부 실거래가 공개시스템(공공데이터포털){% if index or supply %}, 한국부동산원 R-ONE{% endif %}.
 평균은 그 달 신고분의 단순 평균이며 면적·층을 보정하지 않았습니다.
 해제(계약 취소)로 신고된 건은 뺐습니다.*

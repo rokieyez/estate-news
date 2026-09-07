@@ -652,6 +652,104 @@ def suspect_drops(rows: list[dict], *, floor: int = 30, ratio: float = 0.1) -> l
 # ── 한국부동산원 ─────────────────────────────────────────────
 
 
+
+# ── 공급 쪽 통계 (미분양·인허가·착공) ────────────────────────
+#
+# 지금까지 우리 통계는 전부 '팔린 것' 이었습니다. 미분양은 지금 안 팔리고 남은 물량이고,
+# 인허가·착공은 1~2년 뒤 공급을 말해 줍니다. 세 숫자의 **성질이 서로 다릅니다.**
+
+
+def reb_supply_rows(cfg, statbl_id: str, cls_id: str, start: str, end: str,
+                    max_pages: int = 20) -> dict[str, float]:
+    """월간 통계표 한 장을 시점→값으로. 인증키가 없으면 빈 표."""
+    key = reb_key()
+    if not key or not statbl_id:
+        return {}
+    out: dict[str, float] = {}
+    timeout = float(cfg.get("collect.timeout_seconds", 15))
+    for page in range(1, max_pages + 1):
+        params = {"KEY": key, "Type": "json", "STATBL_ID": statbl_id, "DTACYCLE_CD": "MM",
+                  "START_WRTTIME": start, "END_WRTTIME": end,
+                  "pIndex": str(page), "pSize": "100"}
+        if cls_id:
+            params["CLS_ID"] = str(cls_id)
+        try:
+            resp = _get(REB_DATA_URL, params=params, timeout=timeout)
+            resp.raise_for_status()
+            rows = _reb_rows(resp.json())
+        except (requests.RequestException, ValueError) as exc:
+            log.warning("부동산원 공급 통계 실패(%s): %s", statbl_id, type(exc).__name__)
+            break
+        if not rows:
+            break
+        before = len(out)
+        for row in rows:
+            try:
+                out[str(row.get("WRTTIME_IDTFR_ID", ""))] = float(
+                    str(row.get("DTA_VAL", "")).replace(",", ""))
+            except (TypeError, ValueError):
+                continue
+        if len(out) == before:
+            break
+    return dict(sorted(out.items()))
+
+
+def de_cumulate(rows: dict[str, float]) -> dict[str, float]:
+    """연초부터 쌓인 누계를 그 달치로 되돌린다.
+
+    **인허가 실적은 누계입니다** (2026-09-08 실측: 서울 2025년 1월 2,801 → 12월 41,912 →
+    2026년 1월 1,250 으로 초기화). 그대로 '6월 20,838호' 라고 쓰면 그 달에 그만큼 허가된
+    것처럼 읽혀 글이 거짓말이 됩니다. 1월은 누계가 곧 그 달치라 그대로 둡니다.
+    """
+    out: dict[str, float] = {}
+    prev_year, prev_value = "", 0.0
+    for time, value in sorted(rows.items()):
+        year, month = time[:4], time[4:6]
+        out[time] = value if (month == "01" or year != prev_year) else value - prev_value
+        prev_year, prev_value = year, value
+    return out
+
+
+def reb_supply(cfg, run_date: str = "") -> list[dict]:
+    """미분양·인허가·착공을 한 번에. 설정에 적힌 통계표만 봅니다.
+
+    발표가 두세 달 늦으므로 넉넉한 구간을 요청하고 받은 것 중 최근치만 씁니다.
+    """
+    settings = ((cfg.get("stats", {}) or {}).get("supply", {}) or {})
+    if not settings.get("enabled", True) or not reb_key():
+        return []
+    try:
+        end = date.fromisoformat(run_date or date.today().isoformat())
+    except ValueError:
+        end = date.today()
+    months = max(int(settings.get("months", 13)), 2)
+    start_ym = f"{end.year - 2}01"          # 발표 지연을 감안해 넉넉히
+    end_ym = f"{end.year}12"
+
+    out: list[dict] = []
+    for item in settings.get("tables", []) or []:
+        rows = reb_supply_rows(cfg, str(item.get("id", "")), str(item.get("cls", "")),
+                               start_ym, end_ym)
+        if not rows:
+            continue
+        if str(item.get("mode", "monthly")) == "cumulative":
+            rows = de_cumulate(rows)
+        picked = list(rows.items())[-months:]
+        if not picked:
+            continue
+        out.append({
+            "name": str(item.get("name", "")),
+            "unit": str(item.get("unit", "호")),
+            "mode": str(item.get("mode", "monthly")),
+            "note": str(item.get("note", "")),
+            "rows": [{"time": t, "label": month_label(t), "value": v} for t, v in picked],
+            "latest": picked[-1][1],
+            "latest_label": month_label(picked[-1][0]),
+            "before": picked[-2][1] if len(picked) > 1 else None,
+        })
+    return out
+
+
 def reb_tables(cfg, keyword: str = "") -> list[dict]:
     """통계표 목록. 이름에 keyword 가 든 것만 (번호를 설정에 적기 위해 씁니다)."""
     key = reb_key()
@@ -682,7 +780,11 @@ def reb_tables(cfg, keyword: str = "") -> list[dict]:
 def _reb_rows(data) -> list[dict]:
     """부동산원 응답에서 자료 줄만 꺼낸다. 오류면 빈 목록."""
     if isinstance(data, dict) and "RESULT" in data:
-        log.warning("부동산원 응답 오류: %s", str(data["RESULT"].get("CODE", ""))[:20])
+        code = str(data["RESULT"].get("CODE", ""))[:20]
+        # INFO-200 은 '해당 자료 없음' 입니다. 쪽을 넘기다 끝에 닿으면 늘 나오므로
+        # 오류로 올리면 정상 실행에도 경고가 줄줄이 찍힙니다.
+        log.debug("부동산원 자료 없음: %s", code) if code == "INFO-200" else \
+            log.warning("부동산원 응답 오류: %s", code)
         return []
     if isinstance(data, list):                      # [{head...}, {row: [...]}]
         for part in data:

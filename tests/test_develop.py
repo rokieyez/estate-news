@@ -1672,3 +1672,89 @@ def test_recaps_reuse_the_daily_stats_images(cfg, tmp_path):
     assert (out / "img-stats-map.png").exists()
     assert "jeonse_map" not in made                      # 없는 그림은 넣지 않는다
     assert copy_stats_images(cfg, out, "2026-08-01") == {}
+
+
+# ── 공급 쪽 통계 (미분양·인허가·착공) ────────────────────────
+
+def test_cumulative_permits_are_turned_back_into_months():
+    """인허가 원자료는 연초부터의 누계다. 그대로 실으면 글이 거짓말이 된다."""
+    from rebrief.stats import de_cumulate
+
+    # 2026-09-08 실측 모양: 2025년 내내 쌓이다가 2026년 1월에 초기화된다
+    rows = {"202511": 39299, "202512": 41912, "202601": 1250, "202602": 3856, "202603": 5715}
+    got = de_cumulate(rows)
+    assert got["202512"] == 41912 - 39299          # 그 달치 = 누계 차분
+    assert got["202601"] == 1250                   # 1월은 누계가 곧 그 달치
+    assert got["202602"] == 2606 and got["202603"] == 1859
+    assert de_cumulate({}) == {}
+
+
+def test_supply_tables_keep_their_own_kind(cfg, monkeypatch):
+    from rebrief import stats as stats_mod
+
+    cfg.settings["stats"]["supply"] = {
+        "enabled": True, "months": 3,
+        "tables": [
+            {"name": "미분양", "id": "T1", "cls": "50018", "mode": "stock", "note": "서울 전체"},
+            {"name": "인허가", "id": "T2", "cls": "50033", "mode": "cumulative"},
+        ],
+    }
+    monkeypatch.setenv("REB_API_KEY", "테스트키")
+    table = {
+        "T1": {"202605": 985, "202606": 1013, "202607": 994},
+        "T2": {"202604": 12890, "202605": 19208, "202606": 20838},
+    }
+
+    class Resp:
+        def __init__(self, rows):
+            self._rows = rows
+
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return [{"head": []}, {"row": self._rows}]
+
+    calls = {"n": 0}
+
+    def fake_get(url, params=None, timeout=None):
+        calls["n"] += 1
+        if params.get("pIndex") != "1":            # 두 번째 쪽은 비어 온다
+            return Resp([])
+        return Resp([{"WRTTIME_IDTFR_ID": t, "DTA_VAL": v}
+                     for t, v in table[params["STATBL_ID"]].items()])
+
+    monkeypatch.setattr(stats_mod, "_get", fake_get)
+    got = stats_mod.reb_supply(cfg, "2026-09-08")
+    assert [g["name"] for g in got] == ["미분양", "인허가"]
+
+    stock = got[0]
+    assert stock["latest"] == 994 and stock["latest_label"] == "2026년 7월"
+    assert stock["before"] == 1013 and stock["note"] == "서울 전체"
+
+    permits = got[1]
+    assert permits["latest"] == 20838 - 19208      # 누계를 그 달치로 되돌렸다
+    assert [r["value"] for r in permits["rows"]][-2:] == [19208 - 12890, 20838 - 19208]
+
+    # 키가 없으면 조용히 건너뛴다 (선택 기능이다)
+    monkeypatch.delenv("REB_API_KEY")
+    assert stats_mod.reb_supply(cfg, "2026-09-08") == []
+
+
+def test_supply_chart_says_what_kind_of_number_it_is():
+    from rebrief import images
+
+    rows = [{"time": f"20260{i}", "label": f"2026년 {i}월", "value": 1000 + i * 10}
+            for i in range(1, 8)]
+    img = images.supply_line({"name": "미분양", "unit": "호", "mode": "stock",
+                              "note": "서울 전체", "rows": rows}, "2026-09-07")
+    assert img is not None and img.slug == "stats-supply"
+    assert "재고" in img.svg and "1,070호" in img.svg
+
+    permits = images.supply_line({"name": "인허가", "unit": "호", "mode": "cumulative",
+                                  "rows": rows}, "2026-09-07")
+    assert "누계라 그 달치로 되돌린 값" in permits.svg
+
+    # 넉 달이 안 되면 추이라고 부를 수 없다
+    assert images.supply_line({"name": "미분양", "rows": rows[:3]}, "2026-09-07") is None
+    assert images.supply_line({}, "2026-09-07") is None

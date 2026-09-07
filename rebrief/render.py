@@ -362,7 +362,8 @@ class Renderer:
 
     def stats(self, data: dict, series: dict | None = None,
               history: list[dict] | None = None, history_region: str = "",
-              jeonse_history: list[dict] | None = None) -> Path | None:
+              jeonse_history: list[dict] | None = None,
+              supply: list[dict] | None = None) -> Path | None:
         """실거래가 집계표와 그림. 자료가 없으면 아무것도 만들지 않는다."""
         if not data or not data.get("districts"):
             return None
@@ -380,6 +381,8 @@ class Renderer:
                 ("map", images_mod.district_choropleth(data, self.date, extra)),
                 ("map_jeonse", images_mod.district_choropleth(data, self.date, extra,
                                                              metric="jeonse")),
+                # 공급 그림은 첫 항목(미분양)만. 셋을 다 그리면 페이지가 그림밭이 된다.
+                ("supply", images_mod.supply_line((supply or [{}])[0], self.date, extra)),
             )
             scale = int(cfg.get("png_scale_stats", 1) or cfg.get("png_scale", 2))
             for key, img in made:
@@ -393,7 +396,7 @@ class Renderer:
         # 템플릿은 StrictUndefined 라 빠진 항목이 있으면 바로 터진다. 예전에 모은 자료도
         # 그릴 수 있게 새로 생긴 항목의 기본값을 먼저 깔아 둔다.
         payload = {"rent": [], "sizes": [], "map": {}, "map_jeonse": {}, "swings": [],
-                   "warnings": [], **data}
+                   "warnings": [], **data, "supply": supply or []}
         return self._write("stats.md", "stats.md.j2", index=index_table(series or {}),
                            images=files, history_region=history_region, **payload)
 

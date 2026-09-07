@@ -594,7 +594,7 @@ def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result,
         history = book.month_series(region) if region else []
         jeonse = book.jeonse_series(region) if region else []
         renderer.stats(data, series, history=history, history_region=region,
-                       jeonse_history=jeonse)
+                       jeonse_history=jeonse, supply=stats_mod.reb_supply(cfg, date_str))
         # 응답이 비어 오면 그 구가 조용히 0건이 된다. 사람이 한 번 보게 올린다.
         result.warnings += data.get("warnings", [])
         log.info("실거래가 %d개 지역 집계", len(data["districts"]))

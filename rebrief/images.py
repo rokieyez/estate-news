@@ -846,6 +846,65 @@ def trade_history_line(rows: list[dict], region: str, date: str,
     return Image("stats-history", "\n".join(p), title)
 
 
+
+def supply_line(item: dict, date: str, extra: dict | None = None) -> "Image | None":
+    """공급 쪽 통계 한 가지의 월별 추이. 넉 달 이상 있어야 그린다.
+
+    거래·가격과 달리 이 숫자는 **앞으로의 공급**을 말합니다. 미분양은 재고, 인허가·착공은
+    1~2년 뒤 물량이라 각주에 성질을 밝힙니다 (인허가 원자료는 누계라 되돌린 값입니다).
+    """
+    rows = [r for r in (item or {}).get("rows", []) if r.get("value") is not None]
+    if len(rows) < 4:
+        return None
+    unit = item.get("unit", "호")
+    title = f"{item.get('name', '')} 추이 — {rows[-1]['label']}까지"
+    sub = f"{rows[0]['label']} ~ {rows[-1]['label']} · 서울"
+    kind = {"stock": "그 시점에 남아 있는 물량입니다(재고).",
+            "cumulative": "원자료가 연초부터의 누계라 그 달치로 되돌린 값입니다.",
+            }.get(item.get("mode", ""), "그 달 실적입니다.")
+    notes = ["※ " + kind + (f" {item['note']}." if item.get("note") else ""),
+             f"출처: 한국부동산원 R-ONE · {date} 조회"]
+
+    w, plot_h = 1000, 250
+    h = card_height(w, title, sub, plot_h + 96, notes)
+    p, g = frame_open(w, h, title=title, subtitle=sub, channel=_channel(extra), date=date)
+    x, y, inner = g["x"], g["top"], g["inner"]
+
+    values = [r["value"] for r in rows]
+    ticks = nice_ticks(min(min(values), 0), max(values))
+    lo, hi = ticks[0], ticks[-1]
+    axis_w = 92
+    px, pw = x + axis_w, inner - axis_w
+    py = y + 40
+
+    def sy(v: float) -> float:
+        return py + plot_h - (v - lo) / (hi - lo) * plot_h if hi > lo else py + plot_h
+
+    for t in ticks:
+        ty = sy(t)
+        p.append(f'<line x1="{px}" y1="{ty:g}" x2="{px + pw}" y2="{ty:g}" '
+                 f'stroke="{GRID}" stroke-width="1"/>')
+        p.append(f'<text x="{px - 14}" y="{ty + 6:g}" font-size="18" text-anchor="end" '
+                 f'fill="{MUTED}">{t:,.0f}</text>')
+
+    step = pw / max(len(rows) - 1, 1)
+    coords = [(px + i * step, sy(v)) for i, v in enumerate(values)]
+    p.append(f'<polyline fill="none" stroke="{ORANGE}" stroke-width="3" '
+             'stroke-linejoin="round" points="'
+             + " ".join(f"{cx:.1f},{cy:.1f}" for cx, cy in coords) + '"/>')
+    for cx, cy in coords:
+        p.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="4.5" fill="{ORANGE}" '
+                 f'stroke="{CARD}" stroke-width="2"/>')
+    ex, ey = coords[-1]
+    p.append(f'<text x="{ex:.1f}" y="{ey - 16:.1f}" font-size="24" font-weight="700" '
+             f'text-anchor="end" fill="{INK}">{values[-1]:,.0f}{esc(unit)}</text>')
+    for idx, anchor in ((0, "start"), (len(rows) - 1, "end")):
+        p.append(f'<text x="{coords[idx][0]:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
+                 f'text-anchor="{anchor}" fill="{MUTED}">{esc(rows[idx]["label"])}</text>')
+    frame_close(p, notes, g)
+    return Image("stats-supply", "\n".join(p), title)
+
+
 def build(datapoints: list[dict], date: str, headline: str = "", limit: int = 3,
           history: list[dict] | None = None) -> list[Image]:
     """수치 목록에서 그릴 수 있는 그림을 최대 limit 개 만든다.

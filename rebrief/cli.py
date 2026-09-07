@@ -402,8 +402,9 @@ def _cmd_stats(cfg, args) -> int:
     book.save()
     region = data["districts"][0]["name"] if data["districts"] else ""
     renderer = Renderer(cfg, cfg.output_dir / date_str, date_str)
+    supply = stats_mod.reb_supply(cfg, date_str)
     path = renderer.stats(data, series, history=book.month_series(region), history_region=region,
-                          jeonse_history=book.jeonse_series(region))
+                          jeonse_history=book.jeonse_series(region), supply=supply)
     print(f"{data['month']} 전체 {data['total']}건 (전달 {data['total_before']}건)")
     for row in data["districts"]:
         print(f"  {row['name']:<6} {row['now']['count']:>4}건  {row['change']:+4d}  "
@@ -413,6 +414,11 @@ def _cmd_stats(cfg, args) -> int:
               f"{rows[0]['when'] or rows[0]['time']} {rows[0]['value']:.2f}"
               f" → {rows[-1]['when'] or rows[-1]['time']} {rows[-1]['value']:.2f}"
               f"  ({len(rows)}주)")
+    for item in supply:
+        arrow = ""
+        if item.get("before") is not None:
+            arrow = f"  전달 대비 {item['latest'] - item['before']:+,.0f}"
+        print(f"\n{item['name']} ({item['latest_label']}) {item['latest']:,.0f}{item['unit']}{arrow}")
     if data.get("swings"):
         print("\n거래가 크게 움직인 구 (25개 구 전체에서)")
         for sw in data["swings"]:
