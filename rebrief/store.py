@@ -362,6 +362,89 @@ class PublishLog:
         self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+TRADES_FILE = "trades.json"
+
+
+class TradeLog:
+    """날마다 집계한 실거래 결과를 남긴다. 며칠 쌓이면 우리가 만든 추이가 된다.
+
+    같은 달을 여러 날 집계하면 신고가 늦게 들어와 값이 조금씩 커진다. 그래서
+    '집계한 날' 기준으로 남기고, 같은 날 다시 돌리면 덮어쓴다.
+    """
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.days: dict[str, dict] = {}
+        if path.exists():
+            try:
+                self.days = json.loads(path.read_text(encoding="utf-8")).get("days", {}) or {}
+            except (json.JSONDecodeError, OSError):
+                self.days = {}
+
+    def add(self, run_date: str, data: dict, series: dict | None = None) -> None:
+        if not data or not data.get("districts"):
+            return
+        self.days[run_date] = {
+            "month": data.get("month", ""),
+            "total": data.get("total", 0),
+            "districts": {r["name"]: {"count": r["now"]["count"], "avg": r["now"]["avg"]}
+                          for r in data["districts"]},
+            "index": {name: (rows[-1]["value"] if rows else None)
+                      for name, rows in (series or {}).items()},
+        }
+
+    def month_series(self, name: str, limit: int = 12) -> list[dict]:
+        """한 지역의 집계일별 거래 건수. 같은 달을 여러 번 집계한 것도 그대로 남긴다."""
+        rows = []
+        for day, entry in sorted(self.days.items()):
+            got = (entry.get("districts") or {}).get(name)
+            if got:
+                rows.append({"date": day, "month": entry.get("month", ""), **got})
+        return rows[-limit:]
+
+    def week_summary(self, end: str, days: int = 7) -> dict:
+        """지난 며칠치 집계에서 주간 결산에 쓸 것만 뽑는다. API 를 다시 부르지 않는다."""
+        from datetime import date as _date
+        from datetime import timedelta as _td
+
+        try:
+            last = _date.fromisoformat(end)
+        except ValueError:
+            return {}
+        wanted = {(last - _td(days=i)).isoformat() for i in range(days)}
+        rows = [(day, entry) for day, entry in sorted(self.days.items()) if day in wanted]
+        if not rows:
+            return {}
+        first_day, first = rows[0]
+        last_day, latest = rows[-1]
+        index = {}
+        for name, value in (latest.get("index") or {}).items():
+            before = (first.get("index") or {}).get(name)
+            if value is not None:
+                index[name] = {"value": value,
+                               "change": round(value - before, 2) if before is not None else None}
+        return {
+            "from": first_day, "to": last_day, "month": latest.get("month", ""),
+            "total": latest.get("total", 0),
+            "total_change": latest.get("total", 0) - first.get("total", 0) if len(rows) > 1 else 0,
+            "districts": sorted(
+                ({"name": n, **v} for n, v in (latest.get("districts") or {}).items()),
+                key=lambda r: r.get("count", 0), reverse=True)[:5],
+            "index": index,
+            "days": len(rows),
+        }
+
+    def prune(self, keep: int = 180) -> None:
+        if len(self.days) <= keep:
+            return
+        self.days = dict(sorted(self.days.items())[-keep:])
+
+    def save(self) -> None:
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"updated_at": datetime.now().isoformat(timespec="seconds"), "days": self.days}
+        self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
 POLICIES_FILE = "policies.json"
 
 

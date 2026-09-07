@@ -238,15 +238,52 @@ def month_of(run_date: str) -> str:
     return candidate
 
 
+# 서울 25개 자치구의 시군구 코드(법정동코드 앞 5자리). 기사에 나온 구를 바로 찾아보기 위한 표.
+# 다른 지역을 보려면 settings.yaml 의 stats.districts 를 고치면 되고, 이 표는 그때도 그대로 쓴다.
+SEOUL_CODES = {
+    "종로구": "11110", "중구": "11140", "용산구": "11170", "성동구": "11200",
+    "광진구": "11215", "동대문구": "11230", "중랑구": "11260", "성북구": "11290",
+    "강북구": "11305", "도봉구": "11320", "노원구": "11350", "은평구": "11380",
+    "서대문구": "11410", "마포구": "11440", "양천구": "11470", "강서구": "11500",
+    "구로구": "11530", "금천구": "11545", "영등포구": "11560", "동작구": "11590",
+    "관악구": "11620", "서초구": "11650", "강남구": "11680", "송파구": "11710",
+    "강동구": "11740",
+}
+
+
+def districts_for(cfg, focus: list[str] | None = None) -> list[dict]:
+    """오늘 볼 지역 목록. 기사에 나온 구를 앞에 놓고, 나머지는 설정 순서대로 채운다.
+
+    기사가 노원구를 다루는 날 표에 노원구가 없으면 글과 표가 따로 논다.
+    """
+    settings = cfg.get("stats", {}) or {}
+    default = [dict(d) for d in (settings.get("districts", []) or [])]
+    limit = int(settings.get("max_districts", 8))
+
+    picked: list[dict] = []
+    seen: set[str] = set()
+    for name in focus or []:
+        code = SEOUL_CODES.get(name)
+        if code and code not in seen:
+            picked.append({"name": name, "code": code, "focus": True})
+            seen.add(code)
+    for item in default:
+        code = str(item.get("code", ""))
+        if code and code not in seen:
+            picked.append({**item, "focus": False})
+            seen.add(code)
+    return picked[:limit]
+
+
 def month_label(ym: str) -> str:
     """'202608' → '2026년 8월'. 사람이 읽는 자리에만 씁니다."""
     return f"{ym[:4]}년 {int(ym[4:6])}월" if len(ym) == 6 and ym.isdigit() else ym
 
 
-def collect(cfg, run_date: str) -> dict:
+def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
     """설정된 구들의 지난달·전달 거래를 모아 비교표로 만든다."""
     settings = cfg.get("stats", {}) or {}
-    districts = list(settings.get("districts", []) or [])
+    districts = districts_for(cfg, focus)
     if not deal_key() or not districts:
         return {}
     ym = month_of(run_date)
@@ -260,7 +297,7 @@ def collect(cfg, run_date: str) -> dict:
         cursor = prev_month(cursor)
 
     rows, picks = [], []
-    for item in districts[: int(settings.get("max_districts", 8))]:
+    for item in districts:
         code, name = str(item.get("code", "")), str(item.get("name", ""))
         if not code:
             continue
@@ -273,16 +310,18 @@ def collect(cfg, run_date: str) -> dict:
         if not now["count"] and not was["count"]:
             continue
         rows.append({"name": name, "code": code, "now": now, "was": was,
+                     "focus": bool(item.get("focus")),
                      "change": now["count"] - was["count"]})
         picks += highlights(deals, history, district=name)
 
     if not rows:
         return {}
-    rows.sort(key=lambda r: r["now"]["count"], reverse=True)
+    rows.sort(key=lambda r: (not r["focus"], -r["now"]["count"]))
     picks.sort(key=lambda r: (r["kind"] != "신고가", -abs(r["pct"])))
     return {"month": ym, "month_label": month_label(ym),
             "before": before, "before_label": month_label(before), "districts": rows,
             "highlights": picks[: int(settings.get("max_highlights", 5))],
+            "focus": [r["name"] for r in rows if r["focus"]],
             "history_months": months_back,
             "total": sum(r["now"]["count"] for r in rows),
             "total_before": sum(r["was"]["count"] for r in rows)}
@@ -355,6 +394,23 @@ def reb_period(run_date: str, cycle: str, weeks: int = 12) -> tuple[str, str]:
     for _ in range(max(weeks // 4, 1)):
         start = prev_month(start)
     return start, ym
+
+
+def reb_all_series(cfg, run_date: str = "") -> dict[str, list[dict]]:
+    """설정에 적힌 지수들을 한 번에. 열쇠는 사람이 읽는 이름('매매'·'전세')."""
+    settings = cfg.get("stats", {}) or {}
+    cycle = str(settings.get("reb_cycle", "WK") or "WK")
+    count = int(settings.get("reb_weeks", 12))
+    wanted = (("매매", str(settings.get("reb_statbl_id", "") or "")),
+              ("전세", str(settings.get("reb_jeonse_statbl_id", "") or "")))
+    out: dict[str, list[dict]] = {}
+    for name, statbl_id in wanted:
+        if not statbl_id:
+            continue
+        rows = reb_series(cfg, statbl_id, cycle, count=count, run_date=run_date)
+        if rows:
+            out[name] = rows
+    return out
 
 
 def reb_series(cfg, statbl_id: str, cycle: str = "WK", count: int = 12,

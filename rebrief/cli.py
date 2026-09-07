@@ -76,6 +76,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_stats = sub.add_parser("stats", help="정부 통계 직접 받기 (실거래가·부동산원)")
     p_stats.add_argument("--date", help="기준 날짜 (기본: 오늘)")
     p_stats.add_argument("--tables", nargs="?", const="", help="부동산원 통계표 번호 찾기 (낱말로 검색)")
+    p_stats.add_argument("--region", action="append", help="먼저 볼 자치구 (여러 번 쓸 수 있음)")
 
     p_pub = sub.add_parser("publish", help="네이버에 올린 글 주소를 기록 (사이트에 '발행함' 으로 표시)")
     p_pub.add_argument("--date", help="날짜 (기본: 오늘)")
@@ -235,6 +236,7 @@ def _notify_result(cfg, result) -> None:
         date=result.date, headline=headline, issues=result.issues, articles=result.articles,
         site_url=str(cfg.get("site.url", "") or ""), warnings=result.warnings,
         llm_used=result.llm_used, images=len(list(result.out_dir.glob("img-*.png"))),
+        stats=getattr(result, "stats", None),
     )
     print("📨 텔레그램 알림 " + ("전송" if send_telegram(text) else "실패"))
 
@@ -355,26 +357,29 @@ def _cmd_stats(cfg, args) -> int:
         print("DATA_GO_KR_KEY 가 없어 건너뜁니다.")
         print("공공데이터포털에서 '아파트 매매 실거래가' 를 신청하면 인증키가 나옵니다.")
         return 0
-    data = stats_mod.collect(cfg, date_str)
+    data = stats_mod.collect(cfg, date_str, focus=args.region or None)
     if not data:
         print("받아온 거래가 없습니다. 코드·기간을 확인하세요.")
         return 1
-    settings = cfg.get("stats", {}) or {}
-    series = stats_mod.reb_series(cfg, str(settings.get("reb_statbl_id", "") or ""),
-                                  str(settings.get("reb_cycle", "WK") or "WK"),
-                                  count=int(settings.get("reb_weeks", 12)),
-                                  run_date=date_str)
+    series = stats_mod.reb_all_series(cfg, date_str)
+    from .store import TradeLog
+
+    book = TradeLog(cfg.state_dir / "trades.json")
+    book.add(date_str, data, series)
+    book.prune()
+    book.save()
+    region = data["districts"][0]["name"] if data["districts"] else ""
     renderer = Renderer(cfg, cfg.output_dir / date_str, date_str)
-    path = renderer.stats(data, series)
+    path = renderer.stats(data, series, history=book.month_series(region), history_region=region)
     print(f"{data['month']} 전체 {data['total']}건 (전달 {data['total_before']}건)")
     for row in data["districts"]:
         print(f"  {row['name']:<6} {row['now']['count']:>4}건  {row['change']:+4d}  "
               f"평균 {row['now']['avg'] / 100000000:.1f}억")
-    if series:
-        print(f"\n부동산원 주간 지수({series[0]['region']}) "
-              f"{series[0]['when'] or series[0]['time']} {series[0]['value']:.2f}"
-              f" → {series[-1]['when'] or series[-1]['time']} {series[-1]['value']:.2f}"
-              f"  ({len(series)}주)")
+    for name, rows in series.items():
+        print(f"\n부동산원 {name}가격지수({rows[0]['region']}) "
+              f"{rows[0]['when'] or rows[0]['time']} {rows[0]['value']:.2f}"
+              f" → {rows[-1]['when'] or rows[-1]['time']} {rows[-1]['value']:.2f}"
+              f"  ({len(rows)}주)")
     print(f"\n저장 → {path}" if path else "")
     return 0
 

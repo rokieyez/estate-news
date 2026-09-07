@@ -341,7 +341,8 @@ class Renderer:
                 return png.name
         return svg.name
 
-    def stats(self, data: dict, series: list | None = None) -> Path | None:
+    def stats(self, data: dict, series: dict | None = None,
+              history: list[dict] | None = None, history_region: str = "") -> Path | None:
         """실거래가 집계표와 그림. 자료가 없으면 아무것도 만들지 않는다."""
         if not data or not data.get("districts"):
             return None
@@ -349,13 +350,18 @@ class Renderer:
         files: dict[str, str] = {}
         if cfg.get("enabled", True):
             extra = {"channel": str((self.cfg.get("video", {}) or {}).get("channel_name", "") or "")}
-            for key, img in (("volume", images_mod.trade_volume_bar(data, self.date, extra)),
-                             ("index", images_mod.price_index_line(series or [], self.date, extra))):
+            made = (
+                ("volume", images_mod.trade_volume_bar(data, self.date, extra)),
+                ("index", images_mod.price_index_line(series or {}, self.date, extra)),
+                ("history", images_mod.trade_history_line(history or [], history_region,
+                                                          self.date, extra)),
+            )
+            for key, img in made:
                 if img:
                     files[key] = self._write_image(img, cfg)
         self.stats_images = files
-        return self._write("stats.md", "stats.md.j2", series=series or [],
-                           images=files, **data)
+        return self._write("stats.md", "stats.md.j2", index=index_table(series or {}),
+                           images=files, history_region=history_region, **data)
 
     def policy(self, docs: list) -> Path | None:
         """정부 발표 원문 3줄 요약 + 원본 파일. 없으면 파일을 만들지 않는다."""
@@ -645,6 +651,32 @@ def policy_block_html(docs: list | None) -> str:
 def _eok(amount: float) -> str:
     """원 단위를 '12.5억' 으로. 글에서 읽기 쉬운 단위는 억이다."""
     return f"{amount / 100_000_000:.1f}억"
+
+
+def index_table(series: dict) -> dict:
+    """지수 여러 개를 기준일로 맞춘 표. 템플릿에서 다시 짝지을 필요가 없게 여기서 정리한다."""
+    names = [name for name, rows in (series or {}).items() if rows]
+    if not names:
+        return {}
+    by_time: dict[str, dict] = {}
+    for name in names:
+        for row in series[name]:
+            key = row.get("when") or row.get("time", "")
+            by_time.setdefault(key, {"when": key, "by_name": {}})["by_name"][name] = row["value"]
+    region = series[names[0]][0].get("region", "") or "전국"
+    # 표는 여기서 줄 단위로 만들어 넘긴다. 템플릿 안에서 반복문을 겹치면 줄바꿈이 먹힌다.
+    def cell(value) -> str:
+        return f"{value:.2f}" if isinstance(value, (int, float)) else "—"
+
+    lines = [
+        "| 기준일 | " + " | ".join(names) + " |",
+        "| --- |" + " ---: |" * len(names),
+    ] + [
+        f"| {by_time[k]['when']} | " + " | ".join(cell(by_time[k]["by_name"].get(n)) for n in names) + " |"
+        for k in sorted(by_time)
+    ]
+    return {"names": names, "region": region, "lines": lines,
+            "rows": [by_time[k] for k in sorted(by_time)]}
 
 
 def stats_block_html(data: dict | None, image: str = "") -> str:

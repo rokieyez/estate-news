@@ -36,6 +36,7 @@ class RunResult:
     usage: Usage | None = None
     llm_used: bool = False
     warnings: list[str] = field(default_factory=list)
+    stats: dict = field(default_factory=dict)      # 실거래 집계 (알림·요약에 쓴다)
 
 
 def local_now(cfg: Config) -> datetime:
@@ -126,7 +127,9 @@ def run(
     if want_llm and model == "":
         want_llm = False                      # 월 예산 초과
     # 통계를 먼저 받는다 — 블로그 글 안에 이 숫자를 넣기 때문이다 (모델과는 무관).
-    stats_data = _collect_stats(cfg, renderer, date_str, result)
+    # 오늘 이슈에 나온 지역을 먼저 보게 해서 글과 표가 같은 곳을 가리키게 한다.
+    stats_data = _collect_stats(cfg, renderer, date_str, result, focus=_focus_regions(issues))
+    result.stats = stats_data or {}
     artifacts: dict = {}
     if want_llm and issues:
         artifacts = _generate_with_llm(cfg, renderer, issues, date_str, result, model=model,
@@ -455,7 +458,18 @@ def _collect_policies(cfg: Config, renderer: Renderer, date_str: str, generator,
     return docs
 
 
-def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result) -> dict:
+def _focus_regions(issues: list[Cluster], limit: int = 3) -> list[str]:
+    """오늘 이슈 제목에 나온 자치구. 실거래 표를 그 지역부터 보여 주기 위한 것."""
+    from .regions import find_regions
+    from .stats import SEOUL_CODES
+
+    # Cluster 에는 제목이 없다. 묶인 기사들의 제목을 그대로 본다.
+    text = " ".join(a.title for c in issues for a in c.articles if a.title)
+    return [name for name in find_regions(text, limit=10) if name in SEOUL_CODES][:limit]
+
+
+def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result,
+                   focus: list[str] | None = None) -> dict:
     """정부 통계를 직접 받아 표로 만든다. 키가 없거나 실패해도 실행은 계속한다."""
     from . import stats as stats_mod
 
@@ -463,19 +477,32 @@ def _collect_stats(cfg: Config, renderer: Renderer, date_str: str, result) -> di
     if not settings.get("enabled", True) or not stats_mod.deal_key():
         return {}
     try:
-        data = stats_mod.collect(cfg, date_str)
-        series = stats_mod.reb_series(cfg, str(settings.get("reb_statbl_id", "") or ""),
-                                      str(settings.get("reb_cycle", "WK") or "WK"),
-                                      count=int(settings.get("reb_weeks", 12)),
-                                      run_date=date_str)
+        data = stats_mod.collect(cfg, date_str, focus=focus)
+        series = stats_mod.reb_all_series(cfg, date_str)
     except Exception as exc:                       # 외부 자료가 바뀌어도 실행은 멈추지 않는다
         log.warning("통계 수집 실패: %s", exc)
         result.warnings.append(f"통계 수집 실패 — {type(exc).__name__}")
         return {}
     if data:
-        renderer.stats(data, series)
+        _record_trades(cfg, date_str, data, series)
+        # 장부에 오늘 것까지 담은 뒤에 추이를 그린다 (첫 지역 기준)
+        from .store import TradeLog
+
+        region = data["districts"][0]["name"] if data["districts"] else ""
+        history = TradeLog(cfg.state_dir / "trades.json").month_series(region) if region else []
+        renderer.stats(data, series, history=history, history_region=region)
         log.info("실거래가 %d개 지역 집계", len(data["districts"]))
     return data
+
+
+def _record_trades(cfg: Config, date_str: str, data: dict, series: dict) -> None:
+    """집계 결과를 장부에 남긴다. 며칠 쌓이면 우리가 만든 추이가 된다."""
+    from .store import TradeLog
+
+    book = TradeLog(cfg.state_dir / "trades.json")
+    book.add(date_str, data, series)
+    book.prune()
+    book.save()
 
 
 def _link_policies(cfg: Config, docs: list, date_str: str) -> None:

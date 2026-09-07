@@ -903,3 +903,93 @@ def test_pipeline_puts_trade_numbers_into_the_post(cfg, monkeypatch):
     md = (out / "blog.md").read_text(encoding="utf-8")
     assert "직접 센 숫자" in naver and "직접 센 숫자" in md
     assert (out / "stats.md").exists()
+
+
+# ── 기사 지역 연결 · 이력 · 주간 요약 ────────────────────────
+
+def test_focus_regions_come_first_in_the_table(cfg):
+    from rebrief.stats import districts_for
+
+    monkey = {"enabled": True, "max_districts": 4,
+              "districts": [{"name": "강남구", "code": "11680"}, {"name": "서초구", "code": "11650"}]}
+    cfg.settings["stats"] = monkey
+
+    rows = districts_for(cfg, focus=["노원구", "강남구"])
+    assert [r["name"] for r in rows] == ["노원구", "강남구", "서초구"]   # 겹치면 한 번만
+    assert rows[0]["focus"] is True and rows[2]["focus"] is False
+    assert rows[0]["code"] == "11350"
+
+    assert [r["name"] for r in districts_for(cfg)] == ["강남구", "서초구"]
+    # 서울 밖 지역은 코드를 모르므로 조용히 지나간다
+    assert [r["name"] for r in districts_for(cfg, focus=["부산"])] == ["강남구", "서초구"]
+
+
+def test_pipeline_reads_regions_from_article_titles():
+    from rebrief.models import Article, Cluster
+    from rebrief.pipeline import _focus_regions
+
+    def art(title):
+        return Article(id=title, title=title, url="https://e.test/" + title,
+                       feed_id="f", feed_name="f")
+
+    issues = [Cluster(key="a", articles=[art("노원구 상계주공 신고가"), art("노원 재건축 속도")]),
+              Cluster(key="b", articles=[art("강남구 아파트값 상승")])]
+    assert _focus_regions(issues) == ["노원구", "강남구"]
+    assert _focus_regions([]) == []
+
+
+def test_trade_log_keeps_history_and_weekly_summary(tmp_path):
+    from rebrief.store import TradeLog
+
+    book = TradeLog(tmp_path / "trades.json")
+    data = {"month": "202607", "total": 2200,
+            "districts": [{"name": "노원구", "now": {"count": 700, "avg": 700000000}},
+                          {"name": "강남구", "now": {"count": 160, "avg": 3200000000}}]}
+    book.add("2026-09-01", data, {"매매": [{"value": 100.4}], "전세": [{"value": 100.5}]})
+    book.add("2026-09-07", {**data, "total": 2230,
+                            "districts": [{"name": "노원구", "now": {"count": 723, "avg": 700000000}},
+                                          {"name": "강남구", "now": {"count": 161, "avg": 3290000000}}]},
+             {"매매": [{"value": 100.73}], "전세": [{"value": 100.84}]})
+    book.save()
+
+    again = TradeLog(tmp_path / "trades.json")
+    assert [r["count"] for r in again.month_series("노원구")] == [700, 723]
+
+    week = again.week_summary("2026-09-07")
+    assert week["total"] == 2230 and week["total_change"] == 30
+    assert week["districts"][0]["name"] == "노원구"
+    assert week["index"]["매매"] == {"value": 100.73, "change": 0.33}
+    assert again.week_summary("2027-01-01") == {}      # 그 주에 집계가 없으면 빈 값
+
+
+def test_index_table_aligns_two_series():
+    from rebrief.render import index_table
+
+    table = index_table({
+        "매매": [{"when": "2026-08-24", "value": 100.64, "region": "전국"},
+               {"when": "2026-08-31", "value": 100.73, "region": "전국"}],
+        "전세": [{"when": "2026-08-31", "value": 100.84, "region": "전국"}],
+    })
+    assert table["names"] == ["매매", "전세"] and table["region"] == "전국"
+    assert table["lines"][0] == "| 기준일 | 매매 | 전세 |"
+    assert table["lines"][2] == "| 2026-08-24 | 100.64 | — |"   # 없는 값은 줄표
+    assert table["lines"][3] == "| 2026-08-31 | 100.73 | 100.84 |"
+    assert index_table({}) == {}
+
+
+def test_notification_carries_the_trade_numbers():
+    from rebrief.notify import build_run_message
+
+    text = build_run_message(
+        date="2026-09-07", headline="종부세 확대 전망", issues=5, articles=300,
+        site_url="https://www.rokiz.net/estate-news/", warnings=[], llm_used=True, images=3,
+        stats={"month_label": "2026년 7월", "total": 2230, "total_before": 2252,
+               "districts": [{}],
+               "highlights": [{"kind": "신고가", "district": "성동구", "name": "벽산",
+                               "amount": 1_080_000_000, "pct": 25.6}]})
+    assert "신고 매매 2,230건 (-22건)" in text
+    assert "신고가 성동구 벽산 10.8억 (+25.6%)" in text
+    # 통계가 없는 날에도 알림은 그대로 간다
+    plain = build_run_message(date="2026-09-07", headline="", issues=1, articles=10,
+                              site_url="", warnings=[], llm_used=True)
+    assert "🏢" not in plain

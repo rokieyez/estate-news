@@ -155,10 +155,18 @@ def run_weekly(cfg: Config, *, end_date: str | None = None, use_llm: bool | None
     return result
 
 
+def _weekly_trades(cfg: Config, end: str) -> dict:
+    """그 주의 실거래 요약. 날마다 쌓아 둔 장부를 읽을 뿐이라 API 를 다시 부르지 않는다."""
+    from .store import TradeLog
+
+    return TradeLog(cfg.state_dir / "trades.json").week_summary(end)
+
+
 def _render_weekly(cfg: Config, renderer: Renderer, review: WeeklyReview, result: WeeklyResult) -> None:
     renderer._write(
         "weekly.md", "weekly.md.j2",
         review=review, week=result.week, start=result.start, end=result.end,
+        trades=_weekly_trades(cfg, result.end),
         category=(cfg.get("blog", {}) or {}).get("category", "부동산"),
         disclaimer=(cfg.get("blog", {}) or {}).get("disclaimer", ""),
     )

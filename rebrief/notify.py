@@ -48,11 +48,12 @@ def send_telegram(text: str, *, timeout: float = 15) -> bool:
 
 def build_run_message(*, date: str, headline: str, issues: int, articles: int,
                       site_url: str, warnings: list[str], llm_used: bool,
-                      images: int = 0) -> str:
+                      images: int = 0, stats: dict | None = None) -> str:
     lines = [f"📅 {date} 부동산 브리핑"]
     if headline:
         lines.append(headline)
     lines.append(f"이슈 {issues}개 · 기사 {articles}건" + (f" · 그림 {images}장" if images else ""))
+    lines += stats_lines(stats)
     if not llm_used:
         lines.append("⚠️ 요약·대본은 만들지 못했습니다 (prompt-pack.md 참고)")
     for w in warnings[:3]:
@@ -60,6 +61,19 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
     if site_url:
         lines.append(f"🔗 {site_url.rstrip('/')}/latest/")
     return "\n".join(lines)
+
+
+def stats_lines(stats: dict | None) -> list[str]:
+    """실거래 요약 두 줄. 폰만 보고도 오늘 글을 올릴지 판단할 수 있게."""
+    if not stats or not stats.get("districts"):
+        return []
+    diff = stats.get("total", 0) - stats.get("total_before", 0)
+    out = [f"🏢 {stats.get('month_label', '')} 신고 매매 {stats.get('total', 0):,}건 ({diff:+,}건)"]
+    hot = next((h for h in (stats.get("highlights") or []) if h["kind"] == "신고가"), None)
+    if hot:
+        out.append(f"📈 신고가 {hot['district']} {hot['name']} "
+                   f"{hot['amount'] / 100_000_000:.1f}억 ({hot['pct']:+.1f}%)")
+    return out
 
 
 def build_failure_message(*, date: str, site_url: str = "", run_url: str = "", streak: int = 1) -> str:

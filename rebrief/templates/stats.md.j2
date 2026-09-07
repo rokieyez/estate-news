@@ -30,25 +30,29 @@
 {% endfor %}
 {% endif %}
 
-{% if series %}
-## 한국부동산원 주간 아파트 매매가격지수 ({{ series[0].region }})
-
-{{ series[0].when }} {{ series[0].value|round(2) }} → **{{ series[-1].when }} {{ series[-1].value|round(2) }}**
-({{ '%+.2f'|format(series[-1].value - series[0].value) }})
+{% if index %}
+## 한국부동산원 주간 가격지수 ({{ index.region }})
 
 {% if images.get('index') %}
-![주간 매매가격지수]({{ images['index'] }})
+![주간 가격지수]({{ images['index'] }})
 
 {% endif %}
-| 기준일 | 지수 |
-| --- | ---: |
-{% for s in series %}
-| {{ s.when or s.time }} | {{ s.value|round(2) }} |
+{% for line in index.lines %}
+{{ line }}
 {% endfor %}
+{% endif %}
+
+{% if images.get('history') %}
+## 우리가 날마다 센 추이 ({{ history_region }})
+
+![집계일별 거래 건수]({{ images['history'] }})
+
+같은 달이라도 신고가 늦게 들어와 집계일마다 값이 조금씩 커집니다.
+가격 변화가 아니라 신고가 쌓이는 속도를 보는 그림입니다.
 {% endif %}
 
 ---
 
-*출처: 국토교통부 실거래가 공개시스템(공공데이터포털){% if series %}, 한국부동산원 R-ONE{% endif %}.
+*출처: 국토교통부 실거래가 공개시스템(공공데이터포털){% if index %}, 한국부동산원 R-ONE{% endif %}.
 평균은 그 달 신고분의 단순 평균이며 면적·층을 보정하지 않았습니다.
 해제(계약 취소)로 신고된 건은 뺐습니다.*

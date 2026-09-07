@@ -1,36 +1,41 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="826" viewBox="0 0 1000 826" font-family="'Apple SD Gothic Neo','Noto Sans CJK KR','Noto Sans KR','NanumGothic',system-ui,-apple-system,sans-serif">
-<rect width="1000" height="826" fill="#fcfcfb"/>
-<rect x="40" y="40" width="920" height="746" rx="22" fill="#ffffff" stroke="#e6e5df" stroke-width="1.5"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="840" viewBox="0 0 1000 840" font-family="'Apple SD Gothic Neo','Noto Sans CJK KR','Noto Sans KR','NanumGothic',system-ui,-apple-system,sans-serif">
+<rect width="1000" height="840" fill="#fcfcfb"/>
+<rect x="40" y="40" width="920" height="760" rx="22" fill="#ffffff" stroke="#e6e5df" stroke-width="1.5"/>
 <rect x="84" y="91" width="5" height="20" rx="2.5" fill="#256abf"/>
 <text x="98" y="106" font-size="20" font-weight="700" fill="#256abf">부동산 브리핑</text>
 <text x="916" y="106" font-size="19" text-anchor="end" fill="#898781">2026-09-07</text>
-<text x="84" y="184" font-size="34" font-weight="700" fill="#0b0b0b">주간 아파트 매매가격지수 · 전국</text>
+<text x="84" y="184" font-size="34" font-weight="700" fill="#0b0b0b">주간 아파트 가격지수 · 전국</text>
 <text x="84" y="218" font-size="21" fill="#52514e">2026-08-03 ~ 2026-08-31</text>
 <line x1="84" y1="244" x2="916" y2="244" stroke="#e1e0d9" stroke-width="1"/>
-<line x1="158" y1="632" x2="916" y2="632" stroke="#e1e0d9" stroke-width="1"/>
-<text x="144" y="638" font-size="18" text-anchor="end" fill="#898781">100.3</text>
-<line x1="158" y1="572" x2="916" y2="572" stroke="#e1e0d9" stroke-width="1"/>
-<text x="144" y="578" font-size="18" text-anchor="end" fill="#898781">100.4</text>
-<line x1="158" y1="512" x2="916" y2="512" stroke="#e1e0d9" stroke-width="1"/>
-<text x="144" y="518" font-size="18" text-anchor="end" fill="#898781">100.5</text>
-<line x1="158" y1="452" x2="916" y2="452" stroke="#e1e0d9" stroke-width="1"/>
-<text x="144" y="458" font-size="18" text-anchor="end" fill="#898781">100.6</text>
-<line x1="158" y1="392" x2="916" y2="392" stroke="#e1e0d9" stroke-width="1"/>
-<text x="144" y="398" font-size="18" text-anchor="end" fill="#898781">100.7</text>
-<line x1="158" y1="332" x2="916" y2="332" stroke="#e1e0d9" stroke-width="1"/>
-<text x="144" y="338" font-size="18" text-anchor="end" fill="#898781">100.8</text>
-<polyline fill="none" stroke="#256abf" stroke-width="3" stroke-linejoin="round" points="158.0,588.8 347.5,542.1 537.0,496.5 726.5,428.8 916.0,375.0"/>
-<circle cx="158.0" cy="588.8" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
-<circle cx="347.5" cy="542.1" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
-<circle cx="537.0" cy="496.5" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
-<circle cx="726.5" cy="428.8" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
-<circle cx="916.0" cy="375.0" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
-<text x="158.0" y="570.8" font-size="22" font-weight="700" text-anchor="start" fill="#0b0b0b">100.37</text>
-<text x="916.0" y="357.0" font-size="22" font-weight="700" text-anchor="end" fill="#0b0b0b">100.73</text>
-<text x="158.0" y="662" font-size="18" text-anchor="start" fill="#898781">2026-08-03</text>
-<text x="916.0" y="662" font-size="18" text-anchor="end" fill="#898781">2026-08-31</text>
-<text x="84" y="308" font-size="26" font-weight="700" fill="#006300">▲ 0.36<tspan font-size="20" font-weight="500" fill="#52514e"> 5주 동안</tspan></text>
-<line x1="84" y1="684" x2="916" y2="684" stroke="#e1e0d9" stroke-width="1"/>
-<text x="84" y="714" font-size="17" fill="#898781">※ 한국부동산원이 매주 발표하는 지수입니다. 값 자체가 가격이 아니라 기준 시점 대비 상대값입니다.</text>
-<text x="84" y="738" font-size="17" fill="#898781">출처: 한국부동산원 R-ONE · 2026-09-07 조회</text>
+<line x1="158" y1="642" x2="916" y2="642" stroke="#e1e0d9" stroke-width="1"/>
+<text x="144" y="648" font-size="18" text-anchor="end" fill="#898781">100.2</text>
+<line x1="158" y1="567" x2="916" y2="567" stroke="#e1e0d9" stroke-width="1"/>
+<text x="144" y="573" font-size="18" text-anchor="end" fill="#898781">100.4</text>
+<line x1="158" y1="492" x2="916" y2="492" stroke="#e1e0d9" stroke-width="1"/>
+<text x="144" y="498" font-size="18" text-anchor="end" fill="#898781">100.6</text>
+<line x1="158" y1="417" x2="916" y2="417" stroke="#e1e0d9" stroke-width="1"/>
+<text x="144" y="423" font-size="18" text-anchor="end" fill="#898781">100.8</text>
+<line x1="158" y1="342" x2="916" y2="342" stroke="#e1e0d9" stroke-width="1"/>
+<text x="144" y="348" font-size="18" text-anchor="end" fill="#898781">101</text>
+<polyline fill="none" stroke="#256abf" stroke-width="3" stroke-linejoin="round" points="158.0,577.5 347.5,548.3 537.0,519.8 726.5,477.5 916.0,443.9"/>
+<circle cx="158.0" cy="577.5" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
+<circle cx="347.5" cy="548.3" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
+<circle cx="537.0" cy="519.8" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
+<circle cx="726.5" cy="477.5" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
+<circle cx="916.0" cy="443.9" r="5" fill="#256abf" stroke="#ffffff" stroke-width="2"/>
+<rect x="84" y="290" width="14" height="14" rx="3" fill="#256abf"/>
+<text x="106" y="302" font-size="20" fill="#52514e">매매 <tspan font-weight="700" fill="#0b0b0b">100.73</tspan> <tspan fill="#006300">▲0.36</tspan></text>
+<polyline fill="none" stroke="#a9560a" stroke-width="3" stroke-linejoin="round" points="158.0,555.6 347.5,522.5 537.0,485.6 726.5,443.0 916.0,403.3"/>
+<circle cx="158.0" cy="555.6" r="5" fill="#a9560a" stroke="#ffffff" stroke-width="2"/>
+<circle cx="347.5" cy="522.5" r="5" fill="#a9560a" stroke="#ffffff" stroke-width="2"/>
+<circle cx="537.0" cy="485.6" r="5" fill="#a9560a" stroke="#ffffff" stroke-width="2"/>
+<circle cx="726.5" cy="443.0" r="5" fill="#a9560a" stroke="#ffffff" stroke-width="2"/>
+<circle cx="916.0" cy="403.3" r="5" fill="#a9560a" stroke="#ffffff" stroke-width="2"/>
+<rect x="322.0" y="290" width="14" height="14" rx="3" fill="#a9560a"/>
+<text x="344.0" y="302" font-size="20" fill="#52514e">전세 <tspan font-weight="700" fill="#0b0b0b">100.84</tspan> <tspan fill="#006300">▲0.41</tspan></text>
+<text x="158.0" y="672" font-size="18" text-anchor="start" fill="#898781">2026-08-03</text>
+<text x="916.0" y="672" font-size="18" text-anchor="end" fill="#898781">2026-08-31</text>
+<line x1="84" y1="698" x2="916" y2="698" stroke="#e1e0d9" stroke-width="1"/>
+<text x="84" y="728" font-size="17" fill="#898781">※ 값 자체가 가격이 아니라 기준 시점 대비 상대값입니다. 두 선의 높낮이가 아니라 기울기를 보세요.</text>
+<text x="84" y="752" font-size="17" fill="#898781">출처: 한국부동산원 R-ONE · 2026-09-07 조회</text>
 </svg>

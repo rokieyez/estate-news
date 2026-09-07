@@ -32,6 +32,7 @@ BASELINE = "#c3c2b7"
 GRID = "#e1e0d9"        # 눈금선 (가는 선)
 BLUE = "#256abf"        # 파랑 step500 — 흰 글씨 대비 5.39:1
 BLUE_SOFT = "#cde2fb"   # 파랑 step100
+ORANGE = "#a9560a"      # 두 번째 계열색. 파랑↔주황은 색각 이상에서도 구분된다
 CRITICAL = "#d03b3b"
 GOOD = "#006300"
 # 맥(Apple SD Gothic Neo) → 리눅스 러너(Noto Sans CJK KR, 워크플로에서 설치) → 그 외 순서.
@@ -534,30 +535,100 @@ def trade_volume_bar(data: dict, date: str, extra: dict | None = None) -> "Image
     return Image("stats-volume", "\n".join(p), title)
 
 
-def price_index_line(series: list[dict], date: str, extra: dict | None = None) -> "Image | None":
-    """한국부동산원 주간 아파트 매매가격지수 추이."""
-    points = [s for s in series if s.get("value") is not None]
-    if len(points) < 3:
+def price_index_line(series: dict, date: str, extra: dict | None = None) -> "Image | None":
+    """한국부동산원 주간 지수 추이. 매매·전세를 한 판에 겹쳐 그린다."""
+    lines = [(name, [s for s in rows if s.get("value") is not None])
+             for name, rows in (series or {}).items()]
+    lines = [(name, rows) for name, rows in lines if len(rows) >= 3]
+    if not lines:
         return None
-    region = points[0].get("region", "") or "전국"
-    title = f"주간 아파트 매매가격지수 · {region}"
-    sub = f"{points[0].get('when') or points[0]['time']} ~ {points[-1].get('when') or points[-1]['time']}"
-    change = points[-1]["value"] - points[0]["value"]
+    first = lines[0][1]
+    region = first[0].get("region", "") or "전국"
+    title = f"주간 아파트 가격지수 · {region}"
+    sub = f"{first[0].get('when') or first[0]['time']} ~ {first[-1].get('when') or first[-1]['time']}"
     notes = [
-        "※ 한국부동산원이 매주 발표하는 지수입니다. 값 자체가 가격이 아니라 기준 시점 대비 상대값입니다.",
+        "※ 값 자체가 가격이 아니라 기준 시점 대비 상대값입니다. 두 선의 높낮이가 아니라 기울기를 보세요.",
         f"출처: 한국부동산원 R-ONE · {date} 조회",
     ]
     w, plot_h = 1000, 300
-    h = card_height(w, title, sub, plot_h + 96, notes)
+    h = card_height(w, title, sub, plot_h + 110, notes)
     p, g = frame_open(w, h, title=title, subtitle=sub, channel=_channel(extra), date=date)
     x, y, inner = g["x"], g["top"], g["inner"]
 
-    values = [s["value"] for s in points]
+    values = [v["value"] for _, rows in lines for v in rows]
     ticks = nice_ticks(min(values), max(values))
     lo, hi = ticks[0], ticks[-1]
     axis_w = 74
     px, pw = x + axis_w, inner - axis_w
-    py = y + 54
+    py = y + 64
+
+    def sy(v: float) -> float:
+        return py + plot_h - (v - lo) / (hi - lo) * plot_h
+
+    for t in ticks:
+        ty = sy(t)
+        p.append(f'<line x1="{px}" y1="{ty:g}" x2="{px + pw}" y2="{ty:g}" '
+                 f'stroke="{GRID}" stroke-width="1"/>')
+        p.append(f'<text x="{px - 14}" y="{ty + 6:g}" font-size="18" text-anchor="end" '
+                 f'fill="{MUTED}">{t:g}</text>')
+
+    colors = [BLUE, ORANGE]
+    legend_x = x
+    for i, (name, rows) in enumerate(lines[:2]):
+        color = colors[i]
+        step = pw / max(len(rows) - 1, 1)
+        coords = [(px + j * step, sy(v["value"])) for j, v in enumerate(rows)]
+        p.append(f'<polyline fill="none" stroke="{color}" stroke-width="3" '
+                 'stroke-linejoin="round" points="'
+                 + " ".join(f"{cx:.1f},{cy:.1f}" for cx, cy in coords) + '"/>')
+        for cx, cy in coords:
+            p.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="5" fill="{color}" '
+                     f'stroke="{CARD}" stroke-width="2"/>')
+        # 선 끝에 이름을 적으면 두 선이 붙은 날 서로 겹친다. 범례 한 곳에 이름·값·변화를 모은다.
+        change = rows[-1]["value"] - rows[0]["value"]
+        legend = (f'{name} {rows[-1]["value"]:.2f} '
+                  f'{"▲" if change > 0 else ("▼" if change < 0 else "―")}{abs(change):.2f}')
+        p.append(f'<rect x="{legend_x}" y="{y + 12}" width="14" height="14" rx="3" fill="{color}"/>')
+        p.append(f'<text x="{legend_x + 22}" y="{y + 24}" font-size="20" fill="{INK_2}">'
+                 f'{esc(name)} <tspan font-weight="700" fill="{INK}">'
+                 f'{rows[-1]["value"]:.2f}</tspan> '
+                 f'<tspan fill="{GOOD if change > 0 else (CRITICAL if change < 0 else INK_2)}">'
+                 f'{"▲" if change > 0 else ("▼" if change < 0 else "―")}{abs(change):.2f}</tspan></text>')
+        legend_x += 46 + text_width(legend, 20)
+
+    for idx, anchor in ((0, "start"), (len(first) - 1, "end")):
+        cx = px + idx * (pw / max(len(first) - 1, 1))
+        when = first[idx].get("when") or first[idx]["time"]
+        p.append(f'<text x="{cx:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
+                 f'text-anchor="{anchor}" fill="{MUTED}">{esc(when)}</text>')
+    frame_close(p, notes, g)
+    return Image("stats-index", "\n".join(p), title)
+
+
+def trade_history_line(rows: list[dict], region: str, date: str,
+                       extra: dict | None = None) -> "Image | None":
+    """우리가 날마다 집계한 거래 건수 추이. 사흘 이상 쌓여야 그린다."""
+    points = [r for r in rows if r.get("count") is not None]
+    if len(points) < 3:
+        return None
+    title = f"{region} 아파트 매매 거래 건수 — 우리 집계 추이"
+    sub = f"{points[0]['date']} ~ {points[-1]['date']} 집계"
+    notes = [
+        "※ 같은 달이라도 신고가 늦게 들어와 집계일마다 값이 조금씩 커집니다. "
+        "가격 변화가 아니라 신고가 쌓이는 속도를 보는 그림입니다.",
+        "출처: 국토교통부 실거래가 공개시스템 · 날마다 직접 집계",
+    ]
+    w, plot_h = 1000, 260
+    h = card_height(w, title, sub, plot_h + 96, notes)
+    p, g = frame_open(w, h, title=title, subtitle=sub, channel=_channel(extra), date=date)
+    x, y, inner = g["x"], g["top"], g["inner"]
+
+    values = [r["count"] for r in points]
+    ticks = nice_ticks(min(values), max(values))
+    lo, hi = ticks[0], ticks[-1]
+    axis_w = 74
+    px, pw = x + axis_w, inner - axis_w
+    py = y + 40
 
     def sy(v: float) -> float:
         return py + plot_h - (v - lo) / (hi - lo) * plot_h
@@ -571,31 +642,20 @@ def price_index_line(series: list[dict], date: str, extra: dict | None = None) -
 
     step = pw / max(len(points) - 1, 1)
     coords = [(px + i * step, sy(v)) for i, v in enumerate(values)]
-    p.append('<polyline fill="none" stroke="' + BLUE + '" stroke-width="3" '
+    p.append(f'<polyline fill="none" stroke="{BLUE}" stroke-width="3" '
              'stroke-linejoin="round" points="'
              + " ".join(f"{cx:.1f},{cy:.1f}" for cx, cy in coords) + '"/>')
     for cx, cy in coords:
         p.append(f'<circle cx="{cx:.1f}" cy="{cy:.1f}" r="5" fill="{BLUE}" '
                  f'stroke="{CARD}" stroke-width="2"/>')
-
-    # 처음과 끝만 값을 적는다. 모든 점에 숫자를 붙이면 읽히지 않는다.
+    ex, ey = coords[-1]
+    p.append(f'<text x="{ex:.1f}" y="{ey - 16:.1f}" font-size="24" font-weight="700" '
+             f'text-anchor="end" fill="{INK}">{values[-1]}건</text>')
     for idx, anchor in ((0, "start"), (len(points) - 1, "end")):
-        cx, cy = coords[idx]
-        p.append(f'<text x="{cx:.1f}" y="{cy - 18:.1f}" font-size="22" font-weight="700" '
-                 f'text-anchor="{anchor}" fill="{INK}">{values[idx]:.2f}</text>')
-    for idx, anchor in ((0, "start"), (len(points) - 1, "end")):
-        cx = coords[idx][0]
-        when = points[idx].get("when") or points[idx]["time"]
-        p.append(f'<text x="{cx:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
-                 f'text-anchor="{anchor}" fill="{MUTED}">{esc(when)}</text>')
-
-    p.append(f'<text x="{x}" y="{y + 30}" font-size="26" font-weight="700" '
-             f'fill="{GOOD if change > 0 else (CRITICAL if change < 0 else INK)}">'
-             f'{"▲" if change > 0 else ("▼" if change < 0 else "―")} {abs(change):.2f}'
-             f'<tspan font-size="20" font-weight="500" fill="{INK_2}"> '
-             f'{len(points)}주 동안</tspan></text>')
+        p.append(f'<text x="{coords[idx][0]:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
+                 f'text-anchor="{anchor}" fill="{MUTED}">{esc(points[idx]["date"])}</text>')
     frame_close(p, notes, g)
-    return Image("stats-index", "\n".join(p), title)
+    return Image("stats-history", "\n".join(p), title)
 
 
 def build(datapoints: list[dict], date: str, headline: str = "", limit: int = 3,
