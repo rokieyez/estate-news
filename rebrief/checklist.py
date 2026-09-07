@@ -206,6 +206,23 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
         elif prev_bodies:
             items.append(Item("overlap", OK, f"지난 글과 겹치는 문장 {ratio * 100:.0f}%"))
 
+        # 4-0-3) 짧게 쓰기 — 메인 하나 + 나머지 한 줄 구조인지
+        from .render import outline_from_markdown
+
+        heads = outline_from_markdown(post.body_markdown)
+        if not any("그 밖의" in h for h in heads):
+            items.append(Item("shape", WARN, "'그 밖의 오늘 소식' 묶음이 없습니다",
+                              "이슈를 모두 길게 설명하면 글이 늘어집니다. 메인 하나만 깊게 쓰고 나머지는 한 줄씩 모으세요."))
+        elif len(heads) > 6:
+            items.append(Item("shape", WARN, f"소제목이 {len(heads)}개로 많습니다",
+                              "메인 이슈 2~3개 + 그 밖의 소식 + 체크포인트면 충분합니다."))
+        else:
+            items.append(Item("shape", OK, f"소제목 {len(heads)}개 · 메인 하나에 집중"))
+
+        if not getattr(post, "takeaways", None):
+            items.append(Item("takeaways", WARN, "'그래서 나는?' 이 비어 있습니다",
+                              "무주택자·1주택자처럼 읽는 사람 유형별로 한 줄씩 있어야 남 얘기로 안 읽힙니다."))
+
         # 4-1) 읽기 쉬움 — 긴 문장·긴 문단
         long_s = long_sentences(post.body_markdown, int(blog.get("max_sentence_chars", 90)))
         long_p = long_paragraphs(post.body_markdown, int(blog.get("max_paragraph_chars", 320)))

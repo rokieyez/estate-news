@@ -162,6 +162,13 @@ class BlogPost(BaseModel):
         default_factory=list,
         description="본문 맨 앞에 얹을 요약 3줄. 각 45자 내외. 검색으로 들어온 사람이 이것만 읽고도 알게",
     )
+    takeaways: list[str] = Field(
+        default_factory=list,
+        description=(
+            "'그래서 나는?' 2~3개. 읽는 사람 유형으로 시작해 무엇을 하면 되는지 한 줄. "
+            "예: '무주택 실수요자라면, 지금은 대출 한도부터 확인할 때입니다'. 각 45자 내외"
+        ),
+    )
     closing_question: str = Field(
         default="",
         description="글 끝에 붙일 질문 한 문장. 댓글을 유도하되 구걸하지 않는 자연스러운 물음",

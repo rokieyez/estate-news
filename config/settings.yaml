@@ -106,8 +106,10 @@ blog:
   max_sentence_chars: 90    # 이보다 긴 문장은 점검표에 올림
   max_paragraph_chars: 320  # 이보다 긴 문단은 점검표에 올림
 
-  min_chars: 1800
-  max_chars: 3500
+  # 짧게 씁니다. 이슈 5개를 다 설명하면 3천 자가 넘고 아무도 끝까지 읽지 않습니다.
+  # 메인 1개만 깊게 쓰고 나머지는 '그 밖의 오늘 소식' 에 한 줄씩 (프롬프트 규칙).
+  min_chars: 1200
+  max_chars: 2000
   frontmatter: true         # blog.md 에 YAML 머리말 포함 (Jekyll/Hugo/Obsidian 호환)
   category: "부동산"
   disclaimer: "본 글은 공개된 언론 보도를 정리한 것이며, 투자 판단의 책임은 이용자 본인에게 있습니다."
@@ -115,6 +117,7 @@ blog:
   related_posts: 3          # 글 끝에 붙일 지난 글 개수 (발행 기록에 주소가 있는 날만). 0 이면 끔
   overlap_lookback_days: 3  # 며칠 전 글까지 문장 겹침을 볼지
   max_overlap_ratio: 0.15   # 지난 글과 같은 문장이 이 비율을 넘으면 점검표에 올림
+  glossary_max: 3           # 글 앞에 붙일 '낯선 말 풀이' 개수. 0 이면 끔
   key_numbers: 3            # '오늘의 숫자' 카드에 넣을 핵심 수치 개수. 본문 강조·썸네일 배지에도 쓴다. 0 이면 끔
 
   naver:

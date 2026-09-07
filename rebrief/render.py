@@ -91,8 +91,10 @@ class Renderer:
             post=post,
             tags=self._tags(post),
             cover=cover,
-            lead_block=lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown)),
-            tail_block=tail_block_markdown(post.closing_question, related),
+            lead_block=lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown))
+                       + terms_block_markdown(self._terms(post)),
+            tail_block=takeaways_block_markdown(post.takeaways)
+                       + tail_block_markdown(post.closing_question, related),
             key_card=kn.card_markdown(key_numbers or []),
             body_markdown=place_images_markdown(post.body_markdown, slot_files or {}),
             clusters=clusters,
@@ -126,6 +128,8 @@ class Renderer:
                 closing_question=post.closing_question,
                 related=related,
                 cover=cover,
+                terms=self._terms(post),
+                takeaways=post.takeaways,
             ),
             hashtags=format_hashtags(self._tags(post)),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
@@ -302,6 +306,13 @@ class Renderer:
             paths.append(self.out_dir / f"{slug}.svg")
         return paths
 
+    def _terms(self, post: BlogPost) -> list[tuple[str, str]]:
+        """글에 나온 어려운 말 풀이. 사전은 사람이 적어 둔 고정 문장을 쓴다."""
+        from .glossary import explain
+
+        limit = int((self.cfg.get("blog", {}) or {}).get("glossary_max", 3) or 0)
+        return explain(post.body_markdown, limit) if limit else []
+
     def _tags(self, post: BlogPost) -> list[str]:
         """모델 태그 + 글에 나온 지역 + 고정 태그로 네이버 30칸을 채운다."""
         from .regions import find_regions
@@ -374,7 +385,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
                   highlight_min: int = 3, key_numbers: list | None = None,
                   summary_lines: list[str] | None = None, closing_question: str = "",
                   related: list[dict] | None = None, outline: bool = True,
-                  cover: str = "") -> str:
+                  cover: str = "", terms: list[tuple[str, str]] | None = None,
+                  takeaways: list[str] | None = None) -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -415,9 +427,11 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
     html = highlight_repeated_numbers(html, highlight_min, {n.key for n in (key_numbers or [])})
     html = _IMAGE_SLOT.sub(slot, html)
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
-    head = cover_block_html(cover) + lead_block_html(
-        summary_lines, outline_from_markdown(body_markdown) if outline else [])
-    return head + kn.card_html(key_numbers or []) + html + tail_block_html(closing_question, related)
+    head = (cover_block_html(cover)
+            + lead_block_html(summary_lines, outline_from_markdown(body_markdown) if outline else [])
+            + terms_block_html(terms or []))
+    return (head + kn.card_html(key_numbers or []) + html
+            + takeaways_block_html(takeaways) + tail_block_html(closing_question, related))
 
 
 _HL_STYLE = "background-color:#fff59d"
@@ -539,6 +553,41 @@ def lead_block_html(summary_lines: list[str] | None, outline: list[str] | None) 
             f'<ol style="margin:6px 0 0;padding-left:20px;line-height:1.6">{rows}</ol></div>'
         )
     return "".join(parts)
+
+
+def terms_block_html(terms: list[tuple[str, str]]) -> str:
+    """낯선 말 풀이. 배경지식 없는 사람이 첫 문단에서 막히지 않게 요약 바로 아래 둔다."""
+    if not terms:
+        return ""
+    rows = "".join(
+        f'<li style="margin-bottom:5px"><b>{_esc(t)}</b> — {_esc(m)}</li>' for t, m in terms
+    )
+    return ('<div style="background-color:#fff8e1;padding:12px 16px;margin:0 0 22px;font-size:14px">'
+            '<b>낯선 말 풀이</b>'
+            f'<ul style="margin:6px 0 0;padding-left:18px;line-height:1.6">{rows}</ul></div>')
+
+
+def takeaways_block_html(takeaways: list[str] | None) -> str:
+    """'그래서 나는?' — 남 얘기를 내 얘기로 바꾸는 자리. 본문 끝에 둔다."""
+    if not takeaways:
+        return ""
+    rows = "".join(f'<li style="margin-bottom:6px">{_esc(t)}</li>' for t in takeaways[:3])
+    return ('<div style="background-color:#f2f8ff;border-left:4px solid #256abf;'
+            'padding:14px 16px;margin:26px 0 0">'
+            '<b style="font-size:15px">그래서 나는?</b>'
+            f'<ul style="margin:8px 0 0;padding-left:18px">{rows}</ul></div>')
+
+
+def terms_block_markdown(terms: list[tuple[str, str]]) -> str:
+    if not terms:
+        return ""
+    return "**낯선 말 풀이**\n\n" + "\n".join(f"- **{t}** — {m}" for t, m in terms) + "\n"
+
+
+def takeaways_block_markdown(takeaways: list[str] | None) -> str:
+    if not takeaways:
+        return ""
+    return "**그래서 나는?**\n\n" + "\n".join(f"- {t}" for t in takeaways[:3]) + "\n"
 
 
 def tail_block_html(closing_question: str = "", related: list[dict] | None = None) -> str:

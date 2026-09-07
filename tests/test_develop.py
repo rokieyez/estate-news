@@ -344,3 +344,51 @@ def test_site_bundles_attachments_into_one_zip(cfg, tmp_path):
     assert set(names) == {"img-1-stat-card.png", "thumb-shorts.png", "script-shorts.srt"}
     assert "첨부파일 모두 내려받기" in (dest / "index.html").read_text(encoding="utf-8")
     assert "files.zip" in (dest / "latest" / "images.html").read_text(encoding="utf-8")
+
+
+# ── 짧게 읽히는 글: 용어 풀이 · 그래서 나는? · 구조 ────────
+
+
+def test_glossary_picks_terms_in_order_without_duplicates():
+    from rebrief.glossary import explain
+
+    text = "오늘의 중심은 종부세(종합부동산세)입니다. 정부는 기업형 임대에 합산배제를 검토합니다."
+    got = explain(text, limit=3)
+    assert [t for t, _ in got] == ["종합부동산세", "기업형 임대", "합산배제"]   # 나온 순서대로
+    assert all(len(m) < 60 for _, m in got)
+    assert explain("집값 이야기", limit=3) == []
+    assert len(explain(text, limit=1)) == 1
+
+
+def test_naver_html_shows_glossary_and_takeaways(cfg, tmp_path):
+    from rebrief.models import BlogPost
+    from rebrief.render import Renderer
+
+    post = BlogPost(
+        title="종부세 대상 확대", slug="s", meta_description="d", tags=["종부세"],
+        focus_keyword="종부세 대상", summary_lines=["요약 한 줄"],
+        takeaways=["무주택 실수요자라면, 대출 한도부터 확인해 보세요.", "1주택자라면 보유세 부담을 계산해 보세요."],
+        closing_question="여러분은 어떠신가요?",
+        body_markdown="종부세(종합부동산세) 이야기입니다.\n\n## 종부세 대상\n\n본문\n\n## 그 밖의 오늘 소식\n\n- 한 줄\n")
+    html = Renderer(cfg, tmp_path / "out", "2026-09-07").blog_naver(post).read_text(encoding="utf-8")
+    assert html.index("낯선 말 풀이") < html.index("종부세(종합부동산세) 이야기")   # 본문보다 앞
+    assert "가진 집들의 공시가격 합이" in html
+    assert html.index("그래서 나는?") > html.index("본문")                        # 본문 뒤
+    assert "무주택 실수요자라면" in html and html.index("그래서 나는?") < html.index("여러분은 어떠신가요")
+
+
+def test_checklist_flags_sprawling_shape_and_missing_takeaways(cfg):
+    from rebrief import checklist as cl
+    from rebrief.models import BlogPost
+
+    sprawl = BlogPost(title="t", slug="s", meta_description="d", tags=["a"], focus_keyword="집값",
+                      body_markdown="\n\n".join(["집값 이야기"] + [f"## 소제목 {i}\n\n내용" for i in range(7)]))
+    items = {i.key: i for i in cl.build(cfg, post=sprawl)}
+    assert items["shape"].level == cl.WARN and "그 밖의" in items["shape"].title
+    assert items["takeaways"].level == cl.WARN
+
+    tight = BlogPost(title="t", slug="s", meta_description="d", tags=["a"], focus_keyword="집값",
+                     takeaways=["무주택자라면 …"],
+                     body_markdown="집값 이야기\n\n## 집값 흐름\n\n내용\n\n## 그 밖의 오늘 소식\n\n- 한 줄")
+    ok = {i.key: i for i in cl.build(cfg, post=tight)}
+    assert ok["shape"].level == cl.OK and "takeaways" not in ok
