@@ -44,11 +44,14 @@
   .card { background: #fff; border-radius: 10px; padding: 32px 28px; }
   .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
   .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 제목 위 여백은 본문 줄 간격(약 29px)의 두 배 이상이어야 앞 문단과 떨어져 보인다.
+     아래쪽은 초록 선이 닫아 주므로 좁게 둔다 — 제목이 '아래 내용의 머리'로 읽히게. */
   #post h2 {
-    font-size: 20px; font-weight: 700; margin: 40px 0 14px;
+    font-size: 20px; font-weight: 700; margin: 60px 0 14px;
     padding-bottom: 8px; border-bottom: 2px solid #03c75a;
   }
-  #post h3 { font-size: 17px; font-weight: 700; margin: 28px 0 10px; }
+  #post h2:first-child { margin-top: 8px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
   #post p { margin: 0 0 18px; }
   #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
   #post li { margin-bottom: 8px; }
