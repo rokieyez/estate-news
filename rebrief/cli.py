@@ -412,6 +412,16 @@ def _cmd_stats(cfg, args) -> int:
               f"{rows[0]['when'] or rows[0]['time']} {rows[0]['value']:.2f}"
               f" → {rows[-1]['when'] or rows[-1]['time']} {rows[-1]['value']:.2f}"
               f"  ({len(rows)}주)")
+    if data.get("swings"):
+        print("\n거래가 크게 움직인 구 (25개 구 전체에서)")
+        for sw in data["swings"]:
+            spot = sw.get("hotspot")
+            where = f"  ← {spot['dong']}에 {spot['share']}% 몰림" if spot else ""
+            print(f"  {sw['name']:<6} {sw['before']:>4}건 → {sw['now']:>4}건  {sw['pct']:+6.1f}%{where}")
+    if data.get("warnings"):
+        print("\n⚠️  확인이 필요한 값")
+        for warn in data["warnings"]:
+            print(f"  · {warn}")
     print(f"\n저장 → {path}" if path else "")
     return 0
 

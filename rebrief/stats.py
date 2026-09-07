@@ -544,27 +544,109 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
                        for r in rows if r.get("jeonse")],
             "rent": [{"name": r["name"], **r["rent"]} for r in rows if r.get("rent")],
             "sizes": size_change(size_mix(all_now), size_mix(all_was)),
-            "map": district_counts(cfg, ym) if settings.get("map", True) else {},
+            **_city_block(cfg, ym, before, settings),
+            "warnings": suspect_drops(rows),
             "history_months": months_back,
             "total": sum(r["now"]["count"] for r in rows),
             "total_before": sum(r["was"]["count"] for r in rows)}
 
 
-def district_counts(cfg, ym: str) -> dict:
-    """서울 25개 구 전부의 그 달 거래 건수. 지도 한 장을 채우기 위한 가벼운 한 바퀴.
+def _city_block(cfg, ym: str, before: str, settings: dict) -> dict:
+    """서울 한 바퀴 결과를 collect 가 내놓는 모양으로. 꺼져 있으면 빈 칸만 돌려준다."""
+    if not settings.get("map", True):
+        return {"map": {}, "map_jeonse": {}, "swings": []}
+    city = city_wide(cfg, ym, before, jeonse=bool(settings.get("jeonse", True)))
+    return {"map": city.get("counts", {}),
+            "map_jeonse": city.get("jeonse", {}),
+            "swings": district_swings(city.get("counts", {}), city.get("before", {}),
+                                      city.get("hotspots", {}))}
 
-    표에 올리는 8개 구는 지난 달들과 전월세까지 받지만, 여기서는 **그 달 한 번씩**만
-    부릅니다(25회). 빠진 칸이 열일곱이나 되는 지도는 읽을 값이 없어서, 지도를 그릴 거면
+
+def city_wide(cfg, ym: str, before: str = "", *, jeonse: bool = True) -> dict:
+    """서울 25개 구를 한 바퀴 돈다. 지도 두 장과 구 단위 급변을 여기서 얻는다.
+
+    표에 올리는 8개 구는 지난 달들까지 받지만, 여기서는 **그 달(과 전달) 한 번씩**만
+    부릅니다. 빠진 칸이 열일곱이나 되는 지도는 읽을 값이 없어서, 지도를 그릴 거면
     스물다섯을 다 채워야 합니다.
     """
     if not deal_key():
         return {}
     counts: dict[str, int] = {}
+    was: dict[str, int] = {}
+    ratios: dict[str, float] = {}
+    hotspots: dict[str, dict] = {}
     for name, code in SEOUL_CODES.items():
         deals = apt_trades(cfg, code, ym)
         if deals:
             counts[name] = len(deals)
-    return counts
+            hotspots[name] = _busiest_dong(deals)
+        if before:
+            prior = apt_trades(cfg, code, before)
+            if prior:
+                was[name] = len(prior)
+        if jeonse and deals:
+            ratio = jeonse_ratio(deals, apt_rents(cfg, code, ym))
+            if ratio:
+                ratios[name] = ratio["median"]
+    return {"counts": counts, "before": was, "jeonse": ratios, "hotspots": hotspots}
+
+
+def _busiest_dong(deals: list[dict]) -> dict:
+    """거래가 가장 많은 법정동과 그 비중. 구 전체가 움직였는지 한 동네가 움직였는지 가른다."""
+    tally: dict[str, int] = {}
+    for d in deals:
+        if d.get("dong"):
+            tally[d["dong"]] = tally.get(d["dong"], 0) + 1
+    if not tally:
+        return {}
+    dong, count = max(tally.items(), key=lambda x: x[1])
+    return {"dong": dong, "count": count, "share": round(count / len(deals) * 100, 1)}
+
+
+def district_swings(counts: dict, before: dict, hotspots: dict | None = None, *,
+                    pct: float = 20.0, min_count: int = 40, limit: int = 4,
+                    concentrated: float = 40.0) -> list[dict]:
+    """구 단위로 거래가 크게 늘거나 준 곳. 단지 단위 신고가와는 다른 이야기다.
+
+    표의 '전달 대비' 는 우리가 고른 여덟 곳만 보여 줍니다. 스물다섯 곳을 다 세고 나면
+    "중랑구가 141% 늘었다" 같은 것을 프로그램이 집어낼 수 있습니다. 거래가 원래 적은 구는
+    몇 건만 움직여도 비율이 크게 튀므로 `min_count` 미만이면 뺍니다.
+
+    **한 동네에 몰린 경우를 밝힙니다.** 2026년 7월 중랑구가 208→501건으로 늘었는데
+    501건 가운데 332건이 묵동이었습니다. 이런 달은 구 전체가 달아오른 게 아니라 큰 단지
+    한 곳이 한꺼번에 신고된 것입니다. 비중이 `concentrated` 를 넘으면 그 동네를 함께 답니다.
+    """
+    found = []
+    for name, now in counts.items():
+        prior = before.get(name, 0)
+        if prior < min_count or now < min_count:
+            continue
+        change = (now / prior - 1) * 100
+        if abs(change) < pct:
+            continue
+        spot = (hotspots or {}).get(name) or {}
+        # 템플릿이 StrictUndefined 라 항목은 늘 있어야 한다. 몰린 곳이 없으면 None.
+        found.append({"name": name, "now": now, "before": prior, "pct": round(change, 1),
+                      "hotspot": spot if spot.get("share", 0) >= concentrated else None})
+    found.sort(key=lambda r: -abs(r["pct"]))
+    return found[:limit]
+
+
+def suspect_drops(rows: list[dict], *, floor: int = 30, ratio: float = 0.1) -> list[str]:
+    """거래가 0에 가깝게 떨어진 구. **자료가 아니라 호출을 의심하라는 신호**다.
+
+    응답이 비어 오면 그 구는 조용히 0건이 되어 표에서 빠집니다. 진짜 거래 급감과
+    호출 실패가 겉으로 똑같이 보이는 것입니다. 전달에 넉넉히 있던 곳이 10분의 1 아래로
+    내려가면 사람이 한 번 보게 합니다 — 실제로 이런 달은 거의 없습니다.
+    """
+    out = []
+    for row in rows:
+        was = row.get("was", {}).get("count", 0)
+        now = row.get("now", {}).get("count", 0)
+        if was >= floor and now <= was * ratio:
+            out.append(f"{row['name']} 거래가 {was}건 → {now}건으로 떨어졌습니다. "
+                       f"실제 급감일 수도 있지만 응답이 비어 왔을 가능성을 먼저 확인하세요.")
+    return out
 
 
 # ── 한국부동산원 ─────────────────────────────────────────────

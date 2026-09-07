@@ -331,13 +331,21 @@ class Renderer:
         return expand_tags(post.tags, found, list(naver.get("fixed_tags", []) or []),
                            limit=int(naver.get("tag_count", 30)))
 
-    def _write_image(self, img, cfg: dict, prefix: str = "img-") -> str:
-        """SVG 를 쓰고, 되면 PNG 도 쓴다. 본문에서 가리킬 파일명(PNG 우선)을 돌려준다."""
+    def _write_image(self, img, cfg: dict, prefix: str = "img-", scale: int | None = None) -> str:
+        """SVG 를 쓰고, 되면 PNG 도 쓴다. 본문에서 가리킬 파일명(PNG 우선)을 돌려준다.
+
+        PNG 가 만들어졌으면 SVG 는 지웁니다(`images.keep_svg`). 같은 그림이 두 벌씩 날마다
+        저장소에 쌓이기 때문입니다. 변환에 실패한 날은 SVG 가 유일한 결과물이라 그대로 둡니다.
+        """
         svg = self._write_raw(f"{prefix}{img.slug}.svg", img.svg)
         if cfg.get("png", True):
             png = svg.with_suffix(".png")
-            if images_mod.svg_to_png(svg, png, int(cfg.get("png_scale", 2))):
+            if images_mod.svg_to_png(svg, png, int(scale or cfg.get("png_scale", 2))):
                 self.written.append(png)
+                if not cfg.get("keep_svg", False):
+                    svg.unlink(missing_ok=True)
+                    if svg in self.written:
+                        self.written.remove(svg)
                 return png.name
         return svg.name
 
@@ -359,10 +367,13 @@ class Renderer:
                 ("jeonse", images_mod.jeonse_history_line(jeonse_history or [], history_region,
                                                           self.date, extra)),
                 ("map", images_mod.district_choropleth(data, self.date, extra)),
+                ("map_jeonse", images_mod.district_choropleth(data, self.date, extra,
+                                                             metric="jeonse")),
             )
+            scale = int(cfg.get("png_scale_stats", 1) or cfg.get("png_scale", 2))
             for key, img in made:
                 if img:
-                    files[key] = self._write_image(img, cfg)
+                    files[key] = self._write_image(img, cfg, scale=scale)
         self.stats_images = files
         # 검색 색인이 읽을 수 있게 집계 결과를 그대로 한 벌 남긴다 (그림 경로는 뺀다)
         import json as _json
@@ -370,7 +381,8 @@ class Renderer:
         self._write_raw("stats.json", _json.dumps(data, ensure_ascii=False, indent=2) + "\n")
         # 템플릿은 StrictUndefined 라 빠진 항목이 있으면 바로 터진다. 예전에 모은 자료도
         # 그릴 수 있게 새로 생긴 항목의 기본값을 먼저 깔아 둔다.
-        payload = {"rent": [], "sizes": [], "map": {}, **data}
+        payload = {"rent": [], "sizes": [], "map": {}, "map_jeonse": {}, "swings": [],
+                   "warnings": [], **data}
         return self._write("stats.md", "stats.md.j2", index=index_table(series or {}),
                            images=files, history_region=history_region, **payload)
 
@@ -716,6 +728,17 @@ def stats_block_html(data: dict | None, image: str = "") -> str:
             f'<p style="margin:10px 0 0;font-size:15px;color:#555555">'
             f'{_esc(j["name"])} 전세가율(전세 보증금 ÷ 매매가)은 가운뎃값 <b>{j["median"]}%</b>입니다. '
             f'같은 단지·같은 면적 {j["count"]}곳을 견줬습니다.</p>')
+    swings = (data.get("swings") or [])[:2]
+    if swings:
+        # 단지 하나가 아니라 구 전체가 움직인 이야기다. 신고가와 성격이 달라 따로 적는다.
+        moved = " · ".join(
+            f'{_esc(s["name"])} {s["pct"]:+.1f}%({s["before"]}→{s["now"]}건'
+            + (f', {_esc(s["hotspot"]["dong"])}에 {s["hotspot"]["share"]}% 몰림' if s.get("hotspot") else "")
+            + ")"
+            for s in swings)
+        parts.append(
+            f'<p style="margin:10px 0 0;font-size:15px;color:#555555">'
+            f'서울 25개 구 가운데 거래가 가장 크게 움직인 곳: {moved}</p>')
     hot = [h for h in (data.get("highlights") or []) if h["kind"] == "신고가"][:2]
     if hot:
         items = "".join(
@@ -754,6 +777,14 @@ def stats_block_markdown(data: dict | None, image: str = "") -> str:
         j = jeonse[0]
         lines.append(f'\n{j["name"]} 전세가율 가운뎃값 **{j["median"]}%** '
                      f'(같은 단지·같은 면적 {j["count"]}곳)\n')
+    swings = (data.get("swings") or [])[:2]
+    if swings:
+        moved = " · ".join(
+            f'{s["name"]} {s["pct"]:+.1f}%({s["before"]}→{s["now"]}건'
+            + (f', {s["hotspot"]["dong"]}에 {s["hotspot"]["share"]}% 몰림' if s.get("hotspot") else "")
+            + ")"
+            for s in swings)
+        lines.append(f'\n서울 25개 구 가운데 거래가 가장 크게 움직인 곳: {moved}\n')
     hot = [h for h in (data.get("highlights") or []) if h["kind"] == "신고가"][:2]
     if hot:
         lines.append("\n이번 달 신고가\n")

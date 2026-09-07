@@ -339,7 +339,11 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
     trade_max = max((e.get("total", 0) for _, e in trade_rows), default=0) or 1
     trade_bars = [{"date": d, "total": e.get("total", 0), "month": e.get("month", ""),
                    "h": round(100 * e.get("total", 0) / trade_max, 1)} for d, e in trade_rows]
-    trade_latest = trade_rows[-1][1] if trade_rows else {}
+    trade_latest = dict(trade_rows[-1][1]) if trade_rows else {}
+    if trade_latest.get("month"):
+        from .store import _month_label
+
+        trade_latest["month"] = _month_label(trade_latest["month"])   # '202607' 은 안 읽힌다
 
     from datetime import date as _date
 
@@ -357,8 +361,28 @@ def _build_dashboard(env, cfg: Config, days: list[Path], built: list[dict], dest
         trade_bars=trade_bars, trade_latest=trade_latest,
         trade_stale=_stale_days(trades, days[0].name if days else ""),
         title_types=TitleLog(cfg.state_dir / "titles.json").by_type(),
+        storage=_storage_use(cfg, len(days)),
     )
     (dest / "dashboard.html").write_text(html, encoding="utf-8")
+
+
+def _storage_use(cfg: Config, days: int) -> dict:
+    """산출물 폴더가 얼마나 커졌는지. 지우지는 않고 **보이게만** 합니다.
+
+    날마다 그림이 새로 커밋되고 깃 이력은 지워지지 않으므로, 그냥 두면 몇 해 뒤에 저장소가
+    무거워집니다. 하루 평균과 '1년이면 얼마' 를 함께 내어 사람이 판단하게 합니다.
+    """
+    total = 0
+    for path in cfg.output_dir.rglob("*"):
+        if path.is_file():
+            try:
+                total += path.stat().st_size
+            except OSError:
+                continue
+    per_day = total / days if days else 0
+    return {"mb": round(total / 1024 / 1024, 1),
+            "per_day_mb": round(per_day / 1024 / 1024, 2),
+            "year_gb": round(per_day * 365 / 1024 / 1024 / 1024, 2)}
 
 
 def _build_periods(env, source: Path, dest: Path, *, stem: str, title: str) -> list[dict]:

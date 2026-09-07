@@ -32,9 +32,14 @@
   h2 { font-size: 19px; margin: 48px 0 12px; padding-bottom: 7px; border-bottom: 2px solid #e4e7ea; }
   h2:first-child { margin-top: 6px; }
   h3 { font-size: 16px; margin: 32px 0 8px; }
-  p { margin: 0 0 15px; }
+  /* 제작 메모의 출처 절에는 링크가 아닌 맨 주소가 그대로 들어간다. 구글뉴스 주소는 한 덩어리로
+     1600px 가 넘어 휴대폰에서 화면 전체를 밀어낸다. 필요할 때만 끊기게 한다. */
+  p, li { margin: 0 0 15px; overflow-wrap: anywhere; }
+  li { margin: 0 0 6px; }
   ul, ol { padding-left: 20px; margin: 0 0 15px; }
-  li { margin-bottom: 6px; }
+  /* 그림은 1000px 안팎으로 만들어지므로 그냥 두면 휴대폰에서 화면 밖으로 밀린다.
+     표는 display:block + overflow-x 로 표 안에서만 가로로 움직이게 해 두었다. */
+  img { max-width: 100%; height: auto; display: block; margin: 0 0 18px; border-radius: 8px; }
   table { border-collapse: collapse; width: 100%; margin: 0 0 18px; font-size: 14px; display: block; overflow-x: auto; }
   th, td { border: 1px solid #e0e3e6; padding: 8px 11px; text-align: left; white-space: nowrap; }
   th { background: #f5f6f8; }

@@ -1327,3 +1327,104 @@ def test_sitemap_keeps_the_period_folder(cfg, tmp_path):
     _build_sitemap(cfg, [], periods, tmp_path)
     xml = (tmp_path / "sitemap.xml").read_text(encoding="utf-8")
     assert "/monthly/2026-08/monthly.html" in xml
+
+
+# ── 서울 지수 · 전세가율 지도 · 구 단위 급변 · 조용한 실패 · 용량 ────
+
+def test_swings_name_the_neighbourhood_when_concentrated():
+    from rebrief.stats import _busiest_dong, district_swings
+
+    deals = [{"dong": "묵동"}] * 332 + [{"dong": "면목동"}] * 70 + [{"dong": "신내동"}] * 99
+    spot = _busiest_dong(deals)
+    assert spot["dong"] == "묵동" and spot["share"] == 66.3
+    assert _busiest_dong([]) == {}
+
+    counts = {"중랑구": 501, "동작구": 237, "종로구": 45, "강북구": 60}
+    before = {"중랑구": 208, "동작구": 153, "종로구": 20, "강북구": 59}
+    swings = district_swings(counts, before, {"중랑구": spot, "동작구": {"dong": "사당동", "share": 12.0}})
+    names = [s["name"] for s in swings]
+    assert names[:2] == ["중랑구", "동작구"]          # 변동 폭이 큰 순
+    assert "종로구" not in names                      # 40건 미만은 비율이 튀므로 뺀다
+    assert "강북구" not in names                      # 20% 미만은 '움직였다' 고 하지 않는다
+    # 한 동네에 몰린 달은 그 동네를 밝힌다. 아니면 None (템플릿이 StrictUndefined 라 항목은 늘 있다)
+    assert swings[0]["hotspot"]["dong"] == "묵동"
+    assert swings[1]["hotspot"] is None
+
+
+def test_empty_response_looks_like_a_crash_not_a_number():
+    from rebrief.stats import suspect_drops
+
+    rows = [
+        {"name": "강남구", "was": {"count": 210}, "now": {"count": 3}},     # 호출 실패를 의심
+        {"name": "노원구", "was": {"count": 673}, "now": {"count": 723}},   # 정상
+        {"name": "중구", "was": {"count": 12}, "now": {"count": 0}},        # 원래 적은 곳은 말하지 않는다
+    ]
+    warns = suspect_drops(rows)
+    assert len(warns) == 1 and warns[0].startswith("강남구")
+    assert "응답이 비어 왔을 가능성" in warns[0]
+    assert suspect_drops([]) == []
+
+
+def test_jeonse_map_is_a_separate_metric():
+    from rebrief import images
+
+    names = [gu if gu.endswith("구") else f"{gu}구"
+             for row in images.SEOUL_LAYOUT for gu in row.values()]
+    data = {"month_label": "2026년 7월",
+            "map": {n: 100 + i for i, n in enumerate(names)},
+            "map_jeonse": {n: 38.8 + i for i, n in enumerate(names)}}
+
+    count_img = images.district_choropleth(data, "2026-09-07")
+    jeonse_img = images.district_choropleth(data, "2026-09-07", metric="jeonse")
+    assert count_img.slug == "stats-map" and jeonse_img.slug == "stats-map-jeonse"
+    assert "전세가율" in jeonse_img.title
+    assert "38.8%" in jeonse_img.svg          # 칸에 %가 붙어야 한다 (건수 지도와 다른 형식)
+    assert "갱신 계약은 뺐습니다" in jeonse_img.svg
+    # 없는 지표를 달라고 하면 조용히 안 그린다
+    assert images.district_choropleth(data, "2026-09-07", metric="없는것") is None
+    # 전세가율은 짝이 없는 구가 빠지므로 절반만 차면 그리지 않는다
+    thin = {"map_jeonse": {n: 40.0 for n in names[:9]}}
+    assert images.district_choropleth(thin, "2026-09-07", metric="jeonse") is None
+
+
+def test_png_replaces_the_svg(cfg, tmp_path, monkeypatch):
+    from rebrief import images as images_mod
+    from rebrief import render as render_mod
+    from rebrief.render import Renderer
+
+    out = tmp_path / "2026-09-07"
+    out.mkdir()
+    r = Renderer(cfg, out, "2026-09-07")
+    img = images_mod.Image("demo", '<svg width="100" height="50"></svg>', "데모")
+
+    made: list[int] = []
+
+    def fake_png(svg_path, png_path, scale=2):
+        made.append(scale)
+        png_path.write_bytes(b"PNG")
+        return True
+
+    monkeypatch.setattr(render_mod.images_mod, "svg_to_png", fake_png)
+
+    name = r._write_image(img, {"png": True, "png_scale": 2}, scale=1)
+    assert name == "img-demo.png" and made == [1]
+    assert not (out / "img-demo.svg").exists()          # 같은 그림을 두 벌 쌓지 않는다
+    assert (out / "img-demo.svg") not in r.written
+
+    # 변환에 실패한 날은 SVG 가 유일한 결과물이라 지우면 안 된다
+    monkeypatch.setattr(render_mod.images_mod, "svg_to_png", lambda *a, **k: False)
+    name = r._write_image(images_mod.Image("keep", '<svg width="10" height="10"></svg>', "유지"),
+                          {"png": True})
+    assert name == "img-keep.svg" and (out / "img-keep.svg").exists()
+
+
+def test_storage_use_projects_a_year(cfg):
+    from rebrief.site import _storage_use
+
+    day = cfg.output_dir / "2026-09-07"
+    day.mkdir(parents=True)
+    (day / "big.png").write_bytes(b"x" * (2 * 1024 * 1024))
+    use = _storage_use(cfg, 2)
+    assert use["mb"] == 2.0 and use["per_day_mb"] == 1.0
+    assert use["year_gb"] == 0.36                       # 하루 1MB × 365
+    assert _storage_use(cfg, 0)["per_day_mb"] == 0

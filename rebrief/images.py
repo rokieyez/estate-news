@@ -553,21 +553,46 @@ def _quantile_bins(values: list[float], groups: int = 5) -> list[float]:
     return [xs[min(int(len(xs) * i / groups), len(xs) - 1)] for i in range(1, groups)]
 
 
-def district_choropleth(data: dict, date: str, extra: dict | None = None) -> "Image | None":
-    """서울 자치구 도식에 거래 건수를 색 농담으로 칠한다.
+# 지도로 그릴 수 있는 값들. 칸에 적는 글자 모양이 달라서 여기에 모아 둔다.
+MAP_METRICS = {
+    "count": {
+        "key": "map", "slug": "stats-map",
+        "title": "{label} 서울 자치구별 아파트 매매 거래",
+        "sub": "신고분 기준 · 해제분 제외",
+        "fmt": lambda v: f"{v:,}",
+        "legend": lambda a, b: (f"{a:,.0f}~{b:,.0f}건" if b > a else f"{a:,.0f}건"),
+        "note": "※ 색은 다섯 칸에 구가 고르게 들어가도록 순위로 나눴습니다. 칸마다 실제 건수를 적었습니다.",
+    },
+    "jeonse": {
+        "key": "map_jeonse", "slug": "stats-map-jeonse",
+        "title": "{label} 서울 자치구별 전세가율",
+        "sub": "같은 단지·같은 면적의 전세 보증금 ÷ 매매가 (가운뎃값)",
+        "fmt": lambda v: f"{v:.1f}%",
+        "legend": lambda a, b: (f"{a:.0f}~{b:.0f}%" if b - a >= 1 else f"{a:.1f}%"),
+        "note": "※ 월세가 붙은 계약과 갱신 계약은 뺐습니다. 짝지을 단지가 2곳 미만인 구는 비워 두었습니다.",
+    },
+}
+
+
+def district_choropleth(data: dict, date: str, extra: dict | None = None, *,
+                        metric: str = "count") -> "Image | None":
+    """서울 자치구 도식에 값의 크기를 색 농담으로 칠한다.
 
     스물다섯 칸이 다 차야 지도로 읽히므로, 절반만 있으면 그리지 않습니다.
     색만으로 구분하지 않도록 칸마다 숫자를 함께 적습니다.
     """
-    counts = {k: v for k, v in (data.get("map") or {}).items() if v}
+    spec = MAP_METRICS.get(metric)
+    if not spec:
+        return None
+    counts = {k: v for k, v in (data.get(spec["key"]) or {}).items() if v}
     if len(counts) < 18:
         return None
     label = data.get("month_label", "")
-    title = f"{label} 서울 자치구별 아파트 매매 거래"
-    sub = "신고분 기준 · 해제분 제외"
+    title = spec["title"].format(label=label)
+    sub = spec["sub"]
     notes = [
         "※ 실제 지형이 아닌 위치 도식입니다. 칸의 크기는 면적·인구와 무관합니다.",
-        "※ 색은 다섯 칸에 구가 고르게 들어가도록 순위로 나눴습니다. 칸마다 실제 건수를 적었습니다.",
+        spec["note"],
         f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계",
     ]
 
@@ -596,9 +621,9 @@ def district_choropleth(data: dict, date: str, extra: dict | None = None) -> "Im
     for i, color in enumerate(ramp):
         lx = x + i * lw
         p.append(f'<rect x="{lx:g}" y="{y - 16}" width="26" height="18" rx="4" fill="{color}"/>')
-        left, right = bounds[i] + (1 if i else 0), bounds[i + 1]
-        span = f"{left:,}~{right:,}" if right > left else f"{left:,}"
-        p.append(f'<text x="{lx + 33:g}" y="{y - 1}" font-size="17" fill="{INK_2}">{esc(span)}건</text>')
+        left, right = bounds[i], bounds[i + 1]
+        span = spec["legend"](left, right)
+        p.append(f'<text x="{lx + 33:g}" y="{y - 1}" font-size="17" fill="{INK_2}">{esc(span)}</text>')
 
     map_top = y + 62
     for r, row in enumerate(SEOUL_LAYOUT):
@@ -619,9 +644,10 @@ def district_choropleth(data: dict, date: str, extra: dict | None = None) -> "Im
             p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 - 4:g}" font-size="22" '
                      f'text-anchor="middle" fill="{inks[i]}">{gu}</text>')
             p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 + 26:g}" font-size="25" '
-                     f'font-weight="700" text-anchor="middle" fill="{inks[i]}">{value:,}</text>')
+                     f'font-weight="700" text-anchor="middle" fill="{inks[i]}">'
+                     f'{esc(spec["fmt"](value))}</text>')
     frame_close(p, notes, g)
-    return Image("stats-map", "\n".join(p), title)
+    return Image(spec["slug"], "\n".join(p), title)
 
 
 def price_index_line(series: dict, date: str, extra: dict | None = None) -> "Image | None":

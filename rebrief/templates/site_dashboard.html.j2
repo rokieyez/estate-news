@@ -49,6 +49,7 @@
   <div class="tile"><div class="k">최근 30일 비용</div><div class="v">${{ '%.2f'|format(month_usd) }}</div><div class="s">약 {{ '{:,.0f}'.format(month_usd * krw) }}원 · {{ month_days }}일 실행</div></div>
   <div class="tile"><div class="k">하루 평균 기사</div><div class="v">{{ avg_articles }}</div><div class="s">수집 건수</div></div>
   <div class="tile"><div class="k">피드 성공률</div><div class="v">{{ feed_rate }}%</div><div class="s">{{ feed_ok }}/{{ feed_total }} 피드·일</div></div>
+  <div class="tile"><div class="k">산출물 용량</div><div class="v">{{ storage.mb }}MB</div><div class="s">하루 {{ storage.per_day_mb }}MB · 이대로면 1년 {{ storage.year_gb }}GB</div></div>
   <div class="tile"><div class="k">요약 실패일</div><div class="v {% if fail_days %}bad{% else %}ok{% endif %}">{{ fail_days }}</div><div class="s">data.json 없는 날</div></div>
 </div>
 
