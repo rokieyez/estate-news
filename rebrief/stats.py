@@ -17,7 +17,7 @@ import logging
 import os
 import re
 import xml.etree.ElementTree as ET
-from datetime import date
+from datetime import date, timedelta
 
 import requests
 
@@ -88,6 +88,9 @@ def parse_trades(xml_text: str) -> list[dict]:
         return []
     rows = []
     for item in root.iter("item"):
+        # 해제(계약 취소) 신고분은 뺀다. 넣으면 실제보다 거래가 많아 보인다.
+        if (item.findtext("cdealType") or "").strip():
+            continue
         amount = _won(_text(item, _FIELDS["amount"]))
         if not amount:
             continue
@@ -142,13 +145,28 @@ def prev_month(ym: str) -> str:
     return f"{year - 1}12" if month == 1 else f"{year}{month - 1:02d}"
 
 
+def _month_end(ym: str) -> date:
+    year, month = int(ym[:4]), int(ym[4:6])
+    first_of_next = date(year + month // 12, month % 12 + 1, 1)
+    return first_of_next - timedelta(days=1)
+
+
 def month_of(run_date: str) -> str:
-    """실거래는 신고에 최대 30일이 걸리므로 지난달을 기준으로 본다."""
+    """신고가 다 들어온 마지막 달.
+
+    계약일로부터 30일 안에 신고하므로, 그 달 마지막 날에서 30일이 지나야 자료가 찹니다.
+    9월 7일에 8월을 보면 아직 절반도 안 들어와서 '거래 급감' 으로 잘못 읽습니다.
+    """
     try:
         d = date.fromisoformat(run_date)
     except ValueError:
         d = date.today()
-    return prev_month(f"{d.year}{d.month:02d}")
+    candidate = prev_month(f"{d.year}{d.month:02d}")
+    for _ in range(12):
+        if _month_end(candidate) + timedelta(days=30) <= d:
+            return candidate
+        candidate = prev_month(candidate)
+    return candidate
 
 
 def month_label(ym: str) -> str:

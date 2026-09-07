@@ -713,7 +713,7 @@ def test_stats_collect_compares_with_previous_month(cfg, monkeypatch, tmp_path):
 
     def fake_get(url, params=None, **kw):
         calls.append((params["LAWD_CD"], params["DEAL_YMD"]))
-        return Resp(_OLD_XML if params["DEAL_YMD"] == "202608" else _NEW_XML)
+        return Resp(_OLD_XML if params["DEAL_YMD"] == "202607" else _NEW_XML)
 
     monkeypatch.setattr(S, "_get", fake_get)
     monkeypatch.setitem(cfg.settings, "stats", {
@@ -721,14 +721,15 @@ def test_stats_collect_compares_with_previous_month(cfg, monkeypatch, tmp_path):
         "districts": [{"name": "강남구", "code": "11680"}, {"name": "송파구", "code": "11710"}]})
 
     data = S.collect(cfg, "2026-09-07")
-    assert data["month"] == "202608" and data["before"] == "202607"   # 신고 기한 때문에 지난달
-    assert ("11680", "202608") in calls and ("11680", "202607") in calls
+    # 9월 7일에는 8월 신고가 아직 차는 중이라 7월이 마지막 완성 달이다
+    assert data["month"] == "202607" and data["before"] == "202606"
+    assert ("11680", "202607") in calls and ("11680", "202606") in calls
     assert data["total"] == 4 and data["districts"][0]["change"] == 1
 
     path = Renderer(cfg, tmp_path, "2026-09-07").stats(data)
     body = path.read_text(encoding="utf-8")
     assert "| 강남구 | 2건 | +1 | 23.8억 |" in body.replace("  ", " ") or "23.8억" in body
-    assert "은마" in body and "실거래가로 본 2026년 8월" in body
+    assert "은마" in body and "실거래가로 본 2026년 7월" in body
 
     monkeypatch.delenv("DATA_GO_KR_KEY")
     assert S.collect(cfg, "2026-09-07") == {}          # 키가 없으면 아무것도 하지 않는다
@@ -781,3 +782,21 @@ def test_data_portal_key_accepts_both_forms(monkeypatch):
     assert deal_key() == "abc+def/ghi=="
     monkeypatch.setenv("DATA_GO_KR_KEY", "abc%2Bdef%2Fghi%3D%3D")
     assert deal_key() == "abc+def/ghi=="        # 두 번 인코딩되면 '등록되지 않은 키' 가 된다
+
+
+def test_stats_skips_cancelled_deals_and_incomplete_months():
+    from rebrief.stats import month_of, parse_trades
+
+    xml = """<response><body><items>
+    <item><aptNm>정상</aptNm><dealAmount>100,000</dealAmount><excluUseAr>84.0</excluUseAr>
+     <dealYear>2026</dealYear><dealMonth>7</dealMonth><dealDay>1</dealDay><cdealType></cdealType></item>
+    <item><aptNm>해제된거래</aptNm><dealAmount>900,000</dealAmount><excluUseAr>84.0</excluUseAr>
+     <dealYear>2026</dealYear><dealMonth>7</dealMonth><dealDay>2</dealDay><cdealType>O</cdealType></item>
+    </items></body></response>"""
+    rows = parse_trades(xml)
+    assert [r["name"] for r in rows] == ["정상"]     # 취소된 계약은 거래로 세지 않는다
+
+    # 신고 기한(계약 후 30일)이 지난 달만 본다
+    assert month_of("2026-09-07") == "202607"       # 8월은 아직 차는 중
+    assert month_of("2026-10-01") == "202608"       # 8월 신고 기한이 지났다
+    assert month_of("2026-01-05") == "202511"       # 해를 넘어가도 맞아야 한다
