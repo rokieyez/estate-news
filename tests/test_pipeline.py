@@ -240,10 +240,13 @@ def make_post() -> BlogPost:
         title="서울 아파트값 3주 연속 하락, 9월 6일 부동산 브리핑",
         slug="seoul-apt-price-2026-09-06",
         meta_description="서울 아파트 매매가격이 3주 연속 하락했습니다. 낙폭 축소의 의미를 정리했습니다.",
+        focus_keyword="서울 아파트값",
+        summary_lines=["서울 아파트값이 3주 연속 내렸습니다.", "낙폭은 -0.03%로 줄었습니다.", "관망세가 이어집니다."],
+        closing_question="여러분 동네 시세는 어떤가요?",
         tags=["부동산", "서울아파트", "집값", " 전세사기 ", "#청약", "부동산"],
         body_markdown=(
             "서울 아파트값이 3주 연속 내렸습니다.\n\n"
-            "## 이번 주 숫자\n\n"
+            "## 서울 아파트값 이번 주 숫자\n\n"
             "낙폭은 오히려 줄었습니다.\n\n"
             "| 항목 | 값 |\n| --- | --- |\n| 변동률 | -0.03% |\n\n"
             "[이미지: 한국부동산원 주간 통계 화면 캡처]\n\n"
@@ -327,7 +330,7 @@ def test_naver_html_converts_markdown_semantically():
 
     html = to_naver_html(make_post().body_markdown)
 
-    assert "<h2>이번 주 숫자</h2>" in html
+    assert "<h2>서울 아파트값 이번 주 숫자</h2>" in html
     assert "<table>" in html and "<th>항목</th>" in html
     assert "<ul>" in html and "<li>하락폭 축소</li>" in html
     # 마크다운 기호가 그대로 남으면 네이버 본문에 텍스트로 보인다

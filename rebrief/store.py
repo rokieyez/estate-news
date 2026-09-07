@@ -362,6 +362,30 @@ class PublishLog:
         self.path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
+def previous_blog_bodies(output_dir: Path, run_date: str, days: int = 3) -> list[tuple[str, str]]:
+    """최근 며칠치 blog.md 본문. 머리말과 '참고한 기사' 목록은 뺀다."""
+    try:
+        today = date.fromisoformat(run_date)
+    except ValueError:
+        return []
+    out: list[tuple[str, str]] = []
+    for i in range(1, days + 1):
+        day = (today - timedelta(days=i)).isoformat()
+        path = output_dir / day / "blog.md"
+        if not path.exists():
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if text.startswith("---"):
+            parts = text.split("---", 2)
+            text = parts[2] if len(parts) > 2 else text
+        text = text.split("### 참고한 기사")[0]
+        out.append((day, text))
+    return out
+
+
 # ── 연속 실패 ────────────────────────────────────────────────
 
 

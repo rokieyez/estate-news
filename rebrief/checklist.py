@@ -76,9 +76,54 @@ def long_captions(pack, max_chars: int = 16, max_lines: int = 2) -> list[str]:
     return out
 
 
+def keyword_placement(post, head_chars: int = 120, title_head: int = 15) -> tuple[str, list[str]]:
+    """대표 검색어가 제목·첫 문단·소제목에 들어갔는지. (검색어, 빠진 자리 목록)"""
+    from .render import outline_from_markdown
+
+    keyword = " ".join((getattr(post, "focus_keyword", "") or "").split())
+    if not keyword:
+        return "", []
+    title = " ".join((post.title or "").split())
+    body = " ".join((post.body_markdown or "").split())
+    missing: list[str] = []
+    if keyword not in title:
+        missing.append("제목")
+    elif title.find(keyword) > title_head:
+        missing.append("제목 앞쪽(지금은 뒤쪽)")
+    if keyword not in body[:head_chars]:
+        missing.append(f"첫 {head_chars}자")
+    if not any(keyword in h for h in outline_from_markdown(post.body_markdown)):
+        missing.append("소제목")
+    return keyword, missing
+
+
+def overlap_with_previous(body_markdown: str, prev_bodies, threshold: float = 0.8) -> tuple[float, list[str]]:
+    """어제·그제 글과 사실상 같은 문장의 비율. 매일 같은 문장을 쓰면 검색에서 중복으로 취급된다."""
+    from .cluster import similarity
+
+    mine = _sentences(body_markdown)
+    if not mine or not prev_bodies:
+        return 0.0, []
+    old = [s for _, text in prev_bodies for s in _sentences(text)]
+    if not old:
+        return 0.0, []
+    hits = [m for m in mine if any(similarity(m, o) >= threshold for o in old)]
+    return round(len(hits) / len(mine), 3), hits[:3]
+
+
+def _sentences(markdown_text: str, min_len: int = 15) -> list[str]:
+    out: list[str] = []
+    for block in _body_blocks(markdown_text):
+        for sentence in re.split(r"(?<=[.!?])\s+", block):
+            flat = " ".join(sentence.split())
+            if len(flat) >= min_len:
+                out.append(flat)
+    return out
+
+
 def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
           link_status=None, warnings=None, llm_used: bool = True,
-          empty_photo_slots: int = 0, repeats=None) -> list[Item]:
+          empty_photo_slots: int = 0, repeats=None, prev_bodies=None) -> list[Item]:
     items: list[Item] = []
     video = cfg.get("video", {}) or {}
     blog = cfg.get("blog", {}) or {}
@@ -141,6 +186,26 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
             items.append(Item("tags", WARN, f"태그 {tags}개 (설정 {want}개)"))
         else:
             items.append(Item("tags", OK, f"태그 {tags}개"))
+        # 4-0) 유입의 시작 — 대표 검색어가 제자리에 있는지
+        keyword, missing = keyword_placement(post)
+        if not keyword:
+            items.append(Item("keyword", WARN, "대표 검색어가 비어 있습니다",
+                              "이 글로 누가 검색해 들어올지 정하지 않은 상태입니다. 제목과 첫 문단에 넣을 말을 하나 정하세요."))
+        elif missing:
+            items.append(Item("keyword", WARN, f"대표 검색어 '{keyword}' 가 {' · '.join(missing)} 에 없습니다",
+                              "그 자리에 같은 표기로 넣어야 검색에 걸립니다. 변형이 아니라 글자 그대로."))
+        else:
+            items.append(Item("keyword", OK, f"대표 검색어 '{keyword}' 가 제목·첫 문단·소제목에 모두 있음"))
+
+        # 4-0-2) 지난 글과 겹치는 문장 — 유사문서로 몰리지 않게
+        ratio, samples = overlap_with_previous(post.body_markdown, prev_bodies or [])
+        limit = float(blog.get("max_overlap_ratio", 0.15))
+        if prev_bodies and ratio >= limit:
+            items.append(Item("overlap", WARN, f"지난 글과 거의 같은 문장이 {ratio * 100:.0f}%",
+                              "매일 같은 문장을 쓰면 검색에서 중복 문서로 취급될 수 있습니다. 표현을 바꾸세요.", samples))
+        elif prev_bodies:
+            items.append(Item("overlap", OK, f"지난 글과 겹치는 문장 {ratio * 100:.0f}%"))
+
         # 4-1) 읽기 쉬움 — 긴 문장·긴 문단
         long_s = long_sentences(post.body_markdown, int(blog.get("max_sentence_chars", 90)))
         long_p = long_paragraphs(post.body_markdown, int(blog.get("max_paragraph_chars", 320)))

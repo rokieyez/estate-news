@@ -176,3 +176,78 @@ def test_upcoming_page_and_published_badge(cfg, tmp_path):
     assert upcoming.count("국토부 발표 확인") == 1
     index = (dest / "index.html").read_text(encoding="utf-8")
     assert "이번 주 볼 것" in index and "발행함" in index and "blog.naver.com/x/1" in index
+
+
+# ── 유입 (9/7 오후): 대표 검색어 · 요약·목차 · 지난 글 · 겹침 ──
+
+
+def test_keyword_placement_reports_missing_spots():
+    from rebrief.checklist import keyword_placement
+    from rebrief.models import BlogPost
+
+    def post(title, body, kw="종부세 대상 자치구"):
+        return BlogPost(title=title, slug="s", meta_description="d", tags=["t"],
+                        focus_keyword=kw, body_markdown=body)
+
+    good = post("종부세 대상 자치구 총정리, 9월 7일 브리핑",
+                "종부세 대상 자치구가 어디인지부터 봅니다.\n\n## 종부세 대상 자치구는 어디인가\n\n본문")
+    assert keyword_placement(good) == ("종부세 대상 자치구", [])
+
+    _, missing = keyword_placement(post("오늘의 부동산 브리핑", "집값 이야기입니다.\n\n## 정리\n\n본문"))
+    assert missing == ["제목", "첫 120자", "소제목"]
+
+    _, late = keyword_placement(post("9월 7일 부동산 브리핑에서 살펴본 종부세 대상 자치구",
+                                     "종부세 대상 자치구 이야기\n\n## 종부세 대상 자치구\n\n본문"))
+    assert late == ["제목 앞쪽(지금은 뒤쪽)"]
+
+    assert keyword_placement(post("제목", "본문", kw="")) == ("", [])
+
+
+def test_overlap_with_previous_counts_repeated_sentences():
+    from rebrief.checklist import overlap_with_previous
+
+    yesterday = "서울 아파트값이 3주 연속 내렸습니다. 낙폭은 오히려 줄었습니다."
+    today = "서울 아파트값이 3주 연속 내렸습니다. 오늘은 종부세 대상 자치구가 늘어난다는 분석이 나왔습니다."
+    ratio, samples = overlap_with_previous(today, [("2026-09-06", yesterday)])
+    assert ratio == 0.5 and samples[0].startswith("서울 아파트값이")
+    assert overlap_with_previous(today, [])[0] == 0.0
+
+
+def test_naver_html_has_summary_outline_question_and_related():
+    from rebrief.render import outline_from_markdown, to_naver_html
+
+    body = "첫 문단입니다.\n\n## 첫 소제목\n\n내용\n\n## 둘째 소제목\n\n내용\n\n## 셋째 소제목\n\n내용"
+    assert outline_from_markdown(body) == ["첫 소제목", "둘째 소제목", "셋째 소제목"]
+    html = to_naver_html(body, summary_lines=["요약 하나", "요약 둘", "요약 셋"],
+                         closing_question="여러분은 어떠신가요?",
+                         related=[{"date": "2026-09-06", "title": "어제 글", "url": "https://blog.naver.com/x/1"}])
+    assert html.index("3줄 요약") < html.index("이 글의 순서") < html.index("첫 문단입니다")
+    assert "여러분은 어떠신가요?" in html and html.index("첫 문단입니다") < html.index("함께 보면 좋은 지난 글")
+    assert '<a href="https://blog.naver.com/x/1">어제 글</a>' in html
+    assert "nocopy" not in html          # 지난 글 링크는 복사에 포함돼야 한다
+    assert "이 글의 순서" not in to_naver_html("## 하나\n\n글", summary_lines=[])   # 소제목 3개 미만이면 목차 없음
+
+
+def test_related_posts_prefers_same_topic_and_skips_unpublished(cfg):
+    from rebrief.models import DailyBrief
+    from rebrief.related import related_posts
+    from rebrief.store import PublishLog
+
+    for day, headline, issue in [("2026-09-04", "청약 경쟁률 상승", "청약 경쟁률"),
+                                 ("2026-09-05", "종부세 확대 전망", "종부세 대상 자치구"),
+                                 ("2026-09-06", "전월세 시장 정리", "전월세 매물")]:
+        d = cfg.output_dir / day
+        d.mkdir(parents=True)
+        (d / "data.json").write_text(json.dumps({"headline": headline, "issues": [{"title": issue}]},
+                                                ensure_ascii=False), encoding="utf-8")
+    log_ = PublishLog(cfg.state_dir / "published.json")
+    log_.record("2026-09-04", url="https://blog.naver.com/x/4")
+    log_.record("2026-09-05", url="https://blog.naver.com/x/5")
+    log_.record("2026-09-06")                       # 주소를 안 적은 날은 링크할 수 없다
+    log_.save()
+
+    brief = _brief([_issue("종부세 대상 자치구 확대", [])])
+    got = related_posts(cfg, "2026-09-07", brief, limit=2)
+    assert [r["date"] for r in got] == ["2026-09-05", "2026-09-04"]     # 주제가 가까운 날이 먼저
+    assert all(r["url"].startswith("https://") for r in got)
+    assert isinstance(brief, DailyBrief)

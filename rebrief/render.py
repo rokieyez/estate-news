@@ -82,12 +82,14 @@ class Renderer:
 
     def blog(self, post: BlogPost, clusters: list[Cluster],
              slot_files: dict[int, str] | None = None,
-             key_numbers: list | None = None) -> Path:
+             key_numbers: list | None = None, related: list[dict] | None = None) -> Path:
         blog_cfg = self.cfg.get("blog", {}) or {}
         return self._write(
             "blog.md",
             "blog.md.j2",
             post=post,
+            lead_block=lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown)),
+            tail_block=tail_block_markdown(post.closing_question, related),
             key_card=kn.card_markdown(key_numbers or []),
             body_markdown=place_images_markdown(post.body_markdown, slot_files or {}),
             clusters=clusters,
@@ -98,7 +100,8 @@ class Renderer:
         )
 
     def blog_naver(self, post: BlogPost, slot_files: dict[int, str] | None = None,
-                   filename: str = "blog-naver.html", key_numbers: list | None = None) -> Path:
+                   filename: str = "blog-naver.html", key_numbers: list | None = None,
+                   related: list[dict] | None = None) -> Path:
         """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
         blog_cfg = self.cfg.get("blog", {}) or {}
         photo_links = {
@@ -116,6 +119,9 @@ class Renderer:
                 post.body_markdown, slot_files or {}, photo_links,
                 highlight_min=int(blog_cfg.get("highlight_repeats", 3) or 0),
                 key_numbers=key_numbers,
+                summary_lines=post.summary_lines,
+                closing_question=post.closing_question,
+                related=related,
             ),
             hashtags=format_hashtags(post.tags),
             write_url=(blog_cfg.get("naver", {}) or {}).get(
@@ -298,6 +304,7 @@ class Renderer:
             warnings=result.warnings, llm_used=result.llm_used,
             empty_photo_slots=int(artifacts.get("empty_photo_slots", 0) or 0),
             repeats=artifacts.get("repeats") or [],
+            prev_bodies=artifacts.get("prev_bodies") or [],
         )
         if artifacts.get("autofixed"):
             items.insert(0, cl.Item("autofix", cl.WARN, f"금지 표현 문장 {len(artifacts['autofixed'])}개를 자동으로 고쳐 씀",
@@ -333,7 +340,9 @@ _IMAGE_SLOT_INLINE = re.compile(r"\[이미지\s*:\s*(.*?)\]", re.DOTALL)
 
 def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
                   photo_links: dict[int, list[tuple[str, str]]] | None = None,
-                  highlight_min: int = 3, key_numbers: list | None = None) -> str:
+                  highlight_min: int = 3, key_numbers: list | None = None,
+                  summary_lines: list[str] | None = None, closing_question: str = "",
+                  related: list[dict] | None = None, outline: bool = True) -> str:
     """마크다운 본문을 네이버 에디터가 이해하는 HTML 로 바꾼다.
 
     스마트에디터는 마크다운을 모른다. 대신 클립보드에 서식 있는 HTML 이 들어오면
@@ -374,7 +383,8 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
     html = highlight_repeated_numbers(html, highlight_min, {n.key for n in (key_numbers or [])})
     html = _IMAGE_SLOT.sub(slot, html)
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
-    return kn.card_html(key_numbers or []) + html
+    head = lead_block_html(summary_lines, outline_from_markdown(body_markdown) if outline else [])
+    return head + kn.card_html(key_numbers or []) + html + tail_block_html(closing_question, related)
 
 
 _HL_STYLE = "background-color:#fff59d"
@@ -450,6 +460,83 @@ def _to_local(moment: datetime, tz: str = "Asia/Seoul") -> datetime:
         return moment.astimezone(ZoneInfo(tz))
     except Exception:
         return moment
+
+
+_H2 = re.compile(r"^##\s+(.+?)\s*$", re.MULTILINE)
+
+
+def outline_from_markdown(body_markdown: str) -> list[str]:
+    """본문의 ## 소제목 목록. 글 맨 앞 목차로 쓴다 (네이버는 앵커 링크가 살지 않으므로 글자만)."""
+    return [" ".join(m.group(1).split()) for m in _H2.finditer(body_markdown or "") if m.group(1).strip()]
+
+
+def _esc(text: str) -> str:
+    from html import escape
+
+    return escape(" ".join((text or "").split()))
+
+
+def lead_block_html(summary_lines: list[str] | None, outline: list[str] | None) -> str:
+    """글 맨 앞 요약 3줄과 목차. 검색으로 들어온 사람이 스크롤 없이 판단하게 한다."""
+    parts = []
+    if summary_lines:
+        rows = "".join(f'<li style="margin-bottom:6px">{_esc(line)}</li>' for line in summary_lines[:3])
+        parts.append(
+            '<div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px">'
+            '<b style="font-size:15px">3줄 요약</b>'
+            f'<ul style="margin:8px 0 0;padding-left:18px">{rows}</ul></div>'
+        )
+    if outline and len(outline) >= 3:
+        # 요약 상자 바로 아래에 오므로 눈에 덜 무겁게 — 글씨를 한 단계 줄이고 줄 간격을 좁힌다
+        rows = "".join(f'<li style="margin-bottom:2px">{_esc(t)}</li>' for t in outline)
+        parts.append(
+            '<div style="background-color:#f7f8fa;padding:12px 16px;margin:0 0 22px;font-size:14px">'
+            '<b>이 글의 순서</b>'
+            f'<ol style="margin:6px 0 0;padding-left:20px;line-height:1.6">{rows}</ol></div>'
+        )
+    return "".join(parts)
+
+
+def tail_block_html(closing_question: str = "", related: list[dict] | None = None) -> str:
+    """마무리 질문과 지난 글 링크. 댓글과 다음 글 클릭을 노린다."""
+    parts = []
+    if closing_question:
+        parts.append(
+            '<p style="background-color:#f7f8fa;padding:14px 16px;margin:28px 0 0">'
+            f'<b>{_esc(closing_question)}</b><br>'
+            '<span style="font-size:14px;color:#666666">댓글로 알려 주시면 다음 글에 반영하겠습니다.</span></p>'
+        )
+    if related:
+        rows = "".join(
+            f'<li style="margin-bottom:6px"><a href="{_esc(r["url"])}">{_esc(r["title"])}</a>'
+            f' <span style="color:#888888;font-size:13px">({r["date"]})</span></li>'
+            for r in related
+        )
+        parts.append(
+            '<div style="margin:24px 0 0;padding:14px 16px;background-color:#f7f8fa">'
+            '<b>함께 보면 좋은 지난 글</b>'
+            f'<ul style="margin:8px 0 0;padding-left:18px">{rows}</ul></div>'
+        )
+    return "".join(parts)
+
+
+def lead_block_markdown(summary_lines: list[str] | None, outline: list[str] | None) -> str:
+    parts = []
+    if summary_lines:
+        parts.append("**3줄 요약**\n\n" + "\n".join(f"- {' '.join(l.split())}" for l in summary_lines[:3]) + "\n")
+    if outline and len(outline) >= 3:
+        parts.append("**이 글의 순서**\n\n" + "\n".join(f"{i}. {t}" for i, t in enumerate(outline, start=1)) + "\n")
+    return "\n".join(parts)
+
+
+def tail_block_markdown(closing_question: str = "", related: list[dict] | None = None) -> str:
+    parts = []
+    if closing_question:
+        parts.append(f"**{' '.join(closing_question.split())}**\n")
+    if related:
+        parts.append("**함께 보면 좋은 지난 글**\n\n"
+                     + "\n".join(f"- [{r['title']}]({r['url']}) ({r['date']})" for r in related) + "\n")
+    return "\n".join(parts)
 
 
 def photo_search_links(query: str) -> list[tuple[str, str]]:

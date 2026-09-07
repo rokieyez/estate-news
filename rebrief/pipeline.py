@@ -18,7 +18,9 @@ from .prompts import build_prompt_pack
 from .rank import score_clusters, select_issues
 from .render import RenderStats, Renderer, explain_issues, update_index
 from .linkcheck import check_links
-from .store import CostLog, SeenStore, SeriesStore, load_raw, recent_topics, save_raw
+from .related import related_posts
+from .store import (CostLog, SeenStore, SeriesStore, load_raw, previous_blog_bodies,
+                    recent_topics, save_raw)
 
 log = logging.getLogger(__name__)
 
@@ -248,11 +250,16 @@ def _generate_with_llm(
     if post is not None:
         # 오늘의 핵심 수치: 브리핑 datapoint 가운데 글에 실제로 쓰인 것. 블로그 카드·강조·썸네일 배지가 함께 쓴다.
         keys = keynumbers.pick(brief, post.body_markdown, int(cfg.get("blog.key_numbers", 3) or 0))
-        made.update(post=post, key_numbers=keys, empty_photo_slots=sum(
-            1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
-        renderer.blog(post, issues, slot_files, key_numbers=keys)
+        # 지난 발행 글 가운데 주제가 가까운 것 — 글 끝에 붙여 한 편 더 보게 한다
+        related = related_posts(cfg, date_str, brief, limit=int(cfg.get("blog.related_posts", 3) or 0))
+        made.update(post=post, key_numbers=keys, related=related,
+                    prev_bodies=previous_blog_bodies(cfg.output_dir, date_str,
+                                                     days=int(cfg.get("blog.overlap_lookback_days", 3))),
+                    empty_photo_slots=sum(
+                        1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
+        renderer.blog(post, issues, slot_files, key_numbers=keys, related=related)
         if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-            renderer.blog_naver(post, slot_files, key_numbers=keys)
+            renderer.blog_naver(post, slot_files, key_numbers=keys, related=related)
         _record_titles(cfg, date_str, blog=[post.title])
 
     try:
@@ -477,9 +484,10 @@ def _autofix_banned(cfg: Config, renderer: Renderer, made: dict, issues: list[Cl
         if ch:
             fixed += [f"블로그: {a} → {b}" for a, b in ch]
             keys = made.get("key_numbers") or []
-            renderer.blog(post, issues, slot_files, key_numbers=keys)
+            related = made.get("related") or []
+            renderer.blog(post, issues, slot_files, key_numbers=keys, related=related)
             if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-                renderer.blog_naver(post, slot_files, key_numbers=keys)
+                renderer.blog_naver(post, slot_files, key_numbers=keys, related=related)
     if pack is not None:
         changed = False
         for line in pack.shorts.lines:

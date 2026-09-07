@@ -151,6 +151,21 @@ class BlogPost(BaseModel):
     title: str = Field(description="블로그 제목. 검색 유입을 고려하되 낚시성 금지")
     slug: str = Field(description="영문 소문자 하이픈 슬러그")
     meta_description: str = Field(description="검색결과 설명문. 80~120자")
+    focus_keyword: str = Field(
+        default="",
+        description=(
+            "이 글로 검색 유입을 노릴 대표 검색어 하나. 사람이 실제로 검색창에 칠 말로. "
+            "2~4어절, 예: '종부세 대상 자치구'. 제목 앞쪽·첫 문단·소제목 한 곳 이상에 그대로 들어가야 한다"
+        ),
+    )
+    summary_lines: list[str] = Field(
+        default_factory=list,
+        description="본문 맨 앞에 얹을 요약 3줄. 각 45자 내외. 검색으로 들어온 사람이 이것만 읽고도 알게",
+    )
+    closing_question: str = Field(
+        default="",
+        description="글 끝에 붙일 질문 한 문장. 댓글을 유도하되 구걸하지 않는 자연스러운 물음",
+    )
     tags: list[str] = Field(description="태그 목록. 개수는 지시에 따름")
     body_markdown: str = Field(description="마크다운 본문. H2/H3 소제목, 표, 불릿 활용")
     image_slots: list[ImageSlot] = Field(

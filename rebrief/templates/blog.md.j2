@@ -8,9 +8,14 @@ tags: [{% for t in post.tags %}"{{ t }}"{% if not loop.last %}, {% endif %}{% en
 description: "{{ post.meta_description }}"
 ---
 {% endif %}
+{% if lead_block %}
+{{ lead_block }}{% endif %}
 {% if key_card %}
 {{ key_card }}{% endif %}
 {{ body_markdown }}
+{% if tail_block %}
+
+{{ tail_block }}{% endif %}
 
 ---
 
