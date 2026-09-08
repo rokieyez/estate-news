@@ -158,6 +158,25 @@ def test_인증_오류는_강등하지_않는다(cfg, monkeypatch):
     assert calls == ["claude-opus-5"]
 
 
+def test_잔액이_없으면_한국말로_말하고_강등하지_않는다(cfg, monkeypatch):
+    """2026-09-09 아침 실제 상황. 잔액 부족은 400 으로 오고, 대체 모델도 같은 계정이라 소용없다."""
+    from rebrief.llm import LLMError
+    from rebrief.models import BlogPost
+    calls = []
+
+    def behaviour(model):
+        calls.append(model)
+        raise anthropic.BadRequestError(
+            "Error code: 400 - {'type': 'error', 'error': {'type': 'invalid_request_error', "
+            "'message': 'Your credit balance is too low to access the Anthropic API.'}}",
+            response=_FakeHTTP(400), body=None)
+
+    gen, anthropic = _generator(cfg, monkeypatch, lambda m: behaviour(m))
+    with pytest.raises(LLMError, match="잔액이 없습니다"):
+        gen._parse(system="s", user="u", output_format=BlogPost)
+    assert calls == ["claude-opus-5"]          # 대체 모델을 부르지 않는다
+
+
 def test_대체_모델도_실패하면_둘_다_적는다(cfg, monkeypatch):
     from rebrief.llm import LLMError
     from rebrief.models import BlogPost

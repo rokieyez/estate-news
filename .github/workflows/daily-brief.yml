@@ -53,6 +53,13 @@ jobs:
           # 손으로 날짜를 지정한 실행만 방어막을 건너뜁니다 (일부러 다시 만드는 경우).
           # 예약이든 밖에서 깨운 것이든, 오늘 것이 이미 있으면 다시 만들지 않습니다 —
           # 깃허브 예약과 외부 예약이 겹치는 날 하루에 두 번 돌고 돈도 두 번 나갑니다.
+          #
+          # **체크아웃된 것이 아니라 지금 가지 끝을 봅니다.** checkout 은 실행이 *만들어진*
+          # 순간의 커밋을 받습니다. 2026-09-09 에 07:25 안전망이 줄을 서서 기다리는 동안
+          # 첫 실행이 결과를 밀어 넣었는데, 안전망은 그 전 커밋을 받아 "오늘 것이 없다" 고
+          # 보고 한 번 더 만들었습니다 — 돈이 두 번 나가고, 커밋은 충돌해 실패했습니다.
+          git fetch --quiet --depth=1 origin "$GITHUB_REF_NAME"
+          git reset --quiet --hard FETCH_HEAD
           if [ -z "${{ inputs.date }}" ] && [ -f "output/$DATE/data.json" ]; then
             echo "오늘($DATE) 요약이 이미 있습니다 — 여기서 끝냅니다 (다시 만들려면 date 를 지정하세요)."
             echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -154,6 +161,8 @@ jobs:
           # 같은 시각에 다른 커밋이 들어왔을 수 있으므로 rebase 후 재시도
           for i in 1 2 3; do
             git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
+            # 충돌로 멈춘 rebase 를 치우지 않으면 다음 시도가 "unmerged files" 로 바로 죽습니다.
+            git rebase --abort 2>/dev/null || true
             sleep $((i * 5))
           done
           echo "푸시에 실패했습니다." >&2

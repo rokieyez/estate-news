@@ -301,6 +301,11 @@ class ContentGenerator:
         except anthropic.RateLimitError as exc:
             raise _Retryable("API 사용량 한도에 걸렸습니다. 잠시 후 다시 실행하세요.") from exc
         except anthropic.BadRequestError as exc:
+            # 잔액이 바닥나도 400 으로 옵니다. 영어 원문 그대로 알림에 실리면 무슨 일인지
+            # 한눈에 안 들어옵니다 (2026-09-09 아침). 대체 모델도 같은 계정이라 소용없습니다.
+            if "credit balance" in str(exc):
+                raise LLMError("API 잔액이 없습니다 — console.anthropic.com 의 Plans & Billing "
+                               "에서 충전해야 합니다. 충전 전에는 요약·글·대본이 모두 안 나옵니다.") from exc
             raise LLMError(f"요청이 거부됐습니다: {exc}") from exc
         except anthropic.APIConnectionError as exc:
             raise _Retryable(f"API 서버에 연결하지 못했습니다: {exc}") from exc
