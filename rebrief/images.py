@@ -1295,6 +1295,51 @@ def _art_band(path: Path) -> dict | None:
     return {"height": CARD_BAND, "data": blob, "mime": mime, "credit": ""}
 
 
+_LOGO_PATH = _FONT_DIR.parent / "logo.png"      # assets/logo.png (SVG 도 됩니다)
+_logo_cache: dict[str, str] = {}
+
+
+def _logo_tag(x: float, top: float, height: float, *, white: bool) -> tuple[str, float]:
+    """머리글 왼쪽에 얹을 로고. (SVG 조각, 차지한 너비) 를 돌려준다.
+
+    **어두운 낯에서는 통째로 흰색으로 만듭니다** (2026-09-08, 사용자 지시). 로고의 파랑이
+    청사진 남색과 붙어 있어 그냥 얹으면 보이지 않습니다. `brightness(0) invert(1)` 은
+    투명하지 않은 픽셀을 모두 흰색으로 바꿉니다 — 그래서 **바탕이 투명한 파일이어야
+    합니다.** 흰 바탕 파일을 넣으면 흰 네모가 됩니다.
+
+    파일이 없으면 빈 조각을 돌려주고 글자만 나갑니다. 로고 하나 때문에 카드가 죽으면 안 됩니다.
+    """
+    path = _LOGO_PATH
+    key = str(path)
+    if key not in _logo_cache:
+        import base64
+
+        try:
+            blob = base64.b64encode(path.read_bytes()).decode("ascii")
+            if path.suffix.lower() == ".svg":
+                head = path.read_text(encoding="utf-8", errors="ignore")[:600]
+                box = re.search(r'viewBox="[\d.\s]*?([\d.]+)[\s,]+([\d.]+)"', head)
+                ratio = (float(box.group(1)) / float(box.group(2))) if box else 1.0
+                mime = "image/svg+xml"
+            else:
+                w, h = _png_size(path)
+                ratio, mime = (w / h if h else 1.0), "image/png"
+            _logo_cache[key] = f"{ratio:.4f}|{mime}|{blob}"
+        except (OSError, ValueError):
+            log.debug("%s 가 없어 로고 없이 그립니다", path)
+            _logo_cache[key] = ""
+    packed = _logo_cache[key]
+    if not packed:
+        return "", 0.0
+    ratio, mime, blob = packed.split("|", 2)
+    width = height * float(ratio)
+    style = ' style="filter:brightness(0) invert(1)"' if white else ""
+    tag = (f'<image x="{x:.0f}" y="{top:.0f}" width="{width:.0f}" height="{height:.0f}" '
+           f'preserveAspectRatio="xMidYMid meet"{style} '
+           f'xlink:href="data:{mime};base64,{blob}"/>')
+    return tag, width
+
+
 def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str = "",
                 art: dict | None = None,
                 banner: tuple[str, str] | None = None) -> tuple[list[str], float, float]:
@@ -1373,15 +1418,19 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         if date:
             meta.append(esc(date.replace("-", ".")))
         if meta:
-            p.append(f'<text x="96" y="{h-80}" font-size="25" fill="{dim}">'
-                     f'{" · ".join(meta)}</text>')
+            mark, used = _logo_tag(96, h - 118, 42, white=ground != CARD_PAPER[0])
+            p.append(mark)
+            p.append(f'<text x="{96 + (used + 14 if used else 0):.0f}" y="{h-80}" font-size="25" '
+                     f'fill="{dim}">{" · ".join(meta)}</text>')
     else:
         top, bottom = 172, h - 152
         p.append(f'<rect x="58" y="58" width="{w-116}" height="{h-116}" fill="none" '
                  f'stroke="{signal}" stroke-width="1.4" opacity="0.45"/>')
         if channel:
-            p.append(f'<text x="96" y="102" font-size="28" font-weight="700" letter-spacing="1" '
-                     f'fill="{ink}">{esc(channel)}</text>')
+            mark, used = _logo_tag(96, 66, 44, white=True)
+            p.append(mark)
+            p.append(f'<text x="{96 + (used + 14 if used else 0):.0f}" y="102" font-size="28" '
+                     f'font-weight="700" letter-spacing="1" fill="{ink}">{esc(channel)}</text>')
         if date:
             p.append(f'<text x="{w-96}" y="102" font-size="26" font-family="{MONO}" '
                      f'letter-spacing="1" text-anchor="end" fill="{dim}">'

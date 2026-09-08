@@ -2255,6 +2255,34 @@ def test_cards_drop_an_issue_that_repeats_an_earlier_one(cfg):
     assert len(images._drop_repeats(_brief_for_cards(10)["issues"])) == 10
 
 
+def test_logo_sits_left_of_the_channel_name(cfg, tmp_path, monkeypatch):
+    """머리글 왼쪽에 로고를 글자 크기에 맞춰 넣는다 (2026-09-08 사용자 지시).
+
+    어두운 낯에서는 통째로 흰색으로 만듭니다 — 로고의 파랑이 청사진 남색과 붙어 있어
+    그냥 얹으면 보이지 않습니다. **바탕이 투명한 파일이어야 합니다.**
+    파일이 없으면 로고 없이 글자만 나갑니다 — 로고 하나 때문에 카드가 죽으면 안 됩니다.
+    """
+    from rebrief import images
+
+    logo = tmp_path / "logo.png"
+    _fake_png(logo, 120, 100)
+    monkeypatch.setattr(images, "_LOGO_PATH", logo)
+    monkeypatch.setattr(images, "_logo_cache", {})
+
+    svg = images.cards(_brief_for_cards(), date="2026-09-08", channel="부돌보 브리핑")[-1].svg
+    assert "부돌보 브리핑" in svg
+    assert "filter:brightness(0) invert(1)" in svg      # 어두운 낯에서는 흰색으로
+    # 로고가 글자를 밀어냈다 (겹치지 않는다)
+    x = re.search(r'<text x="(\d+)"[^>]*>부돌보 브리핑</text>', svg)
+    assert x and int(x.group(1)) > 96
+
+    # 파일이 없으면 조용히 로고 없이 그린다
+    monkeypatch.setattr(images, "_LOGO_PATH", tmp_path / "없음.png")
+    monkeypatch.setattr(images, "_logo_cache", {})
+    svg = images.cards(_brief_for_cards(), date="2026-09-08", channel="부돌보 브리핑")[-1].svg
+    assert "부돌보 브리핑" in svg and "<image" not in svg
+
+
 def test_cover_puts_a_banner_over_the_photo(cfg, tmp_path):
     """표지는 사진 위에 '[날짜] 부동산 주요이슈' 대문을 얹는다 (2026-09-08 사용자 지시).
 

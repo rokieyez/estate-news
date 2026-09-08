@@ -51,7 +51,7 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
                       images: int = 0, stats: dict | None = None,
                       usd: float = 0.0, krw_per_usd: float = 1400,
                       quiet: bool = False) -> str:
-    lines = [f"📅 {date} 부동산 브리핑"]
+    lines = [f"📅 {date} 부돌보 브리핑"]
     if headline:
         lines.append(headline)
     lines.append(f"이슈 {issues}개 · 기사 {articles}건" + (f" · 그림 {images}장" if images else ""))
@@ -84,7 +84,7 @@ def stats_lines(stats: dict | None) -> list[str]:
 
 
 def build_failure_message(*, date: str, site_url: str = "", run_url: str = "", streak: int = 1) -> str:
-    lines = [f"❌ {date} 부동산 브리핑 실패"]
+    lines = [f"❌ {date} 부돌보 브리핑 실패"]
     if streak >= 2:
         lines.append(f"🚨 {streak}일 연속 실패입니다. 일시적 장애가 아닐 수 있어요 — API 키·한도, 피드 상태를 확인하세요.")
         lines.append("Actions 탭 → 피드 점검 워크플로를 한 번 돌려 보세요.")

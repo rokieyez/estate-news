@@ -86,7 +86,7 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
     index = env.get_template("site_index.html.j2").render(
         meta=meta_tags(
             site_base(cfg),
-            title=str((cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑")),
+            title=str((cfg.get("video", {}) or {}).get("channel_name", "부돌보 브리핑")),
             description=(today_entry.get("description")
                          or "매일 아침 부동산 뉴스를 정리해 블로그 글과 영상 대본으로 만듭니다."),
             image=(f"{today_entry['date']}/{today_entry['image']}"
@@ -103,14 +103,14 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
         has_search=any((d / "data.json").exists() for d in days),
         upcoming=upcoming,
         generated_at=datetime.now().strftime("%Y-%m-%d %H:%M"),
-        channel=(cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑"),
+        channel=(cfg.get("video", {}) or {}).get("channel_name", "부돌보 브리핑"),
     )
     (dest / "index.html").write_text(index, encoding="utf-8")
 
     _build_feed(cfg, built, dest)
     _build_sitemap(cfg, built, weeks + months, dest)
 
-    _write_pwa(dest, channel=(cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑"),
+    _write_pwa(dest, channel=(cfg.get("video", {}) or {}).get("channel_name", "부돌보 브리핑"),
                png=bool((cfg.get("images", {}) or {}).get("png", True)))
 
     # Jekyll 이 밑줄로 시작하는 폴더를 무시하는 걸 막는다.
@@ -729,7 +729,7 @@ def _build_feed(cfg: Config, built: list[dict], dest: Path, limit: int = 20) -> 
     base = site_base(cfg)
     if not base or not built:
         return
-    channel = (cfg.get("video", {}) or {}).get("channel_name", "부동산 브리핑")
+    channel = (cfg.get("video", {}) or {}).get("channel_name", "부돌보 브리핑")
     items = []
     for entry in built[:limit]:
         date_str = entry["date"]
@@ -738,7 +738,7 @@ def _build_feed(cfg: Config, built: list[dict], dest: Path, limit: int = 20) -> 
         href = next((h for h in ("brief.html", "blog.html") if h in hrefs),
                     hrefs[0] if hrefs else "brief.html")
         link = f"{base}{date_str}/{href}"
-        title = entry.get("headline") or f"{date_str} 부동산 브리핑"
+        title = entry.get("headline") or f"{date_str} 부돌보 브리핑"
         stamp = _rfc822(date_str)
         if not stamp:
             continue

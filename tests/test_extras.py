@@ -175,7 +175,7 @@ def test_알림_문구(monkeypatch):
         site_url="https://www.rokiz.net/estate-news/", warnings=["출처 링크 2개가 열리지 않습니다"],
         llm_used=True, images=3,
     )
-    assert text.splitlines()[0] == "📅 2026-09-06 부동산 브리핑"
+    assert text.splitlines()[0] == "📅 2026-09-06 부돌보 브리핑"
     assert "그림 3장" in text and "⚠️ 출처 링크" in text
     assert text.endswith("https://www.rokiz.net/estate-news/latest/")
 

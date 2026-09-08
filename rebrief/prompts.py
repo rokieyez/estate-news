@@ -64,7 +64,7 @@ def build_shared_context(cfg: Config, brief: DailyBrief) -> str:
     brief_json = json.dumps(payload, ensure_ascii=False, indent=2)
 
     return f"""당신은 부동산 콘텐츠를 만드는 프로듀서입니다.
-채널명은 "{video.get('channel_name', '부동산 브리핑')}" 입니다.
+채널명은 "{video.get('channel_name', '부돌보 브리핑')}" 입니다.
 
 시청자: {video.get('audience', '부동산에 관심 있는 일반 시청자')}
 톤앤매너: {video.get('tone', '차분하고 정확한 정보 전달')}
@@ -148,7 +148,7 @@ def _blog_user_naver(cfg: Config, blog: dict, regions: list[str] | None = None) 
 
 ■ 제목 (title)
 - 위에서 고른 focus_keyword 를 **앞쪽에** 배치합니다. 검색 노출에 유리합니다.
-- 25~35자. 날짜를 넣으면 좋습니다. 예: "서울 아파트값 3주 연속 하락, 9월 6일 부동산 브리핑"
+- 25~35자. 날짜를 넣으면 좋습니다. 예: "서울 아파트값 3주 연속 하락, 9월 6일 부돌보 브리핑"
 - 과장·낚시성 표현은 쓰지 않습니다.
 
 ■ 첫 문단 (본문 맨 앞)
@@ -383,7 +383,7 @@ def build_prompt_pack(cfg: Config, clusters: list[Cluster], run_date: str) -> st
 같은 대화에서 이어서 아래를 입력하세요.
 
 ```text
-채널명: {video.get('channel_name', '부동산 브리핑')}
+채널명: {video.get('channel_name', '부돌보 브리핑')}
 시청자: {video.get('audience', '')}
 톤앤매너: {video.get('tone', '')}
 
@@ -428,7 +428,7 @@ def build_weekly_messages(cfg: Config, days: list[dict], week_label: str) -> tup
 여러 날 반복된 이슈 (같은 사건이 날짜만 바뀌어 다시 나온 것입니다. 각각 세지 말고 흐름으로 묶으세요):
 {lines_}"""
     system = f"""당신은 부동산 콘텐츠를 만드는 프로듀서입니다.
-채널명은 "{video.get('channel_name', '부동산 브리핑')}" 입니다.
+채널명은 "{video.get('channel_name', '부돌보 브리핑')}" 입니다.
 
 시청자: {video.get('audience', '부동산에 관심 있는 일반 시청자')}
 톤앤매너: {video.get('tone', '차분하고 정확한 정보 전달')}
@@ -520,7 +520,7 @@ def build_monthly_messages(cfg: Config, days: list[dict], month_label_: str,
 두 달쯤 앞섭니다 — 어느 달 수치인지 반드시 밝혀 쓰세요."""
 
     system = f"""당신은 부동산 콘텐츠를 만드는 프로듀서입니다.
-채널명은 "{video.get('channel_name', '부동산 브리핑')}" 입니다.
+채널명은 "{video.get('channel_name', '부돌보 브리핑')}" 입니다.
 
 시청자: {video.get('audience', '부동산에 관심 있는 일반 시청자')}
 톤앤매너: {video.get('tone', '차분하고 정확한 정보 전달')}

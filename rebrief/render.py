@@ -271,7 +271,7 @@ class Renderer:
         made = images_mod.cards(
             payload,
             date=self.date,
-            channel=str(self.cfg.get("video.channel_name", "") or "부동산 브리핑"),
+            channel=str(self.cfg.get("video.channel_name", "") or "부돌보 브리핑"),
             key_numbers=[n.__dict__ if hasattr(n, "__dict__") else n for n in (key_numbers or [])],
             max_cards=int(cfg.get("cards_max", 7)),
             art=self._card_art(payload) if cfg.get("cards_art", True) else None,
