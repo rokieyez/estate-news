@@ -179,6 +179,16 @@ def test_upcoming_page_and_published_badge(cfg, tmp_path):
     index = (dest / "index.html").read_text(encoding="utf-8")
     assert "이번 주 볼 것" in index and "발행함" in index and "blog.naver.com/x/1" in index
 
+    # 이 장만 뿌리에 놓인다. 틀이 날짜 칸(site/<날짜>/)을 전제로 `../` 를 쓰던 탓에
+    # '← 목록' 이 부돌보 브리핑이 아니라 rokiz.net 최상위(「로키즈의 방」)로 나갔습니다.
+    # 404 가 아니라 조용히 다른 사이트로 나가서 눈에 띄지 않았습니다 (2026-09-08).
+    assert '"../' not in upcoming, "뿌리에 있는 장이 상위 경로를 가리킨다"
+    # 아이콘 PNG 는 크롬이 있을 때만 만들어지므로 시험에서는 빼고 본다.
+    for link in re.findall(r'(?:href|src)="([^"#?:]+)"', upcoming):
+        if link.startswith(("http", "//", "data:", "mailto:")) or link.endswith(".png"):
+            continue
+        assert (dest / link).exists(), f"끊긴 링크: {link}"
+
 
 # ── 유입 (9/7 오후): 대표 검색어 · 요약·목차 · 지난 글 · 겹침 ──
 

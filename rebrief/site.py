@@ -253,8 +253,11 @@ def _build_upcoming(env, days: list[Path], dest: Path, limit: int = 7,
         lines += ["## 브리핑에서 나온 확인거리", "",
                   "브리핑마다 나온 '내일 확인할 것' 을 모았습니다. 같은 말은 한 번만 실었습니다.", ""]
         lines += [f"- {r['text']}  \n  <small>{r['date']} 브리핑에서</small>" for r in rows]
+    # 이 장만 날짜 칸이 아니라 **뿌리에** 놓입니다. 틀은 날짜 칸(site/<날짜>/) 을 전제로
+    # `../` 를 쓰므로 그대로 두면 '← 목록' 이 부돌보 브리핑이 아니라 rokiz.net 최상위로
+    # 나갑니다. 404 도 아니어서 눈에 안 띕니다 (2026-09-08 에 찾음).
     html = env.get_template("site_page.html.j2").render(
-        title="이번 주 볼 것", date=days[0].name if days else "",
+        title="이번 주 볼 것", date=days[0].name if days else "", base="",
         body_html=md_to_html("\n".join(lines)),
     )
     (dest / "upcoming.html").write_text(html, encoding="utf-8")
@@ -562,11 +565,20 @@ def _copy_assets(day: Path, dest: Path) -> list[dict]:
     return found
 
 
+# 카드 파일 이름(card-<쪽>-<낯>.png)에서 낯을 사람 말로 옮긴다.
+_CARD_FACES = {"cover": "표지", "numbers": "오늘의 숫자", "issue": "이슈",
+               "watch": "내일 볼 것", "rest": "나머지 이슈"}
+_CARD_NAME = re.compile(r"^card-(\d+)-([a-z]+)$")
+
 _ASSET_LABELS = {
-    "card-1-cover": "카드뉴스 1 표지",
-    "card-": "카드뉴스",          # card-2-numbers, card-4-issue …
     "0-cover": "대표 이미지 (글 맨 위)",
     "district-map": "서울 자치구 도식",
+    # 실거래 통계 그림들. 없으면 파일명이 그대로 화면과 대체 텍스트에 나갔습니다.
+    "stats-map-jeonse": "서울 자치구별 전세가율 지도",
+    "stats-map": "서울 자치구별 아파트 매매 거래 지도",
+    "stats-index": "부동산원 지수 비교 그래프",
+    "stats-supply": "주택 인허가 추이 그래프",
+    "stats-volume": "자치구별 거래량 막대그래프",
     "index-comparison": "지수 비교",
     "stat-card": "수치 카드",
     "time-series": "추이 그래프",
@@ -578,7 +590,16 @@ _ASSET_LABELS = {
 
 
 def _asset_label(filename: str) -> str:
+    """그림 하나의 이름표. 화면에도 쓰고 **대체 텍스트(alt)** 로도 나간다.
+
+    카드는 전부 「카드뉴스」로만 읽히던 때가 있었습니다 — 화면 낭독기로 들으면 여섯 장이
+    똑같은 말이라 어느 장인지 알 수 없습니다 (2026-09-08 에 고침).
+    """
     stem = filename.rsplit(".", 1)[0]
+    card = _CARD_NAME.match(stem)
+    if card:
+        face = _CARD_FACES.get(card.group(2), card.group(2))
+        return f"카드뉴스 {int(card.group(1))} {face}"
     for key, label in _ASSET_LABELS.items():
         if key in stem:
             return label
