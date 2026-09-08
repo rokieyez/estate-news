@@ -1158,6 +1158,7 @@ CARD_PAPER = ("#dfeaf4", "#0a2f4f", "#3a6588", "#b9d0e3", "#0b6a8f")
 CARD_FACES = {"cover": CARD_DARK, "numbers": CARD_FLOOD, "issue": CARD_PAPER,
               "rest": CARD_DARK, "watch": CARD_DARK}
 
+CARD_LIGHT = "#ffffff"     # 소제목·사진 위 글씨. 어느 낯에서든 흰색이다.
 CARD_GRID = 60             # 제도 격자 한 칸
 # 한글은 프리텐다드, 숫자·기호는 IBM Plex Mono. 이 카드에만 쓰는 짝입니다
 # (블로그 인포그래픽은 그대로 FONT 를 씁니다 — 러너에 프리텐다드가 없어 그쪽까지
@@ -1295,7 +1296,8 @@ def _art_band(path: Path) -> dict | None:
 
 
 def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str = "",
-                art: dict | None = None) -> tuple[list[str], float, float]:
+                art: dict | None = None,
+                banner: tuple[str, str] | None = None) -> tuple[list[str], float, float]:
     """카드 한 장의 바탕. 조각들과 글이 들어갈 위·아래 경계를 함께 돌려준다.
 
     두 가지 꼴이 있습니다.
@@ -1322,6 +1324,21 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         p.append(f'<image x="0" y="0" width="{w}" height="{band:.0f}" clip-path="url(#band)" '
                  f'preserveAspectRatio="xMidYMid slice" '
                  f'xlink:href="data:{art["mime"]};base64,{art["data"]}"/>')
+        if banner:
+            # 표지의 대문. 사진을 눌러 어둡게 하고 그 위에 흰 글씨를 얹는다.
+            # 어둡게 하지 않으면 밝은 하늘이나 흰 건물 위에서 글씨가 사라진다.
+            p.append(f'<rect x="0" y="0" width="{w}" height="{band:.0f}" '
+                     f'fill="#000000" opacity="0.55"/>')
+            day, line = banner
+            p.append(f'<text x="{w/2:.0f}" y="{band/2-34:.0f}" font-size="40" '
+                     f'font-family="{MONO}" letter-spacing="6" text-anchor="middle" '
+                     f'fill="#ffffff" opacity="0.88">{esc(day)}</text>')
+            size = 92
+            while text_width(line, size) > w - 160 and size > 56:
+                size -= 4
+            p.append(f'<text x="{w/2:.0f}" y="{band/2+size*0.62:.0f}" font-size="{size:.0f}" '
+                     f'font-weight="800" letter-spacing="-1" text-anchor="middle" '
+                     f'fill="#ffffff">{esc(line)}</text>')
         p.append(f'<rect x="0" y="{band:.0f}" width="{w}" height="4" fill="{signal}"/>')
 
     # 제도 격자 — 글이 놓이는 판에만. 읽히려고가 아니라 이것이 재어서 그린 것임을 보이려고 있다.
@@ -1345,9 +1362,9 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         # 사진 출처 한 줄. **'본문과 무관' 을 빼지 마세요.** 은마아파트 기사 옆에 아무
         # 아파트 사진이 붙으면 읽는 사람은 그게 은마인 줄 압니다.
         if art.get("credit"):
-            p.append(f'<rect x="0" y="{band-46:.0f}" width="{w}" height="46" '
+            p.append(f'<rect x="0" y="{band-36:.0f}" width="{w}" height="36" '
                      f'fill="#000000" opacity="0.42"/>')
-            p.append(f'<text x="{w-96}" y="{band-16:.0f}" font-size="22" text-anchor="end" '
+            p.append(f'<text x="{w-96}" y="{band-12:.0f}" font-size="17" text-anchor="end" '
                      f'fill="#ffffff" opacity="0.9">{esc(art["credit"])}</text>')
         bottom = h - 100
         meta = []
@@ -1413,7 +1430,8 @@ def _sentence_fit(text: str, size: float, width: float, max_lines: int) -> tuple
     return lines[:max_lines], size
 
 
-def _numeral(p: list[str], text: str, x: float, y: float, size: float, fill: str) -> None:
+def _numeral(p: list[str], text: str, x: float, y: float, size: float, fill: str,
+             anchor: str = "start") -> None:
     """큰 수치 한 덩이.
 
     고정폭은 글자마다 너비가 같아 큰 크기에서 헐거워 보입니다. 자간을 음수로 조입니다.
@@ -1438,7 +1456,7 @@ def _numeral(p: list[str], text: str, x: float, y: float, size: float, fill: str
                     for dx, run in parts)
     p.append(f'<text x="{x:.0f}" y="{y:.0f}" font-family="{DISPLAY}" font-size="{size:.0f}" '
              f'font-weight="700" letter-spacing="{-size*0.05:.1f}" word-spacing="{-size*0.34:.1f}" '
-             f'fill="{fill}">{inner}</text>')
+             f'text-anchor="{anchor}" fill="{fill}">{inner}</text>')
 
 
 def _title_block(p: list[str], lines: list[str], size: float, x: float, y: float,
@@ -1458,31 +1476,27 @@ def _title_block(p: list[str], lines: list[str], size: float, x: float, y: float
 
 def _cover_card(headline: str, sub: str, badge: str, total: int, date: str, channel: str,
                 art: dict | None = None) -> Image:
-    """표지 — 제목 하나가 화면을 지배한다."""
+    """표지 — 사진 위에 대문, 아래 판에 그날의 제목.
+
+    **부제는 싣지 않습니다** (2026-09-08, 사용자 지시). 표지 부제가 3·4·5번 카드의 내용을
+    앞당겨 말해 버려 뒤 카드들이 되풀이처럼 읽혔습니다 (5번 카드와 낱말 39% 겹침).
+    `sub` 인자는 부르는 쪽 호환을 위해 남겨 두었지만 그리지 않습니다.
+    """
     w, h = CARD_SIZE
     ground, ink, dim, rule, signal = CARD_FACES["cover"]
-    p, top, bottom = _card_frame(CARD_FACES["cover"], 1, total, date=date, channel=channel, art=art)
+    banner = (date.replace("-", ".") if date else "", "부동산 주요이슈") if art else None
+    p, top, bottom = _card_frame(CARD_FACES["cover"], 1, total, date=date, channel=channel,
+                                 art=art, banner=banner)
     inner = w - 192
 
     lines, size = _fit(headline, 104 if not art else 80, inner, 4 if not art else 3,
                        floor=62 if not art else 50)
     line_h = size * 1.26
-    # 줄 수를 늘려 주지 않으면 글씨를 키워도 소용이 없습니다 — `_sentence_fit` 이 줄 안에
-    # 넣으려고 도로 줄여 버립니다. 두 줄로 묶어 두었더니 44 로 올려도 36 으로 되돌아왔습니다.
-    sub_lines, sub_size = _sentence_fit(sub, 44, inner - 40, 3)
-    sub_h = (44 + len(sub_lines) * sub_size * 1.55) if sub_lines else 0
     badge_h = 96 if badge else 0
-    y = top + max(0, (bottom - top - (line_h * len(lines) + sub_h + badge_h)) / 2)
+    y = top + max(0, (bottom - top - (line_h * len(lines) + badge_h)) / 2)
 
     p.append(f'<rect x="96" y="{y:.0f}" width="7" height="{line_h*len(lines):.0f}" fill="{signal}"/>')
     y += _title_block(p, lines, size, 126, y, ink, signal)
-
-    if sub_lines:
-        y += 44
-        for i, line in enumerate(sub_lines):
-            p.append(f'<text x="126" y="{y+i*sub_size*1.55:.0f}" font-size="{sub_size:.0f}" '
-                     f'fill="{dim}">{esc(line)}</text>')
-        y += len(sub_lines) * sub_size * 1.55
     if badge:
         y += 44
         _numeral(p, badge, 126, y + 44, 62, signal)
@@ -1497,9 +1511,9 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
     p, top, bottom = _card_frame(CARD_FACES["numbers"], n, total, date=date, channel=channel)
     inner = w - 192
 
-    p.append(f'<text x="96" y="{top+66:.0f}" font-size="80" font-weight="800" letter-spacing="-1" '
-             f'fill="{ink}">오늘의 숫자</text>')
-    head_h = 132
+    p.append(f'<text x="{w/2:.0f}" y="{top+66:.0f}" font-size="68" font-weight="800" '
+             f'letter-spacing="-1" text-anchor="middle" fill="{CARD_LIGHT}">오늘의 숫자</text>')
+    head_h = 116
     inner = w - 192
 
     # 설명은 **한 줄**로 놓고 너비를 안쪽 테두리까지 넓게 씁니다. 두 줄을 허용하면
@@ -1541,10 +1555,10 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
 
     y = top + head_h + max(0, (room - sum(m[4] for m in measured)) / 2)
     for i, (value, v_size, label, l_size, height) in enumerate(measured):
-        _numeral(p, value, 96, y + v_size * 0.82, v_size, ink)
+        _numeral(p, value, w / 2, y + v_size * 0.82, v_size, ink, anchor="middle")
         for j, line in enumerate(label):
-            p.append(f'<text x="96" y="{y+v_size*0.82+24+l_size+j*l_size*1.35:.0f}" '
-                     f'font-size="{l_size:.0f}" fill="{dim}">{esc(line)}</text>')
+            p.append(f'<text x="{w/2:.0f}" y="{y+v_size*0.82+24+l_size+j*l_size*1.35:.0f}" '
+                     f'font-size="{l_size:.0f}" text-anchor="middle" fill="{dim}">{esc(line)}</text>')
         y += height
         if i < len(measured) - 1:
             p.append(f'<line x1="96" y1="{y-15:.0f}" x2="{w-96}" y2="{y-15:.0f}" '
@@ -1660,13 +1674,13 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
         lines, size = _fit(item, base, inner, 2)
         rows.append((lines, size, size * 1.5 * len(lines) + 42))
 
-    head_h = 158
+    head_h = 142
     while rows and head_h + sum(r[2] for r in rows) > bottom - top:
         rows.pop()
     y = top + max(0, (bottom - top - head_h - sum(r[2] for r in rows)) / 2)
 
-    p.append(f'<text x="96" y="{y+62:.0f}" font-size="80" font-weight="800" letter-spacing="-1" '
-             f'fill="{signal}">{esc(title)}</text>')
+    p.append(f'<text x="96" y="{y+62:.0f}" font-size="68" font-weight="800" letter-spacing="-1" '
+             f'fill="{CARD_LIGHT}">{esc(title)}</text>')
     y += head_h
     for i, (lines, size, height) in enumerate(rows, start=1):
         p.append(f'<text x="96" y="{y+size:.0f}" font-size="39" font-family="{MONO}" '
@@ -1680,6 +1694,33 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
                      f'stroke="{rule}" stroke-width="1.5"/>')
     p.append("</svg>")
     return Image(f"card-{n}-{slug}", _embed_fonts("\n".join(p)), title)
+
+
+def _drop_repeats(issues: list[dict], threshold: float = 0.40) -> list[dict]:
+    """같은 사건이 두 이슈로 갈린 것을 골라 낸다 (2026-09-08, 사용자 지시).
+
+    2026-09-08 에 '분당 집값 상승률 전국 1위' 와 '분당 집값 상승률, 강남 제쳐' 가 따로
+    이슈가 되어 카드 두 장이 낱말 67% 를 공유했습니다. 같은 수치(29.5%)를 두 번 말하니
+    묶음 전체가 되풀이처럼 읽힙니다.
+
+    **기준 0.40 은 재서 골랐습니다.** 그날 이슈 열 쌍을 전부 재 보니 겹친 한 쌍이 0.51,
+    나머지 아홉 쌍은 0.03~0.16 이었습니다. 두 구간 사이가 비어 있어 그 가운데를 끊었습니다.
+
+    **브리핑 자체는 건드리지 않습니다.** 여기서 거르는 것은 카드뿐이고, 블로그와 사이트는
+    그대로 다섯 건을 싣습니다 — 근본 해결은 클러스터·프롬프트 쪽이라 따로 봐야 합니다.
+    앞선 것(순위가 높은 쪽)을 남깁니다.
+    """
+    from .cluster import similarity
+
+    kept: list[dict] = []
+    for issue in issues:
+        text = f"{issue.get('title', '')} {issue.get('one_liner', '')}"
+        if any(similarity(text, f"{k.get('title', '')} {k.get('one_liner', '')}") >= threshold
+               for k in kept):
+            log.debug("카드에서 겹치는 이슈를 뺐습니다: %s", issue.get("title", ""))
+            continue
+        kept.append(issue)
+    return kept
 
 
 def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[dict] | None = None,
@@ -1699,7 +1740,7 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
     기사 사진이 아닙니다 — 남의 사진은 저작권이 있어 쓸 수 없고 수집하지도 않습니다.
     쓸 만한 그림이 없는 날은 글자만 있는 카드로 그대로 나갑니다.
     """
-    issues = [i for i in (brief.get("issues") or []) if i.get("title")]
+    issues = _drop_repeats([i for i in (brief.get("issues") or []) if i.get("title")])
     if not brief.get("headline") or not issues:
         return []
 
@@ -1726,15 +1767,28 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
     # **장수를 고정하지 않습니다** (2026-09-08, 사용자 지시). 이슈가 많은 날은 늘고
     # 적은 날은 줄어듭니다. `max_cards` 는 상한일 뿐 목표가 아닙니다 — 억지로 채우면
     # 내용 없는 카드가 한 장 더 붙습니다.
-    has_numbers = len(nums) >= 2
-    fixed = 1 + int(has_numbers) + int(bool(watch))   # 표지·숫자·내일 볼 것
-    room = max(1, max_cards - fixed)                  # 이슈에 쓸 수 있는 장수
-    deep = min(len(issues), max(1, room - 1))         # '그 밖의 소식' 한 장을 남겨 둔다
-    rest = issues[deep:]
-    if len(rest) == 1:                 # 한 건짜리 '그 밖의 소식' 카드는 낭비다 — 제 카드를 준다
-        deep, rest = deep + 1, []
-    if len(issues) <= deep:            # 이슈가 다 제 카드를 받으면 나머지 카드는 없다
-        rest = []
+    def layout(with_numbers: bool) -> tuple[int, list[dict]]:
+        fixed = 1 + int(with_numbers) + int(bool(watch))   # 표지·숫자·내일 볼 것
+        room = max(1, max_cards - fixed)                   # 이슈에 쓸 수 있는 장수
+        n = min(len(issues), max(1, room - 1))             # '그 밖의 소식' 한 장을 남겨 둔다
+        tail = issues[n:]
+        if len(tail) == 1:             # 한 건짜리 '그 밖의 소식' 카드는 낭비다 — 제 카드를 준다
+            n, tail = n + 1, []
+        if len(issues) <= n:           # 이슈가 다 제 카드를 받으면 나머지 카드는 없다
+            tail = []
+        return n, tail
+
+    # **오늘의 숫자 카드는 이슈 카드가 말하지 않는 수치가 있을 때만 만듭니다**
+    # (2026-09-08, 사용자 지시). 예전에는 이슈 카드의 배지를 미리 보여 주는 예고편이라
+    # 3번 카드와 낱말이 54% 겹쳤습니다. 겹칠 것이 없으면 한 장을 통째로 뺍니다.
+    deep, rest = layout(True)
+    told = {f"{dp.get('value', '')}{dp.get('unit', '')}".strip()
+            for issue in issues[:deep] for dp in (issue.get("numbers") or [])}
+    spare = [dp for dp in nums
+             if f"{dp.get('value', '')}{dp.get('unit', '')}".strip() not in told]
+    has_numbers = len(spare) >= 2
+    if not has_numbers:                # 숫자 카드를 뺀 자리를 이슈에 돌려준다
+        deep, rest = layout(False)
 
     plan = ["cover"]
     if has_numbers:
@@ -1764,7 +1818,7 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
                                    badge, total, date, channel,
                                    art=bands.pop(0) if bands else None))
         elif kind == "numbers":
-            out.append(_numbers_card(nums, n, total, date, channel))
+            out.append(_numbers_card(spare, n, total, date, channel))
         elif kind == "issue":
             out.append(_issue_card(issues[issue_i], n, total, date, channel,
                                    art=bands.pop(0) if bands else None))

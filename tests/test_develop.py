@@ -2014,16 +2014,32 @@ def test_run_survives_a_truncated_script(cfg, monkeypatch):
 # ── 카드뉴스 (유튜브 게시물용) ───────────────────────────────
 
 
+# 서로 다른 이슈여야 합니다. 제목이 한 글자만 다른 가짜 이슈를 쓰면 `_drop_repeats` 가
+# 같은 사건으로 보고 걸러 냅니다 (실제로 그래서 시험 세 개가 깨졌습니다).
+_CARD_ISSUES = [
+    ("서울 정책대출 6억 이하 아파트 실종", "대출·금리", "집값 급등으로 대상 아파트가 사라졌다."),
+    ("분당 집값 상승률 전국 1위", "가격동향", "최근 1년간 경기 분당구가 1위를 기록했다."),
+    ("서울 아파트 평균월세 162만원", "전월세·임대", "오세훈 시장이 주거 지옥이라고 언급했다."),
+    ("은마아파트 재건축 사업관리 선정", "공급·정비사업", "한미글로벌 컨소시엄이 협력업체로 뽑혔다."),
+    ("세종시 미분양 물량 늘어", "분양·청약", "신규 단지 청약 경쟁률이 크게 떨어졌다."),
+    ("전세보증금 반환 사고 급증", "전월세·임대", "보증기관 대위변제액이 최대치를 넘었다."),
+    ("광역급행철도 노선 확정 발표", "교통·개발", "국토부가 새 노선 계획을 공개했다."),
+    ("종부세 과세 기준 손질 논의", "정책·세금", "여당이 완화안을 검토한다고 밝혔다."),
+    ("건설사 부도 위험 경고음", "건설·시행", "중견 업체 유동성 지표가 나빠졌다."),
+    ("오피스텔 거래량 반등 조짐", "가격동향", "도심권을 중심으로 손바뀜이 늘었다."),
+]
+
+
 def _brief_for_cards(issues: int = 5) -> dict:
     return {
         "headline": "분당 집값 1위·서울 월세 162만원",
         "market_temperature": "수도권 전반의 가격·임대료 상승 압력이 뚜렷하다.",
         "tomorrow_watch": ["은마아파트 공사비 협상", "주간 아파트 가격 동향 발표"],
         "issues": [
-            {"title": f"이슈 {i}", "category": "가격동향", "one_liner": f"{i}번째 이야기입니다.",
+            {"title": title, "category": category, "one_liner": one_liner,
              "what_happened": [f"사실 {i}-1 입니다.", f"사실 {i}-2 입니다."],
              "numbers": [{"value": f"{10 + i}", "unit": "%", "label": f"수치 {i}"}]}
-            for i in range(1, issues + 1)
+            for i, (title, category, one_liner) in enumerate(_CARD_ISSUES[:issues], start=1)
         ],
     }
 
@@ -2153,7 +2169,7 @@ def test_cards_put_the_graphic_on_top_and_the_words_below(cfg, tmp_path):
     # 그림은 표지에 한 장만 들어갔고 나머지는 글자 카드로 남는다
     assert sum(1 for g in got if "<image" in g.svg) == 1
     issue = next(g for g in got if g.slug.endswith("-issue"))
-    assert "번째 이야기입니다." in issue.svg
+    assert _CARD_ISSUES[0][2] in issue.svg          # 한 줄 요약이 살아 있다
 
 
 def test_number_card_drops_a_number_instead_of_overflowing(cfg):
@@ -2166,18 +2182,20 @@ def test_number_card_drops_a_number_instead_of_overflowing(cfg):
     from rebrief import images
 
     긴설명 = "서울 정책대출(주금공) 대상 아파트 가격 기준으로 본 최근 상황"
-    brief = _brief_for_cards()
-    brief["issues"][0]["numbers"] = [{"value": "6", "unit": "억원 이하", "label": 긴설명}]
-    got = images.cards(brief, date="2026-09-08",
+    # 이슈가 말하지 않는 수치여야 숫자 카드가 만들어진다 (아래 시험 참고)
+    got = images.cards(_brief_for_cards(), date="2026-09-08",
                        key_numbers=[{"value": "6", "unit": "억원 이하", "label": 긴설명},
                                     {"value": "29.5", "unit": "%", "label": 긴설명},
                                     {"value": "28.4", "unit": "%", "label": 긴설명}])
     card = next(g for g in got if g.slug.endswith("-numbers"))
-    ys = [float(m) for m in re.findall(r'<text x="96" y="([0-9.]+)"', card.svg)]
-    assert ys and max(ys) < 1080 - 100, f"글이 카드 밖으로 나갔다 (y={max(ys):.0f})"
+    # 가운데 정렬이라 x 는 540 이다. 자리를 박아 두면 시험이 먼저 깨진다.
+    # 머리글·날짜·쪽번호(고정폭)는 원래 위아래 끝에 있으므로 내용만 본다.
+    ys = [float(m.group(1)) for m in re.finditer(r'<text [^>]*y="([0-9.]+)"[^>]*>', card.svg)
+          if "IBMPlexMono'" not in m.group(0)]
+    assert ys and max(ys) < 1080 - 108, f"글이 아래 구분선을 넘었다 (y={max(ys):.0f})"
     # 설명이 두 줄로 풀릴 만큼 길면 수치를 덜어 낸다 — 말을 잘라 박지 않는다.
     assert 1 <= card.svg.count(f'font-family="{images.DISPLAY}"') <= 3
-    말 = "".join(re.findall(r'font-size="3[0-9]" fill="[^"]*">([^<]*)</text>', card.svg))
+    말 = "".join(re.findall(r'font-size="3[0-9]"[^>]*>([^<]*)</text>', card.svg))
     assert 말.endswith("최근 상황"), f"설명이 잘렸다: {말[-20:]!r}"
 
 
@@ -2195,6 +2213,63 @@ def test_number_card_fits_three_when_the_labels_are_normal_length(cfg):
     got = images.cards(_brief_for_cards(), date="2026-09-08", key_numbers=keys)
     card = next(g for g in got if g.slug.endswith("-numbers"))
     assert card.svg.count(f'font-family="{images.DISPLAY}"') == 3
+
+
+def test_number_card_only_carries_what_the_issue_cards_do_not_say(cfg):
+    """오늘의 숫자 카드는 이슈 카드가 말하지 않는 수치만 담는다 (2026-09-08 사용자 지시).
+
+    예전에는 이슈 카드의 배지를 미리 보여 주는 예고편이라 3번 카드와 낱말이 54% 겹쳤습니다.
+    겹칠 것이 없으면 한 장을 통째로 뺍니다.
+    """
+    from rebrief import images
+
+    brief = _brief_for_cards()
+    # ① 이슈가 다 제 카드를 받으면 그 수치를 또 말하지 않는다 → 숫자 카드가 없다
+    got = images.cards(brief, date="2026-09-08")
+    assert not [g for g in got if g.slug.endswith("-numbers")]
+
+    # ② 이슈가 말하지 않는 수치를 넘기면 그것만 담아 카드를 만든다
+    남는수치 = [{"value": "3.2", "unit": "%", "label": "서울 아파트 전세가율"},
+              {"value": "1,204", "unit": "건", "label": "지난달 강남구 거래량"}]
+    got = images.cards(brief, date="2026-09-08",
+                       key_numbers=남는수치 + [brief["issues"][0]["numbers"][0]])
+    card = next(g for g in got if g.slug.endswith("-numbers"))
+    assert "전세가율" in card.svg and "거래량" in card.svg
+    assert "수치 1" not in card.svg          # 이슈 카드가 말할 것은 뺀다
+
+
+def test_cards_drop_an_issue_that_repeats_an_earlier_one(cfg):
+    """같은 사건이 두 이슈로 갈리면 카드는 하나만 만든다 (2026-09-08 사용자 지시).
+
+    실측: 그날 이슈 열 쌍 가운데 겹친 한 쌍이 0.51, 나머지는 0.03~0.16 이었습니다.
+    브리핑·블로그는 건드리지 않고 카드에서만 거릅니다.
+    """
+    from rebrief import images
+
+    brief = _brief_for_cards(3)
+    brief["issues"].append({"title": "분당 집값 상승률, 강남 제쳐", "category": "가격동향",
+                            "one_liner": "최근 1년간 분당구가 강남을 제치고 1위를 기록했다."})
+    kept = images._drop_repeats(brief["issues"])
+    assert len(kept) == 3 and "강남 제쳐" not in [k["title"] for k in kept]
+    # 서로 다른 이슈는 그대로 남는다
+    assert len(images._drop_repeats(_brief_for_cards(10)["issues"])) == 10
+
+
+def test_cover_puts_a_banner_over_the_photo(cfg, tmp_path):
+    """표지는 사진 위에 '[날짜] 부동산 주요이슈' 대문을 얹는다 (2026-09-08 사용자 지시).
+
+    사진을 눌러 어둡게 하지 않으면 밝은 하늘이나 흰 건물 위에서 흰 글씨가 사라집니다.
+    """
+    from rebrief import images
+
+    art = tmp_path / "photo-1.jpg"
+    _fake_png(art, 400, 224)
+    cover = images.cards(_brief_for_cards(), date="2026-09-08", art=[(art, "사진 아무개")])[0].svg
+    assert "부동산 주요이슈" in cover and "2026.09.08" in cover
+    assert 'fill="#000000" opacity="0.55"' in cover      # 사진을 눌러 어둡게
+    assert 'text-anchor="middle"' in cover
+    # 부제는 싣지 않는다 — 뒤 카드 내용을 앞당겨 말했다
+    assert "수도권 전반의" not in cover
 
 
 def test_page_number_stays_inside_the_inner_border():
@@ -2221,11 +2296,8 @@ def test_card_count_follows_the_day(cfg):
     from rebrief import images
 
     def brief(n_issues, watch=2):
-        return {"headline": "제목", "market_temperature": "요약",
-                "tomorrow_watch": [f"볼 것 {i}" for i in range(watch)],
-                "issues": [{"title": f"이슈 {i}", "category": "가격동향", "one_liner": "한 줄",
-                            "numbers": [{"value": f"{i}", "unit": "%", "label": f"수치 {i}"}]}
-                           for i in range(1, n_issues + 1)]}
+        return _brief_for_cards(n_issues) | {
+            "tomorrow_watch": [f"볼 것 {i}" for i in range(watch)]}
 
     counts = [len(images.cards(brief(n), date="2026-09-08")) for n in (1, 3, 5, 8)]
     assert counts == sorted(counts), f"이슈가 늘면 장수도 늘어야 한다: {counts}"
@@ -2248,7 +2320,6 @@ def test_cards_are_square_and_numbered(cfg):
     for img in got:
         assert 'width="1080" height="1080"' in img.svg      # 정사각 — 세로는 잘리는 화면이 있다
         assert f"/ {len(got):02d}" in img.svg               # 쪽번호(02 / 07)가 실제 장수와 맞는다
-    assert "오늘의 숫자" in got[1].svg
     assert "내일 볼 것" in got[-1].svg
 
     # 자료가 적은 날은 억지로 채우지 않고 줄어든다
