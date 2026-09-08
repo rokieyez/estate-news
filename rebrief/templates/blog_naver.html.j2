@@ -44,13 +44,17 @@
   .card { background: #fff; border-radius: 10px; padding: 32px 28px; }
   .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
   .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
-  /* 제목 위 여백은 본문 줄 간격(약 29px)의 두 배 이상이어야 앞 문단과 떨어져 보인다.
-     아래쪽은 초록 선이 닫아 주므로 좁게 둔다 — 제목이 '아래 내용의 머리'로 읽히게. */
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 (제목 위).
+     예전에는 제목 아래에 선을 그었는데, 붙여넣고 보면 앞 꼭지의 마지막 문장과 다음
+     제목이 붙어 버리고, 정작 제목과 그 본문 사이가 선으로 갈라져 서로 남처럼 보였다.
+     이제 앞 꼭지 끝 → 넉넉한 여백 → 선 → 제목 → 본문 순서로 읽힌다.
+     이 서식은 '본문 복사' 때 그대로 따라가므로 네이버에 붙여넣어도 같게 보인다. */
   #post h2 {
-    font-size: 20px; font-weight: 700; margin: 60px 0 14px;
-    padding-bottom: 8px; border-bottom: 2px solid #03c75a;
+    font-size: 20px; font-weight: 700; margin: 56px 0 16px;
+    padding-top: 26px; border-top: 2px solid #03c75a;
   }
-  #post h2:first-child { margin-top: 8px; }
+  /* 첫 제목 앞에는 나눌 앞 꼭지가 없으므로 선을 긋지 않는다 */
+  #post h2:first-child { margin-top: 8px; padding-top: 0; border-top: none; }
   #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
   #post p { margin: 0 0 18px; }
   #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }

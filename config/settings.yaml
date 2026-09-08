@@ -226,4 +226,4 @@ blog:
     # 붙여넣기 화면의 '네이버 글쓰기 열기' 버튼이 갈 주소.
     # 내 블로그에서 '글쓰기'를 누른 뒤, 주소창에 뜬 주소를 그대로 붙여넣으세요.
     # 비워 두면 네이버 블로그 첫 화면으로 갑니다.
-    write_url: "https://blog.naver.com/" 
+    write_url: "https://blog.naver.com/rikiwiki?Redirect=Write&" 
