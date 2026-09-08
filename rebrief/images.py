@@ -1543,11 +1543,26 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
 
 
 def _fit(text: str, size: float, width: float, max_lines: int, floor: float = 30) -> tuple[list[str], float]:
-    """줄 수 안에 들어갈 때까지 글씨를 줄인다. 넘치면 잘라 내는 대신 작게 만든다."""
+    """줄 수 안에 들어갈 때까지 글씨를 줄인다. 넘치면 잘라 내는 대신 작게 만든다.
+
+    마지막 줄에 낱말이 하나만 떨어지면(고아 낱말) **10% 안쪽에서 줄여 끌어올립니다** —
+    「…아파트 / 실종」처럼 한 낱말만 다음 줄에 남으면 제목이 두 동강 나 보입니다
+    (2026-09-08 사용자 지적). 10% 를 넘겨야 붙는 제목은 그냥 두 줄로 둡니다. 글씨를
+    많이 줄여 한 줄로 만드는 쪽이 더 나빠서입니다.
+    """
     lines = wrap(text, size, width)
     while len(lines) > max_lines and size > floor:
         size -= 4
         lines = wrap(text, size, width)
+    if len(lines) > 1 and len(lines[-1].split()) == 1:
+        # 하한(floor)은 넘지 않습니다. '오늘의 숫자' 설명은 32 아래로 내려가느니 두 줄로
+        # 푸는 쪽이 낫다고 이미 정해 두었는데, 고아 낱말을 잡겠다고 28 까지 내려갔습니다.
+        limit, small = max(floor, size * 0.9), size
+        while small > limit:
+            small -= 2
+            tighter = wrap(text, small, width)
+            if len(tighter) < len(lines):
+                return tighter[:max_lines], small
     return lines[:max_lines], size
 
 
@@ -1724,7 +1739,9 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
     w, h = CARD_SIZE
     ground, ink, dim, rule, signal = CARD_FACES["issue"]
     p, top, bottom = _card_frame(CARD_FACES["issue"], n, total, date=date, channel=channel, art=art)
-    inner = w - 192
+    # 글자가 쓰는 폭. 오른쪽 여백을 96 → 80 으로 좁혀 제목 한 줄을 더 벌었습니다
+    # (2026-09-08 사용자 지시). 청사진 테두리(58) 안쪽이라 답답해 보이지 않습니다.
+    inner = w - 176
 
     blocks: list[tuple] = []
     cat = str(issue.get("category", "")).strip()
