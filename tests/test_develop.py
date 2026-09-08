@@ -2302,6 +2302,30 @@ def _fake_rgba_png(path, width: int, height: int, bands: list[tuple[int, int]]) 
                      + chunk(b"IDAT", zlib.compress(b"".join(rows))) + chunk(b"IEND", b""))
 
 
+def test_logo_matches_the_letter_height_not_the_font_size(cfg, tmp_path, monkeypatch):
+    """로고 높이는 글자 크기가 아니라 **글자의 잉크 높이**에 맞춘다 (2026-09-08 사용자 지적).
+
+    28px 글자의 잉크는 24.6px 뿐이고 기준선 위로만 22.1px 올라갑니다. em 상자에 맞춰
+    35px 로 얹었더니 로고가 글자보다 크고 위로 튀어 사용자가 바로 알아봤습니다.
+    """
+    from rebrief import images
+
+    logo = tmp_path / "logo.png"
+    _fake_png(logo, 100, 100)                 # 투명하지 않은 정사각 — 잘리지 않는다
+    monkeypatch.setattr(images, "_LOGO_PATH", logo)
+    monkeypatch.setattr(images, "_logo_cache", {})
+
+    svg = images.cards(_brief_for_cards(), date="2026-09-08", channel="부돌보 브리핑")[-1].svg
+    mark = re.search(r'<svg x="96" y="([\d.]+)" width="[\d.]+" height="([\d.]+)"', svg)
+    word = re.search(r'<text x="\d+" y="(\d+)" font-size="(\d+)"[^>]*>부돌보 브리핑</text>', svg)
+    assert mark and word
+    top, height = float(mark.group(1)), float(mark.group(2))
+    baseline, size = float(word.group(1)), float(word.group(2))
+    # 로고 상자가 글자 잉크 상자와 위아래로 겹친다 (1px 안쪽)
+    assert abs(top - (baseline - size * images.CARD_INK_TOP)) < 1
+    assert abs((top + height) - (baseline + size * images.CARD_INK_BOTTOM)) < 1
+
+
 def test_logo_crop_actually_clips_the_wordmark(tmp_path, monkeypatch):
     """자르기가 말로만 끝나면 안 된다 — 잘라 낸 부분이 정말 안 보여야 한다.
 

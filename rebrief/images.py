@@ -1422,6 +1422,22 @@ def _logo_tag(x: float, top: float, height: float, *, white: bool) -> tuple[str,
     return tag, width
 
 
+# 프리텐다드 글자가 실제로 차지하는 세로 — 글자 크기 대비 비율(fontTools 로 잼, 2026-09-08).
+# 기준선 위 0.79em, 아래 0.09em(둥근 글자의 오버슛). 잉크가 아니라 em 상자에 맞추면
+# 로고가 글자보다 1.5배 커 보입니다 — 사용자가 바로 알아봤습니다.
+CARD_INK_TOP, CARD_INK_BOTTOM = 0.79, 0.09
+
+
+def _logo_beside(x: float, baseline: float, size: float, *, white: bool) -> tuple[str, float]:
+    """글자 옆에 로고를 **글자와 위아래가 딱 맞게** 얹는다. (SVG 조각, 차지한 너비)
+
+    로고 높이를 글자 크기(예: 28px)로 주면 안 됩니다. 28px 글자의 잉크는 24.6px 뿐이고
+    기준선 위로만 22px 올라가므로, em 상자에 맞춘 로고는 글자보다 크고 위로 튑니다.
+    """
+    return _logo_tag(x, baseline - size * CARD_INK_TOP,
+                     size * (CARD_INK_TOP + CARD_INK_BOTTOM), white=white)
+
+
 def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str = "",
                 art: dict | None = None,
                 banner: tuple[str, str] | None = None) -> tuple[list[str], float, float]:
@@ -1500,8 +1516,7 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         if date:
             meta.append(esc(date.replace("-", ".")))
         if meta:
-            # 글자 높이의 80% (2026-09-08 사용자 지시). y 는 옛 가운데선(983)에 맞춥니다.
-            mark, used = _logo_tag(96, h - 114, 34, white=ground != CARD_PAPER[0])
+            mark, used = _logo_beside(96, h - 80, 25, white=ground != CARD_PAPER[0])
             p.append(mark)
             p.append(f'<text x="{96 + (used + 14 if used else 0):.0f}" y="{h-80}" font-size="25" '
                      f'fill="{dim}">{" · ".join(meta)}</text>')
@@ -1510,8 +1525,7 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         p.append(f'<rect x="58" y="58" width="{w-116}" height="{h-116}" fill="none" '
                  f'stroke="{signal}" stroke-width="1.4" opacity="0.45"/>')
         if channel:
-            # 글자 높이의 80% (2026-09-08 사용자 지시). y 는 옛 가운데선(88)에 맞춥니다.
-            mark, used = _logo_tag(96, 70, 35, white=True)
+            mark, used = _logo_beside(96, 102, 28, white=True)
             p.append(mark)
             p.append(f'<text x="{96 + (used + 14 if used else 0):.0f}" y="102" font-size="28" '
                      f'font-weight="700" letter-spacing="1" fill="{ink}">{esc(channel)}</text>')
