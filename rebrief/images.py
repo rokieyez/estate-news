@@ -1345,9 +1345,9 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         # 사진 출처 한 줄. **'본문과 무관' 을 빼지 마세요.** 은마아파트 기사 옆에 아무
         # 아파트 사진이 붙으면 읽는 사람은 그게 은마인 줄 압니다.
         if art.get("credit"):
-            p.append(f'<rect x="0" y="{band-46:.0f}" width="{w}" height="46" '
+            p.append(f'<rect x="0" y="{band-62:.0f}" width="{w}" height="62" '
                      f'fill="#000000" opacity="0.42"/>')
-            p.append(f'<text x="{w-96}" y="{band-16:.0f}" font-size="22" text-anchor="end" '
+            p.append(f'<text x="{w-96}" y="{band-20:.0f}" font-size="33" text-anchor="end" '
                      f'fill="#ffffff" opacity="0.9">{esc(art["credit"])}</text>')
         bottom = h - 100
         meta = []
@@ -1356,24 +1356,24 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         if date:
             meta.append(esc(date.replace("-", ".")))
         if meta:
-            p.append(f'<text x="96" y="{h-60}" font-size="25" fill="{dim}">'
+            p.append(f'<text x="96" y="{h-52}" font-size="38" fill="{dim}">'
                      f'{" · ".join(meta)}</text>')
     else:
-        top, bottom = 172, h - 152
+        top, bottom = 194, h - 158
         p.append(f'<rect x="58" y="58" width="{w-116}" height="{h-116}" fill="none" '
                  f'stroke="{signal}" stroke-width="1.4" opacity="0.45"/>')
         if channel:
-            p.append(f'<text x="96" y="102" font-size="28" font-weight="700" letter-spacing="1" '
+            p.append(f'<text x="96" y="110" font-size="42" font-weight="700" letter-spacing="1" '
                      f'fill="{ink}">{esc(channel)}</text>')
         if date:
-            p.append(f'<text x="{w-96}" y="102" font-size="26" font-family="{MONO}" '
+            p.append(f'<text x="{w-96}" y="110" font-size="39" font-family="{MONO}" '
                      f'letter-spacing="1" text-anchor="end" fill="{dim}">'
                      f'{esc(date.replace("-", "."))}</text>')
-        p.append(f'<line x1="96" y1="130" x2="{w-96}" y2="130" stroke="{rule}" stroke-width="1.5"/>')
+        p.append(f'<line x1="96" y1="146" x2="{w-96}" y2="146" stroke="{rule}" stroke-width="1.5"/>')
         p.append(f'<line x1="96" y1="{h-108}" x2="{w-96}" y2="{h-108}" stroke="{rule}" '
                  f'stroke-width="1.5"/>')
     if total > 1:
-        p.append(f'<text x="{w-96}" y="{h-60}" font-size="28" font-family="{MONO}" letter-spacing="2" '
+        p.append(f'<text x="{w-96}" y="{h-52}" font-size="42" font-family="{MONO}" letter-spacing="2" '
                  f'text-anchor="end" fill="{dim}">{n:02d} / {total:02d}</text>')
     return p, top, bottom
 
@@ -1495,19 +1495,39 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
     p, top, bottom = _card_frame(CARD_FACES["numbers"], n, total, date=date, channel=channel)
     inner = w - 192
 
-    p.append(f'<text x="96" y="{top+36:.0f}" font-size="33" font-weight="700" letter-spacing="2.5" '
+    p.append(f'<text x="96" y="{top+40:.0f}" font-size="49" font-weight="700" letter-spacing="2.5" '
              f'fill="{ink}" opacity="0.9">오늘의 숫자</text>')
-    measured = []
-    for dp in nums[:3]:
-        value = f"{dp.get('value', '')}{dp.get('unit', '')}".strip()
-        v_size = 140
-        while text_width(value, v_size) > inner and v_size > 60:
-            v_size -= 6
-        label, l_size = _fit(dp.get("label", ""), 31, inner, 2)
-        measured.append((value, v_size, label, l_size,
-                         v_size * 0.82 + 24 + l_size * 1.35 * len(label) + 56))
+    head_h = 104
+    inner = w - 192
 
-    y = top + 90 + max(0, (bottom - top - 90 - sum(m[4] for m in measured)) / 2)
+    def measure(cap: float) -> list[tuple]:
+        rows = []
+        for dp in nums[:3]:
+            value = f"{dp.get('value', '')}{dp.get('unit', '')}".strip()
+            v_size = cap
+            while text_width(value, v_size) > inner and v_size > 60:
+                v_size -= 6
+            label, l_size = _fit(dp.get("label", ""), 46, inner, 2)
+            rows.append((value, v_size, label, l_size,
+                         v_size * 0.82 + 24 + l_size * 1.35 * len(label) + 56))
+        return rows
+
+    # 글씨를 키운 뒤로 세 수치가 늘 들어가지는 않는다. 그냥 쌓으면 마지막 설명이
+    # 쪽번호와 겹친 채 카드 밖으로 흘러나간다 (2026-09-08 에 실제로 그랬다).
+    #
+    # **줄이기보다 덜어 냅니다.** 셋을 다 넣으려고 수치를 작게 만들면 '오늘의 숫자'
+    # 카드에서 숫자가 가장 작아지는 앞뒤가 안 맞는 그림이 됩니다. 둘을 크게 보이고
+    # 나머지는 이슈 카드가 어차피 다시 말합니다.
+    room = bottom - top - head_h
+    measured = measure(140)
+    while len(measured) > 1 and sum(m[4] for m in measured) > room:
+        measured.pop()
+    cap = 140
+    while sum(m[4] for m in measured) > room and cap > 96:
+        cap -= 8
+        measured = measure(cap)[:len(measured)]
+
+    y = top + head_h + max(0, (room - sum(m[4] for m in measured)) / 2)
     for i, (value, v_size, label, l_size, height) in enumerate(measured):
         _numeral(p, value, 96, y + v_size * 0.82, v_size, ink)
         for j, line in enumerate(label):
@@ -1536,7 +1556,7 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
     blocks: list[tuple] = []
     cat = str(issue.get("category", "")).strip()
     if cat:
-        blocks.append(("cat", cat, 58))
+        blocks.append(("cat", cat, 74))
 
     t_max = 70 if not art else 58
     title, t_size = _fit(str(issue.get("title", "")), t_max, inner, 3, floor=44)
@@ -1549,7 +1569,7 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
         v_size = 116
         while text_width(value, v_size) > inner - 20 and v_size > 56:
             v_size -= 6
-        lab, lab_size = _fit(str(dp.get("label", "")), 30, inner, 2)
+        lab, lab_size = _fit(str(dp.get("label", "")), 45, inner, 2)
         blocks.append(("number", (value, v_size, lab, lab_size),
                        v_size * 0.82 + 22 + lab_size * 1.35 * len(lab) + 44))
 
@@ -1558,7 +1578,7 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
         blocks.append(("body", (body, b_size), b_size * 1.55 * len(body) + 34))
 
     for fact in [f for f in (issue.get("what_happened") or []) if f][:3]:
-        lines, size = _fit(fact, 31, inner - 48, 2)
+        lines, size = _fit(fact, 46, inner - 60, 2)
         blocks.append(("fact", (lines, size), size * 1.5 * len(lines) + 22))
 
     while len(blocks) > 2 and sum(b[2] for b in blocks) > bottom - top:
@@ -1567,8 +1587,8 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
 
     for kind, value, height in blocks:
         if kind == "cat":
-            p.append(f'<rect x="96" y="{y+6:.0f}" width="5" height="26" fill="{signal}"/>')
-            p.append(f'<text x="118" y="{y+28:.0f}" font-size="26" font-weight="700" '
+            p.append(f'<rect x="96" y="{y+6:.0f}" width="6" height="36" fill="{signal}"/>')
+            p.append(f'<text x="118" y="{y+32:.0f}" font-size="39" font-weight="700" '
                      f'letter-spacing="1.5" fill="{dim}">{esc(value)}</text>')
         elif kind == "title":
             lines, size = value
@@ -1612,16 +1632,16 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
         lines, size = _fit(item, base, inner, 2)
         rows.append((lines, size, size * 1.5 * len(lines) + 42))
 
-    head_h = 112
+    head_h = 136
     while rows and head_h + sum(r[2] for r in rows) > bottom - top:
         rows.pop()
     y = top + max(0, (bottom - top - head_h - sum(r[2] for r in rows)) / 2)
 
-    p.append(f'<text x="96" y="{y+36:.0f}" font-size="33" font-weight="700" letter-spacing="2.5" '
+    p.append(f'<text x="96" y="{y+36:.0f}" font-size="49" font-weight="700" letter-spacing="2.5" '
              f'fill="{signal}">{esc(title)}</text>')
     y += head_h
     for i, (lines, size, height) in enumerate(rows, start=1):
-        p.append(f'<text x="96" y="{y+size:.0f}" font-size="26" font-family="{MONO}" '
+        p.append(f'<text x="96" y="{y+size:.0f}" font-size="39" font-family="{MONO}" '
                  f'fill="{dim}">{i:02d}</text>')
         for j, line in enumerate(lines):
             p.append(f'<text x="162" y="{y+size+j*size*1.5:.0f}" font-size="{size:.0f}" '

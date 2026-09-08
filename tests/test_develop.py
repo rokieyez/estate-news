@@ -2156,6 +2156,27 @@ def test_cards_put_the_graphic_on_top_and_the_words_below(cfg, tmp_path):
     assert "번째 이야기입니다." in issue.svg
 
 
+def test_number_card_drops_a_number_instead_of_overflowing(cfg):
+    """수치가 다 안 들어가면 카드 밖으로 흘리지 말고 덜어 낸다.
+
+    2026-09-08 에 작은 글자를 1.5배로 키웠더니 세 번째 설명이 쪽번호와 겹친 채
+    카드 아래로 흘러나갔습니다. 줄이기보다 덜어 냅니다 — '오늘의 숫자' 카드에서
+    숫자가 가장 작아지면 앞뒤가 안 맞습니다.
+    """
+    from rebrief import images
+
+    긴설명 = "서울 정책대출(주금공) 대상 아파트 가격 기준으로 본 최근 상황"
+    brief = _brief_for_cards()
+    brief["issues"][0]["numbers"] = [{"value": "6", "unit": "억원 이하", "label": 긴설명}]
+    got = images.cards(brief, date="2026-09-08",
+                       key_numbers=[{"value": "6", "unit": "억원 이하", "label": 긴설명},
+                                    {"value": "29.5", "unit": "%", "label": 긴설명},
+                                    {"value": "28.4", "unit": "%", "label": 긴설명}])
+    card = next(g for g in got if g.slug.endswith("-numbers"))
+    ys = [float(m) for m in re.findall(r'<text x="96" y="([0-9.]+)"', card.svg)]
+    assert ys and max(ys) < 1080 - 100, f"글이 카드 밖으로 나갔다 (y={max(ys):.0f})"
+
+
 def test_cards_are_square_and_numbered(cfg):
     from rebrief import images
 
