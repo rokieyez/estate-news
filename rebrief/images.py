@@ -1356,7 +1356,7 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         if date:
             meta.append(esc(date.replace("-", ".")))
         if meta:
-            p.append(f'<text x="96" y="{h-60}" font-size="25" fill="{dim}">'
+            p.append(f'<text x="96" y="{h-80}" font-size="25" fill="{dim}">'
                      f'{" · ".join(meta)}</text>')
     else:
         top, bottom = 172, h - 152
@@ -1373,7 +1373,7 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         p.append(f'<line x1="96" y1="{h-108}" x2="{w-96}" y2="{h-108}" stroke="{rule}" '
                  f'stroke-width="1.5"/>')
     if total > 1:
-        p.append(f'<text x="{w-96}" y="{h-60}" font-size="28" font-family="{MONO}" letter-spacing="2" '
+        p.append(f'<text x="{w-96}" y="{h-80}" font-size="28" font-family="{MONO}" letter-spacing="2" '
                  f'text-anchor="end" fill="{dim}">{n:02d} / {total:02d}</text>')
     return p, top, bottom
 
@@ -1502,6 +1502,11 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
     head_h = 132
     inner = w - 192
 
+    # 설명은 **한 줄**로 놓고 너비를 안쪽 테두리까지 넓게 씁니다. 두 줄을 허용하면
+    # 한 줄당 62px 씩 먹어 세 수치가 들어갈 자리가 없어집니다. 넓게 한 줄로 두면
+    # 글씨는 조금 작아지지만(46 → 38쯤) 셋이 다 올라갑니다.
+    label_w = w - 170
+
     def measure(cap: float) -> list[tuple]:
         rows = []
         for dp in nums[:3]:
@@ -1509,25 +1514,30 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
             v_size = cap
             while text_width(value, v_size) > inner and v_size > 60:
                 v_size -= 6
-            label, l_size = _fit(dp.get("label", ""), 46, inner, 2)
+            # 한 줄이 기본입니다. 다만 `_fit` 은 하한(30)에 닿으면 **말을 잘라 버리므로**,
+            # 그래도 안 들어가는 긴 설명은 두 줄로 풀어 줍니다. 잘린 설명보다 낫습니다.
+            text = str(dp.get("label", ""))
+            label, l_size = _fit(text, 46, label_w, 1, floor=32)
+            if len(wrap(text, l_size, label_w)) > 1:
+                label, l_size = _fit(text, 38, label_w, 2, floor=28)
             rows.append((value, v_size, label, l_size,
-                         v_size * 0.82 + 24 + l_size * 1.35 * len(label) + 56))
+                         v_size * 0.82 + 24 + l_size * 1.35 * len(label) + 26))
         return rows
 
     # 글씨를 키운 뒤로 세 수치가 늘 들어가지는 않는다. 그냥 쌓으면 마지막 설명이
     # 쪽번호와 겹친 채 카드 밖으로 흘러나간다 (2026-09-08 에 실제로 그랬다).
     #
-    # **줄이기보다 덜어 냅니다.** 셋을 다 넣으려고 수치를 작게 만들면 '오늘의 숫자'
-    # 카드에서 숫자가 가장 작아지는 앞뒤가 안 맞는 그림이 됩니다. 둘을 크게 보이고
-    # 나머지는 이슈 카드가 어차피 다시 말합니다.
+    # **먼저 수치를 조금 줄여 셋을 다 담아 봅니다** (112 까지). 그래도 넘치면 덜어 냅니다 —
+    # 그 아래로 줄이면 '오늘의 숫자' 카드에서 숫자가 가장 작아지는 앞뒤 안 맞는 그림이
+    # 됩니다. 덜어 낸 수치는 이슈 카드가 어차피 다시 말합니다.
     room = bottom - top - head_h
-    measured = measure(140)
+    cap = 140
+    measured = measure(cap)
+    while sum(m[4] for m in measured) > room and cap > 112:
+        cap -= 8
+        measured = measure(cap)
     while len(measured) > 1 and sum(m[4] for m in measured) > room:
         measured.pop()
-    cap = 140
-    while sum(m[4] for m in measured) > room and cap > 96:
-        cap -= 8
-        measured = measure(cap)[:len(measured)]
 
     y = top + head_h + max(0, (room - sum(m[4] for m in measured)) / 2)
     for i, (value, v_size, label, l_size, height) in enumerate(measured):
@@ -1537,7 +1547,7 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
                      f'font-size="{l_size:.0f}" fill="{dim}">{esc(line)}</text>')
         y += height
         if i < len(measured) - 1:
-            p.append(f'<line x1="96" y1="{y-28:.0f}" x2="{w-96}" y2="{y-28:.0f}" '
+            p.append(f'<line x1="96" y1="{y-15:.0f}" x2="{w-96}" y2="{y-15:.0f}" '
                      f'stroke="{ink}" stroke-width="1.5" opacity="0.28"/>')
     p.append("</svg>")
     return Image(f"card-{n}-numbers", _embed_fonts("\n".join(p)), "오늘의 숫자")
@@ -1583,9 +1593,25 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
         lines, size = _fit(fact, 46, inner - 60, 2)
         blocks.append(("fact", (lines, size), size * 1.5 * len(lines) + 22))
 
-    while len(blocks) > 2 and sum(b[2] for b in blocks) > bottom - top:
+    # 넘칠 때 **뒤에서부터 무작정 덜어 내면 안 됩니다.** 그림 카드에서 한 줄 요약이
+    # 통째로 빠져 제목만 남은 적이 있습니다 (2026-09-08, 요약 글씨를 43 으로 키운 뒤).
+    # 차례는 이렇습니다 — ① 덧붙인 사실 줄 ② 요약 글씨 줄이기 ③ 그래도 안 되면 덜어 내기.
+    room = bottom - top
+    total = lambda: sum(b[2] for b in blocks)          # noqa: E731
+    while total() > room and any(b[0] == "fact" for b in blocks):
+        for i in range(len(blocks) - 1, -1, -1):
+            if blocks[i][0] == "fact":
+                blocks.pop(i)
+                break
+    while total() > room:
+        idx = next((i for i, b in enumerate(blocks) if b[0] == "body"), None)
+        if idx is None or blocks[idx][1][1] <= 30:
+            break
+        lines, size = _fit(str(issue.get("one_liner", "")), blocks[idx][1][1] - 3, inner, 5)
+        blocks[idx] = ("body", (lines, size), size * 1.55 * len(lines) + 34)
+    while len(blocks) > 2 and total() > room:
         blocks.pop()
-    y = top + max(0, (bottom - top - sum(b[2] for b in blocks)) / 2)
+    y = top + max(0, (room - total()) / 2)
 
     for kind, value, height in blocks:
         if kind == "cat":

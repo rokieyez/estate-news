@@ -2175,6 +2175,41 @@ def test_number_card_drops_a_number_instead_of_overflowing(cfg):
     card = next(g for g in got if g.slug.endswith("-numbers"))
     ys = [float(m) for m in re.findall(r'<text x="96" y="([0-9.]+)"', card.svg)]
     assert ys and max(ys) < 1080 - 100, f"글이 카드 밖으로 나갔다 (y={max(ys):.0f})"
+    # 설명이 두 줄로 풀릴 만큼 길면 수치를 덜어 낸다 — 말을 잘라 박지 않는다.
+    assert 1 <= card.svg.count(f'font-family="{images.DISPLAY}"') <= 3
+    말 = "".join(re.findall(r'font-size="3[0-9]" fill="[^"]*">([^<]*)</text>', card.svg))
+    assert 말.endswith("최근 상황"), f"설명이 잘렸다: {말[-20:]!r}"
+
+
+def test_number_card_fits_three_when_the_labels_are_normal_length(cfg):
+    """설명이 보통 길이면 세 수치가 다 올라간다.
+
+    설명을 **한 줄로 놓고 안쪽 테두리까지 넓게** 쓴 덕입니다 (2026-09-08 사용자 제안).
+    두 줄을 허용하면 한 줄당 60px 씩 먹어 셋째가 밀려납니다.
+    """
+    from rebrief import images
+
+    keys = [{"value": "6", "unit": "억원 이하", "label": "서울 정책대출 대상 아파트 가격 기준"},
+            {"value": "29.5", "unit": "%", "label": "최근 1년 아파트값 상승률 1위(분당구)"},
+            {"value": "28.4", "unit": "%", "label": "광명시 아파트값 상승률"}]
+    got = images.cards(_brief_for_cards(), date="2026-09-08", key_numbers=keys)
+    card = next(g for g in got if g.slug.endswith("-numbers"))
+    assert card.svg.count(f'font-family="{images.DISPLAY}"') == 3
+
+
+def test_page_number_stays_inside_the_inner_border():
+    """쪽번호가 안쪽 테두리 위에 걸치면 안 된다.
+
+    테두리 아래 변이 h-58 인데 쪽번호를 h-60 에 두어 글자 아랫부분이 선과 겹쳤습니다
+    (2026-09-08). 날짜가 위 테두리에서 떨어진 만큼 띄웁니다.
+    """
+    from rebrief import images
+
+    svg = images.cards(_brief_for_cards(), date="2026-09-08", channel="부동산 브리핑")[1].svg
+    page = re.search(r'<text x="\{?[0-9w-]*\}?[^"]*" y="([0-9]+)"[^>]*>\d\d / \d\d</text>', svg)
+    page = page or re.search(r'y="([0-9]+)"[^>]*>\d\d / \d\d</text>', svg)
+    assert page, "쪽번호를 찾지 못했습니다"
+    assert float(page.group(1)) + 8 < 1080 - 58, "쪽번호가 안쪽 테두리와 겹칩니다"
 
 
 def test_cards_are_square_and_numbered(cfg):
