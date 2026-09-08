@@ -1345,9 +1345,9 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         # 사진 출처 한 줄. **'본문과 무관' 을 빼지 마세요.** 은마아파트 기사 옆에 아무
         # 아파트 사진이 붙으면 읽는 사람은 그게 은마인 줄 압니다.
         if art.get("credit"):
-            p.append(f'<rect x="0" y="{band-62:.0f}" width="{w}" height="62" '
+            p.append(f'<rect x="0" y="{band-46:.0f}" width="{w}" height="46" '
                      f'fill="#000000" opacity="0.42"/>')
-            p.append(f'<text x="{w-96}" y="{band-20:.0f}" font-size="33" text-anchor="end" '
+            p.append(f'<text x="{w-96}" y="{band-16:.0f}" font-size="22" text-anchor="end" '
                      f'fill="#ffffff" opacity="0.9">{esc(art["credit"])}</text>')
         bottom = h - 100
         meta = []
@@ -1356,24 +1356,24 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         if date:
             meta.append(esc(date.replace("-", ".")))
         if meta:
-            p.append(f'<text x="96" y="{h-52}" font-size="38" fill="{dim}">'
+            p.append(f'<text x="96" y="{h-60}" font-size="25" fill="{dim}">'
                      f'{" · ".join(meta)}</text>')
     else:
-        top, bottom = 194, h - 158
+        top, bottom = 172, h - 152
         p.append(f'<rect x="58" y="58" width="{w-116}" height="{h-116}" fill="none" '
                  f'stroke="{signal}" stroke-width="1.4" opacity="0.45"/>')
         if channel:
-            p.append(f'<text x="96" y="110" font-size="42" font-weight="700" letter-spacing="1" '
+            p.append(f'<text x="96" y="102" font-size="28" font-weight="700" letter-spacing="1" '
                      f'fill="{ink}">{esc(channel)}</text>')
         if date:
-            p.append(f'<text x="{w-96}" y="110" font-size="39" font-family="{MONO}" '
+            p.append(f'<text x="{w-96}" y="102" font-size="26" font-family="{MONO}" '
                      f'letter-spacing="1" text-anchor="end" fill="{dim}">'
                      f'{esc(date.replace("-", "."))}</text>')
-        p.append(f'<line x1="96" y1="146" x2="{w-96}" y2="146" stroke="{rule}" stroke-width="1.5"/>')
+        p.append(f'<line x1="96" y1="130" x2="{w-96}" y2="130" stroke="{rule}" stroke-width="1.5"/>')
         p.append(f'<line x1="96" y1="{h-108}" x2="{w-96}" y2="{h-108}" stroke="{rule}" '
                  f'stroke-width="1.5"/>')
     if total > 1:
-        p.append(f'<text x="{w-96}" y="{h-52}" font-size="42" font-family="{MONO}" letter-spacing="2" '
+        p.append(f'<text x="{w-96}" y="{h-60}" font-size="28" font-family="{MONO}" letter-spacing="2" '
                  f'text-anchor="end" fill="{dim}">{n:02d} / {total:02d}</text>')
     return p, top, bottom
 
@@ -1467,8 +1467,10 @@ def _cover_card(headline: str, sub: str, badge: str, total: int, date: str, chan
     lines, size = _fit(headline, 104 if not art else 80, inner, 4 if not art else 3,
                        floor=62 if not art else 50)
     line_h = size * 1.26
-    sub_lines, sub_size = _sentence_fit(sub, 36, inner - 40, 3 if not art else 2)
-    sub_h = (54 + len(sub_lines) * sub_size * 1.55) if sub_lines else 0
+    # 줄 수를 늘려 주지 않으면 글씨를 키워도 소용이 없습니다 — `_sentence_fit` 이 줄 안에
+    # 넣으려고 도로 줄여 버립니다. 두 줄로 묶어 두었더니 44 로 올려도 36 으로 되돌아왔습니다.
+    sub_lines, sub_size = _sentence_fit(sub, 44, inner - 40, 3)
+    sub_h = (44 + len(sub_lines) * sub_size * 1.55) if sub_lines else 0
     badge_h = 96 if badge else 0
     y = top + max(0, (bottom - top - (line_h * len(lines) + sub_h + badge_h)) / 2)
 
@@ -1476,7 +1478,7 @@ def _cover_card(headline: str, sub: str, badge: str, total: int, date: str, chan
     y += _title_block(p, lines, size, 126, y, ink, signal)
 
     if sub_lines:
-        y += 54
+        y += 44
         for i, line in enumerate(sub_lines):
             p.append(f'<text x="126" y="{y+i*sub_size*1.55:.0f}" font-size="{sub_size:.0f}" '
                      f'fill="{dim}">{esc(line)}</text>')
@@ -1495,9 +1497,9 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
     p, top, bottom = _card_frame(CARD_FACES["numbers"], n, total, date=date, channel=channel)
     inner = w - 192
 
-    p.append(f'<text x="96" y="{top+40:.0f}" font-size="49" font-weight="700" letter-spacing="2.5" '
-             f'fill="{ink}" opacity="0.9">오늘의 숫자</text>')
-    head_h = 104
+    p.append(f'<text x="96" y="{top+66:.0f}" font-size="80" font-weight="800" letter-spacing="-1" '
+             f'fill="{ink}">오늘의 숫자</text>')
+    head_h = 132
     inner = w - 192
 
     def measure(cap: float) -> list[tuple]:
@@ -1573,7 +1575,7 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
         blocks.append(("number", (value, v_size, lab, lab_size),
                        v_size * 0.82 + 22 + lab_size * 1.35 * len(lab) + 44))
 
-    body, b_size = _fit(str(issue.get("one_liner", "")), 39 if not art else 36, inner, 4)
+    body, b_size = _fit(str(issue.get("one_liner", "")), 46 if not art else 43, inner, 4)
     if body:
         blocks.append(("body", (body, b_size), b_size * 1.55 * len(body) + 34))
 
@@ -1626,18 +1628,18 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
 
     # 항목이 적은 날은 글씨를 키운다. 같은 크기로 두면 카드가 '덜 만든 것' 처럼 비어 보인다.
     picked = items[:6]
-    base = {1: 50, 2: 46, 3: 41}.get(len(picked), 35)
+    base = {1: 58, 2: 54, 3: 48}.get(len(picked), 42)
     rows = []
     for item in picked:
         lines, size = _fit(item, base, inner, 2)
         rows.append((lines, size, size * 1.5 * len(lines) + 42))
 
-    head_h = 136
+    head_h = 158
     while rows and head_h + sum(r[2] for r in rows) > bottom - top:
         rows.pop()
     y = top + max(0, (bottom - top - head_h - sum(r[2] for r in rows)) / 2)
 
-    p.append(f'<text x="96" y="{y+36:.0f}" font-size="49" font-weight="700" letter-spacing="2.5" '
+    p.append(f'<text x="96" y="{y+62:.0f}" font-size="80" font-weight="800" letter-spacing="-1" '
              f'fill="{signal}">{esc(title)}</text>')
     y += head_h
     for i, (lines, size, height) in enumerate(rows, start=1):
