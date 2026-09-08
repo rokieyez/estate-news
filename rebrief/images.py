@@ -1500,7 +1500,8 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         if date:
             meta.append(esc(date.replace("-", ".")))
         if meta:
-            mark, used = _logo_tag(96, h - 118, 42, white=ground != CARD_PAPER[0])
+            # 글자 높이의 80% (2026-09-08 사용자 지시). y 는 옛 가운데선(983)에 맞춥니다.
+            mark, used = _logo_tag(96, h - 114, 34, white=ground != CARD_PAPER[0])
             p.append(mark)
             p.append(f'<text x="{96 + (used + 14 if used else 0):.0f}" y="{h-80}" font-size="25" '
                      f'fill="{dim}">{" · ".join(meta)}</text>')
@@ -1509,7 +1510,8 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         p.append(f'<rect x="58" y="58" width="{w-116}" height="{h-116}" fill="none" '
                  f'stroke="{signal}" stroke-width="1.4" opacity="0.45"/>')
         if channel:
-            mark, used = _logo_tag(96, 66, 44, white=True)
+            # 글자 높이의 80% (2026-09-08 사용자 지시). y 는 옛 가운데선(88)에 맞춥니다.
+            mark, used = _logo_tag(96, 70, 35, white=True)
             p.append(mark)
             p.append(f'<text x="{96 + (used + 14 if used else 0):.0f}" y="102" font-size="28" '
                      f'font-weight="700" letter-spacing="1" fill="{ink}">{esc(channel)}</text>')
