@@ -438,12 +438,17 @@ def _build_periods(env, source: Path, dest: Path, *, stem: str, title: str) -> l
 
 # 블로그에 올릴 때 실제로 쓰는 파일들 (문서가 아니라 '첨부물')
 ZIP_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg",
-             "card-*.png", "card-*.svg",          # 유튜브 게시물용 카드뉴스
              "script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv",
              "policy/*"]      # 정부 보도자료 원본(HWP·PDF)도 함께 묶는다
 
+# 카드뉴스는 따로 묶습니다 — 가는 곳이 다릅니다.
+# 블로그 첨부물은 네이버 글에 올리고, 카드뉴스는 유튜브 게시물에 올립니다.
+# 한 봉투에 넣으면 유튜브에 올릴 때마다 필요 없는 자막·컷 리스트를 골라내야 합니다.
+CARD_GLOBS = ["card-*.png", "card-*.svg"]
 
-def _build_zip(dest: Path, name: str = "files.zip") -> dict | None:
+
+def _build_zip(dest: Path, name: str = "files.zip",
+               globs: list[str] | None = None) -> dict | None:
     """그림·자막·컷 리스트를 한 파일로 묶는다. 브라우저에서 링크 한 번으로 받게.
 
     브라우저에서 자바스크립트로 묶지 않고 만들 때 미리 묶어 둔다 — 휴대폰에서도 확실히 받아진다.
@@ -454,7 +459,7 @@ def _build_zip(dest: Path, name: str = "files.zip") -> dict | None:
     import zipfile
 
     files: list[Path] = []
-    for pattern in ZIP_GLOBS:
+    for pattern in (globs or ZIP_GLOBS):
         files += sorted(dest.glob(pattern))
     files = [f for f in files if f.name != name]
     files = [f for f in files if f.is_file()]
@@ -513,10 +518,11 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
 
     assets = _copy_assets(day, dest)
     bundle = _build_zip(dest, f"{day.name}_blogfiles.zip")
+    cards = _build_zip(dest, f"{day.name}_card_news.zip", CARD_GLOBS)
     if assets:
         # 그림 모아보기 페이지. 휴대폰에서 길게 눌러 저장하면 바로 블로그에 올릴 수 있다.
         html = env.get_template("site_images.html.j2").render(
-            date=day.name, images=assets, bundle=bundle,
+            date=day.name, images=assets, bundle=bundle, cards=cards,
         )
         (dest / "images.html").write_text(html, encoding="utf-8")
         pages.append({
@@ -525,6 +531,7 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
         })
 
     entry = {"date": day.name, "pages": pages, "checklist": None, "bundle": bundle,
+             "cards": cards,
              "headline": info["headline"], "description": info["description"],
              "image": info["image"], "size": info["size"]}
     cl = day / "checklist.json"

@@ -44,8 +44,12 @@
 </div>
 <div class="wrap">
 {% if bundle %}
-  <a class="zip" href="{{ bundle.href }}" download>⬇ 첨부파일 모두 내려받기
+  <a class="zip" href="{{ bundle.href }}" download>⬇ 블로그 첨부파일 내려받기
     <small>그림·자막·컷 리스트 {{ bundle.count }}개 · {{ bundle.size }} (zip)</small></a>
+{% endif %}
+{% if cards %}
+  <a class="zip" href="{{ cards.href }}" download>⬇ 카드뉴스 내려받기
+    <small>유튜브 게시물용 정사각 카드 {{ cards.count }}장 · {{ cards.size }} (zip)</small></a>
 {% endif %}
   <div class="hint">
     기사 속 숫자로 자동 생성한 그림입니다. 휴대폰에서는 <b>그림을 길게 눌러 저장</b>한 뒤

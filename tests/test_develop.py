@@ -338,6 +338,8 @@ def test_site_bundles_attachments_into_one_zip(cfg, tmp_path):
     (day / "brief.md").write_text("# 브리핑", encoding="utf-8")
     (day / "img-1-stat-card.png").write_bytes(b"\x89PNG")
     (day / "thumb-shorts.png").write_bytes(b"\x89PNG")
+    (day / "card-1-cover.png").write_bytes(b"\x89PNG")      # 카드뉴스는 따로 묶인다
+    (day / "card-2-numbers.png").write_bytes(b"\x89PNG")
     (day / "script-shorts.srt").write_text("1\n00:00:00,000 --> 00:00:02,000\n자막\n", encoding="utf-8")
     (day / "blog.md").write_text("본문", encoding="utf-8")      # 문서는 첨부물이 아니다
 
@@ -348,11 +350,54 @@ def test_site_bundles_attachments_into_one_zip(cfg, tmp_path):
     assert bundle.exists() and not (dest / "2026-09-07" / "files.zip").exists()
     names = zipfile.ZipFile(bundle).namelist()
     assert set(names) == {"img-1-stat-card.png", "thumb-shorts.png", "script-shorts.srt"}
-    assert "첨부파일 모두 내려받기" in (dest / "index.html").read_text(encoding="utf-8")
+    assert "블로그 첨부파일 내려받기" in (dest / "index.html").read_text(encoding="utf-8")
     # latest/ 는 복사본이라 파일 이름은 그대로 그날 날짜를 단다
     assert (dest / "latest" / "2026-09-07_blogfiles.zip").exists()
     assert "2026-09-07_blogfiles.zip" in (dest / "latest" / "images.html").read_text(encoding="utf-8")
     assert 'href="latest/2026-09-07_blogfiles.zip"' in (dest / "index.html").read_text(encoding="utf-8")
+
+
+def test_site_packs_cards_into_their_own_zip(cfg, tmp_path):
+    """카드뉴스는 블로그 첨부물과 다른 봉투에 담는다.
+
+    가는 곳이 다르다 — 첨부물은 네이버 글에, 카드는 유튜브 게시물에 올린다.
+    한 봉투에 넣으면 유튜브에 올릴 때마다 자막·컷 리스트를 골라내야 한다.
+    """
+    import zipfile
+
+    from rebrief.site import build_site
+
+    day = cfg.output_dir / "2026-09-07"
+    day.mkdir(parents=True)
+    (day / "brief.md").write_text("# 브리핑", encoding="utf-8")
+    (day / "img-1-stat-card.png").write_bytes(b"\x89PNG")
+    (day / "card-1-cover.png").write_bytes(b"\x89PNG")
+    (day / "card-2-numbers.png").write_bytes(b"\x89PNG")
+
+    dest = build_site(cfg, tmp_path / "site")
+    cards = dest / "2026-09-07" / "2026-09-07_card_news.zip"
+    assert cards.exists()
+    assert set(zipfile.ZipFile(cards).namelist()) == {"card-1-cover.png", "card-2-numbers.png"}
+    # 블로그 봉투에는 카드가 없다
+    blog = zipfile.ZipFile(dest / "2026-09-07" / "2026-09-07_blogfiles.zip").namelist()
+    assert not [n for n in blog if n.startswith("card-")]
+    index = (dest / "index.html").read_text(encoding="utf-8")
+    assert 'href="latest/2026-09-07_card_news.zip"' in index and "카드뉴스 내려받기" in index
+    assert "2026-09-07_card_news.zip" in (dest / "latest" / "images.html").read_text(encoding="utf-8")
+
+
+def test_site_omits_card_zip_when_there_are_no_cards(cfg, tmp_path):
+    """카드가 없는 날엔 빈 봉투를 만들지 않는다 (images.cards: false 인 경우)."""
+    from rebrief.site import build_site
+
+    day = cfg.output_dir / "2026-09-07"
+    day.mkdir(parents=True)
+    (day / "brief.md").write_text("# 브리핑", encoding="utf-8")
+    (day / "img-1-stat-card.png").write_bytes(b"\x89PNG")
+
+    dest = build_site(cfg, tmp_path / "site")
+    assert not (dest / "2026-09-07" / "2026-09-07_card_news.zip").exists()
+    assert "카드뉴스 내려받기" not in (dest / "index.html").read_text(encoding="utf-8")
 
 
 # ── 짧게 읽히는 글: 용어 풀이 · 그래서 나는? · 구조 ────────

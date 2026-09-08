@@ -83,8 +83,14 @@
 
   {% if today.bundle %}
   <a class="big" href="latest/{{ today.bundle.href }}" download style="background:#eef4fd;border-color:#cde2fb">
-    <span class="label">⬇ 첨부파일 모두 내려받기</span>
+    <span class="label">⬇ 블로그 첨부파일 내려받기</span>
     <span class="desc">그림·자막·컷 리스트 {{ today.bundle.count }}개 · {{ today.bundle.size }} (zip)</span>
+  </a>
+  {% endif %}
+  {% if today.cards %}
+  <a class="big" href="latest/{{ today.cards.href }}" download style="background:#eaf4f8;border-color:#bcdde9">
+    <span class="label">⬇ 카드뉴스 내려받기</span>
+    <span class="desc">유튜브 게시물용 정사각 카드 {{ today.cards.count }}장 · {{ today.cards.size }} (zip)</span>
   </a>
   {% endif %}
   {% for page in today.pages %}
