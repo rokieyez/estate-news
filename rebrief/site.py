@@ -575,7 +575,8 @@ def _copy_assets(day: Path, dest: Path) -> list[dict]:
 
 # 카드 파일 이름(card-<쪽>-<낯>.png)에서 낯을 사람 말로 옮긴다.
 _CARD_FACES = {"cover": "표지", "numbers": "오늘의 숫자", "issue": "이슈",
-               "watch": "내일 볼 것", "rest": "나머지 이슈"}
+               "rest": "나머지 이슈",
+               "watch": "내일 볼 것"}   # 2026-09-09 전 카드에만 있는 낯. 지난 날짜 이름표용
 _CARD_NAME = re.compile(r"^card-(\d+)-([a-z]+)$")
 
 _ASSET_LABELS = {
