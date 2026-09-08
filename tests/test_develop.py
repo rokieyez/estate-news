@@ -2049,9 +2049,9 @@ def test_cards_do_not_call_the_model(cfg, monkeypatch):
 def test_card_palette_stays_readable():
     """카드 색은 눈이 아니라 대비로 정한다.
 
-    처음 그린 판에서 두 곳이 걸렸다 — 주황 위 낮은 글씨 2.78, 종이 위 신호색 2.75.
-    둘 다 작은 글씨라 4.5 를 넘겨야 한다 (2026-09-08 실측). 그 뒤 "주황이 세다" 는
-    지적을 받아 채도를 낮췄는데, 색을 바꿀 때마다 대비가 다시 무너질 수 있어 여기서 지킨다.
+    색을 고를 때마다 실제로 걸렸다 — 주황 판에서 두 곳(2.78·2.75), 청사진 판에서 또 두 곳
+    (짙은 낯의 낮은 글씨 4.29, 밝은 낯의 낮은 글씨 3.72). 모두 작은 글씨라 4.5 를 넘겨야 한다.
+    눈으로 보면 "괜찮아 보이는" 값들이라 여기서 재서 지킨다.
     """
     from rebrief import images
 
@@ -2064,18 +2064,12 @@ def test_card_palette_stays_readable():
         hi, lo = sorted((lum(a), lum(b)), reverse=True)
         return (hi + 0.05) / (lo + 0.05)
 
-    pairs = [
-        ("어둠 위 흰 글씨", images.CARD_LIGHT, images.CARD_INK),
-        ("어둠 위 낮은 글씨", images.CARD_DIM, images.CARD_INK),
-        ("종이 위 검은 글씨", images.INK, images.CARD_PAPER),
-        ("종이 위 낮은 글씨", images.CARD_DIM_PAPER, images.CARD_PAPER),
-        ("종이 위 신호색", images.CARD_SIGNAL_DEEP, images.CARD_PAPER),
-        ("어둠 위 신호색", images.CARD_SIGNAL, images.CARD_INK),
-        ("흙빛 위 흰 글씨", images.CARD_LIGHT, images.CARD_CLAY),
-        ("흙빛 위 낮은 글씨", images.CARD_CLAY_DIM, images.CARD_CLAY),
-    ]
-    for name, fg, bg in pairs:
-        assert ratio(fg, bg) >= 4.5, f"{name} 대비 {ratio(fg, bg):.2f}"
+    faces = {"남색": images.CARD_DARK, "짙은 남색": images.CARD_FLOOD,
+             "밝은 청사진": images.CARD_PAPER}
+    for face_name, (ground, ink, dim, _rule, signal) in faces.items():
+        for role, color in (("글씨", ink), ("낮은 글씨", dim), ("신호색", signal)):
+            got = ratio(color, ground)
+            assert got >= 4.5, f"{face_name} 위 {role} 대비 {got:.2f}"
 
 
 def test_cards_embed_the_latin_fonts():
@@ -2083,7 +2077,7 @@ def test_cards_embed_the_latin_fonts():
     from rebrief import images
 
     css = images._font_css()
-    assert "BigShoulders" in css and "GeistMono" in css
+    assert "IBMPlexMono" in css and "IBMPlexMonoBold" in css
     assert "base64," in css
     cover = images.cards(_brief_for_cards(), date="2026-09-08")[0].svg
     assert "@font-face" in cover
