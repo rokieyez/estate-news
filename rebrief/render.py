@@ -272,8 +272,25 @@ class Renderer:
             channel=str(self.cfg.get("video.channel_name", "") or "부동산 브리핑"),
             key_numbers=[n.__dict__ if hasattr(n, "__dict__") else n for n in (key_numbers or [])],
             max_cards=int(cfg.get("cards_max", 7)),
+            art=self._card_art() if cfg.get("cards_art", True) else None,
         )
         return [self._write_image(img, cfg, prefix="") for img in made]
+
+    def _card_art(self) -> list[Path]:
+        """카드 위쪽에 얹을 그림 후보. 사람이 넣어 둔 사진이 먼저입니다.
+
+        · 그날 폴더에 `photo-1.jpg` 처럼 넣어 두면 표지부터 차례로 씁니다.
+        · 없으면 그날 그린 인포그래픽(`img-*.png`)을 씁니다. **기사 사진은 쓰지 않습니다** —
+          저작권이 있고 애초에 수집하지도 않습니다.
+
+        표지(`img-0-cover`)와 썸네일은 이미 글자가 박혀 있어 카드 제목과 겹치므로 뺍니다.
+        `cards()` 가 세로로 긴 인포그래픽을 한 번 더 거릅니다.
+        """
+        photos = sorted(f for pat in ("photo-*.jpg", "photo-*.jpeg", "photo-*.png", "photo-*.webp")
+                        for f in self.out_dir.glob(pat))
+        charts = [f for f in sorted(self.out_dir.glob("img-*.png"))
+                  if not f.name.startswith("img-0-cover")]
+        return photos + charts
 
     def images(self, brief: DailyBrief, history: list[dict] | None = None,
                post: BlogPost | None = None) -> dict[int, str]:

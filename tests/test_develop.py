@@ -2028,6 +2028,62 @@ def _brief_for_cards(issues: int = 5) -> dict:
     }
 
 
+def _fake_png(path, width: int, height: int) -> None:
+    """가로·세로만 맞는 진짜 PNG 한 장. 그림 라이브러리를 들이지 않으려고 직접 만든다."""
+    import struct
+    import zlib
+
+    def chunk(tag, payload):
+        body = tag + payload
+        return struct.pack(">I", len(payload)) + body + struct.pack(">I", zlib.crc32(body))
+
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    raw = b"".join(b"\x00" + b"\xff\xff\xff" * width for _ in range(height))
+    path.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr)
+                     + chunk(b"IDAT", zlib.compress(raw)) + chunk(b"IEND", b""))
+
+
+def test_card_art_band_skips_tall_graphics_but_keeps_photos(tmp_path):
+    """카드 위 띠는 가득 채우므로 세로로 긴 인포그래픽은 축·범례가 잘린다. 그건 안 쓴다.
+
+    사람이 넣어 둔 사진(`photo-*`)은 잘려도 되므로 비율을 보지 않는다.
+    """
+    from rebrief import images
+
+    wide = tmp_path / "img-1-stat-card.png"
+    tall = tmp_path / "img-stats-map.png"
+    photo = tmp_path / "photo-1.png"
+    _fake_png(wide, 200, 112)          # 1.79 — 표·수치 카드
+    _fake_png(tall, 112, 122)          # 0.92 — 자치구 지도
+    _fake_png(photo, 112, 122)         # 세로지만 사진이라 그대로 쓴다
+
+    assert images._art_band(wide) is not None
+    assert images._art_band(tall) is None
+    assert images._art_band(photo) is not None
+    assert images._art_band(tmp_path / "없는파일.png") is None
+
+
+def test_cards_put_the_graphic_on_top_and_the_words_below(cfg, tmp_path):
+    """위쪽은 그림, 아래쪽은 글. 그림이 있어도 본문 한 줄은 반드시 남는다.
+
+    처음 만들었을 때 띠를 548px 로 잡았더니 아래 판이 348px 밖에 안 남아 이슈 카드의
+    한 줄 요약이 통째로 잘려 나갔습니다. 그래서 여기서 재서 지킵니다.
+    """
+    from rebrief import images
+
+    art = tmp_path / "img-1-stat-card.png"
+    _fake_png(art, 400, 224)
+    got = images.cards(_brief_for_cards(), date="2026-09-08", channel="부동산 브리핑",
+                       art=[art])
+    cover = got[0].svg
+    assert "base64," in cover and "preserveAspectRatio=\"xMidYMid slice\"" in cover
+    assert f'height="{images.CARD_BAND}"' in cover
+    # 그림은 표지에 한 장만 들어갔고 나머지는 글자 카드로 남는다
+    assert sum(1 for g in got if "<image" in g.svg) == 1
+    issue = next(g for g in got if g.slug.endswith("-issue"))
+    assert "번째 이야기입니다." in issue.svg
+
+
 def test_cards_are_square_and_numbered(cfg):
     from rebrief import images
 
