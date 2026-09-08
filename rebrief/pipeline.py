@@ -272,6 +272,8 @@ def _generate_with_llm(
         result.warnings.append(f"블로그 생성 실패 — {exc}")
 
     slot_files = renderer.images(brief, history=history, post=post)
+    # 유튜브 게시물용 카드뉴스. 브리핑을 나눠 담을 뿐이라 모델을 다시 부르지 않는다.
+    made["cards"] = renderer.cards(brief)
     keys: list = []
     if post is not None:
         # 오늘의 핵심 수치: 브리핑 datapoint 가운데 글에 실제로 쓰인 것. 블로그 카드·강조·썸네일 배지가 함께 쓴다.

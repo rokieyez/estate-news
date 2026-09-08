@@ -257,6 +257,24 @@ class Renderer:
             "data.json", json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
         )
 
+    def cards(self, brief: DailyBrief, key_numbers: list | None = None) -> list[str]:
+        """유튜브 게시물용 카드뉴스. 만든 파일 이름들을 돌려준다.
+
+        이미 만들어 둔 브리핑을 나눠 담는 것이라 **모델을 새로 부르지 않습니다.**
+        그래서 이 기능을 켜도 하루 비용이 늘지 않습니다.
+        """
+        cfg = self.cfg.get("images", {}) or {}
+        if not (cfg.get("enabled", True) and cfg.get("cards", True)):
+            return []
+        made = images_mod.cards(
+            brief.model_dump() if hasattr(brief, "model_dump") else dict(brief),
+            date=self.date,
+            channel=str(self.cfg.get("video.channel_name", "") or "부동산 브리핑"),
+            key_numbers=[n.__dict__ if hasattr(n, "__dict__") else n for n in (key_numbers or [])],
+            max_cards=int(cfg.get("cards_max", 7)),
+        )
+        return [self._write_image(img, cfg, prefix="") for img in made]
+
     def images(self, brief: DailyBrief, history: list[dict] | None = None,
                post: BlogPost | None = None) -> dict[int, str]:
         """수치를 인포그래픽으로 만든다. 블로그 글이 있으면 그 이미지 자리에 맞춰 만든다.

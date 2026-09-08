@@ -1964,3 +1964,83 @@ def test_run_survives_a_truncated_script(cfg, monkeypatch):
     assert (out / "brief.md").exists() and (out / "blog.md").exists()
     assert not (out / "script-longform.md").exists()
     assert any("영상 대본" in w for w in result.warnings)
+
+
+# ── 카드뉴스 (유튜브 게시물용) ───────────────────────────────
+
+
+def _brief_for_cards(issues: int = 5) -> dict:
+    return {
+        "headline": "분당 집값 1위·서울 월세 162만원",
+        "market_temperature": "수도권 전반의 가격·임대료 상승 압력이 뚜렷하다.",
+        "tomorrow_watch": ["은마아파트 공사비 협상", "주간 아파트 가격 동향 발표"],
+        "issues": [
+            {"title": f"이슈 {i}", "category": "가격동향", "one_liner": f"{i}번째 이야기입니다.",
+             "what_happened": [f"사실 {i}-1 입니다.", f"사실 {i}-2 입니다."],
+             "numbers": [{"value": f"{10 + i}", "unit": "%", "label": f"수치 {i}"}]}
+            for i in range(1, issues + 1)
+        ],
+    }
+
+
+def test_cards_are_square_and_numbered(cfg):
+    from rebrief import images
+
+    got = images.cards(_brief_for_cards(), date="2026-09-08", channel="부동산 브리핑")
+    assert 5 <= len(got) <= 7                       # 유튜브 게시물 한 묶음
+    assert got[0].slug == "card-1-cover"
+    for img in got:
+        assert 'width="1080" height="1080"' in img.svg      # 정사각 — 세로는 잘리는 화면이 있다
+        assert f"/ {len(got)}" in img.svg                   # 쪽번호가 실제 장수와 맞는다
+    assert "오늘의 숫자" in got[1].svg
+    assert "내일 볼 것" in got[-1].svg
+
+    # 자료가 적은 날은 억지로 채우지 않고 줄어든다
+    small = images.cards({"headline": "조용한 하루", "issues": [
+        {"title": "하나", "one_liner": "한 줄", "numbers": []}]}, date="2026-09-08")
+    assert 0 < len(small) < 5
+    assert "1 / " not in small[0].svg or len(small) > 1      # 한 장이면 쪽번호를 찍지 않는다
+
+
+def test_cards_badge_only_uses_a_number_that_is_in_the_headline():
+    """'6' 이 '162만원' 안의 6 에 걸려 엉뚱한 배지가 달렸다 (2026-09-08)."""
+    from rebrief import images
+
+    brief = _brief_for_cards()
+    brief["issues"][0]["numbers"] = [{"value": "6", "unit": "억원 이하", "label": "대출 기준"}]
+    cover = images.cards(brief, date="2026-09-08")[0].svg
+    assert "억원 이하" not in cover          # 제목에 없는 수치는 배지로 달지 않는다
+
+    brief["issues"][0]["numbers"] = [{"value": "162", "unit": "만원", "label": "평균 월세"}]
+    assert "162만원" in images.cards(brief, date="2026-09-08")[0].svg
+
+
+def test_cards_do_not_call_the_model(cfg, monkeypatch):
+    """카드뉴스는 이미 만든 브리핑을 나눠 담을 뿐이라 하루 비용이 늘지 않는다."""
+    from rebrief import pipeline
+    from tests.test_pipeline import FakeGenerator
+
+    calls = {"n": 0}
+
+    class Counting(FakeGenerator):
+        def _count(self):
+            calls["n"] += 1
+
+        def generate_brief(self, *a, **k):
+            self._count(); return super().generate_brief(*a, **k)
+
+        def generate_blog(self, *a, **k):
+            self._count(); return super().generate_blog(*a, **k)
+
+        def generate_video(self, *a, **k):
+            self._count(); return super().generate_video(*a, **k)
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", Counting)
+    cfg.settings["images"]["enabled"] = True
+    cfg.settings["images"]["cards"] = True
+    pipeline.run(cfg, run_date="2026-09-06", use_llm=True)
+
+    assert calls["n"] == 3                       # 브리핑·블로그·대본. 카드 때문에 늘지 않았다
+    made = sorted(p.name for p in (cfg.output_dir / "2026-09-06").glob("card-*.svg"))
+    assert made and made[0].startswith("card-1-cover")

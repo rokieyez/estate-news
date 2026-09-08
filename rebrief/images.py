@@ -1126,3 +1126,304 @@ def svg_to_png(svg_path: Path, png_path: Path, scale: int = 2) -> bool:
             log.warning("PNG 변환 실패 (%s). SVG 는 그대로 남습니다.", exc)
             return False
     return png_path.exists()
+
+
+# ── 카드뉴스 (유튜브 커뮤니티 게시물용) ──────────────────────
+
+CARD_SIZE = (1080, 1080)   # 정사각. 유튜브 게시물은 세로를 잘라 보여 주는 화면이 있다.
+
+
+def _card_frame(n: int, total: int, *, date: str = "", channel: str = "") -> list[str]:
+    """카드 한 장의 바탕 — 위 띠(채널·날짜)와 오른쪽 아래 쪽번호."""
+    w, h = CARD_SIZE
+    p = svg_open(w, h)
+    p.append(f'<rect width="{w}" height="{h}" fill="{SURFACE}"/>')
+    p.append(f'<rect x="0" y="0" width="{w}" height="8" fill="{BLUE}"/>')
+    if channel:
+        p.append(f'<text x="72" y="86" font-size="30" font-weight="700" fill="{BLUE}">{esc(channel)}</text>')
+    if date:
+        p.append(f'<text x="{w - 72}" y="86" font-size="28" text-anchor="end" fill="{MUTED}">{esc(date)}</text>')
+    if total > 1:
+        p.append(f'<text x="{w - 72}" y="{h - 56}" font-size="30" font-weight="700" '
+                 f'text-anchor="end" fill="{BASELINE}">{n} / {total}</text>')
+    return p
+
+
+def _fit(text: str, size: float, width: float, max_lines: int, floor: float = 30) -> tuple[list[str], float]:
+    """줄 수 안에 들어갈 때까지 글씨를 줄인다. 넘치면 잘라 내는 대신 작게 만든다."""
+    lines = wrap(text, size, width)
+    while len(lines) > max_lines and size > floor:
+        size -= 4
+        lines = wrap(text, size, width)
+    return lines[:max_lines], size
+
+
+def _sentence_fit(text: str, size: float, width: float, max_lines: int) -> tuple[list[str], float]:
+    """문장 중간에서 끊기지 않게 자른다.
+
+    그냥 줄 수로 자르면 "…수도권 전반의" 처럼 말이 끊긴 채 카드에 박힙니다.
+    문장을 하나씩 덧붙여 보고 넘치기 직전까지만 담습니다.
+    """
+    text = " ".join((text or "").split())
+    if not text:
+        return [], size
+    buf = ""
+    for chunk in re.split(r"(?<=[.!?다])\s+", text):
+        if not chunk:
+            continue
+        trial = f"{buf} {chunk}".strip()
+        if len(wrap(trial, size, width)) > max_lines and buf:
+            break
+        buf = trial
+    lines = wrap(buf or text, size, width)
+    while len(lines) > max_lines and size > 26:      # 한 문장도 안 들어가면 글씨를 줄인다
+        size -= 3
+        lines = wrap(buf or text, size, width)
+    return lines[:max_lines], size
+
+
+def _cover_card(headline: str, sub: str, badge: str, total: int, date: str, channel: str) -> Image:
+    w, h = CARD_SIZE
+    p = _card_frame(1, total, date=date, channel=channel)
+    inner = w - 144 - 40
+    lines, size = _fit(headline, 96, inner, 4, floor=52)
+    line_h = size * 1.22
+    top = (h - line_h * len(lines)) / 2 - 30 + size * 0.8
+    p.append(f'<rect x="72" y="{top - size * 0.82:.0f}" width="12" '
+             f'height="{line_h * len(lines):.0f}" rx="4" fill="{BLUE}"/>')
+    for i, line in enumerate(lines):
+        p.append(f'<text x="112" y="{top + i * line_h:.0f}" font-size="{size:.0f}" '
+                 f'font-weight="800" fill="{INK}">{esc(line)}</text>')
+    if sub:
+        sub_lines, sub_size = _sentence_fit(sub, 38, inner, 3)
+        base = top + line_h * len(lines) + 34
+        for i, line in enumerate(sub_lines):
+            p.append(f'<text x="112" y="{base + i * (sub_size * 1.4):.0f}" '
+                     f'font-size="{sub_size:.0f}" fill="{INK_2}">{esc(line)}</text>')
+    if badge:
+        bw = text_width(badge, 46) + 60
+        p.append(f'<rect x="72" y="{h - 200}" width="{bw:.0f}" height="82" rx="41" fill="{BLUE}"/>')
+        p.append(f'<text x="{72 + bw / 2:.0f}" y="{h - 145}" font-size="46" font-weight="800" '
+                 f'text-anchor="middle" fill="#ffffff">{esc(badge)}</text>')
+    p.append("</svg>")
+    return Image("card-1-cover", "\n".join(p), headline)
+
+
+def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str) -> Image:
+    """오늘의 숫자 — 최대 3개를 크게. 블로그에서 뺀 그 카드가 여기서는 주인공이다."""
+    w, h = CARD_SIZE
+    top, bottom = 150, h - 130
+    inner = w - 144
+
+    rows = []
+    for dp in nums[:3]:
+        value = f"{dp.get('value', '')}{dp.get('unit', '')}".strip()
+        v_lines, v_size = _fit(value, 84, inner, 1, floor=44)
+        label, l_size = _fit(dp.get("label", ""), 36, inner, 2)
+        rows.append((v_lines[0] if v_lines else "", v_size, label, l_size,
+                     v_size + 12 + l_size * 1.3 * len(label) + 54))
+
+    head_h = 52 * 1.6 + 46
+    used = head_h + sum(r[4] for r in rows)
+    y = top + max(0, (bottom - top - used) / 2)
+
+    p = _card_frame(n, total, date=date, channel=channel)
+    p.append(f'<text x="72" y="{y + 52:.0f}" font-size="52" font-weight="800" fill="{INK}">오늘의 숫자</text>')
+    y += head_h
+    for i, (value, v_size, label, l_size, height) in enumerate(rows):
+        p.append(f'<text x="72" y="{y + v_size * 0.86:.0f}" font-size="{v_size:.0f}" '
+                 f'font-weight="800" fill="{BLUE}">{esc(value)}</text>')
+        for j, line in enumerate(label):
+            p.append(f'<text x="72" y="{y + v_size + 12 + l_size + j * l_size * 1.3:.0f}" '
+                     f'font-size="{l_size:.0f}" fill="{INK_2}">{esc(line)}</text>')
+        y += height
+        if i < len(rows) - 1:
+            p.append(f'<line x1="72" y1="{y - 27:.0f}" x2="{w - 72}" y2="{y - 27:.0f}" '
+                     f'stroke="{GRID}" stroke-width="2"/>')
+    p.append("</svg>")
+    return Image(f"card-{n}-numbers", "\n".join(p), "오늘의 숫자")
+
+
+def _issue_card(issue: dict, n: int, total: int, date: str, channel: str) -> Image:
+    """이슈 한 건. 내용을 먼저 재고 세로 가운데에 놓는다.
+
+    위에서부터 쌓기만 하면 짧은 날 카드 아래 절반이 텅 빈 채로 남습니다. 자료가 적은 날은
+    적은 대로 가운데 모여 있어야 '덜 만든 것' 이 아니라 '그만큼인 것' 으로 보입니다.
+    `what_happened` 는 있으면 채우고 없으면 건너뜁니다 (data.json 요약본에는 없습니다).
+    """
+    w, h = CARD_SIZE
+    top, bottom = 150, h - 130          # 머리 띠와 쪽번호 사이가 쓸 수 있는 자리
+    inner = w - 144
+
+    # 1) 무엇을 그릴지 먼저 정하고 높이를 잰다
+    blocks: list[tuple] = []
+    cat = str(issue.get("category", "")).strip()
+    if cat:
+        blocks.append(("chip", cat, 28 * 1.9 + 22))
+
+    title, t_size = _fit(str(issue.get("title", "")), 66, inner, 3, floor=42)
+    blocks.append(("title", (title, t_size), t_size * 1.25 * len(title) + 34))
+
+    nums = [dp for dp in (issue.get("numbers") or []) if dp.get("value")][:1]
+    if nums:
+        dp = nums[0]
+        value = f"{dp.get('value', '')}{dp.get('unit', '')}".strip()
+        v_lines, v_size = _fit(value, 76, inner - 56, 1, floor=44)
+        label = str(dp.get("label", ""))
+        # 값이 상자의 절반을 넘으면 이름을 아래줄로 내린다. 옆에 두면 서로 바싹 붙는다.
+        stacked = text_width(v_lines[0], v_size) > (inner - 120) * 0.5
+        lab_lines, lab_size = _fit(label, 30, inner - 120, 2 if stacked else 1)
+        box_h = v_size * 1.6 + (lab_size * 1.35 * len(lab_lines) + 20 if stacked else 0) + 34
+        blocks.append(("number", (v_lines[0], v_size, lab_lines, lab_size, stacked, box_h),
+                       box_h + 40))
+
+    body, b_size = _fit(str(issue.get("one_liner", "")), 40, inner, 4)
+    if body:
+        blocks.append(("body", (body, b_size), b_size * 1.5 * len(body) + 40))
+
+    for fact in [f for f in (issue.get("what_happened") or []) if f][:3]:
+        lines, size = _fit(fact, 34, inner - 56, 2)
+        blocks.append(("fact", (lines, size), size * 1.4 * len(lines) + 28))
+
+    # 2) 넘치면 뒤에서부터 덜어 내고, 남으면 가운데로 내린다
+    while len(blocks) > 2 and sum(b[2] for b in blocks) > bottom - top:
+        blocks.pop()
+    used = sum(b[2] for b in blocks)
+    y = top + max(0, (bottom - top - used) / 2)
+
+    p = _card_frame(n, total, date=date, channel=channel)
+    for kind, value, height in blocks:
+        if kind == "chip":
+            p.append(chip(72, y, value, size=28))
+        elif kind == "title":
+            lines, size = value
+            for i, line in enumerate(lines):
+                p.append(f'<text x="72" y="{y + size * 0.85 + i * size * 1.25:.0f}" '
+                         f'font-size="{size:.0f}" font-weight="800" fill="{INK}">{esc(line)}</text>')
+        elif kind == "number":
+            text, size, lab_lines, lab_size, stacked, box_h = value
+            p.append(f'<rect x="72" y="{y:.0f}" width="{inner}" height="{box_h:.0f}" '
+                     f'rx="18" fill="{BLUE_SOFT}"/>')
+            p.append(f'<text x="112" y="{y + size * 1.12:.0f}" font-size="{size:.0f}" '
+                     f'font-weight="800" fill="{BLUE}">{esc(text)}</text>')
+            for i, line in enumerate(lab_lines):
+                if stacked:
+                    p.append(f'<text x="112" y="{y + size * 1.6 + lab_size + i * lab_size * 1.35:.0f}" '
+                             f'font-size="{lab_size:.0f}" fill="{INK_2}">{esc(line)}</text>')
+                else:
+                    p.append(f'<text x="{w - 112}" y="{y + size * 1.12:.0f}" '
+                             f'font-size="{lab_size:.0f}" text-anchor="end" fill="{INK_2}">{esc(line)}</text>')
+        elif kind == "body":
+            lines, size = value
+            for i, line in enumerate(lines):
+                p.append(f'<text x="72" y="{y + size + i * size * 1.5:.0f}" '
+                         f'font-size="{size:.0f}" fill="{INK}">{esc(line)}</text>')
+        elif kind == "fact":
+            lines, size = value
+            p.append(f'<circle cx="86" cy="{y + size * 0.55:.0f}" r="7" fill="{BASELINE}"/>')
+            for i, line in enumerate(lines):
+                p.append(f'<text x="120" y="{y + size + i * size * 1.4:.0f}" '
+                         f'font-size="{size:.0f}" fill="{INK_2}">{esc(line)}</text>')
+        y += height
+    p.append("</svg>")
+    return Image(f"card-{n}-issue", "\n".join(p), str(issue.get("title", "")))
+
+
+def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
+               date: str, channel: str) -> Image:
+    """제목 하나에 불릿 몇 줄. 이슈 카드와 같은 이유로 세로 가운데에 모은다."""
+    w, h = CARD_SIZE
+    top, bottom = 150, h - 130
+    inner = w - 200
+
+    rows = []
+    for item in items[:6]:
+        lines, size = _fit(item, 38, inner, 2)
+        rows.append((lines, size, size * 1.4 * len(lines) + 34))
+
+    head_h = 52 * 1.6 + 40
+    while rows and head_h + sum(r[2] for r in rows) > bottom - top:
+        rows.pop()
+    used = head_h + sum(r[2] for r in rows)
+    y = top + max(0, (bottom - top - used) / 2)
+
+    p = _card_frame(n, total, date=date, channel=channel)
+    p.append(f'<text x="72" y="{y + 52:.0f}" font-size="52" font-weight="800" '
+             f'fill="{INK}">{esc(title)}</text>')
+    y += head_h
+    for lines, size, height in rows:
+        p.append(f'<circle cx="88" cy="{y + size * 0.55:.0f}" r="8" fill="{BLUE}"/>')
+        for i, line in enumerate(lines):
+            p.append(f'<text x="124" y="{y + size + i * size * 1.4:.0f}" '
+                     f'font-size="{size:.0f}" fill="{INK}">{esc(line)}</text>')
+        y += height
+    p.append("</svg>")
+    return Image(f"card-{n}-{slug}", "\n".join(p), title)
+
+
+def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[dict] | None = None,
+          max_cards: int = 7) -> list[Image]:
+    """하루치 브리핑을 유튜브 게시물용 카드 5~7장으로.
+
+    **모델을 새로 부르지 않습니다.** 이미 만들어 둔 브리핑(headline·issues·numbers·
+    tomorrow_watch)을 그대로 나눠 담습니다. 그래서 카드를 켜도 하루 비용이 늘지 않습니다.
+
+    구성: 표지 → 오늘의 숫자 → 이슈 2~3장 → 그 밖의 소식 → 내일 볼 것.
+    자료가 모자란 날은 장수가 줄어듭니다. 억지로 채우지 않습니다.
+    """
+    issues = [i for i in (brief.get("issues") or []) if i.get("title")]
+    if not brief.get("headline") or not issues:
+        return []
+
+    nums = list(key_numbers or [])
+    if not nums:                       # 핵심 수치를 안 넘겨주면 이슈에서 주워 온다
+        for issue in issues:
+            for dp in issue.get("numbers") or []:
+                if dp.get("value") and len(nums) < 3:
+                    nums.append(dp)
+
+    # 배지는 **제목에 실제로 나온 수치**만 붙인다. 아무 수치나 붙이면 제목은 분당 집값
+    # 이야기인데 배지에는 '6억원 이하' 가 떠서 서로 딴 소리를 한다 (2026-09-08 실제).
+    # 제목에 없는 수치뿐이면 배지를 달지 않는다 — 제목이 이미 숫자를 말하고 있다.
+    headline = brief["headline"]
+    badge = ""
+    for dp in nums:
+        # **단위까지 붙은 온전한 값**으로만 견준다. 값만 보면 '6' 이 '162만원' 안의 6 에
+        # 걸려 엉뚱한 배지가 달린다 (2026-09-08 실제로 그랬다).
+        text = f"{dp.get('value', '')}{dp.get('unit', '')}".strip()
+        if text and text in headline:
+            badge = text
+            break
+    watch = [w for w in (brief.get("tomorrow_watch") or []) if w]
+
+    # 장수를 먼저 정한다 — 쪽번호(1/6)를 찍어야 하므로.
+    deep = min(3, max(1, len(issues) - 1))            # 깊게 다룰 이슈
+    rest = issues[deep:]
+    plan = ["cover"]
+    if len(nums) >= 2:
+        plan.append("numbers")
+    plan += ["issue"] * deep
+    if rest:
+        plan.append("rest")
+    if watch:
+        plan.append("watch")
+    plan = plan[:max_cards]
+    total = len(plan)
+
+    out: list[Image] = []
+    issue_i = 0
+    for n, kind in enumerate(plan, start=1):
+        if kind == "cover":
+            out.append(_cover_card(brief["headline"], brief.get("market_temperature", ""),
+                                   badge, total, date, channel))
+        elif kind == "numbers":
+            out.append(_numbers_card(nums, n, total, date, channel))
+        elif kind == "issue":
+            out.append(_issue_card(issues[issue_i], n, total, date, channel))
+            issue_i += 1
+        elif kind == "rest":
+            out.append(_list_card("그 밖의 오늘 소식", [i["title"] for i in rest],
+                                  "rest", n, total, date, channel))
+        elif kind == "watch":
+            out.append(_list_card("내일 볼 것", watch, "watch", n, total, date, channel))
+    return out

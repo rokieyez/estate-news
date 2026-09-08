@@ -37,7 +37,8 @@ PAGES = [
 ]
 EXTRA_FILES = ["script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv", "data.json"]
 # 그림·썸네일은 이름 패턴으로 통째로 복사한다.
-ASSET_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg"]
+ASSET_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg",
+               "card-*.png", "card-*.svg"]      # 유튜브 게시물용 카드뉴스
 
 
 def build_site(cfg: Config, dest: Path | None = None) -> Path:
@@ -437,6 +438,7 @@ def _build_periods(env, source: Path, dest: Path, *, stem: str, title: str) -> l
 
 # 블로그에 올릴 때 실제로 쓰는 파일들 (문서가 아니라 '첨부물')
 ZIP_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg",
+             "card-*.png", "card-*.svg",          # 유튜브 게시물용 카드뉴스
              "script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv",
              "policy/*"]      # 정부 보도자료 원본(HWP·PDF)도 함께 묶는다
 
@@ -554,6 +556,8 @@ def _copy_assets(day: Path, dest: Path) -> list[dict]:
 
 
 _ASSET_LABELS = {
+    "card-1-cover": "카드뉴스 1 표지",
+    "card-": "카드뉴스",          # card-2-numbers, card-4-issue …
     "0-cover": "대표 이미지 (글 맨 위)",
     "district-map": "서울 자치구 도식",
     "index-comparison": "지수 비교",
