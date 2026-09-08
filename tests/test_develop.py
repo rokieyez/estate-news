@@ -2212,11 +2212,38 @@ def test_page_number_stays_inside_the_inner_border():
     assert float(page.group(1)) + 8 < 1080 - 58, "쪽번호가 안쪽 테두리와 겹칩니다"
 
 
+def test_card_count_follows_the_day(cfg):
+    """장수는 고정이 아니라 그날 내용이 정한다 (2026-09-08 사용자 지시).
+
+    이슈가 많으면 상한까지 늘고, 조용한 날은 네댓 장으로 줄어듭니다.
+    `cards_max` 는 **상한일 뿐 목표가 아닙니다** — 억지로 채우면 내용 없는 카드가 붙습니다.
+    """
+    from rebrief import images
+
+    def brief(n_issues, watch=2):
+        return {"headline": "제목", "market_temperature": "요약",
+                "tomorrow_watch": [f"볼 것 {i}" for i in range(watch)],
+                "issues": [{"title": f"이슈 {i}", "category": "가격동향", "one_liner": "한 줄",
+                            "numbers": [{"value": f"{i}", "unit": "%", "label": f"수치 {i}"}]}
+                           for i in range(1, n_issues + 1)]}
+
+    counts = [len(images.cards(brief(n), date="2026-09-08")) for n in (1, 3, 5, 8)]
+    assert counts == sorted(counts), f"이슈가 늘면 장수도 늘어야 한다: {counts}"
+    assert counts[0] < 5 and counts[-1] == 10        # 조용한 날은 줄고, 많은 날은 상한까지
+    assert len(images.cards(brief(9), date="2026-09-08", max_cards=6)) == 6   # 상한을 지킨다
+
+    # 한 건짜리 '그 밖의 소식' 카드는 만들지 않는다 — 제 카드를 준다
+    for n in range(1, 11):
+        slugs = [g.slug for g in images.cards(brief(n), date="2026-09-08")]
+        rest = [g for g in slugs if g.endswith("-rest")]
+        assert not rest or n - sum(1 for g in slugs if g.endswith("-issue")) >= 2
+
+
 def test_cards_are_square_and_numbered(cfg):
     from rebrief import images
 
     got = images.cards(_brief_for_cards(), date="2026-09-08", channel="부동산 브리핑")
-    assert 5 <= len(got) <= 7                       # 유튜브 게시물 한 묶음
+    assert 5 <= len(got) <= 10                      # 유튜브 게시물 한 묶음
     assert got[0].slug == "card-1-cover"
     for img in got:
         assert 'width="1080" height="1080"' in img.svg      # 정사각 — 세로는 잘리는 화면이 있다

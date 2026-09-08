@@ -1683,16 +1683,17 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
 
 
 def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[dict] | None = None,
-          max_cards: int = 7,
+          max_cards: int = 10,
           art: list[Path | tuple[Path, str]] | None = None) -> list[Image]:
     """하루치 브리핑을 유튜브 게시물용 카드 5~7장으로.
 
     **모델을 새로 부르지 않습니다.** 이미 만들어 둔 브리핑(headline·issues·numbers·
     tomorrow_watch)을 그대로 나눠 담습니다. 그래서 카드를 켜도 하루 비용이 늘지 않습니다.
 
-    구성: 표지(남색) → 오늘의 숫자(짙은 남색) → 이슈 2~3장(밝은 청사진) → 그 밖의 소식(남색) →
+    구성: 표지(남색) → 오늘의 숫자(짙은 남색) → 이슈 몇 장(밝은 청사진) → 그 밖의 소식(남색) →
     내일 볼 것(남색). 짙음과 밝음이 교차하며 묶음에 박자를 만듭니다.
-    자료가 모자란 날은 장수가 줄어듭니다. 억지로 채우지 않습니다.
+    **장수는 그날 내용에 따라 정해집니다** — 이슈가 많으면 `max_cards` 까지 늘고,
+    자료가 모자란 날은 네댓 장으로 줄어듭니다. 억지로 채우지 않습니다.
 
     `art` 를 넘기면 표지와 이슈 카드 위쪽에 **그날 만든 인포그래픽**을 얹습니다.
     기사 사진이 아닙니다 — 남의 사진은 저작권이 있어 쓸 수 없고 수집하지도 않습니다.
@@ -1721,10 +1722,22 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
     watch = [w for w in (brief.get("tomorrow_watch") or []) if w]
 
     # 장수를 먼저 정한다 — 쪽번호(02 / 07)를 찍어야 하므로.
-    deep = min(3, max(1, len(issues) - 1))            # 깊게 다룰 이슈
+    #
+    # **장수를 고정하지 않습니다** (2026-09-08, 사용자 지시). 이슈가 많은 날은 늘고
+    # 적은 날은 줄어듭니다. `max_cards` 는 상한일 뿐 목표가 아닙니다 — 억지로 채우면
+    # 내용 없는 카드가 한 장 더 붙습니다.
+    has_numbers = len(nums) >= 2
+    fixed = 1 + int(has_numbers) + int(bool(watch))   # 표지·숫자·내일 볼 것
+    room = max(1, max_cards - fixed)                  # 이슈에 쓸 수 있는 장수
+    deep = min(len(issues), max(1, room - 1))         # '그 밖의 소식' 한 장을 남겨 둔다
     rest = issues[deep:]
+    if len(rest) == 1:                 # 한 건짜리 '그 밖의 소식' 카드는 낭비다 — 제 카드를 준다
+        deep, rest = deep + 1, []
+    if len(issues) <= deep:            # 이슈가 다 제 카드를 받으면 나머지 카드는 없다
+        rest = []
+
     plan = ["cover"]
-    if len(nums) >= 2:
+    if has_numbers:
         plan.append("numbers")
     plan += ["issue"] * deep
     if rest:
