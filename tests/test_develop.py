@@ -2507,3 +2507,42 @@ def test_cards_embed_only_the_letters_they_use():
 
     cover = images.cards(_brief_for_cards(), date="2026-09-08")[0].svg
     assert "@font-face" in cover and images._FONT_CSS_TOKEN not in cover
+
+
+def test_naver_copy_page_paints_no_background_behind_the_text(cfg, tmp_path):
+    """네이버에 붙였을 때 문단 뒤에 회색 형광펜이 깔리지 않게 (2026-09-08, 사용자 지적).
+
+    Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+    background-color 로 박아 넣는다. 실측: body 가 #f5f6f8 이면 문단·제목 18곳에
+    rgb(245,246,248) 이 실려 네이버에서 연한 회색 배경으로 보였다. html·body·.card 를
+    투명하게 두고 바탕은 뒤 층(body::before)에만 칠하면 사라진다. 상자들의
+    `background-color:#ffffff` 도 같은 이유로 뺐다 — 흰 형광펜이 실린다.
+    """
+    from rebrief.models import BlogPost
+    from rebrief.render import Renderer
+
+    post = BlogPost(title="t", slug="s", meta_description="d", tags=["부동산"], focus_keyword="집값",
+                    summary_lines=["요약"], closing_question="어떻게 보시나요?",
+                    body_markdown="본문\n\n## 소제목\n\n내용\n")
+    html = Renderer(cfg, tmp_path / "out", "2026-09-08").blog_naver(
+        post, related=[{"title": "지난 글", "url": "https://example.test/p", "date": "2026-09-07"}]).read_text(encoding="utf-8")
+    assert "html, body { background: transparent; }" in html
+    assert "body::before" in html                          # 바탕색은 뒤 층에만
+    assert ".card { background: transparent;" in html
+    assert "background-color:#ffffff" not in html          # 흰 상자도 형광펜이 된다
+    # 사본은 언제나 body 아래에 만들어 복사한다 — .card 안에서 복사하면 흰 배경이 실린다
+    assert "var clone = node.cloneNode(true);" in html and "if (node.querySelector(\".nocopy\"))" not in html
+
+
+def test_naver_html_separates_sections_with_hr_not_heading_borders(cfg, tmp_path):
+    """꼭지 사이 구분선은 <hr> 로 보낸다 (2026-09-08, 사용자가 고른 2번).
+
+    네이버 에디터는 소제목의 border-top 을 받지 않고 얇은 회색 선으로 바꿨다. <hr> 은
+    에디터가 제 구분선 부품으로 또렷하게 바꾼다. 첫 소제목 앞에는 긋지 않는다.
+    """
+    from rebrief.render import section_dividers, to_naver_html
+
+    assert section_dividers("<p>a</p><h2>하나</h2><p>b</p><h2>둘</h2><h2 id=x>셋</h2>") == \
+        "<p>a</p><h2>하나</h2><p>b</p><hr><h2>둘</h2><hr><h2 id=x>셋</h2>"
+    html = to_naver_html("머리\n\n## 하나\n\n본문\n\n## 둘\n\n본문\n\n## 셋\n\n본문\n")
+    assert html.count("<hr>") == 2 and html.index("<hr>") > html.index("<h2>하나</h2>")

@@ -7,9 +7,19 @@
 <style>
   :root { color-scheme: light; }
   * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
   body {
     margin: 0; padding: 0 16px 80px;
-    background: #f5f6f8; color: #1a1a1a;
+    color: #1a1a1a;
     font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
     line-height: 1.8; font-size: 16px;
   }
@@ -41,23 +51,17 @@
     .title { font-size: 21px; }
   }
   .wrap { max-width: 720px; margin: 0 auto; }
-  .card { background: #fff; border-radius: 10px; padding: 32px 28px; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
   .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
   .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
-  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 (제목 위).
-     예전에는 제목 아래에 선을 그었는데, 붙여넣고 보면 앞 꼭지의 마지막 문장과 다음
-     제목이 붙어 버리고, 정작 제목과 그 본문 사이가 선으로 갈라져 서로 남처럼 보였다.
-     이제 앞 꼭지 끝 → 넉넉한 여백 → 선 → 제목 → 본문 순서로 읽힌다.
-     이 서식은 '본문 복사' 때 그대로 따라가므로 네이버에 붙여넣어도 같게 보인다. */
-  #post h2 {
-    font-size: 20px; font-weight: 700; margin: 56px 0 16px;
-    padding-top: 26px; border-top: 2px solid #03c75a;
-  }
-  /* 첫 제목 앞에는 나눌 앞 꼭지가 없으므로 선을 긋지 않는다.
-     :first-child 가 아니라 :first-of-type 인 이유 — 제목 앞에 요약·목차·용어 상자가
-     먼저 오므로 첫 h2 는 결코 #post 의 첫 자식이 아니다. 예전 규칙은 한 번도
-     맞은 적이 없었다. */
-  #post h2:first-of-type { margin-top: 8px; padding-top: 0; border-top: none; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
   #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
   #post p { margin: 0 0 18px; }
   #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
@@ -139,15 +143,14 @@ document.querySelectorAll("[data-copy]").forEach(function (btn) {
 
     // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
     // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
-    var copyNode = node;
-    var clone = null;
-    if (node.querySelector(".nocopy")) {
-      clone = node.cloneNode(true);
-      clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
-      clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
-      document.body.appendChild(clone);
-      copyNode = clone;
-    }
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
 
     // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
     // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
@@ -161,7 +164,7 @@ document.querySelectorAll("[data-copy]").forEach(function (btn) {
     try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
     sel.removeAllRanges();
     var plainText = copyNode.innerText;
-    if (clone) clone.remove();
+    clone.remove();
 
     if (!ok && navigator.clipboard) {
       navigator.clipboard.writeText(plainText).then(flash, function () {
