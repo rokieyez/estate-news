@@ -1234,7 +1234,7 @@ def _art_band(path: Path) -> dict | None:
         blob = base64.b64encode(path.read_bytes()).decode("ascii")
     except OSError:
         return None
-    return {"height": CARD_BAND, "data": blob, "mime": mime}
+    return {"height": CARD_BAND, "data": blob, "mime": mime, "credit": ""}
 
 
 def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str = "",
@@ -1285,6 +1285,13 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         top = band + 64
         p.append(f'<rect x="58" y="{band+30:.0f}" width="{w-116}" height="{h-band-88:.0f}" '
                  f'fill="none" stroke="{signal}" stroke-width="1.4" opacity="0.45"/>')
+        # 사진 출처 한 줄. **'본문과 무관' 을 빼지 마세요.** 은마아파트 기사 옆에 아무
+        # 아파트 사진이 붙으면 읽는 사람은 그게 은마인 줄 압니다.
+        if art.get("credit"):
+            p.append(f'<rect x="0" y="{band-46:.0f}" width="{w}" height="46" '
+                     f'fill="#000000" opacity="0.42"/>')
+            p.append(f'<text x="{w-96}" y="{band-16:.0f}" font-size="20" text-anchor="end" '
+                     f'fill="#ffffff" opacity="0.9">{esc(art["credit"])}</text>')
         bottom = h - 100
         meta = []
         if channel:
@@ -1571,7 +1578,8 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
 
 
 def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[dict] | None = None,
-          max_cards: int = 7, art: list[Path] | None = None) -> list[Image]:
+          max_cards: int = 7,
+          art: list[Path | tuple[Path, str]] | None = None) -> list[Image]:
     """하루치 브리핑을 유튜브 게시물용 카드 5~7장으로.
 
     **모델을 새로 부르지 않습니다.** 이미 만들어 둔 브리핑(headline·issues·numbers·
@@ -1622,7 +1630,13 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
     total = len(plan)
 
     # 쓸 만한 그림만 미리 걸러 둔다 (세로로 긴 지도·읽을 수 없는 것은 여기서 빠진다).
-    bands = [b for b in (_art_band(f) for f in (art or [])) if b]
+    bands = []
+    for item in art or []:
+        path, credit = item if isinstance(item, tuple) else (item, "")
+        band = _art_band(path)
+        if band:
+            band["credit"] = credit
+            bands.append(band)
 
     out: list[Image] = []
     issue_i = 0

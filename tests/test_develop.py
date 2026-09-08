@@ -2028,6 +2028,76 @@ def _brief_for_cards(issues: int = 5) -> dict:
     }
 
 
+def test_photo_search_picks_words_from_the_day(cfg):
+    """찾을 말은 그날 이슈에서 나온다. 매일 같은 낱말이면 매일 같은 사진이 온다."""
+    from rebrief import photos
+
+    got = photos.queries_for({
+        "headline": "은마아파트 재건축 사업시행인가",
+        "issues": [{"title": "전세 보증금 반환 지연", "category": "임대차", "one_liner": ""},
+                   {"title": "주담대 금리 인상", "category": "대출·금리", "one_liner": ""}],
+    }, limit=3)
+    assert len(got) == 3 and len(set(got)) == 3            # 세 장이 다 달라야 한다
+    assert "construction" in got[0]                        # 재건축 → 공사 현장
+    assert any("interior" in q for q in got)               # 전세 → 실내
+    assert any("bank" in q for q in got)                   # 금리 → 금융
+
+
+def test_photo_search_survives_a_missing_key_and_a_dead_network(cfg, tmp_path, monkeypatch):
+    """사진은 있으면 좋은 것이지 없으면 안 되는 것이 아니다. 무엇이 터져도 빈 목록."""
+    from rebrief import photos
+
+    brief = {"headline": "집값", "issues": []}
+    kw = {"cache_dir": tmp_path / "c", "ledger": tmp_path / "l.json", "count": 2}
+    monkeypatch.delenv("PEXELS_API_KEY", raising=False)
+    assert photos.fetch(brief, **kw) == []                 # 키가 없으면 조용히 건너뛴다
+
+    def boom(*a, **k):
+        raise OSError("망이 막혔습니다")
+
+    monkeypatch.setattr(photos, "_get", boom)
+    assert photos.fetch(brief, key="아무키", **kw) == []     # 망이 죽어도 실행은 산다
+
+
+def test_photo_search_does_not_repeat_yesterdays_picture(cfg, tmp_path, monkeypatch):
+    """어제 쓴 사진은 건너뛴다. 매일 같은 사진이 표지에 오르면 자동 생성 티가 난다."""
+    import json
+
+    from rebrief import photos
+
+    ledger = tmp_path / "photos.json"
+    ledger.write_text(json.dumps(["111"]), encoding="utf-8")
+
+    def fake_get(url, headers, timeout=20):
+        if url.startswith(photos.PEXELS_SEARCH):
+            return json.dumps({"photos": [
+                {"id": 111, "photographer": "어제 그 사람", "src": {"landscape": "http://x/1.jpg"}},
+                {"id": 222, "photographer": "오늘 그 사람", "src": {"landscape": "http://x/2.jpg"}},
+            ]}).encode()
+        return b"\xff\xd8\xff\xe0jpeg"      # 사진 몸통 흉내
+
+    monkeypatch.setattr(photos, "_get", fake_get)
+    got = photos.fetch({"headline": "집값", "issues": []}, cache_dir=tmp_path / "c",
+                       ledger=ledger, count=1, key="아무키")
+    assert [p.ident for p in got] == ["222"]
+    assert got[0].credit == "오늘 그 사람" and got[0].path.exists()
+    assert json.loads(ledger.read_text()) == ["111", "222"]      # 장부에 쌓인다
+
+
+def test_cards_credit_the_photo_and_say_it_is_unrelated(cfg, tmp_path):
+    """사진에는 출처와 함께 '본문과 무관' 을 반드시 적는다.
+
+    은마아파트 기사 옆에 아무 아파트 사진이 붙으면 읽는 사람은 그게 은마인 줄 압니다.
+    """
+    from rebrief import images
+
+    art = tmp_path / "photo-222.jpg"
+    _fake_png(art, 400, 224)      # 확장자만 jpg 인 가짜 파일이어도 띠 계산에는 문제없다
+    got = images.cards(_brief_for_cards(), date="2026-09-08", channel="부동산 브리핑",
+                       art=[(art, "사진 홍길동 / Pexels · 본문과 무관")])
+    assert "본문과 무관" in got[0].svg and "홍길동" in got[0].svg
+
+
 def _fake_png(path, width: int, height: int) -> None:
     """가로·세로만 맞는 진짜 PNG 한 장. 그림 라이브러리를 들이지 않으려고 직접 만든다."""
     import struct

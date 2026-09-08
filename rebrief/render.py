@@ -12,6 +12,7 @@ import markdown as markdown_lib
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
 from . import images as images_mod
+from . import photos as photos_mod
 from . import keynumbers as kn
 from .config import Config
 from .models import BlogPost, CaptionLine, Cluster, DailyBrief, VideoPack
@@ -266,31 +267,47 @@ class Renderer:
         cfg = self.cfg.get("images", {}) or {}
         if not (cfg.get("enabled", True) and cfg.get("cards", True)):
             return []
+        payload = brief.model_dump() if hasattr(brief, "model_dump") else dict(brief)
         made = images_mod.cards(
-            brief.model_dump() if hasattr(brief, "model_dump") else dict(brief),
+            payload,
             date=self.date,
             channel=str(self.cfg.get("video.channel_name", "") or "부동산 브리핑"),
             key_numbers=[n.__dict__ if hasattr(n, "__dict__") else n for n in (key_numbers or [])],
             max_cards=int(cfg.get("cards_max", 7)),
-            art=self._card_art() if cfg.get("cards_art", True) else None,
+            art=self._card_art(payload) if cfg.get("cards_art", True) else None,
         )
         return [self._write_image(img, cfg, prefix="") for img in made]
 
-    def _card_art(self) -> list[Path]:
-        """카드 위쪽에 얹을 그림 후보. 사람이 넣어 둔 사진이 먼저입니다.
+    def _card_art(self, brief: dict | None = None) -> list[tuple[Path, str]]:
+        """카드 위쪽에 얹을 그림 후보. (파일, 출처 한 줄) 짝으로 돌려줍니다.
 
-        · 그날 폴더에 `photo-1.jpg` 처럼 넣어 두면 표지부터 차례로 씁니다.
-        · 없으면 그날 그린 인포그래픽(`img-*.png`)을 씁니다. **기사 사진은 쓰지 않습니다** —
-          저작권이 있고 애초에 수집하지도 않습니다.
+        차례가 이렇습니다.
+        1. 그날 폴더에 손으로 넣어 둔 `photo-1.jpg` — 사람이 고른 것이 언제나 먼저입니다.
+        2. 무료 사진(Pexels). 인증키가 있어야 하고, 없으면 조용히 건너뜁니다.
+        3. 그날 그린 인포그래픽(`img-*.png`).
 
+        **기사 사진은 쓰지 않습니다** — 저작권이 있고 애초에 수집하지도 않습니다.
         표지(`img-0-cover`)와 썸네일은 이미 글자가 박혀 있어 카드 제목과 겹치므로 뺍니다.
         `cards()` 가 세로로 긴 인포그래픽을 한 번 더 거릅니다.
         """
-        photos = sorted(f for pat in ("photo-*.jpg", "photo-*.jpeg", "photo-*.png", "photo-*.webp")
-                        for f in self.out_dir.glob(pat))
-        charts = [f for f in sorted(self.out_dir.glob("img-*.png"))
-                  if not f.name.startswith("img-0-cover")]
-        return photos + charts
+        cfg = self.cfg.get("images", {}) or {}
+        mine = sorted(f for pat in ("photo-*.jpg", "photo-*.jpeg", "photo-*.png", "photo-*.webp")
+                      for f in self.out_dir.glob(pat))
+        out: list[tuple[Path, str]] = [(f, "") for f in mine]
+
+        if brief and cfg.get("photos", True):
+            found = photos_mod.fetch(
+                brief,
+                cache_dir=self.cfg.state_dir / "photos",
+                ledger=self.cfg.state_dir / "photos.json",
+                count=max(0, int(cfg.get("photos_max", 3)) - len(out)),
+            )
+            out += [(ph.path, f"사진 {ph.credit} / {ph.source} · 본문과 무관"
+                     if ph.credit else f"사진 {ph.source} · 본문과 무관") for ph in found]
+
+        out += [(f, "") for f in sorted(self.out_dir.glob("img-*.png"))
+                if not f.name.startswith("img-0-cover")]
+        return out
 
     def images(self, brief: DailyBrief, history: list[dict] | None = None,
                post: BlogPost | None = None) -> dict[int, str]:

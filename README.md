@@ -348,6 +348,17 @@ Encoding 쪽을 넣어도 프로그램이 알아서 되돌리기는 하지만, �
 | --- | --- | --- |
 | 공공데이터포털 (data.go.kr) | 국토교통부 아파트 매매 실거래가 **상세 자료** (오픈API) | `DATA_GO_KR_KEY` |
 | 한국부동산원 (reb.or.kr 열린자료) | 통계 조회 인증키 | `REB_API_KEY` |
+| Pexels (pexels.com/api) | 카드뉴스에 얹을 무료 사진 | `PEXELS_API_KEY` |
+
+**Pexels 키 받는 길** (심사 없습니다. 3분쯤 걸립니다)
+
+1. `https://www.pexels.com/api/` 를 열고 **Get Started** 를 누릅니다.
+2. 이메일로 가입하거나 구글 계정으로 들어갑니다.
+3. "무엇에 쓰실 건가요" 를 물으면 아무 이름이나 적고(예: `부동산 브리핑 카드뉴스`),
+   주소는 사이트 주소(`https://www.rokiz.net/estate-news/`)를 넣습니다.
+4. 바로 나오는 긴 글자열이 키입니다. 그걸 아래 방법으로 넣으세요.
+
+사진이 없어도 실행은 그대로 됩니다 — 그날은 인포그래픽이 대신 올라갑니다.
 
 받은 키는 저장소 **Settings → Secrets and variables → Actions → New repository secret** 에
 위 이름 그대로 넣으면 다음 날 아침부터 표가 붙습니다. 보는 지역을 바꾸려면

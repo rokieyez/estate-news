@@ -100,6 +100,8 @@ jobs:
           # 정부 통계 인증키. 등록돼 있지 않으면 그 단계만 조용히 건너뜁니다.
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
           REB_API_KEY: ${{ secrets.REB_API_KEY }}
+          # 카드뉴스 위쪽 사진. 없으면 인포그래픽으로 갑니다.
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
           ARGS="-v run"
           if [ -n "${{ inputs.date }}" ]; then ARGS="$ARGS --date ${{ inputs.date }}"; fi

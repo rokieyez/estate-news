@@ -62,6 +62,9 @@ def cfg(tmp_path: Path) -> Config:
     settings["collect"]["fetch_body"] = False        # 본문 수집은 네트워크가 필요
     settings["run"]["skip_recent_days"] = 0
     settings.setdefault("images", {})["png"] = False   # 테스트는 브라우저를 띄우지 않는다
+    # 사진 검색은 망을 탄다. .env 에 PEXELS_API_KEY 를 넣은 컴퓨터에서 시험이
+    # 조용히 인터넷을 쓰기 시작하는 것을 막는다.
+    settings["images"]["photos"] = False
     settings["collect"]["check_links"] = False        # 링크 점검은 별도 테스트에서 스텁으로
     settings.setdefault("stats", {})["enabled"] = False  # 정부 통계는 개별 테스트에서만 켠다
 
