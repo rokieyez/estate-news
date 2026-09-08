@@ -32,13 +32,20 @@ PEXELS_SEARCH = "https://api.pexels.com/v1/search"
 # 이슈의 성격에 따라 찾을 말을 바꿉니다. Pexels 는 영어로 찾아야 결과가 많이 나옵니다.
 # 한국어로 넣으면 몇 건 안 나오는 것을 확인하고 영어 낱말로 짝지어 두었습니다.
 QUERY_MAP: list[tuple[tuple[str, ...], str]] = [
-    (("재건축", "재개발", "정비사업", "공사비", "착공"), "apartment construction site city"),
-    (("전세", "월세", "임대", "보증금"), "apartment living room interior"),
-    (("분양", "청약", "미분양", "입주"), "new apartment building exterior"),
-    (("대출", "금리", "이자", "주담대", "은행"), "bank finance calculator desk"),
-    (("정책", "규제", "정부", "국토부", "세금", "종부세"), "seoul city skyline government"),
-    (("거래", "매매", "시세", "집값", "가격"), "seoul apartment buildings"),
+    (("재건축", "재개발", "정비사업", "공사비", "착공"), "seoul construction site"),
+    (("전세", "월세", "임대", "보증금"), "seoul apartment window"),
+    (("분양", "청약", "미분양", "입주"), "korea apartment complex"),
+    (("대출", "금리", "이자", "주담대", "은행"), "korea real estate agency"),
+    (("정책", "규제", "정부", "국토부", "세금", "종부세"), "seoul government building"),
+    (("거래", "매매", "시세", "집값", "가격"), "seoul housing"),
 ]
+# **낱말이 주제를 너무 곧이곧대로 좇으면 엉뚱한 사진이 옵니다.** '대출·금리' 를
+# 'korean won money' 로 찾았더니 버스 교통카드 단말기가 올라왔습니다 (2026-09-08).
+# 부동산 글에는 어떤 이야기든 아파트·도시 사진이 어울리므로, 낱말을 그쪽으로 되돌려
+# 두었습니다. 결이 조금 덜 맞아도 엉뚱한 것보다 낫습니다.
+# 표지에 쓰는 기본값. **낱말마다 '서울' 이나 '한국' 을 넣습니다** — 빼고 찾으면 서양 주택
+# 사진이 올라옵니다. 2026-09-08 에 실제로 '아파트 실내' 로 찾았더니 벽돌벽 로프트가
+# 표지에 붙었습니다. 'seoul' 을 넣은 뒤로는 서울 아파트 단지가 나옵니다.
 DEFAULT_QUERY = "seoul apartment buildings"
 
 
@@ -51,11 +58,15 @@ class Photo:
 
 
 def queries_for(brief: dict, limit: int = 3) -> list[str]:
-    """브리핑에서 찾을 말을 뽑는다. 겹치지 않게, 모자라면 기본값으로 채운다."""
-    text_by_issue = [f"{i.get('title', '')} {i.get('category', '')} {i.get('one_liner', '')}"
-                     for i in (brief.get("issues") or [])]
-    out: list[str] = []
-    for text in [str(brief.get("headline", ""))] + text_by_issue:
+    """브리핑에서 찾을 말을 뽑는다. 겹치지 않게, 모자라면 기본값으로 채운다.
+
+    **첫 장은 언제나 기본값**입니다. 첫 장은 표지이고 표지는 그날 전체를 받으므로,
+    이슈 하나의 성격(예: 월세 → 실내 사진)에 끌려가면 안 됩니다. 두 번째부터가
+    이슈 카드라 거기서 성격을 따라갑니다.
+    """
+    out: list[str] = [DEFAULT_QUERY]
+    for issue in brief.get("issues") or []:
+        text = f"{issue.get('title', '')} {issue.get('category', '')} {issue.get('one_liner', '')}"
         for words, query in QUERY_MAP:
             if any(w in text for w in words) and query not in out:
                 out.append(query)
@@ -67,9 +78,15 @@ def queries_for(brief: dict, limit: int = 3) -> list[str]:
     return out[:limit]
 
 
+# 이름을 밝히지 않으면 클라우드플레어가 막습니다. 인증키가 맞아도 `error code: 1010` 이
+# 돌아옵니다 (2026-09-08 실측 — 이 줄 하나로 403 이 200 이 됐습니다). urllib 의 기본
+# 이름(Python-urllib/3.x)이 걸리는 것이라, 무엇이든 사람이 읽을 이름을 보내야 합니다.
+USER_AGENT = "estate-news/1.0 (+https://www.rokiz.net/estate-news/)"
+
+
 def _get(url: str, headers: dict, timeout: int = 20) -> bytes:
     """망 호출 한 곳. 시험에서 이 함수만 갈아끼우면 네트워크 없이 검증된다."""
-    req = urllib.request.Request(url, headers=headers)
+    req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT, **headers})
     with urllib.request.urlopen(req, timeout=timeout) as resp:
         return resp.read()
 

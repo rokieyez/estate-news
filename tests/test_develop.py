@@ -2038,9 +2038,11 @@ def test_photo_search_picks_words_from_the_day(cfg):
                    {"title": "주담대 금리 인상", "category": "대출·금리", "one_liner": ""}],
     }, limit=3)
     assert len(got) == 3 and len(set(got)) == 3            # 세 장이 다 달라야 한다
-    assert "construction" in got[0]                        # 재건축 → 공사 현장
-    assert any("interior" in q for q in got)               # 전세 → 실내
-    assert any("bank" in q for q in got)                   # 금리 → 금융
+    assert got[0] == photos.DEFAULT_QUERY                  # 표지는 그날 전체를 받는다
+    assert any("window" in q for q in got)                 # 전세 → 아파트 외벽
+    assert any("real estate" in q for q in got)            # 금리 → 부동산
+    # 낱말마다 서울·한국이 들어가야 서양 주택 사진이 안 온다 (2026-09-08 실측)
+    assert all("seoul" in q or "korea" in q for _, q in photos.QUERY_MAP)
 
 
 def test_photo_search_survives_a_missing_key_and_a_dead_network(cfg, tmp_path, monkeypatch):
