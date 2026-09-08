@@ -276,7 +276,12 @@ class Renderer:
             max_cards=int(cfg.get("cards_max", 7)),
             art=self._card_art(payload) if cfg.get("cards_art", True) else None,
         )
-        return [self._write_image(img, cfg, prefix="") for img in made]
+        # 카드는 밑그림이 이미 1080×1080 입니다. 2배로 뽑으면 2160 이 되는데, 올릴 곳인
+        # 유튜브 커뮤니티 게시물은 어차피 1080 언저리로 줄여 보여 줍니다 — 늘어난 화소는
+        # 전송량만 먹습니다. 2026-09-08 에 같은 카드 여섯 장을 두 배율로 뽑아 재 보니
+        # 4.2MB → 1.6MB (약 62% 감소) 였습니다.
+        scale = int(cfg.get("png_scale_cards", 1) or 1)
+        return [self._write_image(img, cfg, prefix="", scale=scale) for img in made]
 
     def _card_art(self, brief: dict | None = None) -> list[tuple[Path, str]]:
         """카드 위쪽에 얹을 그림 후보. (파일, 출처 한 줄) 짝으로 돌려줍니다.

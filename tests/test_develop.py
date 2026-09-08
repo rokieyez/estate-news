@@ -183,11 +183,54 @@ def test_upcoming_page_and_published_badge(cfg, tmp_path):
     # '← 목록' 이 부돌보 브리핑이 아니라 rokiz.net 최상위(「로키즈의 방」)로 나갔습니다.
     # 404 가 아니라 조용히 다른 사이트로 나가서 눈에 띄지 않았습니다 (2026-09-08).
     assert '"../' not in upcoming, "뿌리에 있는 장이 상위 경로를 가리킨다"
-    # 아이콘 PNG 는 크롬이 있을 때만 만들어지므로 시험에서는 빼고 본다.
-    for link in re.findall(r'(?:href|src)="([^"#?:]+)"', upcoming):
-        if link.startswith(("http", "//", "data:", "mailto:")) or link.endswith(".png"):
-            continue
-        assert (dest / link).exists(), f"끊긴 링크: {link}"
+
+
+def test_site_has_no_broken_links(cfg, tmp_path):
+    """사이트 전체에 끊긴 링크가 없다. 그리고 검사기가 실제로 잡아낸다.
+
+    '← 목록' 이 엉뚱한 사이트로 나가던 버그(2026-09-08)는 404 조차 아니어서 몇 주를
+    지나갔습니다. 틀을 고칠 때마다 눈으로 확인하는 대신 시험이 날마다 세게 했습니다.
+    """
+    from rebrief.site import broken_links, build_site
+
+    day = cfg.output_dir / "2026-09-07"
+    day.mkdir(parents=True)
+    (day / "brief.md").write_text("# 브리핑\n\n본문", encoding="utf-8")
+    (day / "sources.md").write_text("# 기사 원문\n\n- 없음", encoding="utf-8")
+    (day / "data.json").write_text(json.dumps({
+        "date": "2026-09-07", "headline": "머리글", "issues": [],
+        "tomorrow_watch": ["국토부 발표 확인"],
+    }, ensure_ascii=False), encoding="utf-8")
+    (day / "card-1-cover.png").write_bytes(b"\x89PNG\r\n\x1a\n")   # 그림 장을 만들게 한다
+    (day / "img-stats-map.png").write_bytes(b"\x89PNG\r\n\x1a\n")
+
+    dest = build_site(cfg, tmp_path / "site")
+    # 아이콘 PNG 는 크롬이 있을 때만 만들어집니다. 시험 설정은 브라우저를 띄우지 않으므로
+    # 이 한 가지만 빼고 봅니다 (실제 사이트에는 있습니다).
+    bad = [b for b in broken_links(dest) if "icon-512.png" not in b]
+    assert bad == []
+
+    # 검사기가 정말 무언가를 잡는지. 이것이 없으면 위의 빈 목록은 아무 뜻이 없습니다.
+    index = dest / "index.html"
+    index.write_text(index.read_text(encoding="utf-8").replace(
+        'href="upcoming.html"', 'href="없는장.html"', 1), encoding="utf-8")
+    assert any("없는장.html" in b for b in broken_links(dest))
+
+
+def test_link_checker_ignores_javascript_built_addresses(tmp_path):
+    """`<script>` 안에서 이어 붙이는 주소는 파일 이름이 아니다.
+
+    검색 장이 `'<a href="' + d.date + '/brief.html">'` 처럼 주소를 만드는데, 그 조각을
+    파일 이름으로 읽어 끊긴 링크라고 잘못 짚은 적이 있습니다 (2026-09-08).
+    """
+    from rebrief.site import broken_links
+
+    (tmp_path / "search.html").write_text(
+        '<a href="index.html">목록</a>'
+        '<script>el.innerHTML = \'<a href="\' + d.date + \'/brief.html">\' + d.title;</script>',
+        encoding="utf-8")
+    (tmp_path / "index.html").write_text("<p>목록</p>", encoding="utf-8")
+    assert broken_links(tmp_path) == []
 
 
 # ── 유입 (9/7 오후): 대표 검색어 · 요약·목차 · 지난 글 · 겹침 ──
@@ -2429,6 +2472,36 @@ def test_cards_are_square_and_numbered(cfg):
         {"title": "하나", "one_liner": "한 줄", "numbers": []}]}, date="2026-09-08")
     assert 0 < len(small) < 5
     assert "01 / " not in small[0].svg or len(small) > 1     # 한 장이면 쪽번호를 찍지 않는다
+
+
+def test_cards_are_written_at_their_own_size_not_doubled(cfg, tmp_path, monkeypatch):
+    """카드 PNG 는 1배(1080)로 뽑는다. 2배로 뽑으면 같은 여섯 장이 4.2MB 였다 (2026-09-08).
+
+    밑그림이 이미 1080×1080 이고, 올릴 곳인 유튜브 커뮤니티 게시물은 그보다 크게 보여
+    주지 않습니다. 2160 은 저장소와 전송량만 먹었습니다.
+    """
+    from rebrief import images as images_mod
+    from rebrief import render as render_mod
+    from rebrief.render import Renderer
+
+    out = tmp_path / "2026-09-08"
+    out.mkdir()
+    scales: list[int] = []
+
+    def fake_png(svg_path, png_path, scale=2):
+        scales.append(scale)
+        png_path.write_bytes(b"PNG")
+        return True
+
+    monkeypatch.setattr(render_mod.images_mod, "svg_to_png", fake_png)
+    cfg.settings["images"]["png"] = True
+    made = Renderer(cfg, out, "2026-09-08").cards(_brief_for_cards())
+
+    assert made and all(n.endswith(".png") for n in made)
+    assert set(scales) == {1}, f"카드를 {sorted(set(scales))} 배로 뽑고 있다"
+    # 본문 그림은 그대로 2배입니다 — 네이버 블로그에서 크게 보이는 자리라서.
+    assert int(cfg.get("images.png_scale", 2)) == 2
+    assert images_mod.CARD_SIZE == (1080, 1080)
 
 
 def test_cards_badge_only_uses_a_number_that_is_in_the_headline():

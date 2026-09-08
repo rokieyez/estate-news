@@ -11,6 +11,7 @@ GitHub Pages 로 올릴 수 있는 site/ 를 만들어 두면 링크 하나만 �
 
 from __future__ import annotations
 
+import logging
 import re
 import shutil
 from datetime import datetime
@@ -21,6 +22,8 @@ import markdown as markdown_lib
 from .config import Config
 from .render import make_env
 from .sanitize import clean_html
+
+log = logging.getLogger(__name__)
 
 DATE_DIR = re.compile(r"\d{4}-\d{2}-\d{2}")
 
@@ -115,6 +118,11 @@ def build_site(cfg: Config, dest: Path | None = None) -> Path:
 
     # Jekyll 이 밑줄로 시작하는 폴더를 무시하는 걸 막는다.
     (dest / ".nojekyll").write_text("", encoding="utf-8")
+
+    # 끊긴 링크는 날마다 봅니다. 시험은 틀이 어긋난 것을 잡지만, 그날 자료가 없어
+    # 생긴 링크(예: 만들어지지 않은 통계 그림)는 여기서만 드러납니다.
+    for bad in broken_links(dest):
+        log.warning("끊긴 링크: %s", bad)
     return dest
 
 
@@ -587,6 +595,34 @@ _ASSET_LABELS = {
     "thumb-longform": "롱폼 썸네일 1안",
     "thumb-shorts": "쇼츠 썸네일 1안",
 }
+
+
+# 링크를 세는 자리. `<script>` 안은 빼고 봅니다 — 검색 장의 자바스크립트가
+# `'<a href="' + h.day.date + '/brief.html">'` 처럼 주소를 이어 붙이는데, 그 조각을
+# 그대로 파일 이름으로 읽으면 없는 파일이라고 잘못 짚습니다 (2026-09-08 에 겪음).
+_SCRIPT_BLOCK = re.compile(r"<script\b[^>]*>.*?</script>", re.S | re.I)
+_LINK_ATTR = re.compile(r'(?:href|src)="([^"]*)"')
+_OUTSIDE = ("http://", "https://", "//", "data:", "mailto:", "tel:", "javascript:")
+
+
+def broken_links(dest: Path) -> list[str]:
+    """만들어 둔 사이트를 훑어 **가리키는 곳이 없는 링크**를 찾는다. (「장 → 링크」 목록)
+
+    끊긴 링크는 대개 조용합니다. 2026-09-08 에 「이번 주 볼 것」의 '← 목록' 이 부돌보
+    브리핑이 아니라 rokiz.net 최상위로 나가고 있었는데, 404 도 아니어서 몇 주를 그냥
+    지나갔습니다. 틀을 고칠 때마다 눈으로 확인하는 대신 여기서 세게 했습니다.
+    """
+    bad: list[str] = []
+    for page in sorted(dest.rglob("*.html")):
+        text = _SCRIPT_BLOCK.sub("", page.read_text(encoding="utf-8"))
+        for link in _LINK_ATTR.findall(text):
+            target = link.split("#")[0].split("?")[0]
+            if not target or target.startswith(_OUTSIDE):
+                continue
+            base = dest if target.startswith("/") else page.parent
+            if not (base / target.lstrip("/")).exists():
+                bad.append(f"{page.relative_to(dest)} → {link}")
+    return bad
 
 
 def _asset_label(filename: str) -> str:
