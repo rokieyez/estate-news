@@ -223,11 +223,12 @@ def test_naver_html_has_summary_outline_question_and_related():
     html = to_naver_html(body, summary_lines=["요약 하나", "요약 둘", "요약 셋"],
                          closing_question="여러분은 어떠신가요?",
                          related=[{"date": "2026-09-06", "title": "어제 글", "url": "https://blog.naver.com/x/1"}])
-    assert html.index("3줄 요약") < html.index("이 글의 순서") < html.index("첫 문단입니다")
+    # 머리에는 상자를 하나만 둔다 — 3줄 요약 다음이 바로 본문이다 (2026-09-08).
+    assert html.index("3줄 요약") < html.index("첫 문단입니다")
+    assert "이 글의 순서" not in html          # 목차는 더 이상 넣지 않는다
     assert "여러분은 어떠신가요?" in html and html.index("첫 문단입니다") < html.index("함께 보면 좋은 지난 글")
     assert '<a href="https://blog.naver.com/x/1">어제 글</a>' in html
     assert "nocopy" not in html          # 지난 글 링크는 복사에 포함돼야 한다
-    assert "이 글의 순서" not in to_naver_html("## 하나\n\n글", summary_lines=[])   # 소제목 3개 미만이면 목차 없음
 
 
 def test_related_posts_prefers_same_topic_and_skips_unpublished(cfg):
@@ -379,8 +380,8 @@ def test_naver_html_shows_glossary_and_takeaways(cfg, tmp_path):
         closing_question="여러분은 어떠신가요?",
         body_markdown="종부세(종합부동산세) 이야기입니다.\n\n## 종부세 대상\n\n본문\n\n## 그 밖의 오늘 소식\n\n- 한 줄\n")
     html = Renderer(cfg, tmp_path / "out", "2026-09-07").blog_naver(post).read_text(encoding="utf-8")
-    assert html.index("낯선 말 풀이") < html.index("종부세(종합부동산세) 이야기")   # 본문보다 앞
-    assert "가진 집들의 공시가격 합이" in html
+    # 낯선 말 풀이 상자는 뺐다 — 본문이 이미 괄호로 설명하고 있어 겹쳤다 (2026-09-08).
+    assert "낯선 말 풀이" not in html
     assert html.index("그래서 나는?") > html.index("본문")                        # 본문 뒤
     assert "무주택 실수요자라면" in html and html.index("그래서 나는?") < html.index("여러분은 어떠신가요")
 

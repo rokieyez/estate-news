@@ -179,7 +179,7 @@ def test_썸네일은_후보_두_개를_그린다(cfg, tmp_path):
 # ── 수치 강조: 되풀이 형광펜 · 핵심 수치 · 오늘의 숫자 카드 ───
 
 
-def test_repeated_numbers_first_highlight_then_underline():
+def test_repeated_numbers_highlight_only_the_first_time():
     from rebrief.render import to_naver_html
 
     body = (
@@ -189,11 +189,13 @@ def test_repeated_numbers_first_highlight_then_underline():
         "[이미지: 10% 상승률 그래프]"
     )
     html = to_naver_html(body, {1: "img-1-stat-card.png"})
-    assert html.count(">10%</span>") == 1 and html.count("<u>10%</u>") == 2   # 첫 등장만 형광펜
+    # 첫 등장만 형광펜. 두 번째부터는 아무 표시도 하지 않는다 — 예전에는 밑줄을 그었는데
+    # 5천 자 글에 강조가 42회나 쌓여 무엇이 중요한지 알 수 없었다 (2026-09-08).
+    assert html.count(">10%</span>") == 1 and "<u>" not in html
     assert "<h2>상승률 10% 전망</h2>" in html          # 소제목은 건드리지 않는다
     assert "집값</span>" not in html and "2026년</span>" not in html   # 주제어·연도는 제외
-    assert ">3억 원</span>" in html and html.count("<u>3억원</u>") == 2  # 띄어쓰기 달라도 같은 수치
-    assert "5억원</span>" not in html and "<u>5억원</u>" not in html
+    assert ">3억 원</span>" in html and html.count(">3억원</span>") == 0  # 띄어쓰기 달라도 같은 수치
+    assert "5억원</span>" not in html
     assert 'alt="10% 상승률 그래프"' in html
     assert "<span" not in to_naver_html(body, highlight_min=0)
 
@@ -207,9 +209,9 @@ def test_key_numbers_bold_and_card():
     html = to_naver_html("집값이 매년 11% 오르면 22개구가 대상. 다시 11%.", key_numbers=keys)
     assert '<span class="hl" style="background-color:#fff59d"><strong>11%</strong></span>' in html   # 한 번만 나와도 핵심이면 강조
     assert "<strong>22개구</strong>" in html
-    assert "<u>11%</u>" in html
-    assert html.index("오늘의 숫자") < html.index("집값이")          # 카드가 본문 앞에
-    assert html.count("<td") == 2 and "2030년까지" in html
+    assert html.count('class="hl"') == 2 and "<u>" not in html   # 11%·22개구 각 한 번씩, 두 번째 11% 는 맨몸
+    # '오늘의 숫자' 카드는 뺐다 — 3줄 요약과 같은 수치를 한 번 더 말하고 있었다 (2026-09-08).
+    assert "오늘의 숫자" not in html
 
 
 def test_pick_prefers_numbers_used_in_body():
@@ -250,8 +252,8 @@ def test_renderer_reads_highlight_threshold(cfg, tmp_path):
     off = Renderer(cfg, tmp_path / "off", "2026-09-06").blog_naver(post).read_text(encoding="utf-8")
     cfg.settings["blog"]["highlight_repeats"] = 3
     on = Renderer(cfg, tmp_path / "on", "2026-09-06").blog_naver(post).read_text(encoding="utf-8")
-    assert "7%</span>" not in off.split('id="post"')[1] and "<u>7%</u>" not in off
-    assert on.count("7%</span>") == 1 and on.count("<u>7%</u>") == 2
+    assert "7%</span>" not in off.split('id="post"')[1]
+    assert on.count('class="hl"') == 1 and "<u>" not in on   # 첫 등장만 형광펜, 나머지는 맨몸
 
 
 # ── HTML 안전장치 ──────────────────────────────────────────

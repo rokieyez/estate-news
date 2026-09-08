@@ -95,13 +95,12 @@ class Renderer:
             tags=self._tags(post),
             cover=cover,
             lead_block=asof_block_markdown(self.date, stats)
-                       + lead_block_markdown(post.summary_lines, outline_from_markdown(post.body_markdown))
-                       + terms_block_markdown(self._terms(post)),
+                       + lead_block_markdown(post.summary_lines),
             tail_block=takeaways_block_markdown(post.takeaways)
                        + stats_block_markdown(stats, stats_image)
                        + policy_block_markdown(policies)
                        + tail_block_markdown(post.closing_question, related),
-            key_card=kn.card_markdown(key_numbers or []),
+            key_card="",       # 3줄 요약과 같은 수치를 한 번 더 말하고 있었습니다
             body_markdown=place_images_markdown(post.body_markdown, slot_files or {}),
             clusters=clusters,
             date=self.date,
@@ -511,11 +510,13 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
     html = _IMAGE_SLOT_INLINE.sub(slot, html)   # 문단 안에 섞여 들어온 경우
     # 언제 기준인지 맨 위에. 반년 뒤 검색으로 들어온 사람에게는 이 한 줄이 없으면
     # 지난 수치가 '지금 값' 으로 읽힙니다.
+    # 머리에는 표지 · 시점 한 줄 · 3줄 요약만. 낯선 말 풀이는 본문이 이미 괄호로
+    # 설명하고 있어 겹쳤고, '오늘의 숫자' 카드는 3줄 요약과 같은 수치를 한 번 더
+    # 말하고 있었습니다 (2026-09-08, 사용자 요청).
     head = (cover_block_html(cover)
             + (asof_block_html(date, stats) if date else "")
-            + lead_block_html(summary_lines, outline_from_markdown(body_markdown) if outline else [])
-            + terms_block_html(terms or []))
-    return (head + kn.card_html(key_numbers or []) + html
+            + lead_block_html(summary_lines))
+    return (head + html
             + takeaways_block_html(takeaways)
             + stats_block_html(stats, stats_image) + policy_block_html(policies)
             + tail_block_html(closing_question, related))
@@ -528,7 +529,9 @@ def highlight_repeated_numbers(html: str, min_count: int = 3, keys: set[str] | N
     """수치를 세 단계로 강조한다.
 
     · 핵심 수치(keys — 브리핑 datapoint)와 min_count 회 이상 되풀이되는 수치를 '중요' 로 본다.
-    · 중요 수치의 첫 등장: 형광펜. 핵심 수치면 굵게도. 두 번째부터는 밑줄만(눈이 덜 피로하게).
+    · 중요 수치의 **첫 등장에만** 형광펜. 핵심 수치면 굵게도. 두 번째부터는 아무 표시도
+      하지 않는다 — 예전에는 밑줄을 그었는데, 5천 자 글에 강조가 42회(굵게 25·밑줄 11·
+      형광 6)나 쌓여 무엇이 중요한지 알 수 없었다 (2026-09-08 실측).
     · '집값' 같은 글자는 세지 않고 숫자+단위만 센다. '3억 원' 과 '3억원' 은 같은 수치.
     · 태그·엔티티·이미지 자리·소제목은 건드리지 않는다.
     인라인 style 을 쓰는 이유: 네이버 에디터가 class 는 버려도 background-color 는 살리기 때문.
@@ -547,7 +550,7 @@ def highlight_repeated_numbers(html: str, min_count: int = 3, keys: set[str] | N
         if key not in important:
             return m.group(0)
         if key in seen:
-            return f"<u>{m.group(0)}</u>"
+            return m.group(0)          # 두 번째부터는 그대로 둔다
         seen.add(key)
         inner = f"<strong>{m.group(0)}</strong>" if key in keys else m.group(0)
         return f'<span class="hl" style="{_HL_STYLE}">{inner}</span>'
@@ -669,25 +672,21 @@ def cover_block_html(filename: str) -> str:
     )
 
 
-def lead_block_html(summary_lines: list[str] | None, outline: list[str] | None) -> str:
-    """글 맨 앞 요약 3줄과 목차. 검색으로 들어온 사람이 스크롤 없이 판단하게 한다."""
-    parts = []
-    if summary_lines:
-        rows = "".join(f'<li style="margin-bottom:6px">{_esc(line)}</li>' for line in summary_lines[:3])
-        parts.append(
-            '<div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px">'
+def lead_block_html(summary_lines: list[str] | None, outline: list[str] | None = None) -> str:
+    """글 맨 앞 요약 3줄. 검색으로 들어온 사람이 스크롤 없이 판단하게 한다.
+
+    **머리에는 상자를 하나만 둡니다 (2026-09-08).** 예전에는 3줄 요약 · 이 글의 순서 ·
+    낯선 말 풀이 · 오늘의 숫자가 연달아 나왔습니다. 넷이 같은 수치를 미리 말해 버려서
+    본문에 닿을 때쯤엔 새로울 게 없었고, 첫 문단까지 상자 여섯 개를 지나야 했습니다.
+    `outline` 은 부르는 쪽 호환을 위해 남겨 두지만 쓰지 않습니다 — 네 꼭지짜리 글에
+    목차는 과합니다.
+    """
+    if not summary_lines:
+        return ""
+    rows = "".join(f'<li style="margin-bottom:6px">{_esc(line)}</li>' for line in summary_lines[:3])
+    return ('<div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px">'
             '<b style="font-size:15px">3줄 요약</b>'
-            f'<ul style="margin:8px 0 0;padding-left:18px">{rows}</ul></div>'
-        )
-    if outline and len(outline) >= 3:
-        # 요약 상자 바로 아래에 오므로 눈에 덜 무겁게 — 글씨를 한 단계 줄이고 줄 간격을 좁힌다
-        rows = "".join(f'<li style="margin-bottom:2px">{_esc(t)}</li>' for t in outline)
-        parts.append(
-            '<div style="background-color:#ffffff;padding:12px 16px;margin:0 0 22px;font-size:14px">'
-            '<b>이 글의 순서</b>'
-            f'<ol style="margin:6px 0 0;padding-left:20px;line-height:1.6">{rows}</ol></div>'
-        )
-    return "".join(parts)
+            f'<ul style="margin:8px 0 0;padding-left:18px">{rows}</ul></div>')
 
 
 def terms_block_html(terms: list[tuple[str, str]]) -> str:
@@ -975,13 +974,11 @@ def asof_block_markdown(date: str, stats: dict | None = None) -> str:
     return f"*{asof_note(date, stats)}*\n"
 
 
-def lead_block_markdown(summary_lines: list[str] | None, outline: list[str] | None) -> str:
-    parts = []
-    if summary_lines:
-        parts.append("**3줄 요약**\n\n" + "\n".join(f"- {' '.join(l.split())}" for l in summary_lines[:3]) + "\n")
-    if outline and len(outline) >= 3:
-        parts.append("**이 글의 순서**\n\n" + "\n".join(f"{i}. {t}" for i, t in enumerate(outline, start=1)) + "\n")
-    return "\n".join(parts)
+def lead_block_markdown(summary_lines: list[str] | None, outline: list[str] | None = None) -> str:
+    """HTML 쪽과 같은 이유로 3줄 요약만 남깁니다 (lead_block_html 설명 참고)."""
+    if not summary_lines:
+        return ""
+    return "**3줄 요약**\n\n" + "\n".join(f"- {' '.join(l.split())}" for l in summary_lines[:3]) + "\n"
 
 
 def tail_block_markdown(closing_question: str = "", related: list[dict] | None = None) -> str:
