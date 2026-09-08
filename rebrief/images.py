@@ -293,7 +293,7 @@ def seoul_district_map(dp: dict, date: str, extra: dict | None = None) -> Image 
                 p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 + 9:g}" font-size="24" '
                          f'font-weight="600" text-anchor="middle" fill="#ffffff">{gu}</text>')
     frame_close(p, notes, g)
-    return Image("district-map", "\n".join(p), dp["label"])
+    return Image("district-map", _embed_fonts("\n".join(p)), dp["label"])
 
 
 # ── 2) 지수 비교 막대 ────────────────────────────────────────
@@ -353,7 +353,7 @@ def index_comparison(dp: dict, date: str, extra: dict | None = None) -> Image | 
     p.append(f'<line x1="{bx}" y1="{top - 8}" x2="{bx}" y2="{top + 84 + 56 + 8}" '
              f'stroke="{BASELINE}" stroke-width="2"/>')
     frame_close(p, notes, g)
-    return Image("index-comparison", "\n".join(p), dp["label"])
+    return Image("index-comparison", _embed_fonts("\n".join(p)), dp["label"])
 # ── 시계열 (이력이 쌓인 지표만) ─────────────────────────────
 
 SERIES_MIN_POINTS = 3
@@ -465,7 +465,7 @@ def time_series(dp: dict, date: str, extra: dict | None = None) -> Image | None:
         p.append(f'<text x="{sx(i):.1f}" y="{sy(v) - 18:.1f}" font-size="19" font-weight="700" '
                  f'text-anchor="{"start" if i == 0 else "end"}" fill="{INK}">{v:g}{esc(unit)}</text>')
     frame_close(p, notes, g)
-    return Image("time-series", "\n".join(p), dp["label"])
+    return Image("time-series", _embed_fonts("\n".join(p)), dp["label"])
 # ── 3) 수치 카드 (기본형) ────────────────────────────────────
 
 
@@ -497,7 +497,7 @@ def stat_card(dp: dict, date: str, extra: dict | None = None) -> Image | None:
     if dp.get("period"):
         p.append(chip(x, y + 150, f'기준 {dp["period"]}'))
     frame_close(p, notes, g)
-    return Image("stat-card", "\n".join(p), dp["label"])
+    return Image("stat-card", _embed_fonts("\n".join(p)), dp["label"])
 SPECIFIC = (time_series, seoul_district_map, index_comparison)
 FALLBACK = (stat_card,)
 GENERATORS = SPECIFIC + FALLBACK
@@ -553,7 +553,7 @@ def trade_volume_bar(data: dict, date: str, extra: dict | None = None) -> "Image
     p.append(f'<line x1="{bx}" y1="{y - 8}" x2="{bx}" y2="{y + len(rows) * row_h - 8}" '
              f'stroke="{BASELINE}" stroke-width="2"/>')
     frame_close(p, notes, g)
-    return Image("stats-volume", "\n".join(p), title)
+    return Image("stats-volume", _embed_fonts("\n".join(p)), title)
 
 
 
@@ -665,7 +665,7 @@ def district_choropleth(data: dict, date: str, extra: dict | None = None, *,
                      f'font-weight="700" text-anchor="middle" fill="{inks[i]}">'
                      f'{esc(spec["fmt"](value))}</text>')
     frame_close(p, notes, g)
-    return Image(spec["slug"], "\n".join(p), title)
+    return Image(spec["slug"], _embed_fonts("\n".join(p)), title)
 
 
 def price_index_line(series: dict, date: str, extra: dict | None = None) -> "Image | None":
@@ -735,7 +735,7 @@ def price_index_line(series: dict, date: str, extra: dict | None = None) -> "Ima
         p.append(f'<text x="{cx:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
                  f'text-anchor="{anchor}" fill="{MUTED}">{esc(when)}</text>')
     frame_close(p, notes, g)
-    return Image("stats-index", "\n".join(p), title)
+    return Image("stats-index", _embed_fonts("\n".join(p)), title)
 
 
 def jeonse_history_line(rows: list[dict], region: str, date: str,
@@ -790,7 +790,7 @@ def jeonse_history_line(rows: list[dict], region: str, date: str,
         p.append(f'<text x="{coords[idx][0]:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
                  f'text-anchor="{anchor}" fill="{MUTED}">{esc(points[idx]["date"])}</text>')
     frame_close(p, notes, g)
-    return Image("stats-jeonse", "\n".join(p), title)
+    return Image("stats-jeonse", _embed_fonts("\n".join(p)), title)
 
 
 def trade_history_line(rows: list[dict], region: str, date: str,
@@ -843,7 +843,7 @@ def trade_history_line(rows: list[dict], region: str, date: str,
         p.append(f'<text x="{coords[idx][0]:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
                  f'text-anchor="{anchor}" fill="{MUTED}">{esc(points[idx]["date"])}</text>')
     frame_close(p, notes, g)
-    return Image("stats-history", "\n".join(p), title)
+    return Image("stats-history", _embed_fonts("\n".join(p)), title)
 
 
 
@@ -902,7 +902,7 @@ def supply_line(item: dict, date: str, extra: dict | None = None) -> "Image | No
         p.append(f'<text x="{coords[idx][0]:.1f}" y="{py + plot_h + 30:g}" font-size="18" '
                  f'text-anchor="{anchor}" fill="{MUTED}">{esc(rows[idx]["label"])}</text>')
     frame_close(p, notes, g)
-    return Image("stats-supply", "\n".join(p), title)
+    return Image("stats-supply", _embed_fonts("\n".join(p)), title)
 
 
 def build(datapoints: list[dict], date: str, headline: str = "", limit: int = 3,
@@ -1062,7 +1062,7 @@ def thumbnail(text: str, *, sub: str = "", channel: str = "", date: str = "",
         p.append(f'<text x="{bx + bw / 2:.0f}" y="{by + bh * 0.68:.0f}" font-size="{bsize}" font-weight="800" '
                  f'text-anchor="middle" fill="#ffffff">{esc(badge)}</text>')
     p.append("</svg>")
-    return Image("thumb", "\n".join(p), text)
+    return Image("thumb", _embed_fonts("\n".join(p)), text)
 
 
 # ── PNG 변환 (있으면 덤) ─────────────────────────────────────
@@ -1159,38 +1159,95 @@ CARD_FACES = {"cover": CARD_DARK, "numbers": CARD_FLOOD, "issue": CARD_PAPER,
               "rest": CARD_DARK, "watch": CARD_DARK}
 
 CARD_GRID = 60             # 제도 격자 한 칸
-DISPLAY = "'IBMPlexMonoBold','Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif"
+# 한글은 프리텐다드, 숫자·기호는 IBM Plex Mono. 이 카드에만 쓰는 짝입니다
+# (블로그 인포그래픽은 그대로 FONT 를 씁니다 — 러너에 프리텐다드가 없어 그쪽까지
+# 바꾸면 맥에서 만든 그림과 러너에서 만든 그림이 달라집니다).
+CARD_FONT = "'Pretendard','Apple SD Gothic Neo','Noto Sans CJK KR',sans-serif"
+DISPLAY = "'IBMPlexMonoBold','PretendardBold','Apple SD Gothic Neo',sans-serif"
 MONO = "'IBMPlexMono','SF Mono',ui-monospace,monospace"
 
 _FONT_DIR = Path(__file__).resolve().parent.parent / "assets" / "fonts"
-_FONT_FILES = {"IBMPlexMono": "IBMPlexMono-Regular.ttf", "IBMPlexMonoBold": "IBMPlexMono-Bold.ttf"}
-_font_css_cache: str | None = None
+_FONT_FILES = {
+    "IBMPlexMono": "IBMPlexMono-Regular.ttf",
+    "IBMPlexMonoBold": "IBMPlexMono-Bold.ttf",
+    "Pretendard": "Pretendard-Regular.otf",
+    "PretendardBold": "Pretendard-Bold.otf",
+}
+# 굵기를 이름으로 갈라 두었으므로 @font-face 에 굵기를 함께 적습니다. 그래야
+# font-weight:800 인 제목이 굵은 파일을 집습니다.
+_FONT_WEIGHT = {"IBMPlexMonoBold": 700, "PretendardBold": 700}
+_FONT_CSS_TOKEN = "<!--글꼴-->"     # 카드마다 쓴 글자만 잘라 넣을 자리
+_font_cache: dict[str, str] = {}
 
 
-def _font_css() -> str:
-    """라틴 서체를 SVG 안에 심는다.
+def _font_css(chars: str = "") -> str:
+    """카드에 실제로 쓴 글자만 잘라 SVG 안에 심는다.
 
     깃허브 러너에는 이 글꼴이 없고, 크롬은 다른 로컬 파일을 기본적으로 읽지 못합니다.
-    심어 보내면 어디서 그리든 같은 그림이 나옵니다. 심은 SVG 는 PNG 로 바뀐 뒤 지워지므로
-    저장소에 쌓이지 않습니다. 글꼴을 못 찾으면 조용히 시스템 글꼴로 넘어갑니다.
+    심어 보내면 어디서 그리든 같은 그림이 나옵니다.
+
+    **통째로 심으면 안 됩니다.** 프리텐다드 한 벌이 1.5MB 라 두 굵기를 그대로 넣으면
+    카드 한 장의 SVG 가 4MB 를 넘습니다. 한 장에 쓰는 글자는 200자 안쪽이므로 그만
+    잘라내면 수십 KB 로 줄어듭니다. fontTools 가 없으면 조용히 시스템 글꼴로 갑니다 —
+    글씨가 조금 달라질 뿐 카드는 그대로 나옵니다.
     """
-    global _font_css_cache
-    if _font_css_cache is not None:
-        return _font_css_cache
+    key = "".join(sorted(set(chars)))
+    if key in _font_cache:
+        return _font_cache[key]
     import base64
+
+    try:
+        from fontTools import subset as ft_subset
+        from fontTools.ttLib import TTFont
+
+        # 'meta NOT subset' 안내가 글꼴마다 나온다. 우리가 할 일이 없는 표라 접어 둔다.
+        logging.getLogger("fontTools.subset").setLevel(logging.ERROR)
+    except ImportError:
+        log.debug("fontTools 가 없어 카드 글꼴을 시스템 것으로 그립니다")
+        _font_cache[key] = ""
+        return ""
 
     faces = []
     for family, filename in _FONT_FILES.items():
         path = _FONT_DIR / filename
         try:
-            blob = base64.b64encode(path.read_bytes()).decode("ascii")
-        except OSError:
+            font = TTFont(path, lazy=True)
+        except Exception:
             log.debug("%s 를 찾지 못해 시스템 글꼴로 그립니다", path)
             continue
-        faces.append(f"@font-face{{font-family:'{family}';font-display:block;"
-                     f"src:url(data:font/ttf;base64,{blob}) format('truetype');}}")
-    _font_css_cache = "".join(faces)
-    return _font_css_cache
+        try:
+            options = ft_subset.Options()
+            options.desubroutinize = True          # CFF 를 풀어야 크롬이 확실히 읽는다
+            options.drop_tables += ["GSUB", "GPOS"]
+            options.notdef_outline = True
+            subsetter = ft_subset.Subsetter(options=options)
+            subsetter.populate(text=key + "0123456789.,%/ ")
+            subsetter.subset(font)
+            import io
+
+            buf = io.BytesIO()
+            font.save(buf)
+            blob = base64.b64encode(buf.getvalue()).decode("ascii")
+        except Exception as exc:
+            log.debug("%s 부분집합을 뜨지 못했습니다: %s", filename, exc)
+            continue
+        finally:
+            font.close()
+        weight = _FONT_WEIGHT.get(family, 400)
+        faces.append(f"@font-face{{font-family:'{family}';font-weight:{weight};"
+                     f"font-display:block;"
+                     f"src:url(data:font/otf;base64,{blob}) format('opentype');}}")
+    _font_cache[key] = "".join(faces)
+    return _font_cache[key]
+
+
+def _embed_fonts(svg: str) -> str:
+    """다 그린 카드에서 쓴 글자를 긁어 글꼴을 심는다.
+
+    글꼴을 먼저 넣고 글을 나중에 그리므로, 그릴 때는 자리만 잡아 두고 마지막에 바꿉니다.
+    """
+    chars = "".join(re.findall(r">([^<>]*)<", svg))
+    return svg.replace(_FONT_CSS_TOKEN, f"<style>{_font_css(chars)}</style>")
 
 
 def _png_size(path: Path) -> tuple[int, int]:
@@ -1210,9 +1267,9 @@ def _art_band(path: Path) -> dict | None:
     """카드 위쪽에 얹을 그림 한 장을 준비한다.
 
     두 갈래입니다.
-    · `photo-*` — **사람이 직접 넣어 둔 사진**. 그날 폴더에 넣어 두면 먼저 씁니다.
+    · `photo-*` — **사람이 직접 넣어 둔 사진**, 또는 무료 사진(Pexels)에서 받아 온 것.
     · `img-*` — 그날 우리가 그린 인포그래픽. 기사 사진은 저작권이 있어 쓰지 않고
-      수집하지도 않으므로, 아무것도 넣지 않은 날의 기본값이 이쪽입니다.
+      수집하지도 않으므로, 사진이 없는 날의 기본값이 이쪽입니다.
 
     띠는 **가득 채웁니다**(`slice`). 담아서 넣으면 양옆이나 위아래가 허옇게 비어
     '덜 만든 것' 처럼 보입니다. 대신 세로로 긴 인포그래픽은 잘리면 축이나 범례가
@@ -1290,7 +1347,7 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         if art.get("credit"):
             p.append(f'<rect x="0" y="{band-46:.0f}" width="{w}" height="46" '
                      f'fill="#000000" opacity="0.42"/>')
-            p.append(f'<text x="{w-96}" y="{band-16:.0f}" font-size="20" text-anchor="end" '
+            p.append(f'<text x="{w-96}" y="{band-16:.0f}" font-size="22" text-anchor="end" '
                      f'fill="#ffffff" opacity="0.9">{esc(art["credit"])}</text>')
         bottom = h - 100
         meta = []
@@ -1299,24 +1356,24 @@ def _card_frame(face: tuple, n: int, total: int, *, date: str = "", channel: str
         if date:
             meta.append(esc(date.replace("-", ".")))
         if meta:
-            p.append(f'<text x="96" y="{h-60}" font-size="22" fill="{dim}">'
+            p.append(f'<text x="96" y="{h-60}" font-size="25" fill="{dim}">'
                      f'{" · ".join(meta)}</text>')
     else:
         top, bottom = 172, h - 152
         p.append(f'<rect x="58" y="58" width="{w-116}" height="{h-116}" fill="none" '
                  f'stroke="{signal}" stroke-width="1.4" opacity="0.45"/>')
         if channel:
-            p.append(f'<text x="96" y="102" font-size="25" font-weight="700" letter-spacing="1" '
+            p.append(f'<text x="96" y="102" font-size="28" font-weight="700" letter-spacing="1" '
                      f'fill="{ink}">{esc(channel)}</text>')
         if date:
-            p.append(f'<text x="{w-96}" y="102" font-size="23" font-family="{MONO}" '
+            p.append(f'<text x="{w-96}" y="102" font-size="26" font-family="{MONO}" '
                      f'letter-spacing="1" text-anchor="end" fill="{dim}">'
                      f'{esc(date.replace("-", "."))}</text>')
         p.append(f'<line x1="96" y1="130" x2="{w-96}" y2="130" stroke="{rule}" stroke-width="1.5"/>')
         p.append(f'<line x1="96" y1="{h-108}" x2="{w-96}" y2="{h-108}" stroke="{rule}" '
                  f'stroke-width="1.5"/>')
     if total > 1:
-        p.append(f'<text x="{w-96}" y="{h-60}" font-size="25" font-family="{MONO}" letter-spacing="2" '
+        p.append(f'<text x="{w-96}" y="{h-60}" font-size="28" font-family="{MONO}" letter-spacing="2" '
                  f'text-anchor="end" fill="{dim}">{n:02d} / {total:02d}</text>')
     return p, top, bottom
 
@@ -1407,10 +1464,10 @@ def _cover_card(headline: str, sub: str, badge: str, total: int, date: str, chan
     p, top, bottom = _card_frame(CARD_FACES["cover"], 1, total, date=date, channel=channel, art=art)
     inner = w - 192
 
-    lines, size = _fit(headline, 92 if not art else 70, inner, 4 if not art else 3,
-                       floor=54 if not art else 44)
+    lines, size = _fit(headline, 104 if not art else 80, inner, 4 if not art else 3,
+                       floor=62 if not art else 50)
     line_h = size * 1.26
-    sub_lines, sub_size = _sentence_fit(sub, 31, inner - 40, 3 if not art else 2)
+    sub_lines, sub_size = _sentence_fit(sub, 36, inner - 40, 3 if not art else 2)
     sub_h = (54 + len(sub_lines) * sub_size * 1.55) if sub_lines else 0
     badge_h = 96 if badge else 0
     y = top + max(0, (bottom - top - (line_h * len(lines) + sub_h + badge_h)) / 2)
@@ -1426,9 +1483,9 @@ def _cover_card(headline: str, sub: str, badge: str, total: int, date: str, chan
         y += len(sub_lines) * sub_size * 1.55
     if badge:
         y += 44
-        _numeral(p, badge, 126, y + 44, 54, signal)
+        _numeral(p, badge, 126, y + 44, 62, signal)
     p.append("</svg>")
-    return Image("card-1-cover", "\n".join(p), headline)
+    return Image("card-1-cover", _embed_fonts("\n".join(p)), headline)
 
 
 def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str) -> Image:
@@ -1438,15 +1495,15 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
     p, top, bottom = _card_frame(CARD_FACES["numbers"], n, total, date=date, channel=channel)
     inner = w - 192
 
-    p.append(f'<text x="96" y="{top+36:.0f}" font-size="29" font-weight="700" letter-spacing="2.5" '
+    p.append(f'<text x="96" y="{top+36:.0f}" font-size="33" font-weight="700" letter-spacing="2.5" '
              f'fill="{ink}" opacity="0.9">오늘의 숫자</text>')
     measured = []
     for dp in nums[:3]:
         value = f"{dp.get('value', '')}{dp.get('unit', '')}".strip()
-        v_size = 126
-        while text_width(value, v_size) > inner and v_size > 54:
+        v_size = 140
+        while text_width(value, v_size) > inner and v_size > 60:
             v_size -= 6
-        label, l_size = _fit(dp.get("label", ""), 27, inner, 2)
+        label, l_size = _fit(dp.get("label", ""), 31, inner, 2)
         measured.append((value, v_size, label, l_size,
                          v_size * 0.82 + 24 + l_size * 1.35 * len(label) + 56))
 
@@ -1461,7 +1518,7 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
             p.append(f'<line x1="96" y1="{y-28:.0f}" x2="{w-96}" y2="{y-28:.0f}" '
                      f'stroke="{ink}" stroke-width="1.5" opacity="0.28"/>')
     p.append("</svg>")
-    return Image(f"card-{n}-numbers", "\n".join(p), "오늘의 숫자")
+    return Image(f"card-{n}-numbers", _embed_fonts("\n".join(p)), "오늘의 숫자")
 
 
 def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
@@ -1481,27 +1538,27 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
     if cat:
         blocks.append(("cat", cat, 58))
 
-    t_max = 62 if not art else 52
-    title, t_size = _fit(str(issue.get("title", "")), t_max, inner, 3, floor=38)
+    t_max = 70 if not art else 58
+    title, t_size = _fit(str(issue.get("title", "")), t_max, inner, 3, floor=44)
     blocks.append(("title", (title, t_size), t_size * 1.28 * len(title) + 38))
 
     nums = [dp for dp in (issue.get("numbers") or []) if dp.get("value")][:1]
     if nums and not art:      # 그림이 있는 날엔 수치까지 얹으면 판이 비좁다
         dp = nums[0]
         value = f"{dp.get('value', '')}{dp.get('unit', '')}".strip()
-        v_size = 104
-        while text_width(value, v_size) > inner - 20 and v_size > 50:
+        v_size = 116
+        while text_width(value, v_size) > inner - 20 and v_size > 56:
             v_size -= 6
-        lab, lab_size = _fit(str(dp.get("label", "")), 26, inner, 2)
+        lab, lab_size = _fit(str(dp.get("label", "")), 30, inner, 2)
         blocks.append(("number", (value, v_size, lab, lab_size),
                        v_size * 0.82 + 22 + lab_size * 1.35 * len(lab) + 44))
 
-    body, b_size = _fit(str(issue.get("one_liner", "")), 34 if not art else 31, inner, 4)
+    body, b_size = _fit(str(issue.get("one_liner", "")), 39 if not art else 36, inner, 4)
     if body:
         blocks.append(("body", (body, b_size), b_size * 1.55 * len(body) + 34))
 
     for fact in [f for f in (issue.get("what_happened") or []) if f][:3]:
-        lines, size = _fit(fact, 27, inner - 48, 2)
+        lines, size = _fit(fact, 31, inner - 48, 2)
         blocks.append(("fact", (lines, size), size * 1.5 * len(lines) + 22))
 
     while len(blocks) > 2 and sum(b[2] for b in blocks) > bottom - top:
@@ -1511,7 +1568,7 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
     for kind, value, height in blocks:
         if kind == "cat":
             p.append(f'<rect x="96" y="{y+6:.0f}" width="5" height="26" fill="{signal}"/>')
-            p.append(f'<text x="118" y="{y+28:.0f}" font-size="23" font-weight="700" '
+            p.append(f'<text x="118" y="{y+28:.0f}" font-size="26" font-weight="700" '
                      f'letter-spacing="1.5" fill="{dim}">{esc(value)}</text>')
         elif kind == "title":
             lines, size = value
@@ -1535,7 +1592,7 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
                          f'fill="{dim}">{esc(line)}</text>')
         y += height
     p.append("</svg>")
-    return Image(f"card-{n}-issue", "\n".join(p), str(issue.get("title", "")))
+    return Image(f"card-{n}-issue", _embed_fonts("\n".join(p)), str(issue.get("title", "")))
 
 
 def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
@@ -1549,7 +1606,7 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
 
     # 항목이 적은 날은 글씨를 키운다. 같은 크기로 두면 카드가 '덜 만든 것' 처럼 비어 보인다.
     picked = items[:6]
-    base = {1: 44, 2: 40, 3: 36}.get(len(picked), 31)
+    base = {1: 50, 2: 46, 3: 41}.get(len(picked), 35)
     rows = []
     for item in picked:
         lines, size = _fit(item, base, inner, 2)
@@ -1560,11 +1617,11 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
         rows.pop()
     y = top + max(0, (bottom - top - head_h - sum(r[2] for r in rows)) / 2)
 
-    p.append(f'<text x="96" y="{y+36:.0f}" font-size="29" font-weight="700" letter-spacing="2.5" '
+    p.append(f'<text x="96" y="{y+36:.0f}" font-size="33" font-weight="700" letter-spacing="2.5" '
              f'fill="{signal}">{esc(title)}</text>')
     y += head_h
     for i, (lines, size, height) in enumerate(rows, start=1):
-        p.append(f'<text x="96" y="{y+size:.0f}" font-size="23" font-family="{MONO}" '
+        p.append(f'<text x="96" y="{y+size:.0f}" font-size="26" font-family="{MONO}" '
                  f'fill="{dim}">{i:02d}</text>')
         for j, line in enumerate(lines):
             p.append(f'<text x="162" y="{y+size+j*size*1.5:.0f}" font-size="{size:.0f}" '
@@ -1574,7 +1631,7 @@ def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
             p.append(f'<line x1="162" y1="{y-21:.0f}" x2="{w-96}" y2="{y-21:.0f}" '
                      f'stroke="{rule}" stroke-width="1.5"/>')
     p.append("</svg>")
-    return Image(f"card-{n}-{slug}", "\n".join(p), title)
+    return Image(f"card-{n}-{slug}", _embed_fonts("\n".join(p)), title)
 
 
 def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[dict] | None = None,

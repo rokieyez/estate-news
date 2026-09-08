@@ -2245,12 +2245,19 @@ def test_card_palette_stays_readable():
             assert got >= 4.5, f"{face_name} 위 {role} 대비 {got:.2f}"
 
 
-def test_cards_embed_the_latin_fonts():
-    """라틴 서체를 SVG 에 심는다 — 러너에는 그 글꼴이 없다."""
+def test_cards_embed_only_the_letters_they_use():
+    """글꼴을 SVG 에 심되 **쓴 글자만** 잘라 심는다 — 러너에는 이 글꼴이 없다.
+
+    통째로 심으면 프리텐다드 두 굵기만 3MB 라 카드 한 장이 4MB 를 넘는다.
+    실제로 쓰는 글자는 200자 안쪽이라 잘라내면 수십 KB 로 줄어든다.
+    """
     from rebrief import images
 
-    css = images._font_css()
-    assert "IBMPlexMono" in css and "IBMPlexMonoBold" in css
+    css = images._font_css("분당 집값 29.5%")
+    for family in ("IBMPlexMono", "IBMPlexMonoBold", "Pretendard", "PretendardBold"):
+        assert f"'{family}'" in css
     assert "base64," in css
+    assert len(css) < 400_000, f"글꼴이 너무 크다 — {len(css)//1024}KB"
+
     cover = images.cards(_brief_for_cards(), date="2026-09-08")[0].svg
-    assert "@font-face" in cover
+    assert "@font-face" in cover and images._FONT_CSS_TOKEN not in cover
