@@ -1153,10 +1153,15 @@ CARD_PAPER = "#f4f2ed"      # 밝은 카드의 바탕. 흰색(#fff)보다 종이
 CARD_LIGHT = "#ffffff"
 CARD_DIM = "#7d8794"        # 어둠 위의 낮은 글씨
 CARD_DIM_PAPER = "#6b6862"  # 밝은 바탕 위의 낮은 글씨
-# 신호색. 파랑 일색을 깨는 따뜻한 한 점. 밝은 바탕에서는 같은 색이 흐려 보이므로
-# (#ff5c2b 는 종이 위 대비 2.75 로 읽기 어렵다) 짙은 짝을 따로 둔다 — 대비 5.31.
-CARD_SIGNAL = "#ff5c2b"
-CARD_SIGNAL_DEEP = "#b83411"
+# 신호색 — 테라코타. 처음에는 형광에 가까운 주황(#ff5c2b)이었는데 "너무 세다" 는
+# 지적을 받아 채도를 낮췄습니다 (2026-09-08, 사용자). 따뜻함은 남기고 소리만 줄인 색입니다.
+#
+# 한 색으로 어둠과 종이 양쪽을 만족시킬 수 없습니다 — 중간 밝기 색은 양쪽 어디에도
+# 4.5 를 못 냅니다. 그래서 바탕별로 짝을 나눠 둡니다.
+CARD_SIGNAL = "#c9714f"        # 어둠 위 (대비 5.37)
+CARD_SIGNAL_DEEP = "#96482a"   # 종이 위 (대비 5.76)
+CARD_CLAY = "#73402c"          # 면색 카드의 바탕. 흰 글씨 대비 8.40
+CARD_CLAY_DIM = "#e8cfc2"      # 그 위의 낮은 글씨 (대비 5.66)
 CARD_RULE = "#242c38"       # 어둠 위의 실선
 CARD_RULE_PAPER = "#d8d4cb"
 
@@ -1318,20 +1323,20 @@ def _cover_card(headline: str, sub: str, badge: str, total: int, date: str, chan
 def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str) -> Image:
     """오늘의 숫자 — 신호색으로 통째로 채운 한 장. 이 장이 나머지를 지탱한다."""
     w, h = CARD_SIZE
-    p = _card_open(CARD_SIGNAL)
-    ink = "#1a0d07"                       # 신호색 위에 얹는 짙은 글씨 (대비 6.17)
-    dim = "#3d1c0d"                       # 낮은 글씨. 예전 #7a3a1e 는 대비 2.78 로 안 읽혔다
+    p = _card_open(CARD_CLAY)
+    ink = CARD_LIGHT                      # 짙은 흙빛 위에는 흰 글씨 (대비 8.40)
+    dim = CARD_CLAY_DIM                   # 낮은 글씨 (대비 5.66)
     for i in range(21):                   # 눈금은 여기서도 같은 자리에
         y = 150 + i * (h - 300) / 20
         p.append(f'<rect x="40" y="{y:.1f}" width="{18 if i % 5 == 0 else 9}" height="2" '
-                 f'fill="{ink}" opacity="{0.5 if i % 5 == 0 else 0.25}"/>')
+                 f'fill="{ink}" opacity="{0.45 if i % 5 == 0 else 0.22}"/>')
     if channel:
         p.append(f'<text x="96" y="104" font-size="26" font-weight="700" letter-spacing="1.5" '
                  f'fill="{ink}">{esc(channel)}</text>')
     p.append(f'<text x="{w - 96}" y="104" font-size="24" font-family="{MONO}" letter-spacing="1" '
              f'text-anchor="end" fill="{dim}">{esc(date.replace("-", "."))}</text>')
-    p.append(f'<line x1="96" y1="132" x2="{w - 96}" y2="132" stroke="{ink}" stroke-width="1.5" opacity="0.35"/>')
-    p.append(f'<line x1="96" y1="{h - 108}" x2="{w - 96}" y2="{h - 108}" stroke="{ink}" stroke-width="1.5" opacity="0.35"/>')
+    p.append(f'<line x1="96" y1="132" x2="{w - 96}" y2="132" stroke="{ink}" stroke-width="1.5" opacity="0.3"/>')
+    p.append(f'<line x1="96" y1="{h - 108}" x2="{w - 96}" y2="{h - 108}" stroke="{ink}" stroke-width="1.5" opacity="0.3"/>')
     if total > 1:
         p.append(f'<text x="{w - 96}" y="{h - 62}" font-size="26" font-family="{MONO}" '
                  f'letter-spacing="2" text-anchor="end" fill="{dim}">{n:02d} / {total:02d}</text>')
@@ -1361,7 +1366,7 @@ def _numbers_card(nums: list[dict], n: int, total: int, date: str, channel: str)
         y += height
         if i < len(measured) - 1:
             p.append(f'<line x1="96" y1="{y - 27:.0f}" x2="{w - 96}" y2="{y - 27:.0f}" '
-                     f'stroke="{ink}" stroke-width="1.5" opacity="0.3"/>')
+                     f'stroke="{ink}" stroke-width="1.5" opacity="0.25"/>')
     p.append("</svg>")
     return Image(f"card-{n}-numbers", "\n".join(p), "오늘의 숫자")
 
