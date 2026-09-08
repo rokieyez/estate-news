@@ -155,3 +155,20 @@ def fetch(brief: dict, *, cache_dir: Path, ledger: Path, count: int = 3,
         except OSError as exc:
             log.warning("사진 장부를 남기지 못했습니다: %s", exc)
     return out
+
+
+def check_source(query: str = DEFAULT_QUERY) -> tuple[bool, int, str]:
+    """사진 검색이 실제로 되는지 한 번 불러 본다. `doctor` 가 씁니다.
+
+    (되는가, 몇 건, 안 되면 왜) 를 돌려줍니다. 여기서 실패해도 하루 실행은 살아 있습니다 —
+    사진이 없으면 인포그래픽으로 가니까요. **깃허브 러너에서도 되는지 확인하려고 만들었습니다.**
+    맥에서는 되는데 러너에서 막히는 경우가 있고(클라우드플레어), 그걸 다음 날 아침에
+    발견하는 것보다 버튼 한 번으로 미리 보는 편이 낫습니다.
+    """
+    key = os.environ.get("PEXELS_API_KEY", "")
+    if not key:
+        return False, 0, "PEXELS_API_KEY 없음"
+    try:
+        return True, len(_pexels(query, key, per_page=3)), ""
+    except Exception as exc:
+        return False, 0, str(exc)

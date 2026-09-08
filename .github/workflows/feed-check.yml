@@ -28,6 +28,8 @@ jobs:
         env:
           DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
           REB_API_KEY: ${{ secrets.REB_API_KEY }}
+          # 카드뉴스 사진이 러너에서도 되는지 함께 봅니다 (맥에서만 되는 일이 있습니다)
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
         run: |
           {
             echo "## RSS 피드 · 정책브리핑 · 인증키"

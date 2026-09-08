@@ -543,6 +543,19 @@ def _report_keys(cfg) -> None:
     if all(not ok for _, ok, _, _ in rows):
         print("      (없어도 매일 글은 나옵니다. 있으면 통계와 노출 확인이 더해집니다.)")
 
+    # 사진은 키가 있어도 막힐 수 있어 **실제로 한 번 불러 봅니다.** 클라우드플레어가
+    # 이름 없는 호출을 거르기 때문에, 키가 맞아도 403 이 오는 일이 실제로 있었습니다.
+    from . import photos
+
+    ok, found, why = photos.check_source()
+    if ok:
+        print(f"  ✅  카드뉴스 사진 (Pexels) — 시험 검색 {found}건")
+    elif why == "PEXELS_API_KEY 없음":
+        print("  ⏸  카드뉴스 사진 — PEXELS_API_KEY 없음. pexels.com/api 에서 무료 발급"
+              " (없으면 인포그래픽이 대신 올라갑니다)")
+    else:
+        print(f"  ❌  카드뉴스 사진 — 키는 있는데 부르지 못했습니다: {_short(why)}")
+
 
 def _report_policy_source(cfg) -> None:
     """정부 발표 원문(정책브리핑)이 살아 있는지 함께 본다. 여기서 실패해도 doctor 는 실패가 아니다."""
