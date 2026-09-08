@@ -53,8 +53,11 @@
     font-size: 20px; font-weight: 700; margin: 56px 0 16px;
     padding-top: 26px; border-top: 2px solid #03c75a;
   }
-  /* 첫 제목 앞에는 나눌 앞 꼭지가 없으므로 선을 긋지 않는다 */
-  #post h2:first-child { margin-top: 8px; padding-top: 0; border-top: none; }
+  /* 첫 제목 앞에는 나눌 앞 꼭지가 없으므로 선을 긋지 않는다.
+     :first-child 가 아니라 :first-of-type 인 이유 — 제목 앞에 요약·목차·용어 상자가
+     먼저 오므로 첫 h2 는 결코 #post 의 첫 자식이 아니다. 예전 규칙은 한 번도
+     맞은 적이 없었다. */
+  #post h2:first-of-type { margin-top: 8px; padding-top: 0; border-top: none; }
   #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
   #post p { margin: 0 0 18px; }
   #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
