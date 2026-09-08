@@ -1991,7 +1991,7 @@ def test_cards_are_square_and_numbered(cfg):
     assert got[0].slug == "card-1-cover"
     for img in got:
         assert 'width="1080" height="1080"' in img.svg      # 정사각 — 세로는 잘리는 화면이 있다
-        assert f"/ {len(got)}" in img.svg                   # 쪽번호가 실제 장수와 맞는다
+        assert f"/ {len(got):02d}" in img.svg               # 쪽번호(02 / 07)가 실제 장수와 맞는다
     assert "오늘의 숫자" in got[1].svg
     assert "내일 볼 것" in got[-1].svg
 
@@ -1999,7 +1999,7 @@ def test_cards_are_square_and_numbered(cfg):
     small = images.cards({"headline": "조용한 하루", "issues": [
         {"title": "하나", "one_liner": "한 줄", "numbers": []}]}, date="2026-09-08")
     assert 0 < len(small) < 5
-    assert "1 / " not in small[0].svg or len(small) > 1      # 한 장이면 쪽번호를 찍지 않는다
+    assert "01 / " not in small[0].svg or len(small) > 1     # 한 장이면 쪽번호를 찍지 않는다
 
 
 def test_cards_badge_only_uses_a_number_that_is_in_the_headline():
@@ -2044,3 +2044,43 @@ def test_cards_do_not_call_the_model(cfg, monkeypatch):
     assert calls["n"] == 3                       # 브리핑·블로그·대본. 카드 때문에 늘지 않았다
     made = sorted(p.name for p in (cfg.output_dir / "2026-09-06").glob("card-*.svg"))
     assert made and made[0].startswith("card-1-cover")
+
+
+def test_card_palette_stays_readable():
+    """카드 색은 눈이 아니라 대비로 정한다.
+
+    처음 그린 판에서 두 곳이 걸렸다 — 주황 위 낮은 글씨 2.78, 종이 위 신호색 2.75.
+    둘 다 작은 글씨라 4.5 를 넘겨야 한다 (2026-09-08 실측).
+    """
+    from rebrief import images
+
+    def lum(h):
+        c = [int(h[i:i + 2], 16) / 255 for i in (1, 3, 5)]
+        c = [x / 12.92 if x <= 0.03928 else ((x + 0.055) / 1.055) ** 2.4 for x in c]
+        return 0.2126 * c[0] + 0.7152 * c[1] + 0.0722 * c[2]
+
+    def ratio(a, b):
+        hi, lo = sorted((lum(a), lum(b)), reverse=True)
+        return (hi + 0.05) / (lo + 0.05)
+
+    pairs = [
+        ("어둠 위 흰 글씨", images.CARD_LIGHT, images.CARD_INK),
+        ("어둠 위 낮은 글씨", images.CARD_DIM, images.CARD_INK),
+        ("종이 위 검은 글씨", images.INK, images.CARD_PAPER),
+        ("종이 위 낮은 글씨", images.CARD_DIM_PAPER, images.CARD_PAPER),
+        ("종이 위 신호색", images.CARD_SIGNAL_DEEP, images.CARD_PAPER),
+        ("어둠 위 신호색", images.CARD_SIGNAL, images.CARD_INK),
+    ]
+    for name, fg, bg in pairs:
+        assert ratio(fg, bg) >= 4.5, f"{name} 대비 {ratio(fg, bg):.2f}"
+
+
+def test_cards_embed_the_latin_fonts():
+    """라틴 서체를 SVG 에 심는다 — 러너에는 그 글꼴이 없다."""
+    from rebrief import images
+
+    css = images._font_css()
+    assert "BigShoulders" in css and "GeistMono" in css
+    assert "base64," in css
+    cover = images.cards(_brief_for_cards(), date="2026-09-08")[0].svg
+    assert "@font-face" in cover
