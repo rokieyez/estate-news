@@ -27,9 +27,14 @@ for i in $(seq 1 10); do
     sleep 30
 done
 
-if out=$("$GH" workflow run daily-brief.yml --repo "$REPO" --ref main 2>&1); then
-    say "깨웠습니다"
-    exit 0
-fi
-say "실패: $out"
+# 세 번까지 다시 시도한다. 뚜껑을 닫아 둔 사이 06:45 과 07:25 이 **한 번으로 합쳐져**
+# 깨어날 때 실행되므로(launchd.plist 설명서), 그 한 번이 실패하면 그날은 재시도가 없다.
+for attempt in 1 2 3; do
+    if out=$("$GH" workflow run daily-brief.yml --repo "$REPO" --ref main 2>&1); then
+        say "깨웠습니다 (${attempt}번째 시도)"
+        exit 0
+    fi
+    say "실패 ($attempt/3): $out"
+    [ "$attempt" -lt 3 ] && sleep 60
+done
 exit 1
