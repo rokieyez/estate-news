@@ -91,7 +91,7 @@ def _get(url: str, headers: dict, timeout: int = 20) -> bytes:
         return resp.read()
 
 
-def _pexels(query: str, key: str, *, per_page: int = 15) -> list[dict]:
+def _pexels(query: str, key: str, *, per_page: int = 40) -> list[dict]:
     url = f"{PEXELS_SEARCH}?" + urllib.parse.urlencode({
         "query": query, "per_page": per_page,
         "orientation": "landscape",     # 띠가 가로로 길다. 세로 사진은 잘려 못 쓴다.
@@ -128,9 +128,12 @@ def fetch(brief: dict, *, cache_dir: Path, ledger: Path, count: int = 3,
         except Exception as exc:              # 망·인증키·응답 형식 무엇이든
             log.warning("사진 검색 실패(%s): %s", query, exc)
             continue
-        for hit in hits:
+        # 장부에 없는 것부터 고르고, 한 장도 없으면 **그냥 앞의 것을 다시 씁니다.**
+        # 되풀이를 막자고 사진을 아예 안 넣으면 카드가 표로 돌아갑니다 — 그게 더 나쁩니다.
+        fresh = [h for h in hits if str(h.get("id") or "") not in seen]
+        for hit in fresh or hits:
             ident = str(hit.get("id") or "")
-            if not ident or ident in seen:
+            if not ident:
                 continue
             src = (hit.get("src") or {}).get("landscape") or (hit.get("src") or {}).get("large")
             if not src:
@@ -143,6 +146,8 @@ def fetch(brief: dict, *, cache_dir: Path, ledger: Path, count: int = 3,
                 log.warning("사진 내려받기 실패(%s): %s", ident, exc)
                 continue
             seen.add(ident)
+            if ident in used:
+                used.remove(ident)          # 다시 쓴 것은 장부 맨 뒤로 — 가장 오래 안 쓴 것부터 돈다
             used.append(ident)
             out.append(Photo(path=path, credit=str(hit.get("photographer") or "").strip(),
                              source="Pexels", ident=ident))
