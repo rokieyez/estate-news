@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>인천 서해구 재개발 6곳 집중 지원, 9월 9일 부돌보 브리핑</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
+  body {
+    margin: 0; padding: 0 16px 80px;
+    color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.8; font-size: 16px;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    margin: 0 -16px 20px; padding: 12px 16px;
+    background: #03c75a; color: #fff;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .bar strong { margin-right: auto; font-size: 15px; }
+  .bar button {
+    border: 0; border-radius: 6px; padding: 8px 14px;
+    background: rgba(255,255,255,.18); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .bar button:hover { background: rgba(255,255,255,.3); }
+  .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
+  .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
+  #post p { margin: 0 0 18px; }
+  #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
+  #post li { margin-bottom: 8px; }
+  #post table { border-collapse: collapse; width: 100%; margin: 0 0 20px; font-size: 15px; }
+  #post th, #post td { border: 1px solid #ddd; padding: 9px 12px; text-align: left; }
+  #post th { background: #f2f4f6; font-weight: 700; }
+  #post blockquote {
+    margin: 0 0 18px; padding: 12px 16px;
+    background: #f7f8fa; border-left: 4px solid #03c75a; color: #444;
+  }
+  #post a { color: #0068c3; }
+  .imgslot {
+    margin: 0 0 20px; padding: 22px 16px; text-align: center;
+    border: 2px dashed #c9cdd2; border-radius: 8px;
+    background: #fafbfc; color: #6b7178; font-size: 14px;
+  }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .photo-links { margin: -12px 0 20px; font-size: 13px; color: #6b7178; text-align: center; }
+  .photo-links a { color: #0068c3; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
+  .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
+  .hint {
+    max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    font-size: 14px; line-height: 1.75; color: #5f4b16;
+  }
+  .hint ol { margin: 8px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>네이버 블로그 붙여넣기</strong>
+  <button type="button" data-copy="title">제목 복사</button>
+  <button type="button" data-copy="post">본문 복사</button>
+  <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="https://blog.naver.com/rikiwiki?Redirect=Write&amp;" target="_blank" rel="noopener">글쓰기 열기</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1 class="title" id="title">인천 서해구 재개발 6곳 집중 지원, 9월 9일 부돌보 브리핑</h1>
+    <div class="meta">2026-09-09 · 부동산</div>
+
+    <div id="post">
+<div class="imgslot has-file">📷 대표 이미지 — 검색 목록에 이 그림이 썸네일로 뜹니다<br><small>→ 파일 <b>img-0-cover.png</b> 을 <b>글 맨 위</b>에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-0-cover.png" alt="대표 이미지"><p style="margin:0 0 14px;font-size:14px;color:#767676">이 글은 2026년 9월 9일 기준으로 정리한 내용입니다.</p><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px"><b style="font-size:15px">3줄 요약</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">인천 서해구가 원도심 정비사업 집중 지원을 발표했습니다</li><li style="margin-bottom:6px">재개발 6곳·재건축 6곳, 모두 12곳이 대상입니다</li><li style="margin-bottom:6px">재개발 6곳의 연내 정비구역 지정 여부를 보면 됩니다</li></ul></div><p>인천 서해구 재개발 <span class="hl" style="background-color:#fff59d"><strong>6곳</strong></span>을 포함해 정비사업 <span class="hl" style="background-color:#fff59d"><strong>12곳</strong></span>이 집중 지원 대상에 올랐습니다. 같은 날 부동산원과 국토교통부도 잇따라 정비사업 현장 점검에 나섰습니다.</p>
+<p>오늘은 가격 지표보다 정책 행보가 두드러진 하루였습니다.</p>
+<div class="imgslot">📷 이미지 — 노후 주택이 빼곡히 들어선 원도심 골목 풍경</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/korean-old-town-alley-houses" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/korean%20old%20town%20alley%20houses/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/korean%20old%20town%20alley%20houses/" target="_blank" rel="noopener">픽사베이</a></div>
+<h2>인천 서해구 재개발, 오늘 발표된 내용</h2>
+<p>인천 서해구는 원도심 재개발 6곳, 재건축 6곳 등 총 12곳의 정비사업(낡은 주택가를 헐고 새로 정비하는 사업)을 집중 지원하겠다고 밝혔습니다.</p>
+<p>이 가운데 재개발 6곳은 연내 정비구역 지정(정비사업을 할 수 있는 구역으로 지자체가 공식 지정하는 절차)을 목표로 추진 중이라고 합니다.</p>
+<p>여기에 재개발·재건축 원스톱 행정 지원 체계를 가동하고, 도시재생사업과 주차 등 생활환경 개선사업도 함께 본격화한다고 덧붙였습니다.</p>
+<hr><h2>숫자로 본 인천 서해구 재개발·재건축</h2>
+<table>
+<thead>
+<tr>
+<th>구분</th>
+<th>곳 수</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>재개발</td>
+<td>6곳</td>
+<td>연내 정비구역 지정 목표</td>
+</tr>
+<tr>
+<td>재건축</td>
+<td>6곳</td>
+<td>-</td>
+</tr>
+<tr>
+<td>합계</td>
+<td>12곳</td>
+<td>-</td>
+</tr>
+</tbody>
+</table>
+<p>출처: 쓰담미디어, 위키트리, 한국정경신문 등</p>
+<div class="imgslot has-file">📷 이미지 — 재개발 6곳과 재건축 6곳, 합계 12곳을 보여주는 막대그래프<br><small>→ 파일 <b>img-2-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-2-stat-card.png" alt="재개발 6곳과 재건축 6곳, 합계 12곳을 보여주는 막대그래프">
+<hr><h2>인천 서해구 재개발, 지금 어디까지 왔나</h2>
+<p>앞서 본 12곳 가운데 재개발은 아직 정비구역 지정을 목표로 하는 초기 단계입니다. 착공이나 입주까지는 상당한 시간이 걸릴 것으로 보입니다.</p>
+<p>개별 사업장 이름과 세부 진행 단계는 공개되지 않았습니다. 또 '서해구'는 자료 원문 표기를 그대로 옮긴 것이라 실제 행정구역명은 한 번 확인해 보시는 편이 좋겠습니다.</p>
+<p>노후주택에 살고 계신다면, 내 집이 이 대상에 포함되는지와 현재 단계가 어디인지를 구청 고시로 확인하는 것이 순서입니다.</p>
+<hr><h2>그 밖의 오늘 소식</h2>
+<ul>
+<li>이헌욱 부동산원장, 점검회의 열고 정비사업 병목 해소 강조</li>
+<li>김이탁 국토차관, 서울 거여새마을 공공재개발 현장 방문</li>
+<li>국토차관, 조기 착공 적극 지원과 속도 제고 언급</li>
+<li>오늘은 시장 온도를 볼 가격·거래 수치가 확인되지 않았습니다</li>
+</ul>
+<div class="imgslot">📷 이미지 — 정부 관계자들이 재개발 현장을 둘러보는 모습</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/officials-construction-site-inspection" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/officials%20construction%20site%20inspection/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/officials%20construction%20site%20inspection/" target="_blank" rel="noopener">픽사베이</a></div>
+<hr><h2>오늘의 체크포인트</h2>
+<ul>
+<li>인천 서해구 재개발 6곳의 연내 정비구역 지정 여부</li>
+<li>서울 거여새마을 등 공공재개발의 조기 착공 진행 상황</li>
+<li>발언과 현장 방문 단계인 만큼, 구체적 실행계획 공개 여부</li>
+</ul><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:26px 0 0"><b style="font-size:15px">그래서 나는?</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">원도심 노후주택 거주자라면, 내 집이 12곳에 드는지 확인해 보세요</li><li style="margin-bottom:6px">정비사업 조합원이라면, 지금 단계가 어디인지부터 점검할 때입니다</li><li style="margin-bottom:6px">실수요자라면, 착공까지 시간이 걸린다는 점을 감안하셔야 합니다</li></ul></div><p style="padding:14px 16px;margin:28px 0 0"><b>여러분이 사시는 동네도 이번 정비사업 지원 대상에 들어 있는지 확인해 보셨나요?</b><br><span style="font-size:14px;color:#666666">댓글로 알려 주시면 다음 글에 반영하겠습니다.</span></p>
+      <p class="tags" id="tags">#부동산 #아파트 #인천 #서울 #인천서해구 #인천재개발 #서해구재개발 #원도심재개발 #재개발 #재건축 #정비사업 #정비구역지정 #공공재개발 #거여새마을 #국토교통부 #한국부동산원 #도시재생 #노후주택 #주거환경개선 #주택공급 #부동산정책 #부동산뉴스 #내집마련 #실수요자 #조합원 #원스톱행정지원 #생활환경개선 #부동산브리핑 #부돌보브리핑 #오늘의부동산</p>
+    </div>
+  </div>
+
+  <div class="hint">
+    <strong>쓰는 법</strong>
+    <ol>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
+      <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
+      <li><span style="background-color:#fff59d">형광펜</span>은 오늘의 핵심 수치가 <b>처음 나온 자리</b>에만 칠합니다.
+        같은 수치가 다시 나와도 표시하지 않습니다 — 강조가 많으면 아무것도 강조가 아니니까요.
+        붙여넣으면 그대로 따라가고, 마음에 안 들면 에디터에서 지우세요.</li>
+      <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
+    </ol>
+    이 안내문은 복사에 포함되지 않습니다.
+  </div>
+</div>
+
+<script>
+// 버튼이 지정한 영역만 클립보드에 담는다. 안내문과 상단 바는 복사되지 않는다.
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var node = document.getElementById(btn.dataset.copy);
+    if (!node) return;
+
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
+
+    // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
+    // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
+    var range = document.createRange();
+    range.selectNodeContents(copyNode);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    clone.remove();
+
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
+        alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
+      });
+      return;
+    }
+    flash();
+
+    function flash() {
+      var original = btn.textContent;
+      btn.textContent = "복사됨 ✓";
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1400);
+    }
+  });
+});
+</script>
+</body>
+</html>
