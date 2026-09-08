@@ -2166,8 +2166,8 @@ def test_cards_put_the_graphic_on_top_and_the_words_below(cfg, tmp_path):
     cover = got[0].svg
     assert "base64," in cover and "preserveAspectRatio=\"xMidYMid slice\"" in cover
     assert f'height="{images.CARD_BAND}"' in cover
-    # 그림은 표지에 한 장만 들어갔고 나머지는 글자 카드로 남는다
-    assert sum(1 for g in got if "<image" in g.svg) == 1
+    # 자료사진 띠는 표지 한 장뿐 — 머리글 로고도 <image> 라 띠로만 센다
+    assert sum(1 for g in got if 'preserveAspectRatio="xMidYMid slice"' in g.svg) == 1
     issue = next(g for g in got if g.slug.endswith("-issue"))
     assert _CARD_ISSUES[0][2] in issue.svg          # 한 줄 요약이 살아 있다
 
@@ -2281,6 +2281,46 @@ def test_logo_sits_left_of_the_channel_name(cfg, tmp_path, monkeypatch):
     monkeypatch.setattr(images, "_logo_cache", {})
     svg = images.cards(_brief_for_cards(), date="2026-09-08", channel="부돌보 브리핑")[-1].svg
     assert "부돌보 브리핑" in svg and "<image" not in svg
+
+
+def _fake_rgba_png(path, width: int, height: int, bands: list[tuple[int, int]]) -> None:
+    """세로로 끊긴 덩이를 가진 투명 배경 PNG. 로고 자르기를 재려고 직접 만든다."""
+    import struct
+    import zlib
+
+    def chunk(tag, payload):
+        body = tag + payload
+        return struct.pack(">I", len(payload)) + body + struct.pack(">I", zlib.crc32(body))
+
+    rows = []
+    for y in range(height):
+        on = any(a <= y <= b for a, b in bands)
+        px = b"\x00\x00\x00\xff" if on else b"\x00\x00\x00\x00"
+        rows.append(b"\x00" + px * width)
+    ihdr = struct.pack(">IIBBBBB", width, height, 8, 6, 0, 0, 0)
+    path.write_bytes(b"\x89PNG\r\n\x1a\n" + chunk(b"IHDR", ihdr)
+                     + chunk(b"IDAT", zlib.compress(b"".join(rows))) + chunk(b"IEND", b""))
+
+
+def test_logo_crop_actually_clips_the_wordmark(tmp_path, monkeypatch):
+    """자르기가 말로만 끝나면 안 된다 — 잘라 낸 부분이 정말 안 보여야 한다.
+
+    2026-09-08 에 `viewBox` 로 아이콘만 집어 놓고 겹친 `<svg>` 에 `overflow="visible"`
+    를 남겼더니 자르기가 무시되어 '부돌보' 글자가 그대로 딸려 나왔습니다. 자르기는
+    `overflow="hidden"` 일 때만 먹습니다.
+    """
+    from rebrief import images
+
+    logo = tmp_path / "logo.png"
+    _fake_rgba_png(logo, 100, 200, [(10, 59), (120, 179)])   # 아이콘 + 글자, 두 덩이
+    monkeypatch.setattr(images, "_LOGO_PATH", logo)
+    monkeypatch.setattr(images, "_logo_cache", {})
+
+    tag, width = images._logo_tag(0, 0, 44, white=False)
+    assert 'overflow="visible"' not in tag
+    box = re.search(r'viewBox="(\d+) (\d+) (\d+) (\d+)"', tag)
+    assert box and (int(box.group(2)), int(box.group(4))) == (10, 50)   # 윗덩이만
+    assert width == 44 * (100 / 50)
 
 
 def test_cover_puts_a_banner_over_the_photo(cfg, tmp_path):

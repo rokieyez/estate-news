@@ -1296,7 +1296,82 @@ def _art_band(path: Path) -> dict | None:
 
 
 _LOGO_PATH = _FONT_DIR.parent / "logo.png"      # assets/logo.png (SVG 도 됩니다)
-_logo_cache: dict[str, str] = {}
+# 로고의 글자(부돌보)를 뺀 **그림 부분만** 씁니다. 옆에 '부돌보 브리핑' 이 붙어 있어
+# 통째로 넣으면 같은 말이 두 번 되고, 44px 로 줄이면 그 글자가 8px 이 되어 뭉갭니다.
+CARD_LOGO_MARK_ONLY = True
+_logo_cache: dict[str, tuple] = {}
+
+
+def _opaque_box(path: Path) -> tuple[int, int, int, int, list[tuple[int, int]]]:
+    """PNG 에서 **비어 있지 않은 부분**의 사각형과, 세로로 끊긴 덩이 목록을 돌려준다.
+
+    로고 파일은 가운데에만 그림이 있고 사방이 비어 있는 경우가 많습니다 — 이 파일도
+    좌우 30%·아래 23% 가 빈칸이라 그대로 얹으면 그림이 자리의 절반도 못 채웁니다.
+    그림 라이브러리(PIL)를 들이지 않으려고 PNG 를 직접 풉니다. 한 실행에 한 번만 합니다.
+    """
+    import struct
+    import zlib
+
+    raw = path.read_bytes()
+    pos, idat, w, h, color = 8, b"", 0, 0, 6
+    while pos < len(raw):
+        ln = struct.unpack(">I", raw[pos:pos + 4])[0]
+        tag = raw[pos + 4:pos + 8]
+        if tag == b"IHDR":
+            w, h, _depth, color = struct.unpack(">IIBB", raw[pos + 8:pos + 18])
+        elif tag == b"IDAT":
+            idat += raw[pos + 8:pos + 8 + ln]
+        pos += 12 + ln
+    if color != 6:                       # 알파가 없으면 자를 것도 없다
+        return 0, 0, w, h, [(0, h - 1)]
+
+    data, ch = zlib.decompress(idat), 4
+    stride, prev, i = w * ch, bytearray(w * ch), 0
+    minx, miny, maxx, maxy = w, h, -1, -1
+    rows: list[bool] = []
+    for y in range(h):
+        ft = data[i]
+        i += 1
+        line = bytearray(data[i:i + stride])
+        i += stride
+        if ft:                           # 0 이면 필터 없음 — 그대로 쓴다
+            for x in range(stride):
+                a = line[x - ch] if x >= ch else 0
+                b = prev[x]
+                c = prev[x - ch] if x >= ch else 0
+                if ft == 1:
+                    line[x] = (line[x] + a) & 255
+                elif ft == 2:
+                    line[x] = (line[x] + b) & 255
+                elif ft == 3:
+                    line[x] = (line[x] + (a + b) // 2) & 255
+                else:
+                    pp = a + b - c
+                    pa, pb, pc = abs(pp - a), abs(pp - b), abs(pp - c)
+                    line[x] = (line[x] + (a if (pa <= pb and pa <= pc)
+                                          else (b if pb <= pc else c))) & 255
+        prev = line
+        on = False
+        for x in range(w):
+            if line[x * ch + 3] > 16:
+                on = True
+                minx, maxx = min(minx, x), max(maxx, x)
+        rows.append(on)
+        if on:
+            miny, maxy = min(miny, y), max(maxy, y)
+
+    blocks, begin = [], None
+    for y, on in enumerate(rows):
+        if on and begin is None:
+            begin = y
+        if not on and begin is not None:
+            blocks.append((begin, y - 1))
+            begin = None
+    if begin is not None:
+        blocks.append((begin, h - 1))
+    if maxx < 0:
+        return 0, 0, w, h, [(0, h - 1)]
+    return minx, miny, maxx - minx + 1, maxy - miny + 1, blocks
 
 
 def _logo_tag(x: float, top: float, height: float, *, white: bool) -> tuple[str, float]:
@@ -1307,7 +1382,10 @@ def _logo_tag(x: float, top: float, height: float, *, white: bool) -> tuple[str,
     투명하지 않은 픽셀을 모두 흰색으로 바꿉니다 — 그래서 **바탕이 투명한 파일이어야
     합니다.** 흰 바탕 파일을 넣으면 흰 네모가 됩니다.
 
-    파일이 없으면 빈 조각을 돌려주고 글자만 나갑니다. 로고 하나 때문에 카드가 죽으면 안 됩니다.
+    빈 여백은 잘라 냅니다(`_opaque_box`). 자르지 않으면 44px 자리에 그림이 20px 만 찹니다.
+    겹친 `<svg>` 는 **`overflow="hidden"` 이어야** 자르기가 먹습니다 — `visible` 이면
+    `viewBox` 로 아무리 좁혀도 그림 전체가 그대로 나옵니다.
+    파일이 없으면 빈 조각을 돌려주고 글자만 나갑니다 — 로고 하나 때문에 카드가 죽으면 안 됩니다.
     """
     path = _LOGO_PATH
     key = str(path)
@@ -1318,25 +1396,29 @@ def _logo_tag(x: float, top: float, height: float, *, white: bool) -> tuple[str,
             blob = base64.b64encode(path.read_bytes()).decode("ascii")
             if path.suffix.lower() == ".svg":
                 head = path.read_text(encoding="utf-8", errors="ignore")[:600]
-                box = re.search(r'viewBox="[\d.\s]*?([\d.]+)[\s,]+([\d.]+)"', head)
-                ratio = (float(box.group(1)) / float(box.group(2))) if box else 1.0
-                mime = "image/svg+xml"
+                box = re.search(r'viewBox="([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)"',
+                                head)
+                crop = tuple(float(g) for g in box.groups()) if box else (0, 0, 100, 100)
+                _logo_cache[key] = (crop, (crop[2], crop[3]), "image/svg+xml", blob)
             else:
-                w, h = _png_size(path)
-                ratio, mime = (w / h if h else 1.0), "image/png"
-            _logo_cache[key] = f"{ratio:.4f}|{mime}|{blob}"
+                bx, by, bw, bh, blocks = _opaque_box(path)
+                if CARD_LOGO_MARK_ONLY and len(blocks) > 1:
+                    by, bh = blocks[0][0], blocks[0][1] - blocks[0][0] + 1
+                full = _png_size(path)
+                _logo_cache[key] = ((bx, by, bw, bh), full, "image/png", blob)
         except (OSError, ValueError):
             log.debug("%s 가 없어 로고 없이 그립니다", path)
-            _logo_cache[key] = ""
+            _logo_cache[key] = ()
     packed = _logo_cache[key]
     if not packed:
         return "", 0.0
-    ratio, mime, blob = packed.split("|", 2)
-    width = height * float(ratio)
+    (bx, by, bw, bh), (fw, fh), mime, blob = packed
+    width = height * (bw / bh if bh else 1.0)
     style = ' style="filter:brightness(0) invert(1)"' if white else ""
-    tag = (f'<image x="{x:.0f}" y="{top:.0f}" width="{width:.0f}" height="{height:.0f}" '
-           f'preserveAspectRatio="xMidYMid meet"{style} '
-           f'xlink:href="data:{mime};base64,{blob}"/>')
+    tag = (f'<svg x="{x:.0f}" y="{top:.0f}" width="{width:.0f}" height="{height:.0f}" '
+           f'viewBox="{bx:.0f} {by:.0f} {bw:.0f} {bh:.0f}" overflow="hidden">'
+           f'<image x="0" y="0" width="{fw:.0f}" height="{fh:.0f}"{style} '
+           f'xlink:href="data:{mime};base64,{blob}"/></svg>')
     return tag, width
 
 
