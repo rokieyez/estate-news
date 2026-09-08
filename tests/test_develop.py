@@ -341,10 +341,17 @@ def test_site_bundles_attachments_into_one_zip(cfg, tmp_path):
     (day / "blog.md").write_text("본문", encoding="utf-8")      # 문서는 첨부물이 아니다
 
     dest = build_site(cfg, tmp_path / "site")
-    names = zipfile.ZipFile(dest / "2026-09-07" / "files.zip").namelist()
+    # 이름에 날짜가 붙는다 — 며칠치를 받아 두면 files.zip, files-1.zip 이 쌓여
+    # 어느 날 것인지 알 수 없었다.
+    bundle = dest / "2026-09-07" / "2026-09-07_blogfiles.zip"
+    assert bundle.exists() and not (dest / "2026-09-07" / "files.zip").exists()
+    names = zipfile.ZipFile(bundle).namelist()
     assert set(names) == {"img-1-stat-card.png", "thumb-shorts.png", "script-shorts.srt"}
     assert "첨부파일 모두 내려받기" in (dest / "index.html").read_text(encoding="utf-8")
-    assert "files.zip" in (dest / "latest" / "images.html").read_text(encoding="utf-8")
+    # latest/ 는 복사본이라 파일 이름은 그대로 그날 날짜를 단다
+    assert (dest / "latest" / "2026-09-07_blogfiles.zip").exists()
+    assert "2026-09-07_blogfiles.zip" in (dest / "latest" / "images.html").read_text(encoding="utf-8")
+    assert 'href="latest/2026-09-07_blogfiles.zip"' in (dest / "index.html").read_text(encoding="utf-8")
 
 
 # ── 짧게 읽히는 글: 용어 풀이 · 그래서 나는? · 구조 ────────

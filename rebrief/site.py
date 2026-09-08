@@ -445,6 +445,9 @@ def _build_zip(dest: Path, name: str = "files.zip") -> dict | None:
     """그림·자막·컷 리스트를 한 파일로 묶는다. 브라우저에서 링크 한 번으로 받게.
 
     브라우저에서 자바스크립트로 묶지 않고 만들 때 미리 묶어 둔다 — 휴대폰에서도 확실히 받아진다.
+
+    이름은 `2026-09-08_blogfiles.zip` 처럼 날짜를 앞에 답니다. 며칠치를 받아 두면
+    내려받기 폴더에 `files.zip`, `files-1.zip` 이 쌓여 어느 날 것인지 알 수 없었습니다.
     """
     import zipfile
 
@@ -507,7 +510,7 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
         shutil.copytree(day / "policy", dest / "policy", dirs_exist_ok=True)
 
     assets = _copy_assets(day, dest)
-    bundle = _build_zip(dest)
+    bundle = _build_zip(dest, f"{day.name}_blogfiles.zip")
     if assets:
         # 그림 모아보기 페이지. 휴대폰에서 길게 눌러 저장하면 바로 블로그에 올릴 수 있다.
         html = env.get_template("site_images.html.j2").render(
