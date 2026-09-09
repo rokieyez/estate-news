@@ -2733,3 +2733,33 @@ class _capture:
 
     def __exit__(self, *a):
         self.logger.removeHandler(self.h)
+
+
+def test_cover_title_breaks_only_between_stories(cfg):
+    """표지 제목은 기사 단위로만 줄을 바꾼다 (2026-09-10 사용자 지시).
+
+    「부동산원 정비사업 지원 / 확대·목동 청약 / 흥행·…」처럼 낱말 단위로 끊기면 기사 하나가
+    둘로 갈리고 마지막 줄만 색이 달라 다른 기사처럼 읽힌다. 기본 크기에 안 들어가면 줄인다.
+    """
+    from rebrief import images
+
+    width = 1080 - 192
+    # 세 기사 → 세 줄, 가장 긴 기사가 들어갈 때까지 80 에서 줄어든다
+    lines, size = images._fit_items("부동산원 정비사업 지원 확대·목동 청약 흥행·서울 신고가 속출",
+                                    80, width, 3, 50)
+    assert lines == ["부동산원 정비사업 지원 확대", "목동 청약 흥행", "서울 신고가 속출"]
+    assert 50 <= size < 80 and all(images.text_width(l, size) <= width for l in lines)
+    # 다 들어가면 기본 크기 그대로
+    assert images._fit_items("분당 집값 1위·서울 월세 162만원", 80, width, 3, 50) == (
+        ["분당 집값 1위", "서울 월세 162만원"], 80)
+    # 「재건축·재개발」의 점은 낱말 사이 점이지 기사 경계가 아니다
+    assert images._headline_items("재건축·재개발 정비사업 속도전 본격화") == ["재건축·재개발 정비사업 속도전 본격화"]
+
+    # 실제 표지 카드에서 <text> 세 줄이 기사와 일치한다
+    got = images.cards({"headline": "부동산원 정비사업 지원 확대·목동 청약 흥행·서울 신고가 속출",
+                        "issues": [{"title": "하나", "one_liner": "한 줄", "numbers": []}]},
+                       date="2026-09-10")
+    texts = re.findall(r'font-size="(\d+)" font-weight="800" letter-spacing="-1" fill="[^"]+">([^<]+)</text>',
+                       got[0].svg)
+    assert [t for _, t in texts] == ["부동산원 정비사업 지원 확대", "목동 청약 흥행", "서울 신고가 속출"]
+    assert len({s for s, _ in texts}) == 1                     # 세 줄이 같은 크기

@@ -1566,6 +1566,41 @@ def _fit(text: str, size: float, width: float, max_lines: int, floor: float = 30
     return lines[:max_lines], size
 
 
+def _headline_items(text: str) -> list[str]:
+    """가운뎃점(·)으로 이어 붙인 제목을 기사 단위로 나눈다.
+
+    「재건축·재개발 정비사업」의 점은 낱말 사이 점이지 기사 경계가 아닙니다. 그래서
+    나눈 조각이 **낱말 하나뿐이면** 옆 조각에 도로 붙입니다 — 기사 제목은 늘 여러 낱말입니다.
+    """
+    parts = [s.strip() for s in re.split(r"\s*[·‧•]\s*", text or "") if s.strip()]
+    items: list[str] = []
+    for part in parts:
+        if items and (" " not in part or " " not in items[-1]):
+            items[-1] = f"{items[-1]}·{part}"
+        else:
+            items.append(part)
+    return items
+
+
+def _fit_items(text: str, size: float, width: float, max_lines: int, floor: float) -> tuple[list[str], float]:
+    """제목이 기사 여러 개를 이어 붙인 것이면 **기사 단위로만** 줄을 바꾼다.
+
+    2026-09-10 표지 — 「부동산원 정비사업 지원 / 확대·목동 청약 / 흥행·서울 신고가 속출」로
+    낱말 단위로 끊기고 마지막 줄만 색이 달라, 기사 하나가 둘로 갈려 다른 기사처럼 읽혔습니다
+    (사용자 지적). 기본 글자 크기를 먼저 쓰고, 어느 기사가 한 줄에 안 들어가면 **들어갈 때까지
+    글씨를 줄입니다.** 하한에서도 안 들어가거나 기사 수가 줄 수를 넘으면 예전 방식으로 돕니다.
+    """
+    items = _headline_items(text)
+    if len(items) < 2 or len(items) > max_lines:
+        return _fit(text, size, width, max_lines, floor)
+    small = size
+    while small > floor and any(text_width(it, small) > width for it in items):
+        small -= 2
+    if all(text_width(it, small) <= width for it in items):
+        return items, small
+    return _fit(text, size, width, max_lines, floor)
+
+
 def _sentence_fit(text: str, size: float, width: float, max_lines: int) -> tuple[list[str], float]:
     """문장 중간에서 끊기지 않게 자른다.
 
@@ -1651,8 +1686,10 @@ def _cover_card(headline: str, sub: str, badge: str, total: int, date: str, chan
                                  art=art, banner=banner)
     inner = w - 192
 
-    lines, size = _fit(headline, 104 if not art else 80, inner, 4 if not art else 3,
-                       floor=62 if not art else 50)
+    # 기사 단위로만 줄을 바꿉니다 (2026-09-10 사용자 지시). 낱말 단위로 끊으면 기사 하나가
+    # 두 줄로 갈리고 마지막 줄만 색이 달라 다른 기사처럼 보입니다.
+    lines, size = _fit_items(headline, 104 if not art else 80, inner, 4 if not art else 3,
+                             floor=62 if not art else 50)
     line_h = size * 1.26
     badge_h = 96 if badge else 0
     y = top + max(0, (bottom - top - (line_h * len(lines) + badge_h)) / 2)
