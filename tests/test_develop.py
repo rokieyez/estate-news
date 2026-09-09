@@ -2632,3 +2632,82 @@ def test_naver_html_separates_sections_with_hr_not_heading_borders(cfg, tmp_path
         "<p>a</p><h2>하나</h2><p>b</p><hr><h2>둘</h2><hr><h2 id=x>셋</h2>"
     html = to_naver_html("머리\n\n## 하나\n\n본문\n\n## 둘\n\n본문\n\n## 셋\n\n본문\n")
     assert html.count("<hr>") == 2 and html.index("<hr>") > html.index("<h2>하나</h2>")
+
+
+# ── 실패하는 날 (9/9): 안 열리는 서버는 세 번만 두드린다 ──
+
+
+def test_stats_stops_knocking_on_a_dead_server_after_three_tries(monkeypatch):
+    """2026-09-09 아침 공공데이터포털이 통째로 안 열려 57번 × 15초 = 14분을 기다렸다.
+
+    같은 서버에 연결 실패가 세 번 이어지면 그날은 포기한다. HTTP 오류는 세지 않고,
+    한 번 성공하면 다시 0 부터 센다. 서버마다 따로 센다.
+    """
+    import requests
+
+    from rebrief import stats as S
+
+    monkeypatch.setattr(S, "_failures", {})
+    calls = {"n": 0}
+
+    def dead(url, **kw):
+        calls["n"] += 1
+        raise requests.ConnectTimeout("no route")
+
+    monkeypatch.setattr(S.requests, "get", dead)
+    for _ in range(3):
+        with pytest.raises(requests.ConnectTimeout):
+            S._get("https://apis.data.go.kr/x", timeout=1)
+    with pytest.raises(S.ServerDown):                # 네 번째부터는 두드리지 않는다
+        S._get("https://apis.data.go.kr/y", timeout=1)
+    assert calls["n"] == 3
+
+    # 다른 서버는 아직 두드린다
+    with pytest.raises(requests.ConnectTimeout):
+        S._get("https://www.reb.or.kr/x", timeout=1)
+    assert calls["n"] == 4
+
+    # 한 번 열리면 다시 0 부터
+    class Ok:
+        status_code = 200
+        text = ""
+
+        def raise_for_status(self):
+            pass
+
+    monkeypatch.setattr(S, "_failures", {"www.reb.or.kr": 2})
+    monkeypatch.setattr(S.requests, "get", lambda url, **kw: Ok())
+    S._get("https://www.reb.or.kr/x")
+    assert S._failures["www.reb.or.kr"] == 0
+
+
+def test_stats_fetch_goes_quiet_once_the_server_is_given_up(cfg, monkeypatch):
+    """포기한 서버에는 경고를 되풀이하지 않는다 — 57줄짜리 같은 경고가 원래 문제였다."""
+    import logging
+
+    from rebrief import stats as S
+
+    monkeypatch.setenv("DATA_GO_KR_KEY", "k")
+    monkeypatch.setattr(S, "_failures", {"apis.data.go.kr": 3})
+    monkeypatch.setattr(S.requests, "get", lambda url, **kw: (_ for _ in ()).throw(AssertionError("불러선 안 된다")))
+    with _capture(logging.getLogger("rebrief.stats")) as got:
+        assert S.apt_trades(cfg, "11680", "202607") == []
+    assert got == []
+
+
+class _capture:
+    def __init__(self, logger):
+        self.logger, self.records = logger, []
+
+    def __enter__(self):
+        import logging
+
+        class H(logging.Handler):
+            def emit(_, r):
+                self.records.append(r.getMessage())
+
+        self.h = H(); self.logger.addHandler(self.h)
+        return self.records
+
+    def __exit__(self, *a):
+        self.logger.removeHandler(self.h)

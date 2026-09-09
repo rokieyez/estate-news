@@ -212,8 +212,12 @@ def _cmd_notify(cfg, args) -> int:
         from .store import failure_streak
 
         streak = failure_streak(cfg.output_dir, _date.fromisoformat(date_str))
+        # 07:25 안전망이 아직 남아 있을 때만 "한 번 더 시도합니다" 라고 말한다.
+        now = local_now(cfg)
+        retry_ahead = now.strftime("%Y-%m-%d") == date_str and (now.hour, now.minute) < (7, 25)
         ok = send_telegram(build_failure_message(date=date_str, site_url=site_url,
-                                                 run_url=args.run_url, streak=max(streak, 1)))
+                                                 run_url=args.run_url, streak=max(streak, 1),
+                                                 retry_ahead=retry_ahead))
     else:
         ok = send_telegram(_message_from_output(cfg, date_str))
     print("알림을 보냈습니다." if ok else "알림 전송에 실패했습니다.")

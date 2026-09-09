@@ -134,6 +134,9 @@ def test_실패_알림은_연속이면_원인_점검을_권한다():
     once = notify.build_failure_message(date="2026-09-06", streak=1)
     twice = notify.build_failure_message(date="2026-09-06", streak=2, run_url="https://x")
     assert "안전망" in once and "연속" not in once
+    # 07:25 가 이미 지났으면 "한 번 더 시도합니다" 는 거짓말이다 (2026-09-09 아침)
+    late = notify.build_failure_message(date="2026-09-06", streak=1, retry_ahead=False)
+    assert "안전망" not in late and "자동 재시도가 없습니다" in late
     assert "2일 연속" in twice and "피드 점검" in twice and twice.endswith("https://x")
 
 

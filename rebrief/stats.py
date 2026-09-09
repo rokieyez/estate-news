@@ -49,8 +49,35 @@ _RENT_FIELDS = {
 }
 
 
+# 같은 서버가 연달아 안 열리면 더 두드리지 않습니다 (회로 차단기).
+#
+# 2026-09-09 아침 공공데이터포털이 통째로 안 열렸는데, 요청 57번이 저마다 15초씩 기다려
+# 14분을 썼습니다. 그 사이 07:25 안전망이 출발해 같은 날을 한 번 더 만들었습니다. 연결
+# 실패(연결 거부·시간 초과)가 세 번 이어지면 그 서버는 그날 포기하고 경고 한 줄만 남깁니다.
+# HTTP 오류(4xx·5xx)는 세지 않습니다 — 서버는 살아 있고 요청이 틀린 것이라서요.
+_DOWN_AFTER = 3
+_failures: dict[str, int] = {}
+
+
+class ServerDown(requests.ConnectionError):
+    """연달아 안 열려 오늘은 포기한 서버. 부르는 쪽은 조용히 그만둡니다."""
+
+
 def _get(url: str, **kw):
-    return requests.get(url, **kw)
+    from urllib.parse import urlsplit
+
+    host = urlsplit(url).netloc
+    if _failures.get(host, 0) >= _DOWN_AFTER:
+        raise ServerDown(host)
+    try:
+        resp = requests.get(url, **kw)
+    except (requests.ConnectionError, requests.Timeout):
+        _failures[host] = _failures.get(host, 0) + 1
+        if _failures[host] == _DOWN_AFTER:
+            log.warning("%s 가 %d번 연속 열리지 않아 오늘은 더 부르지 않습니다.", host, _DOWN_AFTER)
+        raise
+    _failures[host] = 0
+    return resp
 
 
 def deal_key() -> str:
@@ -140,7 +167,8 @@ def _fetch_pages(cfg, url: str, code: str, ym: str, parse, label: str,
             }, timeout=float(cfg.get("collect.timeout_seconds", 15)))
             resp.raise_for_status()
         except requests.RequestException as exc:
-            log.warning("%s를 가져오지 못했습니다(%s %s): %s", label, code, ym, type(exc).__name__)
+            if not isinstance(exc, ServerDown):
+                log.warning("%s를 가져오지 못했습니다(%s %s): %s", label, code, ym, type(exc).__name__)
             break
         got = parse(resp.text)
         out += got
@@ -678,7 +706,8 @@ def reb_supply_rows(cfg, statbl_id: str, cls_id: str, start: str, end: str,
             resp.raise_for_status()
             rows = _reb_rows(resp.json())
         except (requests.RequestException, ValueError) as exc:
-            log.warning("부동산원 공급 통계 실패(%s): %s", statbl_id, type(exc).__name__)
+            if not isinstance(exc, ServerDown):
+                log.warning("부동산원 공급 통계 실패(%s): %s", statbl_id, type(exc).__name__)
             break
         if not rows:
             break
@@ -764,7 +793,8 @@ def reb_tables(cfg, keyword: str = "") -> list[dict]:
             resp.raise_for_status()
             data = resp.json()
         except (requests.RequestException, ValueError) as exc:
-            log.warning("부동산원 통계표 목록 실패: %s", type(exc).__name__)
+            if not isinstance(exc, ServerDown):
+                log.warning("부동산원 통계표 목록 실패: %s", type(exc).__name__)
             break
         rows = _reb_rows(data)
         if not rows:
@@ -884,7 +914,8 @@ def _reb_fetch(statbl_id: str, cycle: str, count: int, region_id: str,
             resp.raise_for_status()
             data = resp.json()
         except (requests.RequestException, ValueError) as exc:
-            log.warning("부동산원 통계 실패: %s", type(exc).__name__)
+            if not isinstance(exc, ServerDown):
+                log.warning("부동산원 통계 실패: %s", type(exc).__name__)
             break
         rows = _reb_rows(data)
         if not rows:

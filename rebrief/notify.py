@@ -83,13 +83,20 @@ def stats_lines(stats: dict | None) -> list[str]:
     return out
 
 
-def build_failure_message(*, date: str, site_url: str = "", run_url: str = "", streak: int = 1) -> str:
+def build_failure_message(*, date: str, site_url: str = "", run_url: str = "", streak: int = 1,
+                          retry_ahead: bool = True) -> str:
+    """실패 알림. `retry_ahead` 는 07:25 안전망이 **아직 남아 있는지** — 07:25 실행 자체가
+    실패했거나 낮에 손으로 돌린 것이 실패했는데 "한 번 더 시도합니다" 라고 하면 사람이
+    기다리기만 합니다 (2026-09-09 아침에 그랬습니다)."""
     lines = [f"❌ {date} 부돌보 브리핑 실패"]
     if streak >= 2:
         lines.append(f"🚨 {streak}일 연속 실패입니다. 일시적 장애가 아닐 수 있어요 — API 키·한도, 피드 상태를 확인하세요.")
         lines.append("Actions 탭 → 피드 점검 워크플로를 한 번 돌려 보세요.")
-    else:
+    elif retry_ahead:
         lines.append("깃허브 Actions 로그를 확인하세요. 07:25 안전망 실행이 한 번 더 시도합니다.")
+    else:
+        lines.append("깃허브 Actions 로그를 확인하세요. 오늘은 자동 재시도가 없습니다 — "
+                     "원인을 고친 뒤 Actions 에서 date 를 지정해 손으로 돌리세요.")
     if run_url:
         lines.append(run_url)
     return "\n".join(lines)
