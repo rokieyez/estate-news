@@ -7,6 +7,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
+from urllib.parse import quote
 
 import markdown as markdown_lib
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
@@ -117,6 +118,7 @@ class Renderer:
                    stats_image: str = "") -> Path:
         """네이버 스마트에디터에 붙여넣을 HTML. 브라우저로 열어 버튼으로 복사한다."""
         blog_cfg = self.cfg.get("blog", {}) or {}
+        write_url = str((blog_cfg.get("naver", {}) or {}).get("write_url", "") or "https://blog.naver.com/")
         photo_links = {
             i: photo_search_links(slot.search_keywords or slot.description)
             for i, slot in enumerate(post.image_slots, start=1)
@@ -144,9 +146,13 @@ class Renderer:
                 date=self.date,
             ),
             hashtags=format_hashtags(self._tags(post)),
-            write_url=(blog_cfg.get("naver", {}) or {}).get(
-                "write_url", "https://blog.naver.com/"
-            ) or "https://blog.naver.com/",
+            write_url=write_url,
+            # 네이버 글쓰기는 주소의 아이디가 아니라 **지금 로그인된 계정**의 블로그를 엽니다.
+            # 정치 블로그 계정으로 로그인돼 있으면 부동산 글쓰기 버튼이 정치 블로그를 열었습니다
+            # (2026-09-10 사용자 보고). 로그아웃한 뒤 글쓰기로 되돌아오는 주소를 같이 줍니다 —
+            # 다시 로그인하는 계정이 곧 글이 올라갈 블로그입니다.
+            write_switch_url="https://nid.naver.com/nidlogin.logout?returl=" + quote(write_url, safe=""),
+            write_blog_id=(re.search(r"blog\.naver\.com/([^/?#]+)", write_url) or [None, ""])[1],
         )
 
     def shorts(self, pack: VideoPack) -> list[Path]:

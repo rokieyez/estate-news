@@ -489,6 +489,23 @@ def test_naver_html_shows_glossary_and_takeaways(cfg, tmp_path):
     assert "무주택 실수요자라면" in html and html.index("그래서 나는?") < html.index("여러분은 어떠신가요")
 
 
+def test_naver_write_button_offers_to_switch_account(cfg, tmp_path):
+    """네이버 글쓰기는 주소의 아이디가 아니라 지금 로그인된 계정의 블로그를 연다.
+
+    정치 블로그 계정으로 로그인돼 있으면 부동산 글쓰기 버튼이 정치 블로그를 열었다
+    (2026-09-10 사용자 보고). 로그아웃한 뒤 글쓰기로 되돌아오는 링크와 계정 이름을 준다.
+    """
+    from rebrief.models import BlogPost
+    from rebrief.render import Renderer
+
+    cfg.settings["blog"]["naver"]["write_url"] = "https://blog.naver.com/rikiwiki/postwrite"
+    post = BlogPost(title="t", slug="s", meta_description="d", tags=["t"], body_markdown="본문")
+    html = Renderer(cfg, tmp_path / "out", "2026-09-10").blog_naver(post).read_text(encoding="utf-8")
+    assert 'href="https://blog.naver.com/rikiwiki/postwrite"' in html
+    assert ("nidlogin.logout?returl=https%3A%2F%2Fblog.naver.com%2Frikiwiki%2Fpostwrite" in html
+            and "계정 바꿔 열기" in html and "<b>rikiwiki</b> 계정으로" in html)
+
+
 def test_checklist_flags_sprawling_shape_and_missing_takeaways(cfg):
     from rebrief import checklist as cl
     from rebrief.models import BlogPost
