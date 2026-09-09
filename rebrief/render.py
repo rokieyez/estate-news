@@ -264,7 +264,8 @@ class Renderer:
             "data.json", json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
         )
 
-    def cards(self, brief: DailyBrief, key_numbers: list | None = None) -> list[str]:
+    def cards(self, brief: DailyBrief, key_numbers: list | None = None,
+              stats: dict | None = None) -> list[str]:
         """유튜브 게시물용 카드뉴스. 만든 파일 이름들을 돌려준다.
 
         이미 만들어 둔 브리핑을 나눠 담는 것이라 **모델을 새로 부르지 않습니다.**
@@ -281,6 +282,9 @@ class Renderer:
             key_numbers=[n.__dict__ if hasattr(n, "__dict__") else n for n in (key_numbers or [])],
             max_cards=int(cfg.get("cards_max", 7)),
             art=self._card_art(payload) if cfg.get("cards_art", True) else None,
+            # 그달 신고가 목록. 이슈가 신고가를 말하는 날 그 다음 장에 실린다.
+            deals=list((stats or {}).get("highlights") or []),
+            deals_label=str((stats or {}).get("month_label", "") or ""),
         )
         # 카드는 밑그림이 이미 1080×1080 입니다. 2배로 뽑으면 2160 이 되는데, 올릴 곳인
         # 유튜브 커뮤니티 게시물은 어차피 1080 언저리로 줄여 보여 줍니다 — 늘어난 화소는

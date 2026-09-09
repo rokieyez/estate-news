@@ -2763,3 +2763,38 @@ def test_cover_title_breaks_only_between_stories(cfg):
                        got[0].svg)
     assert [t for _, t in texts] == ["부동산원 정비사업 지원 확대", "목동 청약 흥행", "서울 신고가 속출"]
     assert len({s for s, _ in texts}) == 1                     # 세 줄이 같은 크기
+
+
+def test_cards_put_record_prices_right_after_the_issue_that_mentions_them(cfg):
+    """신고가 이슈 다음 장에 단지·금액이 실린다 (2026-09-10 사용자 요청).
+
+    수치가 없거나 신고가를 말하는 이슈가 없으면 장이 생기지 않는다.
+    """
+    from rebrief import images
+
+    deals = [{"kind": "신고가", "district": "성동구", "name": "벽산", "area": 84.8,
+              "amount": 1080000000, "before": 860000000, "pct": 25.6},
+             {"kind": "신고가", "district": "송파구", "name": "우방1", "area": 84.9,
+              "amount": 1300000000, "before": 1070000000, "pct": 21.5}]
+    brief = {"headline": "오늘", "issues": [
+        {"title": "정비사업 지원 확대", "one_liner": "한 줄", "numbers": []},
+        {"title": "서울 개별단지 신고가 거래 속출", "one_liner": "한 줄", "numbers": []},
+        {"title": "목동 청약 흥행", "one_liner": "한 줄", "numbers": []},
+    ]}
+    got = images.cards(brief, date="2026-09-10", deals=deals, deals_label="2026년 7월")
+    kinds = [g.slug.split("-", 2)[-1] for g in got]
+    assert kinds == ["cover", "issue", "issue", "deals", "issue"]        # 신고가 이슈(3번) 바로 다음
+    deal = got[3]
+    plain = re.sub(r"<[^>]+>", "", deal.svg)          # 수치는 마침표에서 조각나므로 글자만 본다
+    assert "2026년 7월 신고가" in plain and "성동구 벽산" in plain and "10.8억" in plain
+    assert "13억" in plain and "+25.6%" in plain and "84.8㎡" in plain
+    assert f"04 / {len(got):02d}" in deal.svg                              # 쪽번호가 장수에 맞다
+
+    # 수치가 없으면 장이 없다 · 신고가를 말하는 이슈가 없어도 없다
+    assert not any(g.slug.endswith("-deals") for g in images.cards(brief, date="2026-09-10"))
+    quiet = dict(brief, issues=[i for i in brief["issues"] if "신고가" not in i["title"]])
+    assert not any(g.slug.endswith("-deals")
+                   for g in images.cards(quiet, date="2026-09-10", deals=deals))
+    # 상한 안에 든다
+    assert len(images.cards(brief, date="2026-09-10", deals=deals, max_cards=4)) == 4
+    assert images._eok(598000000) == "6억" and images._eok(720000000) == "7.2억"

@@ -1156,7 +1156,7 @@ CARD_PAPER = ("#dfeaf4", "#0a2f4f", "#3a6588", "#b9d0e3", "#0b6a8f")
 
 # 일곱 장의 박자. 표지·목록은 남색, 숫자는 짙은 남색, 이슈는 밝은 청사진.
 CARD_FACES = {"cover": CARD_DARK, "numbers": CARD_FLOOD, "issue": CARD_PAPER,
-              "rest": CARD_DARK}
+              "rest": CARD_DARK, "deals": CARD_FLOOD}
 
 CARD_LIGHT = "#ffffff"     # 소제목·사진 위 글씨. 어느 낯에서든 흰색이다.
 CARD_GRID = 60             # 제도 격자 한 칸
@@ -1858,6 +1858,80 @@ def _issue_card(issue: dict, n: int, total: int, date: str, channel: str,
     return Image(f"card-{n}-issue", _embed_fonts("\n".join(p)), str(issue.get("title", "")))
 
 
+# 신고가 카드 — 이슈가 신고가·최고가를 말하는 날, 그 다음 장에 단지와 금액을 싣는다.
+_DEAL_WORDS = ("신고가", "최고가")
+
+
+def _mentions_deals(issue: dict) -> bool:
+    text = f"{issue.get('title', '')} {issue.get('one_liner', '')}"
+    return any(word in text for word in _DEAL_WORDS)
+
+
+def _eok(amount) -> str:
+    """원 → '10.8억'. 끝의 0 은 뗀다 (13.0억 → 13억)."""
+    try:
+        eok = float(amount) / 1e8
+    except (TypeError, ValueError):
+        return ""
+    return f"{eok:.1f}".rstrip("0").rstrip(".") + "억"
+
+
+def _deals_card(deals: list[dict], month_label: str, n: int, total: int,
+                date: str, channel: str) -> Image:
+    """이달의 신고가 — 단지·금액·전 최고가 대비. 우리가 직접 센 실거래라 모델을 거치지 않는다.
+
+    2026-09-10 사용자 요청: "아파트 신고가는 모든 사람이 관심 있어 하는 자료". 이슈 카드가
+    신고가를 말하는 날, 바로 다음 장에 실제 단지와 금액을 보여 줍니다. 수치가 없는 날은
+    이 장이 아예 생기지 않습니다.
+    """
+    w, h = CARD_SIZE
+    ground, ink, dim, rule, signal = CARD_FACES["deals"]
+    p, top, bottom = _card_frame(CARD_FACES["deals"], n, total, date=date, channel=channel)
+    inner = w - 192
+
+    title = f"{month_label} 신고가" if month_label else "이달의 신고가"
+    p.append(f'<text x="{w/2:.0f}" y="{top+66:.0f}" font-size="68" font-weight="800" '
+             f'letter-spacing="-1" text-anchor="middle" fill="{CARD_LIGHT}">{esc(title)}</text>')
+    head_h = 116
+    room = bottom - top - head_h
+
+    rows = []
+    for d in deals[:5]:
+        amount = _eok(d.get("amount"))
+        if not amount:
+            continue
+        amt_size = 60
+        amt_w = text_width(amount, amt_size) * 0.92          # 고정폭을 조여 쓰므로 조금 좁다
+        name = f"{d.get('district', '')} {d.get('name', '')}".strip()
+        name_lines, name_size = _fit(name, 42, inner - amt_w - 28, 1, floor=30)
+        bits = []
+        if d.get("area"):
+            bits.append(f"전용 {float(d['area']):g}㎡")
+        if d.get("before"):
+            bits.append(f"전 최고가 {_eok(d['before'])}")
+        if d.get("pct") is not None:
+            bits.append(f"{float(d['pct']):+.1f}%")
+        sub = " · ".join(bits)
+        rows.append((name_lines[0], name_size, amount, amt_size, sub, 42 + 14 + 28 + 40))
+    while len(rows) > 1 and sum(r[5] for r in rows) > room:
+        rows.pop()
+
+    y = top + head_h + max(0, (room - sum(r[5] for r in rows)) / 2)
+    for i, (name, name_size, amount, amt_size, sub, height) in enumerate(rows):
+        base = y + 42
+        p.append(f'<text x="96" y="{base:.0f}" font-size="{name_size:.0f}" font-weight="800" '
+                 f'letter-spacing="-1" fill="{ink}">{esc(name)}</text>')
+        _numeral(p, amount, w - 96, base + 6, amt_size, signal, anchor="end")
+        if sub:
+            p.append(f'<text x="96" y="{base+14+28:.0f}" font-size="28" fill="{dim}">{esc(sub)}</text>')
+        y += height
+        if i < len(rows) - 1:
+            p.append(f'<line x1="96" y1="{y-20:.0f}" x2="{w-96}" y2="{y-20:.0f}" '
+                     f'stroke="{ink}" stroke-width="1.5" opacity="0.28"/>')
+    p.append("</svg>")
+    return Image(f"card-{n}-deals", _embed_fonts("\n".join(p)), title)
+
+
 def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
                date: str, channel: str) -> Image:
     """제목 하나에 항목 몇 줄. 번호가 도면의 부품 번호처럼 붙는다."""
@@ -1926,7 +2000,8 @@ def _drop_repeats(issues: list[dict], threshold: float = 0.40) -> list[dict]:
 
 def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[dict] | None = None,
           max_cards: int = 10,
-          art: list[Path | tuple[Path, str]] | None = None) -> list[Image]:
+          art: list[Path | tuple[Path, str]] | None = None,
+          deals: list[dict] | None = None, deals_label: str = "") -> list[Image]:
     """하루치 브리핑을 유튜브 게시물용 카드 5~7장으로.
 
     **모델을 새로 부르지 않습니다.** 이미 만들어 둔 브리핑(headline·issues·numbers·
@@ -1937,6 +2012,10 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
     뺐습니다(사용자 지시) — 브리핑의 `tomorrow_watch` 는 글과 사이트에만 남습니다.
     **장수는 그날 내용에 따라 정해집니다** — 이슈가 많으면 `max_cards` 까지 늘고,
     자료가 모자란 날은 네댓 장으로 줄어듭니다. 억지로 채우지 않습니다.
+
+    `deals` 는 그달 실거래 신고가 목록(`stats.highlights`)입니다. 이슈가 신고가·최고가를
+    말하는 날 **그 이슈 카드 바로 다음 장**에 단지와 금액을 싣습니다 (2026-09-10 사용자 요청).
+    수치가 없거나 그런 이슈가 없으면 장이 생기지 않습니다.
 
     `art` 를 넘기면 표지와 이슈 카드 위쪽에 **그날 만든 인포그래픽**을 얹습니다.
     기사 사진이 아닙니다 — 남의 사진은 저작권이 있어 쓸 수 없고 수집하지도 않습니다.
@@ -1962,13 +2041,16 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
         if text and text in headline:
             badge = text
             break
+    deal_rows = [d for d in (deals or []) if d.get("kind", "신고가") == "신고가" and d.get("amount")]
+    has_deals = bool(deal_rows) and any(_mentions_deals(i) for i in issues)
+
     # 장수를 먼저 정한다 — 쪽번호(02 / 07)를 찍어야 하므로.
     #
     # **장수를 고정하지 않습니다** (2026-09-08, 사용자 지시). 이슈가 많은 날은 늘고
     # 적은 날은 줄어듭니다. `max_cards` 는 상한일 뿐 목표가 아닙니다 — 억지로 채우면
     # 내용 없는 카드가 한 장 더 붙습니다.
     def layout(with_numbers: bool) -> tuple[int, list[dict]]:
-        fixed = 1 + int(with_numbers)                      # 표지·숫자
+        fixed = 1 + int(with_numbers) + int(has_deals)     # 표지·숫자·신고가
         room = max(1, max_cards - fixed)                   # 이슈에 쓸 수 있는 장수
         n = min(len(issues), max(1, room - 1))             # '그 밖의 소식' 한 장을 남겨 둔다
         tail = issues[n:]
@@ -1993,9 +2075,16 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
     plan = ["cover"]
     if has_numbers:
         plan.append("numbers")
-    plan += ["issue"] * deep
+    placed = False
+    for i in range(deep):
+        plan.append("issue")
+        if has_deals and not placed and _mentions_deals(issues[i]):
+            plan.append("deals")           # 신고가를 말한 이슈 바로 다음 장
+            placed = True
     if rest:
         plan.append("rest")
+    if has_deals and not placed:           # 그 이슈가 '그 밖의 소식' 에 묶인 날
+        plan.append("deals")
     plan = plan[:max_cards]
     total = len(plan)
 
@@ -2024,4 +2113,6 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
         elif kind == "rest":
             out.append(_list_card("그 밖의 오늘 소식", [i["title"] for i in rest],
                                   "rest", n, total, date, channel))
+        elif kind == "deals":
+            out.append(_deals_card(deal_rows, deals_label, n, total, date, channel))
     return out
