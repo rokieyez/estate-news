@@ -210,6 +210,11 @@ def test_site_has_no_broken_links(cfg, tmp_path):
     bad = [b for b in broken_links(dest) if "icon-512.png" not in b]
     assert bad == []
 
+    # 텔레그램 알림은 `…/latest/` 폴더 자체를 가리킨다. 대문이 없으면 404 (2026-09-10).
+    for folder in ("latest", "2026-09-07"):
+        door = (dest / folder / "index.html").read_text(encoding="utf-8")
+        assert 'href="brief.html"' in door and "이번 주 볼 것" not in door
+
     # 검사기가 정말 무언가를 잡는지. 이것이 없으면 위의 빈 목록은 아무 뜻이 없습니다.
     index = dest / "index.html"
     index.write_text(index.read_text(encoding="utf-8").replace(

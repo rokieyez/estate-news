@@ -559,6 +559,29 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
             (dest / "checklist.html").write_text(html, encoding="utf-8")
         except (json.JSONDecodeError, OSError):
             pass
+
+    # 날짜 칸의 대문. 텔레그램 알림이 `…/latest/` 를 가리키는데 폴더에 index.html 이 없어
+    # 깃허브 페이지가 404 를 냈습니다 (2026-09-10 사용자 보고). 사이트 안에서는 아무도
+    # 폴더 자체를 가리키지 않아 끊긴 링크 검사에도 안 걸렸습니다. latest/ 는 이 폴더의
+    # 사본이라 같이 생깁니다.
+    if pages:
+        lines = [f"- [{pg['label']}]({pg['href']}) — {pg['description']}" for pg in pages]
+        if (dest / "checklist.html").exists():
+            lines.append("- [발행 전 점검](checklist.html) — 올리기 전에 한 번 훑기")
+        html = env.get_template("site_page.html.j2").render(
+            title=info["headline"] or f"{day.name} 브리핑", date=day.name,
+            age_days=_age_days(day.name),
+            body_html=md_to_html("\n".join(lines)),
+            meta=meta_tags(
+                site_base(cfg),
+                title=f"{info['headline'] or day.name} — {day.name}",
+                description=info["description"], path=f"{day.name}/",
+                image=f"{day.name}/{info['image']}" if info["image"] else "",
+                image_size=info["size"], published=day.name,
+                channel=str((cfg.get("video", {}) or {}).get("channel_name", "") or ""),
+            ),
+        )
+        (dest / "index.html").write_text(html, encoding="utf-8")
     return entry
 
 
