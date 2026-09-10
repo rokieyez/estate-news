@@ -1,15 +1,78 @@
 {
   "date": "2026-09-11",
   "summary": {
-    "ok": 1,
-    "warn": 0,
+    "ok": 9,
+    "warn": 1,
     "fail": 0
   },
   "items": [
     {
-      "key": "numbers",
+      "key": "banned",
       "level": "ok",
-      "title": "수치 9건 모두 기사 원문에서 확인",
+      "title": "금지 표현 없음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "blog_len",
+      "level": "ok",
+      "title": "블로그 본문 1,378자",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "tags",
+      "level": "ok",
+      "title": "태그 30개",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "keyword",
+      "level": "ok",
+      "title": "대표 검색어 '강남3구 아파트값 하락' 가 제목·첫 문단·소제목에 모두 있음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "overlap",
+      "level": "ok",
+      "title": "지난 글과 겹치는 문장 0%",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shape",
+      "level": "ok",
+      "title": "소제목 5개 · 메인 하나에 집중",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "readability",
+      "level": "ok",
+      "title": "문장·문단 길이 적당",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "photos",
+      "level": "warn",
+      "title": "직접 넣을 사진 자리 2곳",
+      "detail": "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)",
+      "lines": []
+    },
+    {
+      "key": "shorts_len",
+      "level": "ok",
+      "title": "쇼츠 발화 323자 (약 59초)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "long_len",
+      "level": "ok",
+      "title": "롱폼 발화 2,463자 (약 7.5분)",
       "detail": "",
       "lines": []
     }

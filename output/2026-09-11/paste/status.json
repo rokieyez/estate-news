@@ -2,7 +2,7 @@
   "date": "2026-09-11",
   "steps": {
     "brief": true,
-    "blog": false,
+    "blog": true,
     "video": false
   },
   "issue_url": "https://github.com/rokieyez/estate-news/issues/2",

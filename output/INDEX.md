@@ -1,10 +1,10 @@
 # 산출물 목록
 
-마지막 갱신 2026-09-10 23:20 · 총 6일치
+마지막 갱신 2026-09-10 23:35 · 총 6일치
 
 | 날짜 | 브리핑 | 블로그 | 네이버 | 쇼츠 | 롱폼 | 제작메모 | 데이터 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
-| **2026-09-11** | [브리핑](2026-09-11/brief.md) | — | — | — | — | — | [JSON](2026-09-11/data.json) |
+| **2026-09-11** | [브리핑](2026-09-11/brief.md) | [블로그](2026-09-11/blog.md) | [HTML](2026-09-11/blog-naver.html) | [쇼츠](2026-09-11/script-shorts.md) | [롱폼](2026-09-11/script-longform.md) | [메모](2026-09-11/production-notes.md) | [JSON](2026-09-11/data.json) |
 | **2026-09-10** | [브리핑](2026-09-10/brief.md) | [블로그](2026-09-10/blog.md) | [HTML](2026-09-10/blog-naver.html) | [쇼츠](2026-09-10/script-shorts.md) | [롱폼](2026-09-10/script-longform.md) | [메모](2026-09-10/production-notes.md) | [JSON](2026-09-10/data.json) |
 | **2026-09-09** | [브리핑](2026-09-09/brief.md) | [블로그](2026-09-09/blog.md) | [HTML](2026-09-09/blog-naver.html) | — | — | — | [JSON](2026-09-09/data.json) |
 | **2026-09-08** | [브리핑](2026-09-08/brief.md) | [블로그](2026-09-08/blog.md) | [HTML](2026-09-08/blog-naver.html) | [쇼츠](2026-09-08/script-shorts.md) | [롱폼](2026-09-08/script-longform.md) | [메모](2026-09-08/production-notes.md) | [JSON](2026-09-08/data.json) |
