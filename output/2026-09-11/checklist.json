@@ -1,16 +1,16 @@
 {
   "date": "2026-09-11",
   "summary": {
-    "ok": 0,
+    "ok": 1,
     "warn": 0,
-    "fail": 1
+    "fail": 0
   },
   "items": [
     {
-      "key": "llm",
-      "level": "fail",
-      "title": "요약·대본이 만들어지지 않았습니다",
-      "detail": "prompt-pack.md 를 챗봇에 붙여넣어 직접 만들거나, 키·한도를 확인한 뒤 다시 실행하세요.",
+      "key": "numbers",
+      "level": "ok",
+      "title": "수치 9건 모두 기사 원문에서 확인",
+      "detail": "",
       "lines": []
     }
   ]

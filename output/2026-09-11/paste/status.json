@@ -1,7 +1,7 @@
 {
   "date": "2026-09-11",
   "steps": {
-    "brief": false,
+    "brief": true,
     "blog": false,
     "video": false
   },
