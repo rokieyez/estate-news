@@ -48,6 +48,11 @@ rank:
 
 llm:
   enabled: true
+  # api   — Anthropic API 를 부릅니다 (하루 약 0.42달러, 잔액 충전 필요)
+  # paste — 부르지 않습니다. 아침 실행이 프롬프트를 깃허브 이슈로 열고, 사람이 claude.ai 에
+  #         붙여넣은 답을 이슈 댓글로 되넣으면 워크플로가 산출물을 만듭니다 (0원, 아침 10분).
+  #         2026-09-10 사용자 결정 — "크레딧 사용량이 부담스럽다".
+  mode: paste
   model: claude-opus-5      # 바꾸려면: claude-sonnet-5 (더 저렴), claude-haiku-4-5
   effort: high              # low | medium | high | xhigh | max
   max_tokens: 16000
@@ -71,6 +76,9 @@ llm:
   fallback_model: claude-sonnet-5   # 한도·장애로 실패하면 이 모델로 한 번 더 (비우면 안 함)
   monthly_budget_usd: 0     # 월 예산(달러). 0 이면 제한 없음. 80% 넘으면 fallback_model 로, 넘으면 건너뜀
   budget_soft_ratio: 0.8
+
+paste:
+  open_issue: true          # 붙여넣기 모드에서 아침마다 깃허브 이슈를 엽니다 (gh 가 있을 때)
 
 images:
   enabled: true             # 수치를 인포그래픽 SVG 로 자동 생성

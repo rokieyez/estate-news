@@ -77,6 +77,13 @@
   {% for i in today.checklist["items"] %}<small>{{ '❌' if i.level == 'fail' else '⚠️' }} {{ i.title }}</small>{% endfor %}
 </a>
 {% endif %}
+{% if today.paste %}
+<div class="today" style="background:#fff8e6;border:1px solid #f3d98b">
+  <div class="date">{{ today.date }} · <b style="color:#9a6700">📋 붙여넣기 차례</b></div>
+  <p style="margin:6px 0 10px">남은 단계: {{ today.paste.left|join(' · ') }}</p>
+  {% if today.paste.url %}<a class="big primary" href="{{ today.paste.url }}">이슈 열기 → 상자 복사 → claude.ai → 답을 댓글로</a>{% else %}<small>깃허브 이슈를 열지 못했습니다. output/{{ today.date }}/prompt-pack.md 를 쓰세요.</small>{% endif %}
+</div>
+{% endif %}
 <div class="today">
   <div class="date">{{ today.date }}{% if today.published %} · <b style="color:#03c75a">발행함</b>{% if today.published.url %} <a href="{{ today.published.url }}" style="color:#0068c3">글 보기</a>{% endif %}{% endif %}</div>
   <h2>오늘 할 일</h2>

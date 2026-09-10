@@ -93,9 +93,15 @@ class Config:
         return os.environ.get("ANTHROPIC_API_KEY") or None
 
     @property
+    def paste_mode(self) -> bool:
+        """`llm.mode: paste` — API 를 부르지 않고 사람이 claude.ai 에 붙여넣는다 (0원)."""
+        return str(self.get("llm.mode", "api") or "api").strip().lower() == "paste"
+
+    @property
     def llm_enabled(self) -> bool:
-        """설정에서 켜져 있고 API 키도 있어야 실제로 호출한다."""
-        return bool(self.get("llm.enabled", True)) and bool(self.api_key)
+        """설정에서 켜져 있고 API 키도 있어야 실제로 호출한다. 붙여넣기 모드면 언제나 아니다."""
+        return (bool(self.get("llm.enabled", True)) and bool(self.api_key)
+                and not self.paste_mode)
 
 
 def load_config(config_dir: str | Path | None = None) -> Config:

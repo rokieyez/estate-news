@@ -50,7 +50,7 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
                       site_url: str, warnings: list[str], llm_used: bool,
                       images: int = 0, stats: dict | None = None,
                       usd: float = 0.0, krw_per_usd: float = 1400,
-                      quiet: bool = False) -> str:
+                      quiet: bool = False, paste_url: str = "") -> str:
     lines = [f"📅 {date} 부돌보 브리핑"]
     if headline:
         lines.append(headline)
@@ -61,9 +61,14 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
     if quiet:
         # 실패가 아니라 판단입니다. 물음표가 아니라 마침표로 알립니다.
         lines.append("😴 오늘은 쉬어 가는 날로 봤습니다 — 여러 매체가 함께 다룬 이야기가 없습니다")
+    elif paste_url:
+        # 붙여넣기 모드 — 실패가 아니라 사람 차례입니다
+        lines.append(f"📋 붙여넣기 차례 — 이슈를 열어 상자를 복사하세요: {paste_url}")
     elif not llm_used:
         lines.append("⚠️ 요약·대본은 만들지 못했습니다 (prompt-pack.md 참고)")
     for w in warnings[:3]:
+        if paste_url and w.startswith("붙여넣기 차례"):
+            continue                      # 위에 이미 링크로 적었다
         lines.append(f"⚠️ {w}")
     if site_url:
         lines.append(f"🔗 {site_url.rstrip('/')}/latest/")

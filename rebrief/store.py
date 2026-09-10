@@ -700,6 +700,8 @@ def failure_streak(output_dir: Path, today: date | None = None, lookback: int = 
             break
         if (output_dir / d / "quiet.json").exists():
             continue          # 쉬어 간 날은 세지 않고 그 앞날을 계속 본다
+        if (output_dir / d / "paste" / "status.json").exists():
+            continue          # 붙여넣기를 기다리는 날도 실패가 아니다
         streak += 1
     return streak
 

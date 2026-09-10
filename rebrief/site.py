@@ -544,7 +544,14 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
     entry = {"date": day.name, "pages": pages, "checklist": None, "bundle": bundle,
              "cards": cards,
              "headline": info["headline"], "description": info["description"],
-             "image": info["image"], "size": info["size"]}
+             "image": info["image"], "size": info["size"], "paste": None}
+    # 붙여넣기 모드 — 사람 차례인 날은 첫 화면에 이슈 링크를 띄운다
+    from .paste import STEP_TITLES, STEPS, load_status
+
+    status = load_status(day)
+    if status and not status.get("done"):
+        entry["paste"] = {"url": status.get("issue_url", ""),
+                          "left": [STEP_TITLES[s] for s in STEPS if not status["steps"].get(s)]}
     cl = day / "checklist.json"
     if cl.exists():
         try:

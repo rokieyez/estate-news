@@ -39,6 +39,7 @@ class RunResult:
     warnings: list[str] = field(default_factory=list)
     stats: dict = field(default_factory=dict)      # 실거래 집계 (알림·요약에 쓴다)
     quiet: bool = False                            # 한산해서 일부러 안 만든 날 (실패가 아니다)
+    paste_url: str = ""                            # 붙여넣기 모드: 1단계 프롬프트가 있는 이슈 주소
 
 
 def local_now(cfg: Config) -> datetime:
@@ -149,12 +150,18 @@ def run(
         artifacts = _generate_with_llm(cfg, renderer, issues, date_str, result, model=model,
                                        stats_data=stats_data)
     else:
-        if use_llm is not False and not cfg.api_key:
-            result.warnings.append(
-                "ANTHROPIC_API_KEY 가 없어 요약을 건너뛰었습니다. prompt-pack.md 를 사용하세요."
-            )
         renderer.brief_fallback(issues, stats)
-        renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
+        if cfg.paste_mode and issues and not quiet:
+            # 붙여넣기 모드 — 프롬프트를 깃허브 이슈로 열고, 답은 댓글로 되돌아온다 (paste.py)
+            from . import paste as paste_mod
+
+            paste_mod.prepare(cfg, renderer, issues, date_str, stats_data, result)
+        else:
+            if use_llm is not False and not cfg.api_key:
+                result.warnings.append(
+                    "ANTHROPIC_API_KEY 가 없어 요약을 건너뛰었습니다. prompt-pack.md 를 사용하세요."
+                )
+            renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
     renderer.checklist(result, artifacts, link_status)
     _record_quality(cfg, date_str, renderer, artifacts, result)
 
@@ -251,16 +258,7 @@ def _generate_with_llm(
         renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
         return made
 
-    result.llm_used = True
-    _fill_source_urls(brief, issues, result)
-    checks = _verify_numbers(cfg, brief, issues, result)
-    made.update(brief=brief, checks=checks)
-    made["repeats"] = _repeat_topics(cfg, brief, date_str)
-    renderer.brief(brief, _stats_from_clusters(issues), checks,
-                   diff=_diff_yesterday(cfg, brief, date_str),
-                   why=explain_issues(brief, issues, str(cfg.get("run.timezone", "Asia/Seoul"))))
-    renderer.data_json(brief)
-    history = _record_series(cfg, brief, date_str)
+    history = _after_brief(cfg, renderer, brief, issues, date_str, result, made)
 
     # 그림은 블로그 글의 이미지 자리에 맞춰 만들어야 하므로 글을 먼저 받는다.
     # 글 생성이 실패하면 자리 정보 없이 수치만 보고 만든다.
@@ -276,27 +274,8 @@ def _generate_with_llm(
     made["cards"] = renderer.cards(brief, stats=stats_data)
     keys: list = []
     if post is not None:
-        # 오늘의 핵심 수치: 브리핑 datapoint 가운데 글에 실제로 쓰인 것. 블로그 카드·강조·썸네일 배지가 함께 쓴다.
-        keys = keynumbers.pick(brief, post.body_markdown, int(cfg.get("blog.key_numbers", 3) or 0))
-        # 지난 발행 글 가운데 주제가 가까운 것 — 글 끝에 붙여 한 편 더 보게 한다
-        related = related_posts(cfg, date_str, brief, limit=int(cfg.get("blog.related_posts", 3) or 0))
-        made.update(post=post, key_numbers=keys, related=related,
-                    prev_bodies=previous_blog_bodies(cfg.output_dir, date_str,
-                                                     days=int(cfg.get("blog.overlap_lookback_days", 3))),
-                    empty_photo_slots=sum(
-                        1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
-        cover = renderer.cover(post, keys)          # 검색 목록 썸네일이 될 표지
-        made["cover"] = cover
-        policies = _collect_policies(cfg, renderer, date_str, generator, result,
-                                     stats=stats_data)
-        made["policies"] = policies
-        stats_image = (renderer.stats_images or {}).get("volume", "")
-        renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover,
-                      policies=policies, stats=stats_data, stats_image=stats_image)
-        if str(cfg.get("blog.platform", "naver")).lower() == "naver":
-            renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover,
-                                policies=policies, stats=stats_data, stats_image=stats_image)
-        _record_titles(cfg, date_str, blog=[post.title])
+        keys = _after_blog(cfg, renderer, brief, post, issues, date_str, result, made,
+                           slot_files=slot_files, stats_data=stats_data, generator=generator)
 
     try:
         pack = generator.generate_video(brief, stats=stats_data)
@@ -308,6 +287,61 @@ def _generate_with_llm(
         result.warnings.append(f"영상 대본 생성 실패 — {exc}")
         return made
 
+    _after_video(cfg, renderer, brief, pack, date_str, made, keys)
+    _autofix_banned(cfg, renderer, made, issues, slot_files, result)
+    result.warnings.extend(generator.usage.notes)
+    return made
+
+
+# 세 단계의 뒷일. API 로 받았든 사람이 붙여넣었든(paste.py) 같은 함수를 지납니다 —
+# 두 벌로 두면 한쪽만 고쳐져 어긋납니다.
+
+
+def _after_brief(cfg: Config, renderer: Renderer, brief, issues: list[Cluster], date_str: str,
+                 result: RunResult, made: dict) -> list[dict]:
+    """브리핑을 받은 뒤: 근거 주소·검산·brief.md·data.json·수치 이력. 이미지가 쓸 이력을 돌려준다."""
+    result.llm_used = True
+    _fill_source_urls(brief, issues, result)
+    checks = _verify_numbers(cfg, brief, issues, result)
+    made.update(brief=brief, checks=checks)
+    made["repeats"] = _repeat_topics(cfg, brief, date_str)
+    renderer.brief(brief, _stats_from_clusters(issues), checks,
+                   diff=_diff_yesterday(cfg, brief, date_str),
+                   why=explain_issues(brief, issues, str(cfg.get("run.timezone", "Asia/Seoul"))))
+    renderer.data_json(brief)
+    return _record_series(cfg, brief, date_str)
+
+
+def _after_blog(cfg: Config, renderer: Renderer, brief, post, issues: list[Cluster], date_str: str,
+                result: RunResult, made: dict, *, slot_files: dict, stats_data: dict | None,
+                generator=None) -> list:
+    """블로그 글을 받은 뒤: 핵심 수치·표지·정책·네이버 HTML. 고른 핵심 수치를 돌려준다."""
+    # 오늘의 핵심 수치: 브리핑 datapoint 가운데 글에 실제로 쓰인 것. 블로그 카드·강조·썸네일 배지가 함께 쓴다.
+    keys = keynumbers.pick(brief, post.body_markdown, int(cfg.get("blog.key_numbers", 3) or 0))
+    # 지난 발행 글 가운데 주제가 가까운 것 — 글 끝에 붙여 한 편 더 보게 한다
+    related = related_posts(cfg, date_str, brief, limit=int(cfg.get("blog.related_posts", 3) or 0))
+    made.update(post=post, key_numbers=keys, related=related,
+                prev_bodies=previous_blog_bodies(cfg.output_dir, date_str,
+                                                 days=int(cfg.get("blog.overlap_lookback_days", 3))),
+                empty_photo_slots=sum(
+                    1 for i in range(1, len(post.image_slots) + 1) if i not in slot_files))
+    cover = renderer.cover(post, keys)          # 검색 목록 썸네일이 될 표지
+    made["cover"] = cover
+    policies = _collect_policies(cfg, renderer, date_str, generator, result, stats=stats_data)
+    made["policies"] = policies
+    stats_image = (renderer.stats_images or {}).get("volume", "")
+    renderer.blog(post, issues, slot_files, key_numbers=keys, related=related, cover=cover,
+                  policies=policies, stats=stats_data, stats_image=stats_image)
+    if str(cfg.get("blog.platform", "naver")).lower() == "naver":
+        renderer.blog_naver(post, slot_files, key_numbers=keys, related=related, cover=cover,
+                            policies=policies, stats=stats_data, stats_image=stats_image)
+    _record_titles(cfg, date_str, blog=[post.title])
+    return keys
+
+
+def _after_video(cfg: Config, renderer: Renderer, brief, pack, date_str: str, made: dict,
+                 keys: list) -> None:
+    """영상 대본을 받은 뒤: 쇼츠·롱폼·제작 메모·썸네일."""
     made["pack"] = pack
     renderer.shorts(pack)
     renderer.longform(pack)
@@ -315,9 +349,6 @@ def _generate_with_llm(
     renderer.thumbnails(pack, key_numbers=keys)
     _record_titles(cfg, date_str, longform=pack.longform.title_candidates,
                    shorts=pack.shorts.title_candidates)
-    _autofix_banned(cfg, renderer, made, issues, slot_files, result)
-    result.warnings.extend(generator.usage.notes)
-    return made
 
 
 def _stats(articles: list[Article], feed_results: list[FeedResult]) -> RenderStats:

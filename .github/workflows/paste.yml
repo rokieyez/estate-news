@@ -1,0 +1,118 @@
+name: 붙여넣기 반영
+
+# 붙여넣기 모드(config/settings.yaml 의 llm.mode: paste). 아침 실행이 연 「붙여넣기 · 날짜」
+# 이슈에 사람이 claude.ai 의 답(JSON)을 댓글로 붙여넣으면, 이 워크플로가 그 단계 산출물을
+# 만들고 다음 단계 프롬프트를 댓글로 답니다. 세 단계가 끝나면 이슈를 닫습니다.
+#
+# 저장소가 공개라 누구나 댓글을 달 수 있습니다 — **저장소 주인의 댓글만** 반영합니다.
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: write
+  issues: write
+
+# 아침 실행과 같은 줄에 섭니다 — 둘이 동시에 output/ 을 밀어 넣으면 충돌합니다.
+concurrency:
+  group: daily-brief
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: >-
+      github.event.issue.state == 'open' &&
+      contains(github.event.issue.labels.*.name, '붙여넣기') &&
+      (github.event.comment.author_association == 'OWNER' || github.event.comment.author_association == 'MEMBER')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 가지 끝으로 맞춤
+        # 댓글 두 개가 잇따라 오면 두 번째 실행은 첫 번째가 밀어 넣기 전 커밋을 받습니다.
+        run: |
+          git fetch --quiet --depth=1 origin "${GITHUB_REF_NAME:-main}"
+          git reset --quiet --hard FETCH_HEAD
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: 의존성 설치
+        run: pip install -r requirements.txt
+
+      - name: 한글 글꼴 설치 (PNG 의 한글이 깨지지 않게)
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
+          fc-cache -f >/dev/null
+
+      - name: 댓글 저장
+        id: comment
+        env:
+          BODY: ${{ github.event.comment.body }}
+          TITLE: ${{ github.event.issue.title }}
+        run: |
+          printf '%s' "$BODY" > "$RUNNER_TEMP/answer.md"
+          DATE=$(printf '%s' "$TITLE" | grep -oE '[0-9]{4}-[0-9]{2}-[0-9]{2}' | head -1)
+          echo "date=$DATE" >> "$GITHUB_OUTPUT"
+
+      - name: 반영
+        id: apply
+        if: steps.comment.outputs.date != ''
+        env:
+          # 카드뉴스 위쪽 사진. 없으면 인포그래픽으로 갑니다.
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: |
+          python -m rebrief -v paste --date "${{ steps.comment.outputs.date }}" \
+            --file "$RUNNER_TEMP/answer.md" --reply "$RUNNER_TEMP/reply.md" || true
+
+      - name: 답 댓글
+        if: steps.comment.outputs.date != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if [ -s "$RUNNER_TEMP/reply.md" ]; then
+            gh issue comment ${{ github.event.issue.number }} --body-file "$RUNNER_TEMP/reply.md"
+          fi
+
+      - name: 결과 커밋
+        if: steps.apply.outputs.applied != ''
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add output state
+          if git diff --staged --quiet; then
+            echo "변경 사항 없음 — 커밋을 건너뜁니다."
+            exit 0
+          fi
+          git commit -m "붙여넣기 반영: ${{ steps.comment.outputs.date }} (${{ steps.apply.outputs.applied }})"
+          for i in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
+            git rebase --abort 2>/dev/null || true
+            sleep $((i * 5))
+          done
+          echo "푸시에 실패했습니다." >&2
+          exit 1
+
+      - name: 마무리 (세 단계 끝)
+        if: steps.apply.outputs.done == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: |
+          gh issue close ${{ github.event.issue.number }} --comment "세 단계가 모두 반영돼 닫습니다."
+          python -m rebrief notify --date "${{ steps.comment.outputs.date }}" || true
+
+      - name: 다음 단계 알림
+        if: steps.apply.outputs.applied != '' && steps.apply.outputs.done != 'true'
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m rebrief notify --date "${{ steps.comment.outputs.date }}" || true

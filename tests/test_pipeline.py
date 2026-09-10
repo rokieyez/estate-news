@@ -729,3 +729,89 @@ def test_사이트에_주간_결산이_실린다(cfg, monkeypatch, tmp_path):
     assert (dest / "weekly" / "2026-W36" / "weekly-naver.html").exists()
     assert (dest / "weekly" / "2026-W36" / "weekly.html").exists()
     assert "주간 결산 (1주)" in (dest / "index.html").read_text(encoding="utf-8")
+
+
+# ── 붙여넣기 모드 (9/10): API 대신 사람이 claude.ai 에 붙여넣고 답을 되넣는다 ──
+
+
+def test_paste_mode_round_trips_three_answers_without_calling_the_model(cfg, monkeypatch):
+    """아침 실행은 프롬프트만 남기고, 세 단계 답을 차례로 되넣으면 API 경로와 같은 산출물이 난다."""
+    import json
+
+    from rebrief import paste
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")            # 키가 있어도 부르지 않는다
+    cfg.settings["llm"]["mode"] = "paste"
+    called = {"n": 0}
+
+    class Never(FakeGenerator):
+        def generate_brief(self, *a, **k):
+            called["n"] += 1
+            return super().generate_brief(*a, **k)
+
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", Never)
+
+    result = pipeline.run(cfg, run_date=RUN_DATE)
+    out = cfg.output_dir / RUN_DATE
+    assert called["n"] == 0 and not result.llm_used
+    assert (out / "paste" / "issues.json").exists() and (out / "paste" / "1-brief.md").exists()
+    assert not (out / "data.json").exists()
+    status = paste.load_status(out)
+    assert status and status["steps"] == {"brief": False, "blog": False, "video": False}
+    assert any("붙여넣기 차례" in w for w in result.warnings)
+    # 본문은 저장소에 올리지 않는다
+    assert all(a["body"] == "" for c in json.loads((out / "paste" / "issues.json").read_text(encoding="utf-8"))
+               for a in c["articles"])
+    prompt = (out / "paste" / "1-brief.md").read_text(encoding="utf-8")
+    assert "JSON 하나만" in prompt and '"headline"' in prompt and len(prompt) < paste.BODY_LIMIT
+
+    # 2·3단계 답을 먼저 넣으면 거절한다
+    early = paste.apply(cfg, RUN_DATE, "```json\n" + make_post().model_dump_json() + "\n```")
+    assert not early.applied and "1단계가 먼저" in early.text
+
+    # 1단계 — 채팅 답처럼 인사말과 상자를 섞어 준다
+    r1 = paste.apply(cfg, RUN_DATE, "네, 정리했습니다.\n```json\n" + make_brief().model_dump_json() + "\n```\n확인해 주세요.")
+    assert r1.applied == ["brief"] and not r1.problems and not r1.done
+    assert (out / "data.json").exists() and (out / "brief.md").exists()
+    assert list(out.glob("card-*.svg")), "카드는 1단계에서 나온다"
+    assert "2단계" in r1.text and "3단계" in r1.text and "````text" in r1.text
+    assert (out / "paste" / "2-blog.md").exists() and (out / "paste" / "3-video.md").exists()
+
+    # 2단계 + 3단계를 한 댓글에
+    r2 = paste.apply(cfg, RUN_DATE, "```json\n" + make_post().model_dump_json() + "\n```\n\n```json\n"
+                     + make_pack().model_dump_json() + "\n```")
+    assert r2.applied == ["blog", "video"] and not r2.problems and r2.done
+    for name in ("blog-naver.html", "blog.md", "script-shorts.md", "script-longform.md",
+                 "production-notes.md", "script-shorts.srt", "checklist.md"):
+        assert (out / name).exists(), name
+    assert paste.load_status(out)["done"] and "🎉" in r2.text
+
+    # 깨진 JSON 은 사람에게 되돌린다
+    bad = paste.apply(cfg, RUN_DATE, "```json\n{\"issues\": [}\n```")
+    assert not bad.applied and "JSON 을 찾지 못했습니다" in bad.text
+
+
+def test_paste_extracts_json_from_chat_answers():
+    from rebrief.paste import classify, extract_json
+
+    fenced, _ = extract_json("답입니다.\n```json\n{\"a\": 1}\n```\n끝")
+    assert fenced == [{"a": 1}]
+    bare, _ = extract_json('그냥 {"body_markdown": "x", "n": [1, 2]} 이렇게')
+    assert bare == [{"body_markdown": "x", "n": [1, 2]}]
+    two, _ = extract_json("```json\n{\"shorts\": {}, \"longform\": {}}\n```\n```\n{\"issues\": [], \"headline\": \"h\"}\n```")
+    assert [classify(d) for d in two] == ["video", "brief"]
+    none, errors = extract_json("```json\n{\"a\": }\n```")
+    assert none == [] and errors
+
+
+def test_paste_day_is_not_a_failure_for_the_streak(cfg):
+    from datetime import date
+
+    from rebrief.store import failure_streak
+
+    for d in ("2026-09-08", "2026-09-09"):
+        (cfg.output_dir / d).mkdir(parents=True)
+    (cfg.output_dir / "2026-09-08" / "data.json").write_text("{}", encoding="utf-8")
+    (cfg.output_dir / "2026-09-09" / "paste").mkdir()
+    (cfg.output_dir / "2026-09-09" / "paste" / "status.json").write_text("{}", encoding="utf-8")
+    assert failure_streak(cfg.output_dir, date(2026, 9, 9)) == 0

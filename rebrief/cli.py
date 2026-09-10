@@ -48,6 +48,11 @@ def build_parser() -> argparse.ArgumentParser:
 
     sub.add_parser("site", help="휴대폰에서 볼 사이트 만들기 (site/)")
 
+    p_paste = sub.add_parser("paste", help="붙여넣기 모드: claude.ai 답(JSON)을 되넣어 산출물 만들기")
+    p_paste.add_argument("--date", help="대상 날짜 (기본: 오늘)")
+    p_paste.add_argument("--file", required=True, help="답이 든 파일 (- 면 표준 입력)")
+    p_paste.add_argument("--reply", help="결과 댓글 문구를 쓸 파일 (워크플로가 이슈에 단다)")
+
     sub.add_parser("doctor", help="RSS 피드 상태 점검")
 
     p_notify = sub.add_parser("notify", help="실행 결과를 텔레그램으로 보내기")
@@ -111,6 +116,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_render(cfg, args)
     if args.command == "site":
         return _cmd_site(cfg)
+    if args.command == "paste":
+        return _cmd_paste(cfg, args)
     if args.command == "doctor":
         return _cmd_doctor(cfg, verbose=args.verbose)
     if args.command == "notify":
@@ -140,6 +147,27 @@ def _cmd_run(cfg, args) -> int:
     _notify_result(cfg, result)
     # 자료가 3일치 미만이라 건너뛴 건 실패가 아니다 — 워크플로가 빨간 X 로 보이지 않게 0
     return 0 if (result.files or result.skipped) else 1
+
+
+def _cmd_paste(cfg, args) -> int:
+    """이슈 댓글(또는 파일)의 JSON 을 그 단계 산출물로. 반영 여부와 다음 할 일을 답 문구로 남긴다."""
+    import os
+
+    from . import paste as paste_mod
+
+    date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
+    text = sys.stdin.read() if args.file == "-" else Path(args.file).read_text(encoding="utf-8")
+    reply = paste_mod.apply(cfg, date_str, text)
+    if args.reply:
+        Path(args.reply).write_text(reply.text, encoding="utf-8")
+    print(reply.text)
+    # 워크플로가 이슈를 닫을지 정한다
+    out = os.environ.get("GITHUB_OUTPUT")
+    if out:
+        with open(out, "a", encoding="utf-8") as fh:
+            fh.write(f"done={'true' if reply.done else 'false'}\n")
+            fh.write(f"applied={','.join(reply.applied)}\n")
+    return 0 if reply.applied or not reply.problems else 3
 
 
 def _cmd_collect(cfg, args) -> int:
@@ -240,11 +268,21 @@ def _message_from_output(cfg, date_str: str) -> str:
             issues = len(payload.get("issues", []))
         except (json.JSONDecodeError, OSError):
             pass
-    return build_run_message(
+    from . import paste as paste_mod
+
+    status = paste_mod.load_status(out)
+    text = build_run_message(
         date=date_str, headline=headline, issues=issues, articles=0,
         site_url=str(cfg.get("site.url", "") or ""), warnings=[],
         llm_used=data.exists(), images=len(list(out.glob("img-*.png"))),
+        paste_url="" if (data.exists() or not status) else str(status.get("issue_url", "")),
     )
+    if status and not status.get("done") and data.exists():
+        left = [paste_mod.STEP_TITLES[s] for s in paste_mod.STEPS if not status["steps"].get(s)]
+        text += f"\n📋 남은 단계: {' · '.join(left)} — 댓글의 상자를 이어서 붙여넣으세요"
+        if status.get("issue_url"):
+            text += f"\n{status['issue_url']}"
+    return text
 
 
 def _notify_result(cfg, result) -> None:
@@ -269,6 +307,7 @@ def _notify_result(cfg, result) -> None:
         usd=float(getattr(result.usage, "estimated_usd", 0) or 0) if result.usage else 0.0,
         krw_per_usd=float(cfg.get("llm.krw_per_usd", 1400)),
         quiet=bool(getattr(result, "quiet", False)),
+        paste_url=str(getattr(result, "paste_url", "") or ""),
     )
     print("📨 텔레그램 알림 " + ("전송" if send_telegram(text) else "실패"))
 
@@ -596,6 +635,8 @@ def _report(result) -> None:
         print(f"\n💰 {result.usage.summary()}")
         for line in result.usage.by_kind():          # 어느 단계에서 돈이 나갔는지
             print(f"  · {line}")
+    elif getattr(result, "paste_url", ""):
+        print(f"\n📋 붙여넣기 차례 — {result.paste_url}")
     elif not result.llm_used:
         print("\n요약·대본은 생성하지 않았습니다 (prompt-pack.md 참고).")
 
