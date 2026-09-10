@@ -29,7 +29,7 @@ jobs:
     timeout-minutes: 15
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: 가지 끝으로 맞춤
         # 댓글 두 개가 잇따라 오면 두 번째 실행은 첫 번째가 밀어 넣기 전 커밋을 받습니다.
@@ -37,7 +37,7 @@ jobs:
           git fetch --quiet --depth=1 origin "${GITHUB_REF_NAME:-main}"
           git reset --quiet --hard FETCH_HEAD
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
           cache: pip
