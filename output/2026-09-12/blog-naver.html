@@ -1,0 +1,267 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>서울 아파트 신고가, 9월 12일 부돌보 브리핑</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
+  body {
+    margin: 0; padding: 0 16px 80px;
+    color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.8; font-size: 16px;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    margin: 0 -16px 20px; padding: 12px 16px;
+    background: #03c75a; color: #fff;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .bar strong { margin-right: auto; font-size: 15px; }
+  .bar button {
+    border: 0; border-radius: 6px; padding: 8px 14px;
+    background: rgba(255,255,255,.18); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .bar button:hover { background: rgba(255,255,255,.3); }
+  .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
+  .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
+  #post p { margin: 0 0 18px; }
+  #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
+  #post li { margin-bottom: 8px; }
+  #post table { border-collapse: collapse; width: 100%; margin: 0 0 20px; font-size: 15px; }
+  #post th, #post td { border: 1px solid #ddd; padding: 9px 12px; text-align: left; }
+  #post th { background: #f2f4f6; font-weight: 700; }
+  #post blockquote {
+    margin: 0 0 18px; padding: 12px 16px;
+    background: #f7f8fa; border-left: 4px solid #03c75a; color: #444;
+  }
+  #post a { color: #0068c3; }
+  .imgslot {
+    margin: 0 0 20px; padding: 22px 16px; text-align: center;
+    border: 2px dashed #c9cdd2; border-radius: 8px;
+    background: #fafbfc; color: #6b7178; font-size: 14px;
+  }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .photo-links { margin: -12px 0 20px; font-size: 13px; color: #6b7178; text-align: center; }
+  .photo-links a { color: #0068c3; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
+  .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
+  .hint {
+    max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    font-size: 14px; line-height: 1.75; color: #5f4b16;
+  }
+  .hint ol { margin: 8px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>네이버 블로그 붙여넣기</strong>
+  <button type="button" data-copy="title">제목 복사</button>
+  <button type="button" data-copy="post">본문 복사</button>
+  <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="https://blog.naver.com/rikiwiki/postwrite" target="_blank" rel="noopener">글쓰기 열기</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1 class="title" id="title">서울 아파트 신고가, 9월 12일 부돌보 브리핑</h1>
+    <div class="meta">2026-09-12 · 부동산</div>
+
+    <div id="post">
+<div class="imgslot has-file">📷 대표 이미지 — 검색 목록에 이 그림이 썸네일로 뜹니다<br><small>→ 파일 <b>img-0-cover.png</b> 을 <b>글 맨 위</b>에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-0-cover.png" alt="대표 이미지"><p style="margin:0 0 14px;font-size:14px;color:#767676">이 글은 2026년 9월 12일 기준으로 정리한 내용입니다.</p><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px"><b style="font-size:15px">3줄 요약</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">9월 10일 등록 거래에서 서울 12개 단지가 최근 3년 신고가</li><li style="margin-bottom:6px">송파 2차한양 64.26㎡ 22억 2,000만 원, 노원 포레나 10억 8,000만 원</li><li style="margin-bottom:6px">개별 단지 사례라 서울 전체 시세로 보긴 어렵습니다</li></ul></div><p>9월 10일 국토부 실거래가 시스템에 새로 등록된 거래에서 <strong>서울 아파트 신고가</strong>가 잇따라 확인됐습니다. 송파·동작·구로·노원·도봉·중랑·금천 등 여러 자치구의 12개 단지가 최근 <span class="hl" style="background-color:#fff59d">3년</span> 내 가장 높은 값에 손바뀜했습니다.</p>
+<p>다만 이건 개별 단지의 개별 거래 기록입니다. 서울 전체가 오른다는 통계는 오늘 자료에 없습니다.</p>
+<div class="imgslot has-file">📷 이미지 — 송파구 2차한양아파트 전용 64.26㎡ 거래가를 보여주는 수치 카드<br><small>→ 파일 <b>img-1-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-1-stat-card.png" alt="송파구 2차한양아파트 전용 64.26㎡ 거래가를 보여주는 수치 카드">
+<h2>서울 아파트 신고가, 어느 단지에서 나왔나</h2>
+<p>가장 높은 금액은 송파구 2차한양아파트였습니다. 전용 64.26㎡가 <span class="hl" style="background-color:#fff59d"><strong>22억</strong></span> <span class="hl" style="background-color:#fff59d">2,000만 원</span>에 거래되며 최근 3년 신고가를 기록했습니다.</p>
+<p>동작구 상도두산위브 전용 84.99㎡는 <span class="hl" style="background-color:#fff59d"><strong>17억</strong></span> 2,000만 원이었습니다. 도심권만이 아니라 서남·동북권 중저가 단지에서도 같은 흐름이 나타났습니다.</p>
+<table>
+<thead>
+<tr>
+<th>단지(자치구)</th>
+<th>전용면적</th>
+<th>거래가</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>2차한양(송파)</td>
+<td>64.26㎡</td>
+<td>22억 2,000만 원</td>
+</tr>
+<tr>
+<td>상도두산위브(동작)</td>
+<td>84.99㎡</td>
+<td>17억 2,000만 원</td>
+</tr>
+<tr>
+<td>개봉동 한마을(구로)</td>
+<td>84.57㎡</td>
+<td><span class="hl" style="background-color:#fff59d"><strong>11억</strong></span> 7,000만 원</td>
+</tr>
+<tr>
+<td>금천롯데캐슬골드파크3차(금천)</td>
+<td>59.97㎡</td>
+<td>11억 2,000만 원</td>
+</tr>
+<tr>
+<td>포레나노원(노원)</td>
+<td>59.99㎡</td>
+<td>10억 8,000만 원</td>
+</tr>
+<tr>
+<td>가산동 두산(금천)</td>
+<td>84.9㎡</td>
+<td><span class="hl" style="background-color:#fff59d">8억</span> 8,000만 원</td>
+</tr>
+<tr>
+<td>상봉동 엘지,쌍용(중랑)</td>
+<td>68.12㎡</td>
+<td>8억 2,400만 원</td>
+</tr>
+<tr>
+<td>쌍문동 한양2(도봉)</td>
+<td>84.9㎡</td>
+<td>6억 5,000만 원</td>
+</tr>
+</tbody>
+</table>
+<p>이 밖에 구로구 한일유앤아이 전용 84.962㎡ 8억 2,000만 원, 노원구 불암현대 전용 59.4㎡ 5억 6,500만 원, 한신1차 전용 53.96㎡ 5억 2,000만 원, 상계주공13단지 전용 45.55㎡ 4억 6,500만 원도 같은 날 신고가 목록에 올랐습니다.</p>
+<div class="imgslot has-file">📷 이미지 — 노원구 포레나노원 전용 59.99㎡ 거래가를 보여주는 수치 그래픽<br><small>→ 파일 <b>img-2-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-2-stat-card.png" alt="노원구 포레나노원 전용 59.99㎡ 거래가를 보여주는 수치 그래픽">
+<hr><h2>이 서울 아파트 신고가를 어떻게 읽어야 할까</h2>
+<p>특정 구에 몰리지 않고 일곱 개 자치구에 흩어져 있다는 점이 눈에 띕니다. 국지적으로 매수심리가 살아 있다는 신호로 읽힙니다.</p>
+<p>그런데 신고가(같은 단지·같은 면적에서 최근 3년 중 가장 높은 값)는 단 한 건만 있어도 성립합니다. 매매가격지수나 거래량 같은 전체 통계가 함께 있어야 방향을 말할 수 있습니다.</p>
+<p>오늘 브리핑에는 그 통계가 없습니다. 거래일과 층수 같은 세부 정보도 확인되지 않았습니다. 그래서 <strong>서울 아파트 신고가</strong> 사례는 참고 자료로 두고, 관심 단지의 거래 건수를 직접 세어 보시는 편이 안전합니다.</p>
+<div class="imgslot">📷 이미지 — 서울 외곽 아파트 단지 전경 사진</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/seoul-apartment-complex-skyline" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/seoul%20apartment%20complex%20skyline/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/seoul%20apartment%20complex%20skyline/" target="_blank" rel="noopener">픽사베이</a></div>
+<hr><h2>그 밖의 오늘 소식</h2>
+<ul>
+<li>2026 부동산개발 포럼에서 '정비사업 대전환기'를 주제로 논의가 열렸습니다.</li>
+<li>포럼에선 실거주 유도 세제의 전세시장 부담을 지적하는 발언이 나왔습니다.</li>
+<li>고동진 의원이 공동주택 리모델링 공사기간 재산세 면제를 추진합니다.</li>
+<li>조선비즈는 입주 절벽을 앞둔 서울에서 분양권 신고가가 나온다고 전했습니다.</li>
+</ul>
+<hr><h2>오늘의 체크포인트</h2>
+<ol>
+<li>9월 10일 등록 거래에서 서울 12개 단지가 최근 3년 신고가를 기록했습니다.</li>
+<li>최고가는 송파 22억 2,000만 원, 노원·금천에서도 10억 원대 거래가 나왔습니다.</li>
+<li>전체 시세 통계가 없는 만큼, 단지별 거래 누적을 직접 확인하는 게 먼저입니다.</li>
+</ol><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:26px 0 0"><b style="font-size:15px">그래서 나는?</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">무주택 실수요자라면, 관심 단지의 같은 면적 과거 거래부터 확인해 보세요</li><li style="margin-bottom:6px">1주택자라면, 내 단지 신고가가 일회성인지 반복 거래인지 살펴볼 때입니다</li><li style="margin-bottom:6px">노후 아파트 소유자라면, 리모델링 세제 논의 진행 상황을 지켜볼 만합니다</li></ul></div><p style="padding:14px 16px;margin:28px 0 0"><b>여러분이 눈여겨보는 단지는 최근 1년 사이 거래가 몇 건이나 쌓였나요?</b><br><span style="font-size:14px;color:#666666">댓글로 알려 주시면 다음 글에 반영하겠습니다.</span></p>
+      <p class="tags" id="tags">#부동산 #아파트 #서울아파트 #서울아파트신고가 #실거래가 #국토부실거래가 #신고가거래 #송파구 #노원구 #구로구 #금천구 #도봉구 #중랑구 #동작구 #상계주공 #포레나노원 #금천롯데캐슬골드파크 #내집마련 #부동산공부 #부동산뉴스 #아파트매매 #정비사업 #재건축 #리모델링 #리모델링세제 #재산세 #분양권 #입주물량 #전월세 #부돌보브리핑</p>
+    </div>
+  </div>
+
+  <div class="hint">
+    <strong>쓰는 법</strong>
+    <ol>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다.
+        네이버는 <b>지금 로그인된 계정</b>의 블로그를 엽니다 — 다른 블로그가 열리면
+        <a href="https://nid.naver.com/nidlogin.logout?returl=https%3A%2F%2Fblog.naver.com%2Frikiwiki%2Fpostwrite" target="_blank" rel="noopener">계정 바꿔 열기</a>를 누르고
+<b>rikiwiki</b> 계정으로 다시 로그인하세요. 바로 글쓰기로 갑니다.</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
+      <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
+      <li><span style="background-color:#fff59d">형광펜</span>은 오늘의 핵심 수치가 <b>처음 나온 자리</b>에만 칠합니다.
+        같은 수치가 다시 나와도 표시하지 않습니다 — 강조가 많으면 아무것도 강조가 아니니까요.
+        붙여넣으면 그대로 따라가고, 마음에 안 들면 에디터에서 지우세요.</li>
+      <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
+    </ol>
+    이 안내문은 복사에 포함되지 않습니다.
+  </div>
+</div>
+
+<script>
+// 버튼이 지정한 영역만 클립보드에 담는다. 안내문과 상단 바는 복사되지 않는다.
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var node = document.getElementById(btn.dataset.copy);
+    if (!node) return;
+
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
+
+    // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
+    // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
+    var range = document.createRange();
+    range.selectNodeContents(copyNode);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    clone.remove();
+
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
+        alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
+      });
+      return;
+    }
+    flash();
+
+    function flash() {
+      var original = btn.textContent;
+      btn.textContent = "복사됨 ✓";
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1400);
+    }
+  });
+});
+</script>
+</body>
+</html>
