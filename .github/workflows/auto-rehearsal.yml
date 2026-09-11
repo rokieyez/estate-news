@@ -1,0 +1,69 @@
+name: 구독 자동 답하기 시험
+
+# 아침 실행을 그대로 한 번 돌리되, 결과를 **임시 폴더**에 두고 커밋·이슈·알림을 하지 않는다.
+# 구독 토큰(CLAUDE_CODE_OAUTH_TOKEN)이 살아 있는지, 세 단계가 끝까지 반영되는지 확인할 때 쓴다.
+# 토큰은 1년짜리라 갱신한 뒤에도 이걸로 확인하면 된다. 구독 사용량을 하루치만큼 쓴다.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  rehearse:
+    runs-on: ubuntu-latest
+    timeout-minutes: 50
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: 의존성·글꼴·Claude Code
+        run: |
+          pip install -q -r requirements.txt
+          sudo apt-get update -qq >/dev/null && sudo apt-get install -y -qq fonts-noto-cjk >/dev/null
+          npm install -g --silent @anthropic-ai/claude-code >/dev/null 2>&1
+          echo "Claude Code $(claude --version)"
+
+      - name: 임시 설정 (산출물은 임시 폴더, 이슈 안 열기)
+        run: |
+          cp -r config "$RUNNER_TEMP/cfg"
+          python - <<'PY'
+          import os, yaml
+          p = os.path.join(os.environ["RUNNER_TEMP"], "cfg", "settings.yaml")
+          s = yaml.safe_load(open(p, encoding="utf-8"))
+          s.setdefault("output", {})["dir"] = os.path.join(os.environ["RUNNER_TEMP"], "out")
+          s.setdefault("paste", {}).update(open_issue=False, auto=True)
+          yaml.safe_dump(s, open(p, "w", encoding="utf-8"), allow_unicode=True)
+          PY
+
+      - name: 시험 실행
+        env:
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          DATA_GO_KR_KEY: ${{ secrets.DATA_GO_KR_KEY }}
+          REB_API_KEY: ${{ secrets.REB_API_KEY }}
+          PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+        run: python -m rebrief --config "$RUNNER_TEMP/cfg" -v run --date "$(TZ=Asia/Seoul date +%F)"
+
+      - name: 결과
+        if: always()
+        run: |
+          D="$RUNNER_TEMP/out/$(TZ=Asia/Seoul date +%F)"
+          {
+            echo "## 단계"; echo '```'; cat "$D/paste/status.json" 2>/dev/null || echo "(없음)"; echo '```'
+            echo "## 점검표"; cat "$D/checklist.md" 2>/dev/null | sed -n '1,25p'
+            echo "## 파일"; echo '```'; ls -1 "$D" 2>/dev/null | grep -v '^raw$'; echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          python - <<'PY'
+          import json, os, sys, datetime
+          d = os.path.join(os.environ["RUNNER_TEMP"], "out",
+                           datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y-%m-%d"))
+          st = json.load(open(os.path.join(d, "paste", "status.json")))
+          print("단계:", st["steps"], "끝:", st.get("done"))
+          sys.exit(0 if st.get("done") else 1)
+          PY

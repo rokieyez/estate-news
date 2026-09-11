@@ -40,6 +40,7 @@ class RunResult:
     stats: dict = field(default_factory=dict)      # 실거래 집계 (알림·요약에 쓴다)
     quiet: bool = False                            # 한산해서 일부러 안 만든 날 (실패가 아니다)
     paste_url: str = ""                            # 붙여넣기 모드: 1단계 프롬프트가 있는 이슈 주소
+    paste_auto: list[str] = field(default_factory=list)   # 구독으로 자동 반영한 단계
 
 
 def local_now(cfg: Config) -> datetime:
@@ -162,8 +163,11 @@ def run(
                     "ANTHROPIC_API_KEY 가 없어 요약을 건너뛰었습니다. prompt-pack.md 를 사용하세요."
                 )
             renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
-    renderer.checklist(result, artifacts, link_status)
-    _record_quality(cfg, date_str, renderer, artifacts, result)
+    # 자동 답하기가 한 단계라도 반영했으면 점검표·품질 장부는 이미 그날 전체로 쓰였다.
+    # 여기서 다시 쓰면 브리핑·글 없는 빈 점검표로 덮인다.
+    if not result.paste_auto:
+        renderer.checklist(result, artifacts, link_status)
+        _record_quality(cfg, date_str, renderer, artifacts, result)
 
     # 6) 이력 저장
     seen.mark(articles, date_cls.fromisoformat(date_str))

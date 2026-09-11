@@ -41,7 +41,8 @@ concurrency:
 jobs:
   brief:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # 구독 자동 답하기가 세 단계를 차례로 부르므로(대본이 가장 길다) 넉넉히.
+    timeout-minutes: 50
 
     steps:
       - uses: actions/checkout@v7
@@ -100,10 +101,21 @@ jobs:
             echo "::warning::크롬이 없어 PNG 변환을 건너뜁니다 (SVG 만 생성)"
           fi
 
+      - name: Claude Code 설치 (구독으로 자동 답하기)
+        if: steps.guard.outputs.skip != 'true'
+        # 붙여넣기 세 상자를 사람 대신 받는다 (config/settings.yaml 의 paste.auto).
+        # 설치에 실패해도 실행은 계속한다 — 그날은 예전처럼 이슈를 열어 사람이 붙여넣는다.
+        run: |
+          npm install -g --silent @anthropic-ai/claude-code >/dev/null 2>&1 \
+            && echo "Claude Code $(claude --version)" \
+            || echo "::warning::Claude Code 설치 실패 — 오늘은 붙여넣기로 넘깁니다"
+
       - name: 브리핑 생성
         if: steps.guard.outputs.skip != 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 구독 토큰 (claude setup-token). 이게 있으면 세 단계를 자동으로 답한다.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
           # 정부 통계 인증키. 등록돼 있지 않으면 그 단계만 조용히 건너뜁니다.

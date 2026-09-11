@@ -144,6 +144,141 @@ def next_comment(date_str: str, blog: str, video: str, repo: str = "", *, made: 
     return "\n".join(lines)
 
 
+def remaining_body(out_dir: Path, date_str: str, repo: str, status: dict, why: str = "") -> str:
+    """자동 답하기가 중간에 멈춘 날의 이슈 본문 — 아직 안 된 단계의 상자만 담는다."""
+    pdir = paste_dir(out_dir)
+    steps = status.get("steps") or {}
+    head = [f"## {date_str} 붙여넣기 — 자동 답하기가 멈춘 곳부터"]
+    if why:
+        head += ["", f"자동으로 하다가 멈췄습니다: {why}"]
+    done = [STEP_TITLES[s] for s in STEPS if steps.get(s)]
+    if done:
+        head += ["", "이미 된 단계: " + " · ".join(done)]
+    head += ["", HOW_TO, ""]
+    files = {"brief": "1-brief.md", "blog": "2-blog.md", "video": "3-video.md"}
+    for step in STEPS:
+        path = pdir / files[step]
+        if steps.get(step) or not path.exists():
+            continue
+        head += [f"### {STEP_TITLES[step]}", "",
+                 _box_or_link(path.read_text(encoding="utf-8"), repo, date_str, files[step]), ""]
+    return "\n".join(head)
+
+
+# ── 구독으로 자동 답하기 (2026-09-11 사용자 결정 — "1번 가자") ──────────
+#
+# 사람이 claude.ai 에 붙여넣던 세 상자를, 러너 안에서 Claude Code 가 대신 받는다.
+# `claude setup-token` 으로 만든 CLAUDE_CODE_OAUTH_TOKEN 은 공식 문서가 CI 용이라 적어 두었고,
+# 그걸로 돌리면 API 요금이 아니라 **구독 사용량**으로 처리된다(code.claude.com/docs/en/authentication).
+# 붙여넣은 답과 똑같이 `apply` 를 지나므로 새로 생긴 뒷일은 없다. 한도·만료로 멈추면
+# 그 자리부터 사람이 붙여넣게 이슈를 연다 — 아침 결과가 비는 날은 없다.
+
+AUTO_ENV = "CLAUDE_CODE_OAUTH_TOKEN"
+AUTO_SYSTEM = ("당신은 부동산 뉴스 콘텐츠를 만드는 작가입니다. 도구는 쓰지 않습니다. "
+               "사용자 메시지의 지시와 출력 규칙을 그대로 따르고, 요청한 JSON 을 ```json 상자 하나에 담아 답합니다.")
+AUTO_FILES = {"brief": "1-brief.md", "blog": "2-blog.md", "video": "3-video.md"}
+
+
+def auto_ready(cfg: Config) -> str:
+    """자동으로 답할 수 있으면 빈 문자열, 아니면 못 하는 이유."""
+    pc = cfg.get("paste", {}) or {}
+    if not pc.get("auto", False):
+        return "꺼져 있음"
+    if not os.environ.get(AUTO_ENV):
+        return f"구독 토큰({AUTO_ENV})이 없음"
+    if not shutil.which(str(pc.get("claude_bin", "claude") or "claude")):
+        return "claude 명령이 없음"
+    return ""
+
+
+def _step_model(cfg: Config, step: str) -> str:
+    llm = cfg.get("llm", {}) or {}
+    pick = {"brief": llm.get("brief_model"), "video": llm.get("script_model")}.get(step)
+    return str(pick or llm.get("model") or "claude-sonnet-5")
+
+
+def ask_claude(cfg: Config, step: str, prompt: str, *, model: str = "") -> tuple[str, str]:
+    """Claude Code 에 한 번 묻는다. (답, 오류) — 둘 중 하나만 채워진다.
+
+    · 도구를 모두 끈다(`--tools ""`) — 글만 쓰면 되는 일이라 파일·명령이 필요 없다.
+    · 빈 임시 폴더에서 돈다 — 저장소에서 돌리면 긴 CLAUDE.md 를 읽어 답이 흐트러진다.
+    · `--bare` 는 쓰지 않는다 — 문서상 그 모드는 CLAUDE_CODE_OAUTH_TOKEN 을 읽지 않는다.
+    """
+    import tempfile
+
+    pc = cfg.get("paste", {}) or {}
+    llm = cfg.get("llm", {}) or {}
+    cap = int(llm.get("script_max_tokens" if step == "video" else "max_tokens", 16000) or 16000)
+    cmd = [str(pc.get("claude_bin", "claude") or "claude"), "-p", "--output-format", "json",
+           "--model", model or _step_model(cfg, step), "--tools", "",
+           "--no-session-persistence", "--system-prompt", AUTO_SYSTEM]
+    env = {**os.environ, "CLAUDE_CODE_MAX_OUTPUT_TOKENS": str(cap),
+           "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC": "1"}
+    env.pop("ANTHROPIC_API_KEY", None)        # 남아 있으면 구독 대신 API 로 청구된다 (인증 순서상 위)
+    timeout = int(pc.get("auto_timeout_seconds", 900) or 900)
+    with tempfile.TemporaryDirectory() as tmp:
+        try:
+            done = subprocess.run(cmd, input=prompt, capture_output=True, text=True,
+                                  cwd=tmp, env=env, timeout=timeout)
+        except subprocess.TimeoutExpired:
+            return "", f"{timeout // 60}분 안에 답이 오지 않았습니다"
+        except OSError as exc:
+            return "", f"claude 를 실행하지 못했습니다: {exc}"
+    try:
+        data = json.loads(done.stdout or "{}")
+    except json.JSONDecodeError:
+        tail = (done.stderr or done.stdout or "").strip().splitlines()[-1:] or ["(출력 없음)"]
+        return "", f"claude 응답을 읽지 못했습니다: {tail[0][:200]}"
+    if data.get("is_error") or done.returncode != 0:
+        return "", str(data.get("result") or done.stderr or "알 수 없는 오류")[:300]
+    usage = data.get("usage") or {}
+    log.info("자동 답하기 %s: %s · 출력 %s토큰 · %.0f초", step, cmd[5],
+             usage.get("output_tokens", "?"), (data.get("duration_ms") or 0) / 1000)
+    return str(data.get("result") or ""), ""
+
+
+def auto(cfg: Config, date_str: str, *, issues: list[Cluster] | None = None) -> Reply:
+    """남은 단계를 차례로 Claude Code 에 묻고 반영한다. 한 단계라도 막히면 거기서 멈춘다.
+
+    답이 JSON 검사에서 떨어지면 한 번 더 묻고, 모델 오류(한도·권한)면 대체 모델로 한 번 더
+    묻는다. 그래도 안 되면 멈추고 사람 몫으로 넘긴다."""
+    out_dir = cfg.output_dir / date_str
+    total = Reply()
+    fallback = str((cfg.get("llm", {}) or {}).get("fallback_model", "") or "")
+    for step in STEPS:
+        status = load_status(out_dir) or {}
+        if (status.get("steps") or {}).get(step):
+            continue
+        path = paste_dir(out_dir) / AUTO_FILES[step]
+        if not path.exists():
+            total.problems.append(f"{STEP_TITLES[step]} 프롬프트가 없습니다 ({path.name})")
+            break
+        prompt = path.read_text(encoding="utf-8")
+        applied = False
+        for attempt in range(2):
+            model = _step_model(cfg, step)
+            text, err = ask_claude(cfg, step, prompt, model=model)
+            if err and fallback and fallback != model:
+                log.warning("자동 답하기 %s 실패(%s) — %s 로 한 번 더", step, err, fallback)
+                text, err = ask_claude(cfg, step, prompt, model=fallback)
+            if err:
+                total.problems.append(f"{STEP_TITLES[step]}: {err}")
+                break
+            reply = apply(cfg, date_str, text, issues=issues)
+            if step in reply.applied:
+                total.applied.append(step)
+                applied = True
+                break
+            why = "; ".join(reply.problems) or "반영되지 않았습니다"
+            log.warning("자동 답하기 %s 반영 실패(%d번째): %s", step, attempt + 1, why)
+            if attempt == 1:
+                total.problems.append(f"{STEP_TITLES[step]}: {why}")
+        if not applied:
+            break
+    total.done = bool((load_status(out_dir) or {}).get("done"))
+    return total
+
+
 # ── 아침 실행에서: 준비 ───────────────────────────────────────
 
 
@@ -176,17 +311,37 @@ def prepare(cfg: Config, renderer, issues: list[Cluster], date_str: str,
 
     status = load_status(out_dir) or {"date": date_str, "steps": {s: False for s in STEPS},
                                        "issue_url": "", "issue_number": 0}
+    save_status(out_dir, status)
+    for path in (pdir / "issues.json", pdir / "1-brief.md", pdir / "status.json"):
+        if path not in renderer.written:
+            renderer.written.append(path)
+
+    # 구독으로 자동 답하기가 켜져 있으면 먼저 해 본다. 다 되면 사람 차례가 없다.
+    body = issue_body(date_str, prompt, _repo_name(cfg))
+    why = auto_ready(cfg)
+    if not why:
+        got = auto(cfg, date_str, issues=issues)
+        result.paste_auto = list(got.applied)
+        if got.done:
+            result.llm_used = True
+            log.info("자동 답하기로 세 단계를 모두 반영했습니다.")
+            return ""
+        status = load_status(out_dir) or status
+        stop = "; ".join(got.problems) or "알 수 없는 이유"
+        result.warnings.append(f"자동 답하기가 멈췄습니다 — {stop}. 남은 단계는 붙여넣기로 넘깁니다.")
+        body = remaining_body(out_dir, date_str, _repo_name(cfg), status, why=stop)
+        if status.get("done"):
+            return ""
+    elif why != "꺼져 있음":
+        result.warnings.append(f"자동 답하기를 못 했습니다 ({why}) — 붙여넣기로 넘깁니다.")
+
     if not status.get("issue_url") and bool((cfg.get("paste", {}) or {}).get("open_issue", True)):
-        repo = _repo_name(cfg)
-        url = open_issue(cfg, date_str, issue_body(date_str, prompt, repo))
+        url = open_issue(cfg, date_str, body)
         if url:
             status["issue_url"] = url
             m = re.search(r"/issues/(\d+)", url)
             status["issue_number"] = int(m.group(1)) if m else 0
     save_status(out_dir, status)
-    for path in (pdir / "issues.json", pdir / "1-brief.md", pdir / "status.json"):
-        if path not in renderer.written:
-            renderer.written.append(path)
 
     if status.get("issue_url"):
         result.warnings.append(f"붙여넣기 차례 — 1단계 프롬프트: {status['issue_url']}")
@@ -294,8 +449,12 @@ class Reply:
     text: str = ""
 
 
-def apply(cfg: Config, date_str: str, text: str) -> Reply:
-    """댓글 하나를 반영한다. 여러 단계가 한 댓글에 있어도 순서대로 처리한다."""
+def apply(cfg: Config, date_str: str, text: str, *, issues: list[Cluster] | None = None) -> Reply:
+    """댓글 하나를 반영한다. 여러 단계가 한 댓글에 있어도 순서대로 처리한다.
+
+    `issues` 는 아침 실행 안에서 자동으로 답할 때 넘기는 **본문이 있는** 이슈다. 댓글로
+    들어올 때는 저장소의 issues.json(본문을 비운 것)을 읽으므로 숫자 검산이 제목만 본다."""
+    given_issues = issues
     from . import pipeline as pipe
     from .render import Renderer
 
@@ -334,7 +493,7 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
         try:
             if step == "brief":
                 brief = DailyBrief.model_validate(data)
-                issues = load_issues(out_dir)
+                issues = given_issues or load_issues(out_dir)
                 pipe._after_brief(cfg, renderer, brief, issues, date_str, result, made)
                 made["cards"] = renderer.cards(brief, stats=stats_data)
                 (paste_dir(out_dir) / "brief.json").write_text(brief.model_dump_json(indent=1),
@@ -346,7 +505,7 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
                                           made=f"이슈 {len(brief.issues)}개 · 카드 {len(made['cards'])}장.")
             elif step == "blog":
                 post = BlogPost.model_validate(data)
-                brief, issues = _load_brief(out_dir), load_issues(out_dir)
+                brief, issues = _load_brief(out_dir), given_issues or load_issues(out_dir)
                 made["brief"] = brief
                 from .store import SeriesStore
                 history = SeriesStore(cfg.state_dir / "datapoints.json").rows
@@ -380,7 +539,7 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
 
     if reply.applied:
         result.llm_used = True
-        _restore_made(cfg, out_dir, date_str, status, made, result)
+        _restore_made(cfg, out_dir, date_str, status, made, result, issues=given_issues)
         renderer.checklist(result, made, None)
         pipe._record_quality(cfg, date_str, renderer, made, result)
         save_status(out_dir, status)
@@ -391,7 +550,8 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
     return reply
 
 
-def _restore_made(cfg, out_dir: Path, date_str: str, status: dict, made: dict, result) -> None:
+def _restore_made(cfg, out_dir: Path, date_str: str, status: dict, made: dict, result,
+                  *, issues: list[Cluster] | None = None) -> None:
     """앞선 댓글에서 반영한 단계의 결과를 되살린다 — 점검표·품질 장부가 그날 전체를 보게.
 
     점검표는 호출마다 새로 쓰는데 `made` 에는 이번 댓글에서 반영한 것만 있다. 3단계를
@@ -407,7 +567,7 @@ def _restore_made(cfg, out_dir: Path, date_str: str, status: dict, made: dict, r
             made["brief"] = _load_brief(out_dir)
         brief = made.get("brief")
         if brief is not None and "checks" not in made:
-            made["checks"] = pipe._verify_numbers(cfg, brief, load_issues(out_dir), result)
+            made["checks"] = pipe._verify_numbers(cfg, brief, issues or load_issues(out_dir), result)
         if brief is not None and "repeats" not in made:
             made["repeats"] = pipe._repeat_topics(cfg, brief, date_str)
     if steps.get("blog") and made.get("post") is None and (pdir / "post.json").exists():

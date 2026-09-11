@@ -827,3 +827,118 @@ def test_paste_day_is_not_a_failure_for_the_streak(cfg):
     (cfg.output_dir / "2026-09-09" / "paste").mkdir()
     (cfg.output_dir / "2026-09-09" / "paste" / "status.json").write_text("{}", encoding="utf-8")
     assert failure_streak(cfg.output_dir, date(2026, 9, 9)) == 0
+
+
+# ── 구독으로 자동 답하기 (9/11): 러너 안에서 Claude Code 가 세 상자를 대신 받는다 ──
+
+_FAKE_CLAUDE = r'''#!{python}
+import json, os, sys
+prompt = sys.stdin.read()
+first = prompt.splitlines()[0] if prompt else ""
+step = "brief" if "1단계" in first else "blog" if "2단계" in first else "video" if "3단계" in first else "?"
+d = os.environ["FAKE_CLAUDE_DIR"]
+with open(os.path.join(d, "calls.log"), "a", encoding="utf-8") as fh:
+    fh.write(json.dumps({{"step": step, "args": sys.argv[1:], "cwd": os.getcwd(),
+                         "api_key": bool(os.environ.get("ANTHROPIC_API_KEY")),
+                         "cap": os.environ.get("CLAUDE_CODE_MAX_OUTPUT_TOKENS")}}) + "\n")
+if os.environ.get("FAKE_CLAUDE_FAIL") == step:
+    print(json.dumps({{"type": "result", "is_error": True, "result": "Claude usage limit reached"}}))
+    sys.exit(1)
+answer = open(os.path.join(d, step + ".json"), encoding="utf-8").read()
+print(json.dumps({{"type": "result", "is_error": False, "result": "```json\n" + answer + "\n```",
+                  "usage": {{"output_tokens": 123}}, "duration_ms": 1000}}))
+'''
+
+
+def _install_fake_claude(tmp_path, monkeypatch, fail: str = ""):
+    import os
+    import stat
+    import sys
+
+    d = tmp_path / "fake-claude"
+    (d / "bin").mkdir(parents=True)
+    (d / "brief.json").write_text(make_brief().model_dump_json(), encoding="utf-8")
+    (d / "blog.json").write_text(make_post().model_dump_json(), encoding="utf-8")
+    (d / "video.json").write_text(make_pack().model_dump_json(), encoding="utf-8")
+    exe = d / "bin" / "claude"
+    exe.write_text(_FAKE_CLAUDE.format(python=sys.executable), encoding="utf-8")
+    exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"{d / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}")
+    monkeypatch.setenv("FAKE_CLAUDE_DIR", str(d))
+    monkeypatch.setenv("FAKE_CLAUDE_FAIL", fail)
+    return d
+
+
+def _calls(d) -> list[dict]:
+    path = d / "calls.log"
+    return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()] if path.exists() else []
+
+
+def test_subscription_auto_answers_all_three_steps_in_the_morning_run(cfg, monkeypatch, tmp_path):
+    from rebrief import paste
+
+    d = _install_fake_claude(tmp_path, monkeypatch)
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "sk-ant-oat01-테스트")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-남은키")      # 넘기면 구독 대신 API 로 청구된다
+    cfg.settings["llm"]["mode"] = "paste"
+    cfg.settings.setdefault("paste", {})["auto"] = True
+
+    result = pipeline.run(cfg, run_date=RUN_DATE)
+    out = cfg.output_dir / RUN_DATE
+    status = paste.load_status(out)
+    assert status["done"] and result.paste_auto == ["brief", "blog", "video"], (status, result.warnings)
+    assert not any("붙여넣기" in w for w in result.warnings), result.warnings
+    assert result.llm_used and not result.paste_url
+    for name in ("brief.md", "data.json", "blog-naver.html", "script-longform.md", "checklist.md"):
+        assert (out / name).exists(), name
+    # run 이 마지막에 점검표를 빈 것으로 덮지 않는다
+    checklist = (out / "checklist.md").read_text(encoding="utf-8")
+    assert "블로그 본문" in checklist and "쇼츠 발화" in checklist, checklist[:500]
+
+    calls = _calls(d)
+    assert [c["step"] for c in calls] == ["brief", "blog", "video"]
+    assert not any(c["api_key"] for c in calls), "ANTHROPIC_API_KEY 가 claude 에 넘어갔다"
+    assert all(c["cwd"] != str(cfg.repo_root) for c in calls), "저장소 안에서 돌면 CLAUDE.md 를 읽는다"
+    assert all("--tools" in c["args"] and "--bare" not in c["args"] for c in calls)
+    assert calls[2]["cap"] == str(cfg.get("llm.script_max_tokens"))     # 대본은 큰 한도
+
+
+def test_subscription_auto_hands_the_rest_to_a_person_when_it_stops(cfg, monkeypatch, tmp_path):
+    from rebrief import paste
+
+    d = _install_fake_claude(tmp_path, monkeypatch, fail="blog")
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "sk-ant-oat01-테스트")
+    cfg.settings["llm"]["mode"] = "paste"
+    cfg.settings.setdefault("paste", {})["auto"] = True
+    cfg.settings["llm"]["fallback_model"] = "claude-sonnet-5"
+    cfg.settings["llm"]["model"] = "claude-opus-5"
+
+    result = pipeline.run(cfg, run_date=RUN_DATE)
+    out = cfg.output_dir / RUN_DATE
+    status = paste.load_status(out)
+    assert status["steps"] == {"brief": True, "blog": False, "video": False}
+    assert result.paste_auto == ["brief"]
+    assert any("자동 답하기가 멈췄습니다" in w and "usage limit" in w for w in result.warnings), result.warnings
+    # 모델 오류면 대체 모델로 한 번 더 물었다
+    blog_calls = [c for c in _calls(d) if c["step"] == "blog"]
+    assert len(blog_calls) >= 2 and "claude-sonnet-5" in blog_calls[1]["args"]
+    # 사람에게 넘기는 이슈 본문에는 남은 두 상자만
+    body = paste.remaining_body(out, RUN_DATE, "", status, why="한도")
+    assert "2단계" in body and "3단계" in body and "### 1단계" not in body and "한도" in body
+    # 1단계는 이미 반영돼 카드·브리핑이 있다
+    assert (out / "data.json").exists() and list(out.glob("card-*.svg"))
+
+    # 사람이 남은 두 답을 댓글로 넣으면 끝난다
+    r = paste.apply(cfg, RUN_DATE, "```json\n" + make_post().model_dump_json() + "\n```\n```json\n"
+                    + make_pack().model_dump_json() + "\n```")
+    assert r.applied == ["blog", "video"] and r.done
+
+
+def test_subscription_auto_says_why_it_could_not_start(cfg, monkeypatch):
+    from rebrief import paste
+
+    monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+    cfg.settings.setdefault("paste", {})["auto"] = True
+    assert "구독 토큰" in paste.auto_ready(cfg)
+    cfg.settings["paste"]["auto"] = False
+    assert paste.auto_ready(cfg) == "꺼져 있음"

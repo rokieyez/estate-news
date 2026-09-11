@@ -67,6 +67,7 @@ def cfg(tmp_path: Path) -> Config:
     settings["images"]["photos"] = False
     settings["collect"]["check_links"] = False        # 링크 점검은 별도 테스트에서 스텁으로
     settings.setdefault("paste", {})["open_issue"] = False   # 시험이 gh 로 이슈를 열면 안 된다
+    settings["paste"]["auto"] = False          # 구독 자동 답하기는 그 시험에서만 켠다
     settings.setdefault("llm", {})["mode"] = "api"           # 붙여넣기 모드는 그 시험에서만 켠다
     settings.setdefault("stats", {})["enabled"] = False  # 정부 통계는 개별 테스트에서만 켠다
 

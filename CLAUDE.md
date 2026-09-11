@@ -616,6 +616,17 @@ rokieyez.github.io 는 5시간 6분 늦었습니다. 깃허브 문서는 「부�
   "발행하세요" 가 됐습니다 → 2·3단계 답을 `paste/post.json`·`pack.json`(+`blog-extra.json`)에 남기고
   `_restore_made` 가 점검표 전에 채웁니다. 시험 합성 자료가 핵심 수치 0개라 ①을 못 봤습니다 —
   **합성 자료가 실제 날의 모양(수치가 있는 날)을 따르는지** 먼저 보세요.
+* **구독으로 자동 답하기 (`paste.auto`, 2026-09-11 사용자 결정 "1번 가자").** 붙여넣기 준비(`prepare`)
+  직후 `auto` 가 남은 단계를 `claude -p` 에 묻고 같은 `apply` 로 반영합니다. 인증은 저장소 Secret
+  `CLAUDE_CODE_OAUTH_TOKEN`(`claude setup-token`, 1년) — 공식 문서가 "CI pipelines and scripts" 용이라
+  적었고 구독 사용량으로 처리됩니다. **전에 "구독 토큰을 러너에 넣으면 약관 위반" 이라 한 것은 오판**이었습니다.
+  지켜야 할 것: ① `--bare` 금지(그 모드는 이 토큰을 안 읽음) ② `ANTHROPIC_API_KEY` 를 claude 에 넘기지 않음
+  (인증 순서상 API 키가 이겨서 **요금이 나감**) ③ 빈 임시 폴더에서 실행(저장소에서 돌면 이 긴 CLAUDE.md 를
+  읽음) ④ `--tools ""` ⑤ 대본은 `CLAUDE_CODE_MAX_OUTPUT_TOKENS` 를 `script_max_tokens` 로.
+  모델 오류면 `fallback_model` 로 한 번, JSON 검사 실패면 한 번 더 묻고, 그래도 안 되면 **멈춘 단계부터**
+  이슈(`remaining_body`)를 엽니다. 자동이 한 단계라도 반영했으면 `run` 은 점검표를 다시 쓰지 않습니다
+  (`result.paste_auto`) — 쓰면 빈 점검표로 덮입니다. 러너 메모리의 **본문 있는** 이슈를 `apply(issues=)` 로
+  넘겨 숫자 검산이 제목만 보지 않습니다. 확인은 워크플로 「구독 자동 답하기 시험」(임시 폴더, 커밋 없음).
 * 돌아가려면 `llm.mode: api` 로 바꾸고 잔액을 채우면 됩니다.
 
 **신고가 이슈 다음 장에는 실제 단지와 금액이 실립니다 (`_deals_card`, 2026-09-10 사용자 요청).**
