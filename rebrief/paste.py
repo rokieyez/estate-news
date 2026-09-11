@@ -356,12 +356,21 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
                 (paste_dir(out_dir) / "keys.json").write_text(
                     json.dumps([k.__dict__ if hasattr(k, "__dict__") else k for k in keys],
                                ensure_ascii=False, default=str), encoding="utf-8")
+                # 점검표는 호출마다 새로 쓴다. 3단계를 따로 넣는 날에도 블로그 항목이 남게
+                # 글과 빈 사진 자리 수를 남겨 둔다 (_restore_made 가 읽는다).
+                (paste_dir(out_dir) / "post.json").write_text(post.model_dump_json(indent=1),
+                                                               encoding="utf-8")
+                (paste_dir(out_dir) / "blog-extra.json").write_text(json.dumps(
+                    {"empty_photo_slots": int(made.get("empty_photo_slots", 0) or 0)}),
+                    encoding="utf-8")
             else:
                 pack = VideoPack.model_validate(data)
                 brief = _load_brief(out_dir)
                 made["brief"] = brief
                 keys = _load_keys(paste_dir(out_dir) / "keys.json")
                 pipe._after_video(cfg, renderer, brief, pack, date_str, made, keys)
+                (paste_dir(out_dir) / "pack.json").write_text(pack.model_dump_json(indent=1),
+                                                               encoding="utf-8")
         except Exception as exc:                     # 검사 실패는 사람에게 돌려준다
             log.warning("%s 반영 실패: %s", step, exc, exc_info=True)
             reply.problems.append(f"{STEP_TITLES[step]}: {_short_error(exc)}")
@@ -371,6 +380,7 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
 
     if reply.applied:
         result.llm_used = True
+        _restore_made(cfg, out_dir, date_str, status, made, result)
         renderer.checklist(result, made, None)
         pipe._record_quality(cfg, date_str, renderer, made, result)
         save_status(out_dir, status)
@@ -379,6 +389,41 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
     if not reply.text or reply.problems or reply.done or "brief" not in reply.applied:
         reply.text = _reply_text(reply, status, site_url=str(cfg.get("site.url", "") or ""))
     return reply
+
+
+def _restore_made(cfg, out_dir: Path, date_str: str, status: dict, made: dict, result) -> None:
+    """앞선 댓글에서 반영한 단계의 결과를 되살린다 — 점검표·품질 장부가 그날 전체를 보게.
+
+    점검표는 호출마다 새로 쓰는데 `made` 에는 이번 댓글에서 반영한 것만 있다. 3단계를
+    따로 넣으면 블로그 점검 항목이 모두 빠지고 "막히는 것이 없습니다. 발행하세요" 가
+    됐다 (2026-09-11 에 실제로 그랬다 — 사진 자리 ⚠️ 가 사라졌다)."""
+    from . import pipeline as pipe
+    from .store import previous_blog_bodies
+
+    steps = status.get("steps") or {}
+    pdir = paste_dir(out_dir)
+    if steps.get("brief"):
+        if made.get("brief") is None:
+            made["brief"] = _load_brief(out_dir)
+        brief = made.get("brief")
+        if brief is not None and "checks" not in made:
+            made["checks"] = pipe._verify_numbers(cfg, brief, load_issues(out_dir), result)
+        if brief is not None and "repeats" not in made:
+            made["repeats"] = pipe._repeat_topics(cfg, brief, date_str)
+    if steps.get("blog") and made.get("post") is None and (pdir / "post.json").exists():
+        try:
+            made["post"] = BlogPost.model_validate_json((pdir / "post.json").read_text(encoding="utf-8"))
+        except Exception as exc:                     # 되살리지 못하면 그 항목만 빠진다
+            log.warning("post.json 을 읽지 못했습니다: %s", exc)
+        extra = _load_json(pdir / "blog-extra.json") or {}
+        made.setdefault("empty_photo_slots", int(extra.get("empty_photo_slots", 0) or 0))
+        made.setdefault("prev_bodies", previous_blog_bodies(
+            cfg.output_dir, date_str, days=int(cfg.get("blog.overlap_lookback_days", 3))))
+    if steps.get("video") and made.get("pack") is None and (pdir / "pack.json").exists():
+        try:
+            made["pack"] = VideoPack.model_validate_json((pdir / "pack.json").read_text(encoding="utf-8"))
+        except Exception as exc:
+            log.warning("pack.json 을 읽지 못했습니다: %s", exc)
 
 
 def _load_keys(path: Path) -> list:

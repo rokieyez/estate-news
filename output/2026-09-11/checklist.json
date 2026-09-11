@@ -1,11 +1,18 @@
 {
   "date": "2026-09-11",
   "summary": {
-    "ok": 9,
+    "ok": 10,
     "warn": 1,
     "fail": 0
   },
   "items": [
+    {
+      "key": "numbers",
+      "level": "ok",
+      "title": "수치 9건 모두 기사 원문에서 확인",
+      "detail": "",
+      "lines": []
+    },
     {
       "key": "banned",
       "level": "ok",

@@ -3,9 +3,9 @@
   "steps": {
     "brief": true,
     "blog": true,
-    "video": false
+    "video": true
   },
   "issue_url": "https://github.com/rokieyez/estate-news/issues/2",
   "issue_number": 2,
-  "done": false
+  "done": true
 }

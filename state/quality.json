@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-09-10T23:35:41",
+  "updated_at": "2026-09-11T09:46:27",
   "days": {
     "2026-09-08": {
       "ok": 11,
@@ -48,12 +48,12 @@
       "usd": 0.4239
     },
     "2026-09-11": {
-      "ok": 9,
+      "ok": 10,
       "warn": 1,
       "fail": 0,
-      "verified": 0,
+      "verified": 7,
       "unverified": 0,
-      "no_text": 0,
+      "no_text": 2,
       "models": [],
       "blog_chars": 1378,
       "issues": 0,

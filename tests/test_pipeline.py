@@ -794,6 +794,9 @@ def test_paste_mode_round_trips_three_answers_without_calling_the_model(cfg, mon
         ensure_ascii=False), encoding="utf-8")
     r3 = paste.apply(cfg, RUN_DATE, "```json\n" + make_pack().model_dump_json() + "\n```")
     assert r3.applied == ["video"] and not r3.problems, r3.text
+    # 3단계만 넣은 호출이라도 점검표는 그날 전체를 본다 — 블로그 항목이 빠지면 안 된다
+    checklist = (out / "checklist.md").read_text(encoding="utf-8")
+    assert "블로그 본문" in checklist and "쇼츠 발화" in checklist, checklist[:600]
 
     # 깨진 JSON 은 사람에게 되돌린다
     bad = paste.apply(cfg, RUN_DATE, "```json\n{\"issues\": [}\n```")
