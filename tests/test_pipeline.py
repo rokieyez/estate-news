@@ -510,15 +510,36 @@ def test_tts_text_follows_the_script_templates(cfg, tmp_path):
     from rebrief.tts import longform_text, shorts_text
 
     pack = make_pack()
-    pack.shorts.lines[0].text = "서울 아파트값이"          # 조각 두 개가 한 문장
-    pack.shorts.lines[1].text = "3주째 **내렸습니다**"
+    pack.shorts.lines = [
+        CaptionLine(at="00:03", text="서울 아파트값이", visual="단지 항공샷"),   # 00:03 부터 — 앞 3초는 훅
+        CaptionLine(at="00:05", text="3주째 **내렸습니다**", visual="자막 카드"),
+        CaptionLine(at="00:08", text="직전 주보다", visual="꺾은선"),          # 「보다」는 문장 끝이 아니다
+        CaptionLine(at="00:10", text="낙폭은 오히려 줄었습니다", visual="꺾은선"),
+        CaptionLine(at="00:13", text="다음 발표는 목요일", visual="달력"),     # 명사 끝 — 마침표를 지어내지 않는다
+    ]
     renderer = Renderer(cfg, tmp_path / "out", RUN_DATE)
     renderer.shorts(pack)
     renderer.longform(pack)
 
     shorts = shorts_text((tmp_path / "out" / "script-shorts.md").read_text(encoding="utf-8"))
-    # 문장이 끝나는 조각에서만 줄을 바꾸고, 종결 어미엔 마침표를 붙여 TTS 가 쉬게 한다
-    assert shorts == "서울 아파트값이 3주째 내렸습니다.\n낙폭은 오히려 줄었습니다."
+    # 훅(표에 없음) → 문장 단위 자막 → 마무리(표에 없음). 종결 어미엔 마침표를 붙여 TTS 가 쉬게 한다
+    assert shorts.split("\n") == [
+        "서울 아파트값, 3주 연속 내렸습니다.",
+        "서울 아파트값이 3주째 내렸습니다.",
+        "직전 주보다 낙폭은 오히려 줄었습니다.",
+        "다음 발표는 목요일",
+        "구독과 알림 설정 부탁드립니다.",
+    ]
+    # 자막이 00:00 부터면 훅은 첫 자막이 이미 말한다 — 두 번 싣지 않는다
+    pack.shorts.lines[0].at = "00:00"
+    renderer.shorts(pack)
+    again = shorts_text((tmp_path / "out" / "script-shorts.md").read_text(encoding="utf-8"))
+    assert not again.startswith("서울 아파트값, 3주 연속")
+    # 마무리가 자막 끝에 이미 있으면 한 번만
+    pack.shorts.lines.append(CaptionLine(at="00:16", text="구독과 알림 설정 부탁드립니다", visual="로고"))
+    renderer.shorts(pack)
+    once = shorts_text((tmp_path / "out" / "script-shorts.md").read_text(encoding="utf-8"))
+    assert once.count("구독과 알림") == 1
     for noise in ("자막 카드", "꺾은선", "해시태그", "#부동산", "제목 후보", "00:0"):
         assert noise not in shorts
 
