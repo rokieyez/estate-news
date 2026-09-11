@@ -126,10 +126,10 @@ def run_weekly(cfg: Config, *, end_date: str | None = None, use_llm: bool | None
         {"week": label, "start": result.start, "end": result.end, "days": days},
         ensure_ascii=False, indent=2) + "\n")
 
-    want_llm = cfg.llm_enabled if use_llm is None else (use_llm and bool(cfg.api_key))
+    want_llm = cfg.llm_enabled if use_llm is None else (use_llm and cfg.llm_ready)
     if not want_llm:
-        if use_llm is not False and not cfg.api_key:
-            result.warnings.append("ANTHROPIC_API_KEY 가 없어 결산 글을 건너뛰었습니다. weekly-prompt-pack.md 를 사용하세요.")
+        if use_llm is not False and not cfg.llm_ready:
+            result.warnings.append("모델을 부를 인증(구독 토큰 또는 API 키)이 없어 결산 글을 건너뛰었습니다. weekly-prompt-pack.md 를 사용하세요.")
         renderer._write_raw("weekly-prompt-pack.md", build_weekly_prompt_pack(cfg, days, label))
         result.files = list(renderer.written)
         return result

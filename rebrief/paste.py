@@ -283,7 +283,7 @@ def auto(cfg: Config, date_str: str, *, issues: list[Cluster] | None = None) -> 
 
 
 def prepare(cfg: Config, renderer, issues: list[Cluster], date_str: str,
-            stats_data: dict | None, result) -> str:
+            stats_data: dict | None, result, *, allow_auto: bool = True) -> str:
     """이슈(클러스터)·상태·1단계 프롬프트를 남기고 깃허브 이슈를 연다. 이슈 주소를 돌려준다.
 
     이슈 열기는 되면 좋고 안 되면 그만입니다 — gh 가 없거나 토큰이 없어도 아침 실행은
@@ -318,7 +318,7 @@ def prepare(cfg: Config, renderer, issues: list[Cluster], date_str: str,
 
     # 구독으로 자동 답하기가 켜져 있으면 먼저 해 본다. 다 되면 사람 차례가 없다.
     body = issue_body(date_str, prompt, _repo_name(cfg))
-    why = auto_ready(cfg)
+    why = auto_ready(cfg) if allow_auto else "꺼져 있음"
     if not why:
         got = auto(cfg, date_str, issues=issues)
         result.paste_auto = list(got.applied)

@@ -942,3 +942,111 @@ def test_subscription_auto_says_why_it_could_not_start(cfg, monkeypatch):
     assert "구독 토큰" in paste.auto_ready(cfg)
     cfg.settings["paste"]["auto"] = False
     assert paste.auto_ready(cfg) == "꺼져 있음"
+
+
+# ── 구독으로 예전(API) 길 그대로 (9/11 사용자: "크레딧 차감 없이 자체 토큰만으로") ──
+
+_FAKE_SUB = r'''#!{python}
+import json, os, re, sys
+prompt = sys.stdin.read()
+d = os.environ["FAKE_SUB_DIR"]
+kind = (re.findall(r'"title": "([A-Za-z]+)"', prompt) or ["?"])[-1]
+args = sys.argv[1:]
+model = args[args.index("--model") + 1] if "--model" in args else ""
+with open(os.path.join(d, "calls.log"), "a", encoding="utf-8") as fh:
+    fh.write(json.dumps({{"kind": kind, "model": model, "args": args, "cwd": os.getcwd(),
+                         "api_key": bool(os.environ.get("ANTHROPIC_API_KEY"))}}) + "\n")
+if os.environ.get("FAKE_SUB_FAIL"):
+    print(json.dumps({{"type": "result", "is_error": True, "result": "Claude usage limit reached"}}))
+    sys.exit(1)
+path = os.path.join(d, kind + ".json")
+if not os.path.exists(path):
+    print(json.dumps({{"type": "result", "is_error": True, "result": "no fake answer for " + kind}}))
+    sys.exit(1)
+body = open(path, encoding="utf-8").read()
+print(json.dumps({{"type": "result", "is_error": False, "stop_reason": "end_turn",
+                  "result": "네, 정리했습니다.\n```json\n" + body + "\n```",
+                  "usage": {{"input_tokens": 1000, "output_tokens": 500}}}}))
+'''
+
+
+def _install_fake_subscription(tmp_path, monkeypatch, *, fail: bool = False):
+    import os
+    import stat
+    import sys
+
+    d = tmp_path / "fake-sub"
+    (d / "bin").mkdir(parents=True)
+    for name, obj in (("DailyBrief", make_brief()), ("BlogPost", make_post()), ("VideoPack", make_pack())):
+        (d / f"{name}.json").write_text(obj.model_dump_json(), encoding="utf-8")
+    exe = d / "bin" / "claude"
+    exe.write_text(_FAKE_SUB.format(python=sys.executable), encoding="utf-8")
+    exe.chmod(exe.stat().st_mode | stat.S_IEXEC)
+    monkeypatch.setenv("PATH", f"{d / 'bin'}{os.pathsep}{os.environ.get('PATH', '')}")
+    monkeypatch.setenv("FAKE_SUB_DIR", str(d))
+    monkeypatch.setenv("FAKE_SUB_FAIL", "1" if fail else "")
+    return d
+
+
+def test_subscription_transport_runs_the_old_path_without_spending(cfg, monkeypatch, tmp_path):
+    d = _install_fake_subscription(tmp_path, monkeypatch)
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "sk-ant-oat01-테스트")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-남은키")    # 넘기면 구독 대신 API 로 청구된다
+    cfg.settings["llm"]["transport"] = "subscription"
+    assert cfg.llm_enabled
+
+    result = pipeline.run(cfg, run_date=RUN_DATE)
+    out = cfg.output_dir / RUN_DATE
+    assert result.llm_used and not [w for w in result.warnings if "실패" in w], result.warnings
+    for name in ("brief.md", "data.json", "blog-naver.html", "script-shorts.md", "script-longform.md",
+                 "production-notes.md", "checklist.md"):
+        assert (out / name).exists(), name
+    assert not (out / "paste").exists()                    # 붙여넣기 흐름은 타지 않는다
+    assert result.usage.estimated_usd == 0                 # 구독이라 요금 0 으로 적는다
+
+    calls = [json.loads(x) for x in (d / "calls.log").read_text(encoding="utf-8").splitlines()]
+    kinds = [c["kind"] for c in calls]
+    assert kinds[:3] == ["DailyBrief", "BlogPost", "VideoPack"], kinds
+    by = {c["kind"]: c["model"] for c in calls}
+    assert by["DailyBrief"] == cfg.get("llm.brief_model") and by["BlogPost"] == cfg.get("llm.model")
+    assert by["VideoPack"] == cfg.get("llm.script_model")
+    assert not any(c["api_key"] for c in calls), "ANTHROPIC_API_KEY 가 claude 에 넘어갔다"
+    assert all(c["cwd"] != str(cfg.repo_root) and "--bare" not in c["args"] for c in calls)
+    assert all("--effort" in c["args"] for c in calls)
+
+
+def test_subscription_never_falls_back_to_the_api_key(cfg, monkeypatch):
+    """토큰이 없다고 조용히 API 로 넘어가면 사용자가 끊으려던 요금이 다시 나간다."""
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-남은키")
+    monkeypatch.delenv("CLAUDE_CODE_OAUTH_TOKEN", raising=False)
+    cfg.settings["llm"]["transport"] = "subscription"
+    assert not cfg.llm_ready and not cfg.llm_enabled
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator",
+                        lambda *a, **k: (_ for _ in ()).throw(AssertionError("부르면 안 된다")))
+    result = pipeline.run(cfg, run_date=RUN_DATE)
+    assert any("구독 토큰 또는 API 키" in w for w in result.warnings), result.warnings
+
+
+def test_subscription_stopped_on_the_brief_opens_the_paste_issue_flow(cfg, monkeypatch, tmp_path):
+    from rebrief import paste
+
+    _install_fake_subscription(tmp_path, monkeypatch, fail=True)
+    monkeypatch.setenv("CLAUDE_CODE_OAUTH_TOKEN", "sk-ant-oat01-테스트")
+    cfg.settings["llm"]["transport"] = "subscription"
+    cfg.settings["llm"]["fallback_model"] = "claude-sonnet-5"
+
+    result = pipeline.run(cfg, run_date=RUN_DATE)
+    out = cfg.output_dir / RUN_DATE
+    assert any("브리핑 생성 실패" in w and "usage limit" in w for w in result.warnings), result.warnings
+    status = paste.load_status(out)
+    assert status and status["steps"]["brief"] is False    # 사람이 1단계부터 붙여넣으면 된다
+    assert (out / "paste" / "1-brief.md").exists()
+    assert any("붙여넣기 차례" in w for w in result.warnings)
+
+
+def test_subscription_reads_json_out_of_a_chatty_answer():
+    from rebrief.subscription import extract_json
+
+    assert extract_json('앞말\n```json\n{"a": 1}\n```\n뒷말') == {"a": 1}
+    assert extract_json('상자 없이 {"a": {"b": 2}} 끝') == {"a": {"b": 2}}
+    assert extract_json("JSON 이 없다") is None

@@ -1,7 +1,7 @@
 name: 구독 자동 답하기 시험
 
 # 아침 실행을 그대로 한 번 돌리되, 결과를 **임시 폴더**에 두고 커밋·이슈·알림을 하지 않는다.
-# 구독 토큰(CLAUDE_CODE_OAUTH_TOKEN)이 살아 있는지, 세 단계가 끝까지 반영되는지 확인할 때 쓴다.
+# 구독 토큰(CLAUDE_CODE_OAUTH_TOKEN)이 살아 있는지, 글·카드·대본이 끝까지 나오는지 확인할 때 쓴다.
 # 토큰은 1년짜리라 갱신한 뒤에도 이걸로 확인하면 된다. 구독 사용량을 하루치만큼 쓴다.
 
 on:
@@ -38,7 +38,7 @@ jobs:
           p = os.path.join(os.environ["RUNNER_TEMP"], "cfg", "settings.yaml")
           s = yaml.safe_load(open(p, encoding="utf-8"))
           s.setdefault("output", {})["dir"] = os.path.join(os.environ["RUNNER_TEMP"], "out")
-          s.setdefault("paste", {}).update(open_issue=False, auto=True)
+          s.setdefault("paste", {}).update(open_issue=False)
           yaml.safe_dump(s, open(p, "w", encoding="utf-8"), allow_unicode=True)
           PY
 
@@ -55,15 +55,8 @@ jobs:
         run: |
           D="$RUNNER_TEMP/out/$(TZ=Asia/Seoul date +%F)"
           {
-            echo "## 단계"; echo '```'; cat "$D/paste/status.json" 2>/dev/null || echo "(없음)"; echo '```'
             echo "## 점검표"; cat "$D/checklist.md" 2>/dev/null | sed -n '1,25p'
             echo "## 파일"; echo '```'; ls -1 "$D" 2>/dev/null | grep -v '^raw$'; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
-          python - <<'PY'
-          import json, os, sys, datetime
-          d = os.path.join(os.environ["RUNNER_TEMP"], "out",
-                           datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=9))).strftime("%Y-%m-%d"))
-          st = json.load(open(os.path.join(d, "paste", "status.json")))
-          print("단계:", st["steps"], "끝:", st.get("done"))
-          sys.exit(0 if st.get("done") else 1)
-          PY
+          # 예전(API) 길이 구독으로 끝까지 돌았으면 글과 대본이 있다
+          test -f "$D/blog-naver.html" && test -f "$D/script-longform.md" && test -f "$D/brief.md"

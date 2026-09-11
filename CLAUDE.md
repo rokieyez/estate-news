@@ -627,7 +627,17 @@ rokieyez.github.io 는 5시간 6분 늦었습니다. 깃허브 문서는 「부�
   이슈(`remaining_body`)를 엽니다. 자동이 한 단계라도 반영했으면 `run` 은 점검표를 다시 쓰지 않습니다
   (`result.paste_auto`) — 쓰면 빈 점검표로 덮입니다. 러너 메모리의 **본문 있는** 이슈를 `apply(issues=)` 로
   넘겨 숫자 검산이 제목만 보지 않습니다. 확인은 워크플로 「구독 자동 답하기 시험」(임시 폴더, 커밋 없음).
-* 돌아가려면 `llm.mode: api` 로 바꾸고 잔액을 채우면 됩니다.
+* **구독으로 예전 길 그대로 (`llm.transport: subscription`, 2026-09-11 사용자 "예전처럼 … 크레딧 차감 없이
+  자체 토큰만으로").** 붙여넣기 자동(`paste.auto`)은 브리핑·블로그·대본만 되고 정부 발표 요약·금지 표현 고쳐쓰기·
+  주간/월간 결산이 빠졌습니다. 그래서 **모든 호출이 지나는 `ContentGenerator._call` 한 곳**에 구독 길
+  (`rebrief/subscription.py`)을 붙이고 `llm.mode` 를 `api` 로 되돌렸습니다 — 예전 API 시절 경로가 그대로 돕니다.
+  구독 길의 약속: 스키마를 글로 붙이고 답에서 JSON 을 꺼내 pydantic 검사(못 읽으면 한 번 더), `ANTHROPIC_API_KEY`
+  를 넘기지 않음, 빈 임시 폴더, `--tools ""`, `--bare` 금지, `--effort` 는 haiku 빼고 전달, 한도·장애는 `_Retryable`
+  (대체 모델), 인증 실패는 멈춤, 비용 장부에는 0. **`cfg.llm_ready` 가 구독이면 API 키를 보지 않습니다** — 토큰이
+  없다고 조용히 API 로 넘어가면 끊으려던 요금이 다시 나갑니다(시험 `test_subscription_never_falls_back_to_the_api_key`).
+  브리핑부터 막힌 날은 `paste.fallback` 으로 붙여넣기 이슈를 엽니다(`prepare(allow_auto=False)`).
+  주간·월간 워크플로에도 Claude Code 설치와 토큰을 넣었습니다.
+* 돌아가려면 `llm.transport: api` 로 바꾸고 잔액을 채우면 됩니다.
 
 **신고가 이슈 다음 장에는 실제 단지와 금액이 실립니다 (`_deals_card`, 2026-09-10 사용자 요청).**
 "아파트 신고가는 모든 사람이 관심 있어 하는 자료". 이슈 제목·한 줄에 「신고가」「최고가」가 있고

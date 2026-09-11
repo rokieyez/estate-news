@@ -73,6 +73,7 @@ class Usage:
         usage = getattr(response, "usage", None)
         if usage is None:
             return
+        free = bool(getattr(response, "subscription", False))   # 구독으로 부른 것은 요금이 없다
         model = model or self.model
         inp = getattr(usage, "input_tokens", 0) or 0
         out = getattr(usage, "output_tokens", 0) or 0
@@ -88,8 +89,8 @@ class Usage:
         # 강등되면 호출마다 모델이 다를 수 있으므로 그 호출의 모델 단가로 더한다
         rate_in, rate_out = PRICING.get(model, (5.00, 25.00))
         million = 1_000_000
-        usd = (inp / million * rate_in + cw / million * rate_in * 1.25
-               + cr / million * rate_in * 0.10 + out / million * rate_out)
+        usd = 0.0 if free else (inp / million * rate_in + cw / million * rate_in * 1.25
+                                + cr / million * rate_in * 0.10 + out / million * rate_out)
         self._usd += usd
         self.details.append({
             "kind": kind or "기타", "model": model,
@@ -100,8 +101,8 @@ class Usage:
 
     @property
     def estimated_usd(self) -> float:
-        if self.calls and self._usd:
-            return self._usd
+        if self.calls and (self._usd or self.details):
+            return self._usd                     # 구독으로 부른 날은 0 이 맞다 (아래 추정으로 가면 안 된다)
         # add() 를 거치지 않고 필드만 채운 경우(테스트 등)를 위한 계산
         rate_in, rate_out = PRICING.get(self.model, (5.00, 25.00))
         million = 1_000_000
@@ -147,8 +148,12 @@ class ContentGenerator:
         self.script_max_tokens = int(cfg.get("llm.script_max_tokens", 0) or 0) or self.max_tokens
         self.effort = str(cfg.get("llm.effort", "high"))
         self.fallback_model = str(cfg.get("llm.fallback_model", "") or "").strip()
-        timeout = float(cfg.get("llm.timeout_seconds", 600))
-        self.client = anthropic.Anthropic(api_key=cfg.api_key, timeout=timeout)
+        self.timeout = float(cfg.get("llm.timeout_seconds", 600))
+        # 구독(Claude Code)으로 부를지 API 로 부를지. 구독이면 API 클라이언트를 아예 만들지 않는다 —
+        # 키가 남아 있어도 요금이 나갈 길을 닫아 둔다.
+        self.transport = cfg.llm_transport
+        self.client = (None if self.transport == "subscription"
+                       else anthropic.Anthropic(api_key=cfg.api_key, timeout=self.timeout))
         self.usage = Usage(model=self.model)
         self._shared_context: str | None = None
 
@@ -268,6 +273,27 @@ class ContentGenerator:
 
     def _call(self, system: str, user: str, output_format, model: str,
               max_tokens: int | None = None):
+        if self.transport == "subscription":
+            return self._call_subscription(system, user, output_format, model, max_tokens)
+        return self._call_api(system, user, output_format, model, max_tokens)
+
+    def _call_subscription(self, system: str, user: str, output_format, model: str,
+                           max_tokens: int | None = None):
+        """구독 토큰으로 Claude Code 를 부른다. 한도·장애는 대체 모델로 넘기고, 인증 실패는 멈춘다."""
+        from .subscription import SubscriptionError, ask
+
+        try:
+            reply = ask(self.cfg, system=system, user=user, output_format=output_format, model=model,
+                        max_tokens=max_tokens or self.max_tokens, effort=self.effort,
+                        timeout=max(self.timeout, 900))
+        except SubscriptionError as exc:
+            if exc.retryable:
+                raise _Retryable(exc.message) from exc
+            raise LLMError(exc.message) from exc
+        return reply, model
+
+    def _call_api(self, system: str, user: str, output_format, model: str,
+                  max_tokens: int | None = None):
         # 접두사 캐싱을 걷어냈습니다 (2026-09-07, 실측).
         #
         # **구조화 출력의 스키마가 캐시 접두사에 포함됩니다.** 같은 스키마로 두 번 부르면

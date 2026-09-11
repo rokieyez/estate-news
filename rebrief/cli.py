@@ -202,7 +202,10 @@ def _cmd_render(cfg, args) -> int:
         # 이 명령은 이름만 보면 '다시 그리기' 같지만 **모델을 3번 새로 부릅니다.**
         # 그림이나 틀만 고쳤을 때 무심코 돌리면 하루치 값이 그대로 또 나갑니다
         # (실제로 그렇게 0.42달러를 썼습니다). 부르기 전에 얼마인지 먼저 말해 줍니다.
-        print(f"! 모델을 다시 부릅니다 ({date_str}). 예상 {_typical_cost_note(cfg)}")
+        if cfg.llm_transport == "subscription":
+            print(f"! 모델을 다시 부릅니다 ({date_str}). 구독 사용량을 씁니다 (API 요금 없음).")
+        else:
+            print(f"! 모델을 다시 부릅니다 ({date_str}). 예상 {_typical_cost_note(cfg)}")
         print("  글은 그대로 두고 그림·틀만 다시 만들려면 --no-llm 을 붙이세요.")
     try:
         result = rerender(cfg, date_str, use_llm=use_llm)
@@ -401,7 +404,7 @@ def _cmd_policy(cfg, args) -> int:
     for doc in docs:
         policy_mod.download(doc, renderer.out_dir / "policy", cfg)
         doc.summary = policy_mod.extractive_summary(doc)
-    if not args.no_llm and cfg.api_key:
+    if not args.no_llm and cfg.llm_ready:
         from .llm import ContentGenerator, LLMError
 
         try:

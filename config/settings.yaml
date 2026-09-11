@@ -52,7 +52,14 @@ llm:
   # paste — 부르지 않습니다. 아침 실행이 프롬프트를 깃허브 이슈로 열고, 사람이 claude.ai 에
   #         붙여넣은 답을 이슈 댓글로 되넣으면 워크플로가 산출물을 만듭니다 (0원, 아침 10분).
   #         2026-09-10 사용자 결정 — "크레딧 사용량이 부담스럽다".
-  mode: paste               # paste + 아래 paste.auto: true 면 사람 손 없이 구독으로 자동
+  mode: api                 # api — 예전처럼 한 번에 만든다. paste — 사람이 claude.ai 에 붙여넣는다
+  # 무엇으로 부를지 (2026-09-11 사용자 결정 "크레딧 차감 없이 자체 토큰만으로").
+  #   subscription — 구독(Pro/Max) 토큰으로 Claude Code 를 부른다. API 요금 0원.
+  #                  저장소 Secret CLAUDE_CODE_OAUTH_TOKEN (맥에서 `claude setup-token`, 1년짜리).
+  #                  토큰이 없으면 API 키가 있어도 **쓰지 않는다** — 요금이 다시 나가지 않게.
+  #   api          — ANTHROPIC_API_KEY 로 부른다 (하루 약 0.42달러, 잔액 필요).
+  # 구독이 한도·만료로 막히면 그날은 붙여넣기 이슈가 열린다 (paste.fallback).
+  transport: subscription
   model: claude-opus-5      # 바꾸려면: claude-sonnet-5 (더 저렴), claude-haiku-4-5
   effort: high              # low | medium | high | xhigh | max
   max_tokens: 16000
@@ -78,11 +85,11 @@ llm:
   budget_soft_ratio: 0.8
 
 paste:
-  open_issue: true          # 붙여넣기 모드에서 아침마다 깃허브 이슈를 엽니다 (gh 가 있을 때)
-  # 구독으로 자동 답하기 (2026-09-11). 러너 안에서 Claude Code 가 세 상자를 대신 받습니다.
-  # 저장소 Secret CLAUDE_CODE_OAUTH_TOKEN(맥에서 `claude setup-token`, 1년짜리)이 있어야 돌고,
-  # API 요금이 아니라 구독 사용량으로 처리됩니다. 한도·만료로 멈추면 그 단계부터 이슈를 열어
-  # 사람이 붙여넣게 넘깁니다. 끄면(false) 예전처럼 매일 사람이 붙여넣습니다.
+  open_issue: true          # 붙여넣기 이슈를 깃허브에 엽니다 (gh 가 있을 때)
+  # 구독(llm.transport: subscription)이 브리핑부터 막힌 날, 그날을 비우지 않고 붙여넣기 이슈를 엽니다.
+  fallback: true
+  # llm.mode: paste 일 때만 쓰는 것 — 러너 안의 Claude Code 가 세 상자를 대신 받습니다 (2026-09-11).
+  # 한도·만료로 멈추면 그 단계부터 이슈를 열어 사람이 붙여넣게 넘깁니다.
   auto: true
   auto_timeout_seconds: 900 # 한 단계 대기 상한. 대본(가장 긴 답)도 보통 몇 분이면 끝납니다
 

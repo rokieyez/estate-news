@@ -126,7 +126,7 @@ def run(
     )
 
     link_status = renderer.last_link_status
-    want_llm = cfg.llm_enabled if use_llm is None else (use_llm and bool(cfg.api_key))
+    want_llm = cfg.llm_enabled if use_llm is None else (use_llm and cfg.llm_ready)
     model = _budget_guard(cfg, result) if want_llm else None
     if want_llm and model == "":
         want_llm = False                      # 월 예산 초과
@@ -150,6 +150,12 @@ def run(
     if want_llm and issues:
         artifacts = _generate_with_llm(cfg, renderer, issues, date_str, result, model=model,
                                        stats_data=stats_data)
+        if artifacts.get("brief") is None and cfg.get("paste.fallback", True):
+            # 구독 한도·토큰 만료로 브리핑부터 막힌 날 — 그날을 비워 두지 않고 붙여넣기 이슈를 연다.
+            # 사람이 claude.ai 에 붙여넣으면 「붙여넣기 반영」이 나머지를 만든다 (paste.py).
+            from . import paste as paste_mod
+
+            paste_mod.prepare(cfg, renderer, issues, date_str, stats_data, result, allow_auto=False)
     else:
         renderer.brief_fallback(issues, stats)
         if cfg.paste_mode and issues and not quiet:
@@ -158,9 +164,9 @@ def run(
 
             paste_mod.prepare(cfg, renderer, issues, date_str, stats_data, result)
         else:
-            if use_llm is not False and not cfg.api_key:
+            if use_llm is not False and not cfg.llm_ready:
                 result.warnings.append(
-                    "ANTHROPIC_API_KEY 가 없어 요약을 건너뛰었습니다. prompt-pack.md 를 사용하세요."
+                    "모델을 부를 인증(구독 토큰 또는 API 키)이 없어 요약을 건너뛰었습니다. prompt-pack.md 를 사용하세요."
                 )
             renderer.prompt_pack(build_prompt_pack(cfg, issues, date_str))
     # 자동 답하기가 한 단계라도 반영했으면 점검표·품질 장부는 이미 그날 전체로 쓰였다.
@@ -214,7 +220,7 @@ def rerender(cfg: Config, run_date: str, *, use_llm: bool | None = None) -> RunR
     )
 
     link_status = renderer.last_link_status
-    want_llm = cfg.llm_enabled if use_llm is None else (use_llm and bool(cfg.api_key))
+    want_llm = cfg.llm_enabled if use_llm is None else (use_llm and cfg.llm_ready)
     model = _budget_guard(cfg, result) if want_llm else None
     if want_llm and model == "":
         want_llm = False

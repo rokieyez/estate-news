@@ -98,9 +98,23 @@ class Config:
         return str(self.get("llm.mode", "api") or "api").strip().lower() == "paste"
 
     @property
+    def llm_transport(self) -> str:
+        """`subscription` — 구독 토큰으로 Claude Code 를 부른다(API 요금 0). `api` — API 키로 부른다(요금)."""
+        return str(self.get("llm.transport", "api") or "api").strip().lower()
+
+    @property
+    def llm_ready(self) -> bool:
+        """모델을 부를 인증이 있는가. **구독으로 정해 두었으면 API 키가 있어도 쓰지 않는다** —
+        토큰이 없다고 조용히 API 로 넘어가면 사용자가 끊으려던 요금이 다시 나간다."""
+        if self.llm_transport == "subscription":
+            from .subscription import ready
+            return not ready(self)
+        return bool(self.api_key)
+
+    @property
     def llm_enabled(self) -> bool:
-        """설정에서 켜져 있고 API 키도 있어야 실제로 호출한다. 붙여넣기 모드면 언제나 아니다."""
-        return (bool(self.get("llm.enabled", True)) and bool(self.api_key)
+        """설정에서 켜져 있고 인증(구독 토큰 또는 API 키)도 있어야 실제로 호출한다. 붙여넣기 모드면 언제나 아니다."""
+        return (bool(self.get("llm.enabled", True)) and self.llm_ready
                 and not self.paste_mode)
 
 

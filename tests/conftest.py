@@ -42,7 +42,7 @@ class FakeResponse:
 # **로컬은 통과하고 러너는 실패하는** 시험이 생긴다 (실제로 월간 결산 시험이 그랬다).
 @pytest.fixture(autouse=True)
 def _no_optional_keys(monkeypatch):
-    for name in ("DATA_GO_KR_KEY", "REB_API_KEY", "ANTHROPIC_API_KEY"):
+    for name in ("DATA_GO_KR_KEY", "REB_API_KEY", "ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"):
         monkeypatch.delenv(name, raising=False)
 
 
@@ -69,6 +69,8 @@ def cfg(tmp_path: Path) -> Config:
     settings.setdefault("paste", {})["open_issue"] = False   # 시험이 gh 로 이슈를 열면 안 된다
     settings["paste"]["auto"] = False          # 구독 자동 답하기는 그 시험에서만 켠다
     settings.setdefault("llm", {})["mode"] = "api"           # 붙여넣기 모드는 그 시험에서만 켠다
+    # 시험은 가짜 생성기(FakeGenerator)와 API 키 흉내로 돈다. 구독 경로는 그 시험에서 가짜 claude 로 켠다.
+    settings["llm"]["transport"] = "api"
     settings.setdefault("stats", {})["enabled"] = False  # 정부 통계는 개별 테스트에서만 켠다
 
     # 피드는 픽스처 하나만 쓴다.

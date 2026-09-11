@@ -43,9 +43,18 @@ jobs:
           fc-cache -f >/dev/null
           fc-list | grep -qi "Noto Sans CJK" && echo "한글 글꼴 있음: Noto Sans CJK" || echo "::warning::한글 글꼴 설치 실패 — PNG 의 한글이 깨질 수 있습니다"
 
+      - name: Claude Code 설치 (구독으로 모델 부르기)
+        # llm.transport: subscription — API 요금 없이 구독 토큰으로 부른다. 설치에 실패해도 계속한다.
+        run: |
+          npm install -g --silent @anthropic-ai/claude-code >/dev/null 2>&1 \
+            && echo "Claude Code $(claude --version)" \
+            || echo "::warning::Claude Code 설치 실패 — 모델을 부르지 못하면 프롬프트 팩만 남습니다"
+
       - name: 월간 결산 생성
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          # 구독 토큰 (claude setup-token). llm.transport: subscription 이면 이것으로 부르고 위 키는 쓰지 않는다.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
         run: |
           ARGS="-v monthly"
           if [ -n "${{ inputs.month }}" ]; then ARGS="$ARGS --month ${{ inputs.month }}"; fi
