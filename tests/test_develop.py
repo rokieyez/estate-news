@@ -789,6 +789,110 @@ def test_stats_collect_compares_with_previous_month(cfg, monkeypatch, tmp_path):
     assert S.collect(cfg, "2026-09-07") == {}          # 키가 없으면 아무것도 하지 않는다
 
 
+def _trade_xml(month: int, day: int, amount_manwon: int, name: str = "은마") -> str:
+    return (f"""<response><body><items><item><aptNm>{name}</aptNm>"""
+            f"""<dealAmount>{amount_manwon:,}</dealAmount><excluUseAr>84.43</excluUseAr>"""
+            f"""<dealYear>2026</dealYear><dealMonth>{month}</dealMonth><dealDay>{day}</dealDay>"""
+            f"""<umdNm>대치동</umdNm><floor>5</floor></item></items></body></response>""")
+
+
+def test_record_prices_come_from_the_latest_months_not_the_settled_month(cfg, monkeypatch):
+    """2026-09-11 사용자 지적: 9월 중순인데 신고가가 7월 자료로 나온다.
+
+    거래량은 신고가 다 들어온 달(7월)로 세는 게 맞지만, 신고가는 한 건씩 보는 것이라
+    오늘까지 신고된 8·9월 계약분에서 골라야 한다. 7월 이전은 비교 바탕이다.
+    """
+    from rebrief import stats as S
+
+    monkeypatch.setenv("DATA_GO_KR_KEY", "테스트키")
+    calls = []
+
+    class Resp:
+        def __init__(self, text): self.text = text
+        def raise_for_status(self): pass
+
+    # 같은 단지·같은 면적: 2~7월은 20억대, 7월에 25억(그때의 신고가), 8월 27억, 9월 26억
+    prices = {"202609": (9, 3, 260_000), "202608": (8, 20, 270_000), "202607": (7, 25, 250_000),
+              "202606": (6, 10, 200_000), "202605": (5, 10, 201_000), "202604": (4, 10, 202_000),
+              "202603": (3, 10, 203_000), "202602": (2, 10, 204_000), "202601": (1, 10, 205_000)}
+
+    def fake_get(url, params=None, **kw):
+        ym = params["DEAL_YMD"]
+        calls.append(ym)
+        if "RTMSDataSvcAptRent" in url or ym not in prices:
+            return Resp("<response><body><items></items></body></response>")
+        return Resp(_trade_xml(*prices[ym]))
+
+    monkeypatch.setattr(S, "_get", fake_get)
+    monkeypatch.setitem(cfg.settings, "stats", {
+        "enabled": True, "max_districts": 1, "jeonse": False, "map": False,
+        "districts": [{"name": "강남구", "code": "11680"}]})
+
+    data = S.collect(cfg, "2026-09-11")
+    assert data["month"] == "202607"                       # 거래량은 여전히 다 들어온 달
+    hot = [h for h in data["highlights"] if h["kind"] == "신고가"]
+    assert hot, data["highlights"]
+    assert hot[0]["date"] == "2026-08-20" and hot[0]["amount"] == 2_700_000_000
+    assert hot[0]["before"] == 2_500_000_000               # 7월 25억이 견줄 이전 최고가
+    assert data["highlights_months"] == ["202609", "202608"]
+    assert data["highlights_label"] == "2026년 8~9월"
+    assert data["highlights_short"] == "8~9월"
+    # 같은 달을 두 번 부르지 않는다 (7월은 거래량의 달이자 비교 바탕)
+    assert len(calls) == len(set(calls)), calls
+
+
+def test_range_label_spans_years_and_single_months():
+    from rebrief.stats import range_label, recent_months
+
+    assert recent_months("2026-09-11") == ["202609", "202608"]
+    assert recent_months("2026-01-03") == ["202601", "202512"]
+    assert range_label(["202609", "202608"]) == "2026년 8~9월"
+    assert range_label(["202601", "202512"]) == "2025년 12월~2026년 1월"
+    assert range_label(["202601", "202512"], year=False) == "12~1월"
+    assert range_label(["202609"]) == "2026년 9월"
+    assert range_label([]) == ""
+
+
+def test_record_price_wording_names_the_contract_months(cfg, tmp_path):
+    """블로그·대본 자료·텔레그램 모두 '이번 달' 이 아니라 실제 계약 달을 말해야 한다."""
+    from rebrief.notify import stats_lines
+    from rebrief.prompts import stats_context
+    from rebrief.render import stats_block_html, stats_block_markdown
+
+    data = {"month": "202607", "month_label": "2026년 7월", "before_label": "2026년 6월",
+            "total": 10, "total_before": 9,
+            "districts": [{"name": "강남구", "now": {"count": 10, "avg": 2_000_000_000},
+                           "change": 1}],
+            "highlights": [{"kind": "신고가", "district": "강남구", "name": "은마", "dong": "대치동",
+                            "area": 84.43, "floor": "5", "amount": 2_700_000_000,
+                            "before": 2_500_000_000, "date": "2026-08-20", "pct": 8.0,
+                            "prior_count": 6}],
+            "highlights_label": "2026년 8~9월", "highlights_short": "8~9월"}
+    html = stats_block_html(data)
+    md = stats_block_markdown(data)
+    # 찾아본 범위는 8~9월이지만 실린 거래가 8월 것뿐이면 제목도 8월이다
+    assert "2026년 8월 계약 신고가" in html and "8월 20일 계약" in html
+    assert "이번 달 신고가" not in html
+    assert "2026년 8월 계약 신고가" in md and "8월 20일 계약" in md
+    assert "8/20 계약" in "\n".join(stats_lines(data))
+    assert "2026년 8~9월 계약" in stats_context(data) and "2026-08-20 계약" in stats_context(data)
+
+    # 날짜가 없으면 찾아본 범위, 그것도 없는 예전 자료는 거래량의 달 이름으로 돌아간다
+    undated = {**data, "highlights": [{**data["highlights"][0], "date": ""}]}
+    assert "2026년 8~9월 계약 신고가" in stats_block_html(undated)
+    old = {k: v for k, v in undated.items() if not k.startswith("highlights_")}
+    assert "2026년 7월 계약 신고가" in stats_block_html(old)
+
+
+def test_deals_card_title_follows_the_deals_it_shows(cfg, tmp_path):
+    from rebrief.render import _deals_months
+
+    rows = [{"date": "2026-08-30"}, {"date": "2026-09-02"}]
+    assert _deals_months(rows, year=False) == "8~9월"
+    assert _deals_months(rows[:1], year=False) == "8월"
+    assert _deals_months([{"date": ""}]) == ""
+
+
 def test_reb_rows_survives_shape_changes():
     from rebrief.stats import _reb_rows
 

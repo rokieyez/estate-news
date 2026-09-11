@@ -786,6 +786,15 @@ def test_paste_mode_round_trips_three_answers_without_calling_the_model(cfg, mon
         assert (out / name).exists(), name
     assert paste.load_status(out)["done"] and "🎉" in r2.text
 
+    # 2단계에서 고른 핵심 수치는 keys.json 에 사전으로 저장된다. 3단계가 그걸 다시 읽어
+    # 썸네일 배지에 쓴다 — 사전 그대로 넘기면 '.display' 에서 터진다 (2026-09-11 아침 실제로
+    # 3단계가 이렇게 실패했다. 위 합성 브리핑은 핵심 수치가 0개라 이 길을 안 밟는다).
+    (out / "paste" / "keys.json").write_text(json.dumps(
+        [{"display": "-0.03%", "key": "-0.03%", "label": "강남구 주간 변동률", "note": ""}],
+        ensure_ascii=False), encoding="utf-8")
+    r3 = paste.apply(cfg, RUN_DATE, "```json\n" + make_pack().model_dump_json() + "\n```")
+    assert r3.applied == ["video"] and not r3.problems, r3.text
+
     # 깨진 JSON 은 사람에게 되돌린다
     bad = paste.apply(cfg, RUN_DATE, "```json\n{\"issues\": [}\n```")
     assert not bad.applied and "JSON 을 찾지 못했습니다" in bad.text

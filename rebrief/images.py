@@ -1889,7 +1889,7 @@ def _deals_card(deals: list[dict], month_label: str, n: int, total: int,
     p, top, bottom = _card_frame(CARD_FACES["deals"], n, total, date=date, channel=channel)
     inner = w - 192
 
-    title = f"{month_label} 신고가" if month_label else "이달의 신고가"
+    title = f"{month_label} 신고가" if month_label else "최근 신고가"
     p.append(f'<text x="{w/2:.0f}" y="{top+66:.0f}" font-size="68" font-weight="800" '
              f'letter-spacing="-1" text-anchor="middle" fill="{CARD_LIGHT}">{esc(title)}</text>')
     head_h = 116
@@ -1911,6 +1911,13 @@ def _deals_card(deals: list[dict], month_label: str, n: int, total: int,
             bits.append(f"전 최고가 {_eok(d['before'])}")
         if d.get("pct") is not None:
             bits.append(f"{float(d['pct']):+.1f}%")
+        # 신고가는 최근 두 달치에서 고르므로 몇 월 며칠 계약인지가 중요하다.
+        # 한 줄에 들어갈 때만 앞에 붙인다 — 넘치면 면적·전 최고가가 더 쓸모 있다.
+        day = re.fullmatch(r"\d{4}-(\d{2})-(\d{2})", str(d.get("date") or ""))
+        if day:
+            dated = [f"{int(day.group(1))}.{int(day.group(2))} 계약"] + bits
+            if text_width(" · ".join(dated), 28) <= inner:
+                bits = dated
         sub = " · ".join(bits)
         rows.append((name_lines[0], name_size, amount, amt_size, sub, 42 + 14 + 28 + 40))
     while len(rows) > 1 and sum(r[5] for r in rows) > room:

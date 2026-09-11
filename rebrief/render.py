@@ -282,9 +282,12 @@ class Renderer:
             key_numbers=[n.__dict__ if hasattr(n, "__dict__") else n for n in (key_numbers or [])],
             max_cards=int(cfg.get("cards_max", 7)),
             art=self._card_art(payload) if cfg.get("cards_art", True) else None,
-            # 그달 신고가 목록. 이슈가 신고가를 말하는 날 그 다음 장에 실린다.
+            # 최근 두 달 계약분 신고가. 이슈가 신고가를 말하는 날 그 다음 장에 실린다.
+            # 거래량의 '다 들어온 달' 과 다르다 — 이름도 따로 쓴다 (예: '8~9월').
             deals=list((stats or {}).get("highlights") or []),
-            deals_label=str((stats or {}).get("month_label", "") or ""),
+            deals_label=_deals_months((stats or {}).get("highlights") or [], year=False)
+                        or str((stats or {}).get("highlights_short")
+                               or (stats or {}).get("month_label", "") or ""),
         )
         # 카드는 밑그림이 이미 1080×1080 입니다. 2배로 뽑으면 2160 이 되는데, 올릴 곳인
         # 유튜브 커뮤니티 게시물은 어차피 1080 언저리로 줄여 보여 줍니다 — 늘어난 화소는
@@ -462,7 +465,8 @@ class Renderer:
         # 템플릿은 StrictUndefined 라 빠진 항목이 있으면 바로 터진다. 예전에 모은 자료도
         # 그릴 수 있게 새로 생긴 항목의 기본값을 먼저 깔아 둔다.
         payload = {"rent": [], "sizes": [], "map": {}, "map_jeonse": {}, "swings": [],
-                   "warnings": [], **data, "supply": supply or []}
+                   "warnings": [], "highlights_label": data.get("month_label", ""),
+                   "highlights_asof": "", **data, "supply": supply or []}
         return self._write("stats.md", "stats.md.j2", index=index_table(series or {}),
                            images=files, history_region=history_region, **payload)
 
@@ -837,6 +841,33 @@ def _eok(amount: float) -> str:
     return f"{amount / 100_000_000:.1f}억"
 
 
+def _deals_months(rows: list[dict], *, year: bool = True, limit: int = 5) -> str:
+    """실제로 싣는 거래들의 계약 달 — 찾아본 범위가 8~9월이어도 실린 것이 모두 8월이면 '8월'.
+
+    제목이 '8~9월' 인데 9월 거래가 하나도 없으면 9월 것이 빠진 것처럼 읽힌다."""
+    from .stats import range_label
+
+    months = {f"{d[:4]}{d[5:7]}" for d in (str(r.get("date") or "") for r in rows[:limit])
+              if re.fullmatch(r"\d{4}-\d{2}-\d{2}", d)}
+    return range_label(sorted(months), year=year)
+
+
+def _deal_title(data: dict, rows: list[dict] | None = None) -> str:
+    """신고가 머리말. 신고가는 거래량과 달이 다르다 — 오늘까지 신고된 최근 두 달 계약분.
+
+    실린 거래의 달을 먼저 쓰고, 날짜가 없으면 찾아본 범위, 예전 자료(범위 이름이 없는 날)는
+    거래량의 달 이름으로 돌아간다."""
+    label = (_deals_months(rows or []) or data.get("highlights_label")
+             or data.get("month_label", ""))
+    return f"{label} 계약 신고가" if label else "최근 신고가"
+
+
+def _deal_day(day: str) -> str:
+    """'2026-08-25' → '8월 25일'. 형식이 다르면 빈칸."""
+    m = re.fullmatch(r"\d{4}-(\d{2})-(\d{2})", day or "")
+    return f"{int(m.group(1))}월 {int(m.group(2))}일" if m else ""
+
+
 def index_table(series: dict) -> dict:
     """지수 여러 개를 기준일로 맞춘 표. 템플릿에서 다시 짝지을 필요가 없게 여기서 정리한다."""
     names = [name for name, rows in (series or {}).items() if rows]
@@ -904,10 +935,12 @@ def stats_block_html(data: dict | None, image: str = "") -> str:
     if hot:
         items = "".join(
             f'<li>{_esc(h["district"])} {_esc(h["name"])} {h["area"]}㎡ — '
-            f'{_eok(h["amount"])} (이전 최고 {_eok(h["before"])}, {h["pct"]:+.1f}%)</li>'
+            f'{_eok(h["amount"])} (이전 최고 {_eok(h["before"])}, {h["pct"]:+.1f}%'
+            + (f', {_deal_day(h.get("date", ""))} 계약' if _deal_day(h.get("date", "")) else "")
+            + ')</li>'
             for h in hot
         )
-        parts.append('<p style="margin:12px 0 4px"><b>이번 달 신고가</b></p>'
+        parts.append(f'<p style="margin:12px 0 4px"><b>{_esc(_deal_title(data, hot))}</b></p>'
                      f'<ul style="margin:0;padding-left:18px;font-size:15px">{items}</ul>')
     if image:
         parts.append(f'<img class="preview nocopy" src="{_esc(image)}" alt="지역별 거래 건수" '
@@ -948,9 +981,11 @@ def stats_block_markdown(data: dict | None, image: str = "") -> str:
         lines.append(f'\n서울 25개 구 가운데 거래가 가장 크게 움직인 곳: {moved}\n')
     hot = [h for h in (data.get("highlights") or []) if h["kind"] == "신고가"][:2]
     if hot:
-        lines.append("\n이번 달 신고가\n")
+        lines.append(f"\n{_deal_title(data, hot)}\n")
         lines += [f'- {h["district"]} {h["name"]} {h["area"]}㎡ — {_eok(h["amount"])} '
-                  f'(이전 최고 {_eok(h["before"])}, {h["pct"]:+.1f}%)' for h in hot]
+                  f'(이전 최고 {_eok(h["before"])}, {h["pct"]:+.1f}%'
+                  + (f', {_deal_day(h.get("date", ""))} 계약' if _deal_day(h.get("date", "")) else "")
+                  + ')' for h in hot]
         lines.append("")
     if image:
         lines.append(f'\n![지역별 거래 건수]({image})\n')

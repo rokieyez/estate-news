@@ -232,7 +232,8 @@ def stats_context(stats: dict | None) -> str:
     )
     hot = "\n".join(
         f"- [{h['kind']}] {h['district']} {h['name']} {h['area']}㎡ "
-        f"{h['amount'] / 100_000_000:.1f}억 (이전 {h['before'] / 100_000_000:.1f}억, {h['pct']:+.1f}%)"
+        f"{h['amount'] / 100_000_000:.1f}억 (이전 {h['before'] / 100_000_000:.1f}억, {h['pct']:+.1f}%"
+        + (f", {h['date']} 계약" if h.get("date") else "") + ")"
         for h in (stats.get("highlights") or [])[:5]
     )
     return f"""
@@ -243,7 +244,7 @@ def stats_context(stats: dict | None) -> str:
 
 지역별
 {rows}
-{"" if not hot else "눈에 띄는 거래" + chr(10) + hot}
+{"" if not hot else "눈에 띄는 거래 — " + (stats.get('highlights_label') or stats.get('month_label', '')) + " 계약, 오늘까지 신고된 것 (위 지역별 건수와 달이 다릅니다)" + chr(10) + hot}
 ※ 이 수치는 브리핑에 없는 자료입니다. 쓸 때는 "국토교통부 실거래가 신고 자료 기준" 이라고 밝히세요.
 ※ 신고가는 '같은 단지 같은 면적의 지난 거래보다 높다' 는 뜻입니다. 지역 전체가 올랐다는 뜻이 아닙니다.
 ──────────────────────────────────────"""

@@ -83,8 +83,11 @@ def stats_lines(stats: dict | None) -> list[str]:
     out = [f"🏢 {stats.get('month_label', '')} 신고 매매 {stats.get('total', 0):,}건 ({diff:+,}건)"]
     hot = next((h for h in (stats.get("highlights") or []) if h["kind"] == "신고가"), None)
     if hot:
+        # 신고가는 거래량과 달이 다르다 (최근 두 달 계약분) — 언제 계약인지 붙인다
+        day = str(hot.get("date") or "")
+        when = f", {int(day[5:7])}/{int(day[8:10])} 계약" if len(day) == 10 and day[4] == "-" else ""
         out.append(f"📈 신고가 {hot['district']} {hot['name']} "
-                   f"{hot['amount'] / 100_000_000:.1f}억 ({hot['pct']:+.1f}%)")
+                   f"{hot['amount'] / 100_000_000:.1f}억 ({hot['pct']:+.1f}%{when})")
     return out
 
 

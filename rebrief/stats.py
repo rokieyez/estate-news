@@ -509,6 +509,42 @@ def month_label(ym: str) -> str:
     return f"{ym[:4]}년 {int(ym[4:6])}월" if len(ym) == 6 and ym.isdigit() else ym
 
 
+def recent_months(run_date: str, n: int = 2) -> list[str]:
+    """신고가를 볼 최근 달들 — 오늘이 속한 달부터 거꾸로 n 달 (최신이 앞).
+
+    거래량은 신고가 다 들어온 달(`month_of`)로 봐야 맞지만, 신고가는 **한 건씩** 보는
+    것이라 들어온 만큼만 봐도 틀리지 않습니다. 이미 신고된 거래는 사실이니까요.
+    거래량과 같은 달을 쓰면 9월 중순에 7월 신고가를 내놓게 됩니다 (2026-09-11 사용자 지적:
+    "벌써 9월 중순인데 아직도 신고가는 7월 데이터").
+    """
+    try:
+        d = date.fromisoformat(run_date)
+    except ValueError:
+        d = date.today()
+    out = [f"{d.year}{d.month:02d}"]
+    while len(out) < max(n, 1):
+        out.append(prev_month(out[-1]))
+    return out
+
+
+def range_label(months: list[str], *, year: bool = True) -> str:
+    """['202609', '202608'] → '2026년 8~9월'. 해를 넘으면 '2025년 12월~2026년 1월'.
+
+    `year=False` 는 좁은 자리(카드 제목)용 — '8~9월', '12~1월'."""
+    ms = sorted(m for m in months if len(m) == 6 and m.isdigit())
+    if not ms:
+        return ""
+    first, last = ms[0], ms[-1]
+    fm, lm = int(first[4:]), int(last[4:])
+    if first == last:
+        return month_label(first) if year else f"{fm}월"
+    if not year:
+        return f"{fm}~{lm}월"
+    if first[:4] == last[:4]:
+        return f"{first[:4]}년 {fm}~{lm}월"
+    return f"{month_label(first)}~{month_label(last)}"
+
+
 def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
     """설정된 구들의 지난달·전달 거래를 모아 비교표로 만든다."""
     settings = cfg.get("stats", {}) or {}
@@ -517,10 +553,12 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
         return {}
     ym = month_of(run_date)
     before = prev_month(ym)
-    # 신고가를 가리려면 지난 거래가 있어야 한다. 몇 달치를 더 받아 비교 바탕으로 쓴다.
+    # 신고가는 거래량과 따로 봅니다 — 오늘까지 신고된 최근 두 달 계약분이 대상이고,
+    # 그 앞 몇 달의 거래를 비교 바탕으로 씁니다. 거래량은 여전히 다 들어온 달(ym)로 셉니다.
     months_back = max(int(settings.get("history_months", 6)), 1)
+    recent = recent_months(run_date, int(settings.get("highlight_months", 2)))
     past_months = []
-    cursor = before
+    cursor = prev_month(recent[-1])
     for _ in range(months_back):
         past_months.append(cursor)
         cursor = prev_month(cursor)
@@ -532,12 +570,19 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
         code, name = str(item.get("code", "")), str(item.get("name", ""))
         if not code:
             continue
-        deals = apt_trades(cfg, code, ym)
-        # 달마다 따로 담아 둔다. 전달 비교는 그 달 응답을 그대로 쓰고,
-        # 신고가 비교에는 지난 달들을 전부 합쳐 쓴다.
-        by_month = {month: apt_trades(cfg, code, month) for month in past_months}
-        history = [d for deals_of_month in by_month.values() for d in deals_of_month]
-        now, was = summarize(deals), summarize(by_month.get(before, []))
+        # 같은 달을 두 번 부르지 않게 한 구 안에서 받아 둔다. 달의 쓰임이 겹친다 —
+        # 9월 11일이면 7월은 거래량의 '이번 달' 이면서 신고가의 비교 바탕이다.
+        by_month: dict[str, list[dict]] = {}
+
+        def trades_of(month: str, _code: str = code) -> list[dict]:
+            if month not in by_month:
+                by_month[month] = apt_trades(cfg, _code, month)
+            return by_month[month]
+
+        deals = trades_of(ym)
+        latest = [d for month in recent for d in trades_of(month)]
+        history = [d for month in past_months for d in trades_of(month)]
+        now, was = summarize(deals), summarize(trades_of(before))
         if not now["count"] and not was["count"]:
             continue
         row = {"name": name, "code": code, "now": now, "was": was,
@@ -554,9 +599,9 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
             if mix:
                 row["rent"] = mix
         all_now += deals
-        all_was += by_month.get(before, [])
+        all_was += trades_of(before)
         rows.append(row)
-        picks += highlights(deals, history, district=name)
+        picks += highlights(latest, history, district=name)
 
     if not rows:
         return {}
@@ -565,6 +610,11 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
     return {"month": ym, "month_label": month_label(ym),
             "before": before, "before_label": month_label(before), "districts": rows,
             "highlights": picks[: int(settings.get("max_highlights", 5))],
+            # 신고가는 거래량과 달이 다르다 — 보여 줄 때는 이 이름을 쓴다
+            "highlights_months": recent,
+            "highlights_label": range_label(recent),
+            "highlights_short": range_label(recent, year=False),
+            "highlights_asof": run_date,
             "focus": [r["name"] for r in rows if r["focus"]],
             # 단지 목록은 상위 몇 곳만 남긴다 — 전부 실으면 하루 200KB 가 매일 커밋된다
             "jeonse": [{"name": r["name"], **r["jeonse"],

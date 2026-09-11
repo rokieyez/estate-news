@@ -360,7 +360,7 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
                 pack = VideoPack.model_validate(data)
                 brief = _load_brief(out_dir)
                 made["brief"] = brief
-                keys = _load_json(paste_dir(out_dir) / "keys.json") or []
+                keys = _load_keys(paste_dir(out_dir) / "keys.json")
                 pipe._after_video(cfg, renderer, brief, pack, date_str, made, keys)
         except Exception as exc:                     # 검사 실패는 사람에게 돌려준다
             log.warning("%s 반영 실패: %s", step, exc, exc_info=True)
@@ -379,6 +379,21 @@ def apply(cfg: Config, date_str: str, text: str) -> Reply:
     if not reply.text or reply.problems or reply.done or "brief" not in reply.applied:
         reply.text = _reply_text(reply, status, site_url=str(cfg.get("site.url", "") or ""))
     return reply
+
+
+def _load_keys(path: Path) -> list:
+    """2단계에서 사전으로 저장한 핵심 수치를 KeyNumber 로 되살린다.
+
+    사전 그대로 넘기면 썸네일이 `.display` 를 읽다 터진다 — 2026-09-11 아침 3단계가
+    "'dict' object has no attribute 'display'" 로 실패했다. 모르는 칸은 버린다."""
+    from .keynumbers import KeyNumber
+
+    fields = ("display", "key", "label", "note")
+    out = []
+    for item in _load_json(path) or []:
+        if isinstance(item, dict) and item.get("display"):
+            out.append(KeyNumber(**{f: str(item.get(f, "") or "") for f in fields}))
+    return out
 
 
 def _reply_text(reply: Reply, status: dict | None, site_url: str = "") -> str:
