@@ -505,6 +505,52 @@ def test_site_build(cfg, monkeypatch, tmp_path):
     assert (site / ".nojekyll").exists()
 
 
+def test_tts_text_follows_the_script_templates(cfg, tmp_path):
+    """실제 대본 틀로 그린 마크다운에서 읽는 말만 뽑히는지 (틀을 고치면 여기서 걸린다)."""
+    from rebrief.tts import longform_text, shorts_text
+
+    pack = make_pack()
+    pack.shorts.lines[0].text = "서울 아파트값이"          # 조각 두 개가 한 문장
+    pack.shorts.lines[1].text = "3주째 **내렸습니다**"
+    renderer = Renderer(cfg, tmp_path / "out", RUN_DATE)
+    renderer.shorts(pack)
+    renderer.longform(pack)
+
+    shorts = shorts_text((tmp_path / "out" / "script-shorts.md").read_text(encoding="utf-8"))
+    # 문장이 끝나는 조각에서만 줄을 바꾸고, 종결 어미엔 마침표를 붙여 TTS 가 쉬게 한다
+    assert shorts == "서울 아파트값이 3주째 내렸습니다.\n낙폭은 오히려 줄었습니다."
+    for noise in ("자막 카드", "꺾은선", "해시태그", "#부동산", "제목 후보", "00:0"):
+        assert noise not in shorts
+
+    longform = longform_text((tmp_path / "out" / "script-longform.md").read_text(encoding="utf-8"))
+    expected = [pack.longform.cold_open] + [s.script for s in pack.longform.sections] + [pack.longform.outro]
+    assert longform == "\n\n".join(expected)
+    for noise in ("이번 주 숫자", "B-roll", "부동산원 통계 화면 캡처", "자막 카드", "00:30", "썸네일"):
+        assert noise not in longform
+
+
+def test_site_script_pages_have_a_tts_copy_button(cfg, monkeypatch, tmp_path):
+    """쇼츠·롱폼 페이지에만 「자막만 복사」 버튼이 붙고, 담긴 글은 이스케이프된다."""
+    from rebrief.site import build_site
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setattr("rebrief.pipeline.ContentGenerator", FakeGenerator)
+    pipeline.run(cfg, run_date=RUN_DATE, use_llm=True)
+    shorts_md = cfg.output_dir / RUN_DATE / "script-shorts.md"
+    shorts_md.write_text(shorts_md.read_text(encoding="utf-8").replace(
+        "낙폭은 오히려 줄었습니다", "낙폭은 <script>x</script> 줄었습니다"), encoding="utf-8")
+
+    site = build_site(cfg, dest=tmp_path / "site")
+    day = site / RUN_DATE
+    shorts = (day / "script-shorts.html").read_text(encoding="utf-8")
+    longform = (day / "script-longform.html").read_text(encoding="utf-8")
+    assert 'id="tts-copy"' in shorts and 'id="tts-copy"' in longform
+    assert "국토부가 전세사기 피해자 지원을 확대한다고 밝혔습니다." in longform
+    assert "&lt;script&gt;x&lt;/script&gt;" in shorts and "<script>x</script>" not in shorts
+    for other in ("brief.html", "sources.html"):
+        assert 'id="tts-copy"' not in (day / other).read_text(encoding="utf-8")
+
+
 def test_site_handles_empty_output(cfg, tmp_path):
     """아직 아무것도 안 만들었을 때도 안내 화면이 떠야 한다."""
     from rebrief.site import build_site
