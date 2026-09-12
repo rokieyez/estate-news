@@ -60,6 +60,6 @@ jobs:
             echo "## 쇼츠 자막"; sed -n '/## 자막 & 화면 지시/,/^## 마무리/p' "$D/script-shorts.md" 2>/dev/null \
               | awk -F'|' 'NF>3 {print "  " $4}' | sed -n '1,30p'
             echo "## 파일"; echo '```'; ls -1 "$D" 2>/dev/null | grep -v '^raw$'; echo '```'
-          } >> "$GITHUB_STEP_SUMMARY"
+          } | tee -a "$GITHUB_STEP_SUMMARY"      # 로그에도 남긴다 — 요약 화면은 로그인해야 보인다
           # 예전(API) 길이 구독으로 끝까지 돌았으면 글과 대본이 있다
           test -f "$D/blog-naver.html" && test -f "$D/script-longform.md" && test -f "$D/brief.md"
