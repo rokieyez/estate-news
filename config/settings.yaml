@@ -136,6 +136,10 @@ site:
 
 output:
   dir: output
+  # 자막(.srt)·컷 리스트(.csv) 파일 이름 끝에 붙는 이름. 편집 프로그램에 여러 날·여러 채널
+  # 파일을 함께 올려도 어느 것인지 알 수 있게 `script-shorts_estate-news_260912.srt` 처럼 만듭니다.
+  # 비워 두면 저장소 폴더 이름을 씁니다.
+  project: estate-news
   keep_raw: true            # 수집 원본 JSON 을 내 컴퓨터에 보관 (커밋은 안 됨 — 기사 본문이 들어 있어서)
   write_index: true         # output/INDEX.md 갱신
 

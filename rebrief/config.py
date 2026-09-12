@@ -85,6 +85,11 @@ class Config:
         return path if path.is_absolute() else self.repo_root / path
 
     @property
+    def project_name(self) -> str:
+        """자막·컷 리스트 파일 이름에 붙는 이름 (설정이 없으면 저장소 폴더 이름)."""
+        return str(self.get("output.project", "") or "").strip() or self.repo_root.name
+
+    @property
     def state_dir(self) -> Path:
         return self.repo_root / "state"
 

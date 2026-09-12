@@ -39,7 +39,9 @@ PAGES = [
     ("stats.md", "실거래가 통계", "정부 신고 자료를 직접 집계한 표"),
     ("sources.md", "기사 원문", "근거가 된 기사 링크"),
 ]
-EXTRA_FILES = ["script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv", "data.json"]
+# 자막·컷 리스트 이름에는 저장소·날짜가 붙는다(`script-shorts_estate-news_260912.srt`).
+# 옛 이름(`script-shorts.srt`)으로 남은 지난 날짜도 함께 집도록 패턴으로 찾는다.
+EXTRA_GLOBS = ["script-shorts*.srt", "shorts-cuts*.csv", "longform-chapters*.csv", "data.json"]
 # 그림·썸네일은 이름 패턴으로 통째로 복사한다.
 ASSET_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg",
                "card-*.png", "card-*.svg"]      # 유튜브 게시물용 카드뉴스
@@ -450,7 +452,7 @@ def _build_periods(env, source: Path, dest: Path, *, stem: str, title: str) -> l
 
 # 블로그에 올릴 때 실제로 쓰는 파일들 (문서가 아니라 '첨부물')
 ZIP_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg",
-             "script-shorts.srt", "shorts-cuts.csv", "longform-chapters.csv",
+             "script-shorts*.srt", "shorts-cuts*.csv", "longform-chapters*.csv",
              "policy/*"]      # 정부 보도자료 원본(HWP·PDF)도 함께 묶는다
 
 # 카드뉴스는 따로 묶습니다 — 가는 곳이 다릅니다.
@@ -523,9 +525,9 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
 
         pages.append({"href": href, "label": label, "description": description})
 
-    for filename in EXTRA_FILES:
-        if (day / filename).exists():
-            shutil.copy2(day / filename, dest / filename)
+    for pattern in EXTRA_GLOBS:
+        for path in sorted(day.glob(pattern)):
+            shutil.copy2(path, dest / path.name)
 
     if (day / "policy").is_dir():      # 정부 보도자료 원본 파일
         shutil.copytree(day / "policy", dest / "policy", dirs_exist_ok=True)

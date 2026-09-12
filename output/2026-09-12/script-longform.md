@@ -124,4 +124,4 @@
 
 ### 편집용 파일
 
-- [챕터 마커 `longform-chapters.csv`](longform-chapters.csv) — 챕터별 타임코드·자료화면·띄울 수치
+- [챕터 마커 `longform-chapters_estate-news_260912.csv`](longform-chapters_estate-news_260912.csv) — 챕터별 타임코드·자료화면·띄울 수치

@@ -55,12 +55,12 @@
 
 ### 편집용 파일
 
-- [자막 `script-shorts.srt`](script-shorts.srt) — 한 줄 16자·두 줄로 끊어 둔 자막
-- [컷 리스트 `shorts-cuts.csv`](shorts-cuts.csv) — 컷별 타임코드·자막·화면 지시·쓸 그림 (엑셀에서 바로 열림)
+- [자막 `script-shorts_estate-news_260912.srt`](script-shorts_estate-news_260912.srt) — 한 줄 16자·두 줄로 끊어 둔 자막
+- [컷 리스트 `shorts-cuts_estate-news_260912.csv`](shorts-cuts_estate-news_260912.csv) — 컷별 타임코드·자막·화면 지시·쓸 그림 (엑셀에서 바로 열림)
 
 ### 편집 체크리스트
 
-- [ ] 자막 파일 `script-shorts.srt` 임포트 (Premiere / FinalCut / CapCut 공통)
+- [ ] 자막 파일 `script-shorts_estate-news_260912.srt` 임포트 (Premiere / FinalCut / CapCut 공통)
 - [ ] 훅 구간 0.5초 안에 첫 자막 노출
 - [ ] 수치 자막 카드 17개 제작
 - [ ] 세로 9:16 세이프존 확인 (상단 12%, 하단 20% 비움)

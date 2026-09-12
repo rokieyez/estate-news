@@ -279,7 +279,7 @@ def test_all_templates_render(cfg, tmp_path):
     renderer.blog_naver(post)
 
     for name in (
-        "brief.md", "blog.md", "blog-naver.html", "script-shorts.md", "script-shorts.srt",
+        "brief.md", "blog.md", "blog-naver.html", "script-shorts.md",
         "script-longform.md", "production-notes.md", "sources.md", "data.json",
     ):
         path = out / name
@@ -423,10 +423,11 @@ def test_llm_path_writes_every_artifact(cfg, monkeypatch):
     assert not result.warnings, result.warnings
     for name in (
         "brief.md", "blog.md", "blog-naver.html", "script-shorts.md",
-        "script-shorts.srt", "script-longform.md", "production-notes.md",
+        "script-longform.md", "production-notes.md",
         "sources.md", "data.json",
     ):
         assert (out / name).exists(), f"{name} 이 생성되지 않았습니다"
+    assert list(out.glob("script-shorts_*.srt"))      # 자막 이름에는 저장소·날짜가 붙는다
 
     # 키가 있을 때는 프롬프트 팩을 만들지 않는다
     assert not (out / "prompt-pack.md").exists()
@@ -474,6 +475,26 @@ def test_blog_failure_does_not_stop_video(cfg, monkeypatch):
 # ── 휴대폰용 사이트 ──────────────────────────────────────────
 
 
+def test_editing_files_carry_the_project_and_date(cfg, tmp_path):
+    """자막·컷 리스트 이름에 저장소와 날짜가 붙는지 (편집기에 여러 날 파일이 쌓이므로)."""
+    renderer = Renderer(cfg, tmp_path / "out", RUN_DATE)
+    pack = make_pack()
+    renderer.shorts(pack)
+    renderer.longform(pack)
+
+    tag = f"{cfg.project_name}_260906"          # RUN_DATE = 2026-09-06
+    for name in (f"script-shorts_{tag}.srt", f"shorts-cuts_{tag}.csv",
+                 f"longform-chapters_{tag}.csv"):
+        assert (tmp_path / "out" / name).exists(), name
+    assert not (tmp_path / "out" / "script-shorts.srt").exists()
+
+    # 대본 안의 내려받기 링크도 같은 이름을 가리켜야 한다
+    shorts_md = (tmp_path / "out" / "script-shorts.md").read_text(encoding="utf-8")
+    assert f"(script-shorts_{tag}.srt)" in shorts_md and f"(shorts-cuts_{tag}.csv)" in shorts_md
+    longform_md = (tmp_path / "out" / "script-longform.md").read_text(encoding="utf-8")
+    assert f"(longform-chapters_{tag}.csv)" in longform_md
+
+
 def test_site_build(cfg, monkeypatch, tmp_path):
     """실행 결과가 링크 하나로 열리는 사이트가 되는지."""
     from rebrief.site import build_site
@@ -491,7 +512,7 @@ def test_site_build(cfg, monkeypatch, tmp_path):
     # 네이버 페이지는 복사 버튼이 있으므로 그대로 옮긴다
     assert (site / RUN_DATE / "blog-naver.html").exists()
     # 자막·데이터 파일도 내려받을 수 있어야 한다
-    assert (site / RUN_DATE / "script-shorts.srt").exists()
+    assert list((site / RUN_DATE).glob("script-shorts_*.srt"))
 
     # latest/ 는 항상 최신 날짜의 사본 — 주소가 바뀌지 않아야 즐겨찾기가 유효하다
     assert (site / "latest" / "blog-naver.html").exists()
@@ -849,8 +870,9 @@ def test_paste_mode_round_trips_three_answers_without_calling_the_model(cfg, mon
                      + make_pack().model_dump_json() + "\n```")
     assert r2.applied == ["blog", "video"] and not r2.problems and r2.done
     for name in ("blog-naver.html", "blog.md", "script-shorts.md", "script-longform.md",
-                 "production-notes.md", "script-shorts.srt", "checklist.md"):
+                 "production-notes.md", "checklist.md"):
         assert (out / name).exists(), name
+    assert list(out.glob("script-shorts_*.srt")), "자막 파일이 없습니다"
     assert paste.load_status(out)["done"] and "🎉" in r2.text
 
     # 2단계에서 고른 핵심 수치는 keys.json 에 사전으로 저장된다. 3단계가 그걸 다시 읽어

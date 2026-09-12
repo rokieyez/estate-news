@@ -256,6 +256,14 @@ Actions 아티팩트 업로드 단계도 같이 뺐습니다 — 산출물은 �
 그래서 대본 틀(`script_*.md.j2`)을 고치면 `tts.py` 도 맞춰야 하고, `test_tts_text_follows_the_script_templates`
 가 실제 틀로 그린 대본에서 뽑아 봅니다. 맥 클립보드를 읽어 실제로 담기는 것까지 확인했습니다(9/11 쇼츠 12문장).
 
+**자막·컷 리스트 이름에는 저장소와 날짜가 붙습니다 (2026-09-12 사용자 요청).**
+`script-shorts_estate-news_260912.srt` · `shorts-cuts_estate-news_260912.csv` · `longform-chapters_estate-news_260912.csv`.
+편집 프로그램과 내려받기 폴더에는 여러 날·두 채널 파일이 함께 쌓이는데, 이름이 늘 같으면 어느 날 어느 채널
+것인지 알 수 없었습니다(`script-shorts-2.srt` 가 됩니다). 이름은 `Renderer.asset_name` 한 곳에서 만들고
+붙는 이름은 `output.project`(비면 저장소 폴더 이름)입니다. **사이트·봉투는 패턴(`script-shorts*.srt`)으로
+찾습니다** — 9/11 까지의 지난 날짜는 옛 이름 그대로 남아 있어서입니다. motion-studio 는 CSV 를 파일 이름이
+아니라 머리글로 알아보므로(`cuesheet-lib.mjs`) 이름이 바뀌어도 그대로 읽습니다.
+
 **유튜브 설명란·고정 댓글은 모델이 쓰지 않습니다 (2026-09-07).**
 거기 들어갈 것은 챕터 타임코드와 출처 주소뿐이고 둘 다 우리가 가진 값입니다.
 `render.youtube_description()` · `render.pinned_comment()` 가 만듭니다. 제목·썸네일 문구 후보도

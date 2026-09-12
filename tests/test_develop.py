@@ -398,7 +398,10 @@ def test_site_bundles_attachments_into_one_zip(cfg, tmp_path):
     (day / "thumb-shorts.png").write_bytes(b"\x89PNG")
     (day / "card-1-cover.png").write_bytes(b"\x89PNG")      # 카드뉴스는 따로 묶인다
     (day / "card-2-numbers.png").write_bytes(b"\x89PNG")
-    (day / "script-shorts.srt").write_text("1\n00:00:00,000 --> 00:00:02,000\n자막\n", encoding="utf-8")
+    # 자막 이름에는 저장소·날짜가 붙는다. 옛 이름으로 남은 지난 날짜도 함께 묶여야 한다.
+    (day / "script-shorts_estate-news_260907.srt").write_text(
+        "1\n00:00:00,000 --> 00:00:02,000\n자막\n", encoding="utf-8")
+    (day / "script-shorts.srt").write_text("1\n00:00:00,000 --> 00:00:02,000\n옛 자막\n", encoding="utf-8")
     (day / "blog.md").write_text("본문", encoding="utf-8")      # 문서는 첨부물이 아니다
 
     dest = build_site(cfg, tmp_path / "site")
@@ -407,7 +410,8 @@ def test_site_bundles_attachments_into_one_zip(cfg, tmp_path):
     bundle = dest / "2026-09-07" / "2026-09-07_blogfiles.zip"
     assert bundle.exists() and not (dest / "2026-09-07" / "files.zip").exists()
     names = zipfile.ZipFile(bundle).namelist()
-    assert set(names) == {"img-1-stat-card.png", "thumb-shorts.png", "script-shorts.srt"}
+    assert set(names) == {"img-1-stat-card.png", "thumb-shorts.png",
+                         "script-shorts_estate-news_260907.srt", "script-shorts.srt"}
     assert "블로그 첨부파일 내려받기" in (dest / "index.html").read_text(encoding="utf-8")
     # latest/ 는 복사본이라 파일 이름은 그대로 그날 날짜를 단다
     assert (dest / "latest" / "2026-09-07_blogfiles.zip").exists()

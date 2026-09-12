@@ -34,7 +34,7 @@
 
 ### 편집 체크리스트
 
-- [ ] 자막 파일 `script-shorts.srt` 임포트 (Premiere / FinalCut / CapCut 공통)
+- [ ] 자막 파일 `script-shorts_estate-news_260912.srt` 임포트 (Premiere / FinalCut / CapCut 공통)
 - [ ] 훅 구간 0.5초 안에 첫 자막 노출
 - [ ] 수치 자막 카드 2개 제작
 - [ ] 세로 9:16 세이프존 확인 (상단 12%, 하단 20% 비움)

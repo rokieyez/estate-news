@@ -155,6 +155,15 @@ class Renderer:
             write_blog_id=(re.search(r"blog\.naver\.com/([^/?#]+)", write_url) or [None, ""])[1],
         )
 
+    def asset_name(self, stem: str, ext: str) -> str:
+        """편집 프로그램에 올리는 파일 이름 — `script-shorts_estate-news_260912.srt`.
+
+        편집기에는 여러 날·두 채널 파일이 함께 쌓입니다. 이름이 늘 같으면 어느 날 어느 채널
+        자막인지 알 수 없고, 내려받기 폴더에서도 `script-shorts-2.srt` 가 됩니다
+        (2026-09-12 사용자 요청). 사이트에 남은 옛 파일은 예전 이름 그대로 둡니다.
+        """
+        return f"{stem}_{self.cfg.project_name}_{self.date.replace('-', '')[2:]}.{ext}"
+
     def shorts(self, pack: VideoPack) -> list[Path]:
         shorts = pack.shorts
         char_count = sum(len(line.text) for line in shorts.lines)
@@ -162,6 +171,8 @@ class Renderer:
             1 for line in shorts.lines
             if any(word in line.visual for word in ("자막", "카드", "그래픽", "차트"))
         )
+        srt_name = self.asset_name("script-shorts", "srt")
+        cuts_name = self.asset_name("shorts-cuts", "csv")
         paths = [
             self._write(
                 "script-shorts.md",
@@ -170,6 +181,8 @@ class Renderer:
                 date=self.date,
                 char_count=char_count,
                 graphic_cuts=graphic_cuts,
+                srt_name=srt_name,
+                cuts_name=cuts_name,
             )
         ]
         video_cfg = self.cfg.get("video", {}) or {}
@@ -177,28 +190,30 @@ class Renderer:
                      int(video_cfg.get("caption_max_chars", 16)),
                      int(video_cfg.get("caption_max_lines", 2)))
         if srt:
-            paths.append(self._write_raw("script-shorts.srt", srt))
+            paths.append(self._write_raw(srt_name, srt))
         # 편집 프로그램에 그대로 넣는 컷 리스트. 그림은 이미 만들어져 있으므로 파일명을 짚어 준다.
         pictures = [p.name for p in sorted(self.out_dir.glob("img-*.png"))] or \
                    [p.name for p in sorted(self.out_dir.glob("img-*.svg"))]
         cuts = shorts_cut_csv(shorts, pictures, int(video_cfg.get("cut_list_fps", 30)))
         if cuts:
-            paths.append(self._write_raw("shorts-cuts.csv", cuts))
+            paths.append(self._write_raw(cuts_name, cuts))
         return paths
 
     def longform(self, pack: VideoPack) -> Path:
         longform = pack.longform
         char_count = sum(len(s.script) for s in longform.sections) + len(longform.cold_open)
+        chapters_name = self.asset_name("longform-chapters", "csv")
         path = self._write(
             "script-longform.md",
             "script_longform.md.j2",
             l=longform,
             date=self.date,
             char_count=char_count,
+            chapters_name=chapters_name,
         )
         chapters = longform_chapter_csv(longform, int((self.cfg.get("video", {}) or {}).get("cut_list_fps", 30)))
         if chapters:
-            self._write_raw("longform-chapters.csv", chapters)
+            self._write_raw(chapters_name, chapters)
         return path
 
     def production_notes(self, brief: DailyBrief, pack: VideoPack) -> Path:
