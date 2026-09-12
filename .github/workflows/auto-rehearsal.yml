@@ -56,6 +56,9 @@ jobs:
           D="$RUNNER_TEMP/out/$(TZ=Asia/Seoul date +%F)"
           {
             echo "## 점검표"; cat "$D/checklist.md" 2>/dev/null | sed -n '1,25p'
+            # 쇼츠 자막이 '읽는 대본'인지 눈으로 보려고 표를 그대로 싣는다 (2026-09-12)
+            echo "## 쇼츠 자막"; sed -n '/## 자막 & 화면 지시/,/^## 마무리/p' "$D/script-shorts.md" 2>/dev/null \
+              | awk -F'|' 'NF>3 {print "  " $4}' | sed -n '1,30p'
             echo "## 파일"; echo '```'; ls -1 "$D" 2>/dev/null | grep -v '^raw$'; echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           # 예전(API) 길이 구독으로 끝까지 돌았으면 글과 대본이 있다

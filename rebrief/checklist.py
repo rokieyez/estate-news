@@ -64,6 +64,25 @@ def _body_blocks(markdown_text: str) -> list[str]:
     return blocks
 
 
+# 자막 한 컷이 문장으로 끝나는지 — 종결어미(다·요·죠·까) 또는 문장부호
+_SENTENCE_END = re.compile(r"([.?!…]|다|요|죠|까)$")
+
+
+def headline_captions(pack, min_ratio: float = 0.30) -> tuple[float, list[str]]:
+    """쇼츠 자막이 '읽는 대본'인지 '제목 나열'인지. (문장으로 끝나는 비율, 제목투 자막 예시)
+
+    모델이 정치 기사를 옮길 때 「증인 44명·참고인 4명 요청」처럼 명사로 끝나는 조각을 늘어놓는
+    날이 있었습니다 (2026-09-12 사용자 지적 "대본이라기보다 제목을 나열한 듯한 어감"). 프롬프트로
+    막되 지켜지는지 세어 봅니다. 실측 — 대본답게 읽히는 날 0.44·0.45, 제목투인 날 0.08·0.20.
+    """
+    lines = [" ".join(l.text.split()) for l in pack.shorts.lines if l.text.strip()]
+    if not lines:
+        return 1.0, []
+    ends = [t for t in lines if _SENTENCE_END.search(t)]
+    stubs = [t for t in lines if not _SENTENCE_END.search(t)]
+    return len(ends) / len(lines), stubs[:3]
+
+
 def long_captions(pack, max_chars: int = 16, max_lines: int = 2) -> list[str]:
     """두 줄에 담기지 않는 쇼츠 자막 컷. 화면에서 글자가 작아지거나 넘친다."""
     from .render import wrap_caption
@@ -255,6 +274,13 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
                               "빠르게 읽어야 합니다. 자막 두세 컷을 줄이세요."))
         else:
             items.append(Item("shorts_len", OK, f"쇼츠 발화 {s_chars}자 (약 {s_chars / cpm * 60:.0f}초)"))
+        ratio, stubs = headline_captions(pack)
+        if ratio < 0.30:
+            items.append(Item("shorts_voice", WARN,
+                              f"쇼츠 자막이 제목 나열처럼 읽힙니다 — 문장으로 끝나는 컷이 {ratio * 100:.0f}%",
+                              "예: " + " / ".join(stubs) + " → 종결어미로 맺는 문장으로 고치세요."))
+        else:
+            items.append(Item("shorts_voice", OK, f"쇼츠 자막이 문장으로 이어집니다 ({ratio * 100:.0f}%)"))
         l_target = float(video.get("longform_minutes", 8)) * cpm
         l_chars = len(pack.longform.cold_open) + sum(len(s.script) for s in pack.longform.sections)
         if l_chars > l_target * 1.25 or l_chars < l_target * 0.6:

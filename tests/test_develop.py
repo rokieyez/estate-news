@@ -141,6 +141,30 @@ def test_recent_topics_reads_previous_days(cfg):
     assert rows == [("2026-09-05", "종부세 확대")]
 
 
+def test_headline_captions_flags_a_list_of_titles():
+    """쇼츠 자막이 제목 나열이면 점검표가 잡는다 (2026-09-12 사용자 지적)."""
+    from rebrief import checklist as cl
+
+    def pack_of(texts):
+        lines = [CaptionLine(at=f"00:{i:02d}", text=t, visual="v") for i, t in enumerate(texts)]
+        return VideoPack(
+            shorts=ShortsScript(title_candidates=["t"], hook="h", lines=lines, cta="c",
+                                hashtags=["#x"], estimated_seconds=10),
+            longform=LongformScript(title_candidates=["t"], thumbnail_texts=["x"], cold_open="o",
+                                    sections=[], outro="e", tags=["t"], estimated_minutes=8.0))
+
+    titles = ["증인 44명·참고인 4명 요청", "민주당 거부로 채택 불발", "16일엔 국토부·국방부 후보자",
+              "강신철 후보자, 특별분양 의혹", "계속 지켜봐야겠습니다"]
+    ratio, stubs = cl.headline_captions(pack_of(titles))
+    assert ratio == 0.2 and stubs[0] == "증인 44명·참고인 4명 요청"
+
+    script = ["국민의힘은 김승원 후보자 청문회에", "증인 44명을 요청했지만",
+              "민주당이 거부해 불발됐습니다", "16일에는 국토부와 국방부 후보자가 이어집니다",
+              "다음주 청문회, 계속 지켜봐야겠습니다"]
+    ratio, _ = cl.headline_captions(pack_of(script))
+    assert ratio == 0.6 and ratio >= 0.30      # 0.30 이 경고 기준
+
+
 def test_long_captions_flags_overflowing_cuts():
     from rebrief import checklist as cl
 
