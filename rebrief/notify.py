@@ -79,8 +79,15 @@ def stats_lines(stats: dict | None) -> list[str]:
     """실거래 요약 두 줄. 폰만 보고도 오늘 글을 올릴지 판단할 수 있게."""
     if not stats or not stats.get("districts"):
         return []
-    diff = stats.get("total", 0) - stats.get("total_before", 0)
-    out = [f"🏢 {stats.get('month_label', '')} 신고 매매 {stats.get('total', 0):,}건 ({diff:+,}건)"]
+    from .stats import volume_view
+
+    vol = volume_view(stats)
+    diff = vol.get("total", 0) - vol.get("total_before", 0)
+    if vol.get("window"):
+        out = [f"🏢 {vol.get('short', '')} 계약 매매 {vol.get('total', 0):,}건 "
+               f"({vol.get('before_label', '')} 대비 {diff:+,}건)"]
+    else:
+        out = [f"🏢 {vol.get('month_label', '')} 신고 매매 {vol.get('total', 0):,}건 ({diff:+,}건)"]
     hot = next((h for h in (stats.get("highlights") or []) if h["kind"] == "신고가"), None)
     if hot:
         # 신고가는 거래량과 달이 다르다 (최근 두 달 계약분) — 언제 계약인지 붙인다

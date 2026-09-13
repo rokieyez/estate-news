@@ -479,11 +479,14 @@ class Renderer:
         self._write_raw("stats.json", _json.dumps(data, ensure_ascii=False, indent=2) + "\n")
         # 템플릿은 StrictUndefined 라 빠진 항목이 있으면 바로 터진다. 예전에 모은 자료도
         # 그릴 수 있게 새로 생긴 항목의 기본값을 먼저 깔아 둔다.
-        payload = {"rent": [], "sizes": [], "map": {}, "map_jeonse": {}, "swings": [],
+        from .stats import volume_view
+
+        payload = {"rent": [], "sizes": [], "map": {}, "map_jeonse": {}, "swings": [], "volume": {},
                    "warnings": [], "highlights_label": data.get("month_label", ""),
                    "highlights_asof": "", **data, "supply": supply or []}
         return self._write("stats.md", "stats.md.j2", index=index_table(series or {}),
-                           images=files, history_region=history_region, **payload)
+                           images=files, history_region=history_region,
+                           vol=volume_view(data), **payload)
 
     def policy(self, docs: list, stats: dict | None = None) -> Path | None:
         """정부 발표 원문 3줄 요약 + 원본 파일. 없으면 파일을 만들지 않는다.
@@ -909,25 +912,42 @@ def index_table(series: dict) -> dict:
             "rows": [by_time[k] for k in sorted(by_time)]}
 
 
+def _swing_spot(s: dict, before_label: str = "") -> str:
+    """급변 구에 붙는 '한 동네에 몰림' 한마디. 줄어든 곳은 앞 기간에 몰렸던 것이 이유다."""
+    spot = s.get("hotspot")
+    if not spot:
+        return ""
+    if spot.get("when") == "before":
+        return f', {before_label or "앞 기간"}엔 {spot["dong"]}에 {spot["share"]}% 몰렸음'
+    return f', {spot["dong"]}에 {spot["share"]}% 몰림'
+
+
 def stats_block_html(data: dict | None, image: str = "") -> str:
     """직접 센 실거래 숫자. 모델이 지어낼 수 없게 프로그램이 값을 그대로 넣는다."""
     if not data or not data.get("districts"):
         return ""
-    rows = data["districts"][:3]
+    from .stats import volume_view
+
+    vol = volume_view(data)                  # 건수는 신고 기한이 지난 최신 날짜 창으로
+    rows = vol["districts"][:3]
     top = " · ".join(
         f'{_esc(r["name"])} {r["now"]["count"]}건'
         f'({"+" if r["change"] >= 0 else ""}{r["change"]})'
         for r in rows
     )
+    what = "계약된" if vol.get("window") else "신고된"
     parts = [
         '<div style="margin:28px 0 0;padding:16px 18px">',
-        f'<b>직접 센 숫자 — {_esc(data.get("month_label", ""))} 아파트 실거래</b>',
-        f'<p style="margin:10px 0 0">서울 {len(data["districts"])}개 구에서 신고된 매매는 '
-        f'<b>{data["total"]}건</b>입니다. '
-        f'{_esc(data.get("before_label", ""))} {data["total_before"]}건과 견주면 '
-        f'{data["total"] - data["total_before"]:+d}건입니다.</p>',
+        f'<b>직접 센 숫자 — {_esc(vol.get("month_label", ""))} 아파트 실거래</b>',
+        f'<p style="margin:10px 0 0">서울 {len(vol["districts"])}개 구에서 {what} 매매는 '
+        f'<b>{vol["total"]}건</b>입니다. '
+        f'{_esc(vol.get("before_label", ""))} {vol["total_before"]}건과 견주면 '
+        f'{vol["total"] - vol["total_before"]:+d}건입니다.</p>',
         f'<p style="margin:8px 0 0;font-size:15px;color:#555555">거래가 많은 곳: {top}</p>',
     ]
+    if vol.get("window"):
+        parts.append('<p style="margin:6px 0 0;font-size:13px;color:#888888">'
+                     f'신고 기한(계약 후 30일)이 지난 {vol["days"]}일까지 계약분끼리 견줬습니다.</p>')
     jeonse = (data.get("jeonse") or [])[:1]
     if jeonse:
         j = jeonse[0]
@@ -935,12 +955,12 @@ def stats_block_html(data: dict | None, image: str = "") -> str:
             f'<p style="margin:10px 0 0;font-size:15px;color:#555555">'
             f'{_esc(j["name"])} 전세가율(전세 보증금 ÷ 매매가)은 가운뎃값 <b>{j["median"]}%</b>입니다. '
             f'같은 단지·같은 면적 {j["count"]}곳을 견줬습니다.</p>')
-    swings = (data.get("swings") or [])[:2]
+    swings = (vol.get("swings") or [])[:2]
     if swings:
         # 단지 하나가 아니라 구 전체가 움직인 이야기다. 신고가와 성격이 달라 따로 적는다.
         moved = " · ".join(
             f'{_esc(s["name"])} {s["pct"]:+.1f}%({s["before"]}→{s["now"]}건'
-            + (f', {_esc(s["hotspot"]["dong"])}에 {s["hotspot"]["share"]}% 몰림' if s.get("hotspot") else "")
+            + _esc(_swing_spot(s, vol.get("before_label", "")))
             + ")"
             for s in swings)
         parts.append(
@@ -972,25 +992,30 @@ def stats_block_markdown(data: dict | None, image: str = "") -> str:
     """보관용 blog.md 에도 같은 내용을 남긴다."""
     if not data or not data.get("districts"):
         return ""
-    rows = data["districts"][:3]
+    from .stats import volume_view
+
+    vol = volume_view(data)
+    rows = vol["districts"][:3]
     top = " · ".join(f'{r["name"]} {r["now"]["count"]}건({r["change"]:+d})' for r in rows)
     lines = [
-        f'\n**직접 센 숫자 — {data.get("month_label", "")} 아파트 실거래**\n',
-        f'서울 {len(data["districts"])}개 구 신고 매매 **{data["total"]}건** '
-        f'({data.get("before_label", "")} {data["total_before"]}건, '
-        f'{data["total"] - data["total_before"]:+d}건)',
+        f'\n**직접 센 숫자 — {vol.get("month_label", "")} 아파트 실거래**\n',
+        f'서울 {len(vol["districts"])}개 구 {"계약" if vol.get("window") else "신고"} 매매 **{vol["total"]}건** '
+        f'({vol.get("before_label", "")} {vol["total_before"]}건, '
+        f'{vol["total"] - vol["total_before"]:+d}건)',
         f'\n거래가 많은 곳: {top}\n',
     ]
+    if vol.get("window"):
+        lines.append(f'\n신고 기한(계약 후 30일)이 지난 {vol["days"]}일까지 계약분끼리 견줬습니다.\n')
     jeonse = (data.get("jeonse") or [])[:1]
     if jeonse:
         j = jeonse[0]
         lines.append(f'\n{j["name"]} 전세가율 가운뎃값 **{j["median"]}%** '
                      f'(같은 단지·같은 면적 {j["count"]}곳)\n')
-    swings = (data.get("swings") or [])[:2]
+    swings = (vol.get("swings") or [])[:2]
     if swings:
         moved = " · ".join(
             f'{s["name"]} {s["pct"]:+.1f}%({s["before"]}→{s["now"]}건'
-            + (f', {s["hotspot"]["dong"]}에 {s["hotspot"]["share"]}% 몰림' if s.get("hotspot") else "")
+            + _swing_spot(s, vol.get("before_label", ""))
             + ")"
             for s in swings)
         lines.append(f'\n서울 25개 구 가운데 거래가 가장 크게 움직인 곳: {moved}\n')
@@ -1050,14 +1075,17 @@ def policy_region_links(docs: list, stats: dict | None = None) -> dict:
     정책과 통계가 한 페이지에 있으면서 서로 모르는 게 이상해서 이었습니다.
     수치는 프로그램이 그대로 옮깁니다 — 모델을 거치면 대조할 원문이 없습니다.
     """
-    rows = {r["name"]: r for r in (stats or {}).get("districts", [])}
+    from .stats import volume_view
+
+    vol = volume_view(stats)
+    rows = {r["name"]: r for r in vol.get("districts", [])}
     jeonse = {j["name"]: j for j in (stats or {}).get("jeonse", [])}
     if not rows:
         return {}
     from .regions import find_regions
 
     out: dict[str, list[str]] = {}
-    label = (stats or {}).get("month_label", "")
+    label = vol.get("month_label", "")
     for doc in docs:
         text = " ".join(filter(None, [getattr(doc, "title", ""), getattr(doc, "lead", ""),
                                       " ".join(getattr(doc, "summary", []) or [])]))
@@ -1066,7 +1094,7 @@ def policy_region_links(docs: list, stats: dict | None = None) -> dict:
             row = rows.get(name)
             if not row:
                 continue
-            bit = (f"{name} — {label} 신고 매매 {row['now']['count']}건"
+            bit = (f"{name} — {label} {'계약' if vol.get('window') else '신고'} 매매 {row['now']['count']}건"
                    f"({row['change']:+d}건), 평균 {row['now']['avg'] / 100_000_000:.1f}억")
             got = jeonse.get(name)
             if got:
@@ -1099,8 +1127,15 @@ def asof_note(date: str, stats: dict | None = None) -> str:
     if not when:
         return ""
     line = f"이 글은 {when} 기준으로 정리한 내용입니다."
+    from .stats import volume_view
+
     label = (stats or {}).get("month_label", "")
-    if label:
+    vol = volume_view(stats) if stats else {}
+    if vol.get("window"):
+        # 건수와 전세가율의 기준이 다르다 — 둘 다 밝힌다
+        line += (f" 실거래 거래 건수는 {vol['month_label']} 계약분(신고 기한이 지난 것), "
+                 f"전세가율 등은 {label} 신고분입니다.")
+    elif label:
         line += f" 실거래 수치는 {label} 신고분입니다."
     return line
 

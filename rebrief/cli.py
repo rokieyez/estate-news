@@ -469,8 +469,9 @@ def _cmd_stats(cfg, args) -> int:
     supply = stats_mod.reb_supply(cfg, date_str)
     path = renderer.stats(data, series, history=book.month_series(region), history_region=region,
                           jeonse_history=book.jeonse_series(region), supply=supply)
-    print(f"{data['month']} 전체 {data['total']}건 (전달 {data['total_before']}건)")
-    for row in data["districts"]:
+    vol = stats_mod.volume_view(data)
+    print(f"{vol['month_label']} 전체 {vol['total']}건 ({vol['before_label']} {vol['total_before']}건)")
+    for row in vol["districts"]:
         print(f"  {row['name']:<6} {row['now']['count']:>4}건  {row['change']:+4d}  "
               f"평균 {row['now']['avg'] / 100000000:.1f}억")
     for name, rows in series.items():
@@ -483,11 +484,12 @@ def _cmd_stats(cfg, args) -> int:
         if item.get("before") is not None:
             arrow = f"  전달 대비 {item['latest'] - item['before']:+,.0f}"
         print(f"\n{item['name']} ({item['latest_label']}) {item['latest']:,.0f}{item['unit']}{arrow}")
-    if data.get("swings"):
+    if vol.get("swings"):
         print("\n거래가 크게 움직인 구 (25개 구 전체에서)")
-        for sw in data["swings"]:
+        for sw in vol["swings"]:
             spot = sw.get("hotspot")
-            where = f"  ← {spot['dong']}에 {spot['share']}% 몰림" if spot else ""
+            ago = "앞 기간엔 " if spot and spot.get("when") == "before" else ""
+            where = f"  ← {ago}{spot['dong']}에 {spot['share']}% 몰림" if spot else ""
             print(f"  {sw['name']:<6} {sw['before']:>4}건 → {sw['now']:>4}건  {sw['pct']:+6.1f}%{where}")
     if data.get("warnings"):
         print("\n⚠️  확인이 필요한 값")

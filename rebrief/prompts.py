@@ -225,10 +225,19 @@ def stats_context(stats: dict | None) -> str:
     """영상 대본에 넘길 실거래 자료. 값은 프로그램이 센 것이라 그대로 인용하게 한다."""
     if not stats or not stats.get("districts"):
         return ""
+    from .stats import volume_view
+
+    vol = volume_view(stats)
+    # 러너는 파이썬 3.11 — f-문자열 식 안에 역슬래시를 쓸 수 없어 밖에서 만든다
+    window_note = ""
+    if vol.get("window"):
+        window_note = (f"\n※ 달이 다 차기 전이라 신고 기한(계약 후 30일)이 지난 {vol['days']}일까지 "
+                       f"계약분끼리 견준 값입니다. '{int(vol['month'][4:6])}월 거래가 줄었다' 가 아니라 "
+                       f"'{vol['short']} 계약이 {vol['before_label']}보다' 로 말하세요.")
     rows = "\n".join(
-        f"- {r['name']}: {r['now']['count']}건 (전달 대비 {r['change']:+d}건), "
+        f"- {r['name']}: {r['now']['count']}건 ({vol['before_label'] if vol.get('window') else '전달'} 대비 {r['change']:+d}건), "
         f"평균 {r['now']['avg'] / 100_000_000:.1f}억"
-        for r in stats["districts"][:5]
+        for r in vol["districts"][:5]
     )
     hot = "\n".join(
         f"- [{h['kind']}] {h['district']} {h['name']} {h['area']}㎡ "
@@ -238,9 +247,9 @@ def stats_context(stats: dict | None) -> str:
     )
     return f"""
 
-────────── 실거래 자료 ({stats.get('month_label', '')}) ──────────
+────────── 실거래 자료 ({vol.get('month_label', '')}) ──────────
 국토교통부 신고 자료를 우리가 직접 집계한 값입니다. **숫자를 바꾸지 말고 그대로 인용하세요.**
-전체 신고 매매 {stats.get('total', 0)}건 ({stats.get('before_label', '')} {stats.get('total_before', 0)}건)
+전체 매매 {vol.get('total', 0)}건 ({vol.get('before_label', '')} {vol.get('total_before', 0)}건){window_note}
 
 지역별
 {rows}

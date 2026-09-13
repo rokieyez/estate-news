@@ -513,16 +513,24 @@ GENERATORS = SPECIFIC + FALLBACK
 
 def trade_volume_bar(data: dict, date: str, extra: dict | None = None) -> "Image | None":
     """지역별 아파트 매매 거래 건수. 전달과의 차이를 막대 옆에 함께 적는다."""
-    rows = [r for r in (data.get("districts") or []) if r["now"]["count"]][:8]
+    from .stats import volume_view
+
+    vol = volume_view(data)
+    rows = [r for r in (vol.get("districts") or []) if r["now"]["count"]][:8]
     if len(rows) < 2:
         return None
-    label = data.get("month_label", "")
+    label = vol.get("month_label", "")
     title = f"{label} 아파트 매매 거래 건수"
-    sub = f"{data.get('before_label', '')} 대비 · 신고분 기준"
-    notes = [
-        "※ 국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다.",
-        f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계",
-    ]
+    if vol.get("window"):
+        # 달이 다 차기 전이라 신고 기한이 지난 앞쪽 날짜끼리 견준다 — 그걸 밝혀야 −가 읽힌다
+        sub = f"{vol.get('before_label', '')} 대비 · 같은 기간 계약분"
+    else:
+        sub = f"{vol.get('before_label', '')} 대비 · 신고분 기준"
+    notes = ["※ 국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다."]
+    if vol.get("window"):
+        notes.append(f"※ 신고 기한(계약 후 30일)이 지난 {vol['days']}일까지 계약분만 셌습니다. "
+                     "그 뒤 계약은 아직 신고가 차는 중입니다.")
+    notes.append(f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계")
     w = 1000
     row_h = 60
     content = len(rows) * row_h + 30
@@ -601,17 +609,25 @@ def district_choropleth(data: dict, date: str, extra: dict | None = None, *,
     spec = MAP_METRICS.get(metric)
     if not spec:
         return None
-    counts = {k: v for k, v in (data.get(spec["key"]) or {}).items() if v}
+    from .stats import volume_view
+
+    # 건수 지도는 거래 건수 창(1~N일)을, 전세가율 지도는 다 들어온 달을 쓴다
+    source = volume_view(data) if metric == "count" else data
+    raw = source.get("map") if metric == "count" else data.get(spec["key"])
+    counts = {k: v for k, v in (raw or {}).items() if v}
     if len(counts) < 18:
         return None
-    label = data.get("month_label", "")
+    label = source.get("month_label", "")
     title = spec["title"].format(label=label)
     sub = spec["sub"]
     notes = [
         "※ 실제 지형이 아닌 위치 도식입니다. 칸의 크기는 면적·인구와 무관합니다.",
         spec["note"],
-        f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계",
     ]
+    if metric == "count" and source.get("window"):
+        sub = "신고 기한이 지난 계약분 · 해제분 제외"
+        notes.append(f"※ 신고 기한(계약 후 30일)이 지난 {source['days']}일까지 계약분만 셌습니다.")
+    notes.append(f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계")
 
     tw, th, gap = 128, 92, 10
     ramp = BLUE_RAMP[1:]                    # 맨 옅은 단계는 '자료 없음' 과 헷갈려 뺀다

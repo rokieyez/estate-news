@@ -467,6 +467,67 @@ def month_of(run_date: str) -> str:
     return candidate
 
 
+def volume_window(run_date: str, *, min_days: int = 10, lag_days: int = 31) -> dict | None:
+    """거래 건수를 셀 **신고 기한이 지난 앞쪽 날짜** — 그 달이 다 차기 전에도 최신 달을 보려고.
+
+    달 전체를 기다리면 9월 13일에도 7월을 쓰게 됩니다 (2026-09-13 사용자 지적). 8월 전체를 세면
+    절반쯤만 들어와 '반토막' 으로 보이지만, **계약 후 30일이 지난 날짜까지는 다 들어와 있습니다**.
+    그래서 8월 1~14일 계약분을 7월 1~14일과 견줍니다. 기한 당일 아침엔 아직 안 올라온 신고가 있을 수
+    있어 하루 여유를 둡니다(`lag_days` 31). 9월 13일 실측 — 8월 전체는 7월의 54% 였지만 1~14일끼리는
+    −27% 였고, 기한이 더 오래 지난 첫 주가 오히려 더 줄어(−35%) 늦은 신고 탓이 아니었습니다.
+
+    창이 필요 없으면 None — 그 달이 통째로 찼거나(`month_of` 와 같은 달) 날짜가 `min_days` 보다
+    적어 흔들릴 때(월초). 그때는 예전처럼 `month_of` 의 달 전체를 씁니다.
+    """
+    try:
+        d = date.fromisoformat(run_date)
+    except ValueError:
+        return None
+    cut = d - timedelta(days=lag_days)          # 이 날까지 계약분은 신고 기한이 지났다
+    ym = f"{cut.year}{cut.month:02d}"
+    if ym == month_of(run_date) or cut.day < min_days:
+        return None
+    if cut.day >= _month_end(ym).day:            # 말일까지 찼으면 달 전체와 같다
+        return None
+    return {"month": ym, "before": prev_month(ym), "days": cut.day}
+
+
+def within_days(rows: list[dict], days: int) -> list[dict]:
+    """계약일이 1~days 일인 거래만. 날짜가 없는 행은 뺀다(어느 쪽인지 알 수 없어서)."""
+    out = []
+    for r in rows:
+        day = str(r.get("date") or "")
+        if len(day) == 10 and day[8:10].isdigit() and int(day[8:10]) <= days:
+            out.append(r)
+    return out
+
+
+def window_label(ym: str, days: int, *, year: bool = True) -> str:
+    """'2026년 8월 1~14일'. 그 달 날수 이상이면 달 이름만('2026년 2월')."""
+    base = month_label(ym) if year else f"{int(ym[4:6])}월"
+    if not days or days >= _month_end(ym).day:
+        return base
+    return f"{base} 1~{days}일"
+
+
+def volume_view(data: dict | None) -> dict:
+    """거래 **건수**를 보여 줄 때 쓰는 값 묶음.
+
+    창(1~N일)을 센 날은 `data["volume"]`, 아니면(월초·말일 무렵·예전 자료) 그 달 전체인 맨 위 값.
+    전세가율·월세·면적대·장부는 여전히 맨 위(다 들어온 달)를 씁니다 — 표본이 작아지면 흔들려서입니다.
+    """
+    data = data or {}
+    vol = data.get("volume") or {}
+    if vol.get("districts"):
+        return vol
+    return {"window": False, "days": 0, "month": data.get("month", ""),
+            "month_label": data.get("month_label", ""), "short": data.get("month_label", ""),
+            "before_label": data.get("before_label", ""),
+            "districts": data.get("districts") or [], "total": data.get("total", 0),
+            "total_before": data.get("total_before", 0),
+            "map": data.get("map") or {}, "swings": data.get("swings") or []}
+
+
 # 서울 25개 자치구의 시군구 코드(법정동코드 앞 5자리). 기사에 나온 구를 바로 찾아보기 위한 표.
 # 다른 지역을 보려면 settings.yaml 의 stats.districts 를 고치면 되고, 이 표는 그때도 그대로 쓴다.
 SEOUL_CODES = {
@@ -553,6 +614,9 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
         return {}
     ym = month_of(run_date)
     before = prev_month(ym)
+    # 거래 건수는 신고 기한이 지난 앞쪽 날짜로 최신 달을 셉니다 (volume_window). 창이 없으면 None.
+    window = volume_window(run_date, min_days=int(settings.get("volume_min_days", 10))) \
+        if settings.get("volume_window", True) else None
     # 신고가는 거래량과 따로 봅니다 — 오늘까지 신고된 최근 두 달 계약분이 대상이고,
     # 그 앞 몇 달의 거래를 비교 바탕으로 씁니다. 거래량은 여전히 다 들어온 달(ym)로 셉니다.
     months_back = max(int(settings.get("history_months", 6)), 1)
@@ -563,7 +627,7 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
         past_months.append(cursor)
         cursor = prev_month(cursor)
 
-    rows, picks = [], []
+    rows, picks, vrows = [], [], []
     all_now: list[dict] = []      # 면적대 합계용. 구별로 나눈 것과 별개로 전체도 낸다.
     all_was: list[dict] = []
     for item in districts:
@@ -601,11 +665,30 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
         all_now += deals
         all_was += trades_of(before)
         rows.append(row)
+        if window:
+            vnow = summarize(within_days(trades_of(window["month"]), window["days"]))
+            vwas = summarize(within_days(trades_of(window["before"]), window["days"]))
+            vrows.append({"name": name, "code": code, "now": vnow, "was": vwas,
+                          "focus": bool(item.get("focus")),
+                          "change": vnow["count"] - vwas["count"]})
         picks += highlights(latest, history, district=name)
 
     if not rows:
         return {}
     rows.sort(key=lambda r: (not r["focus"], -r["now"]["count"]))
+    vrows.sort(key=lambda r: (not r["focus"], -r["now"]["count"]))
+    city = _city_block(cfg, ym, before, settings, window)
+    volume = {}
+    if window and vrows:
+        volume = {"window": True, "days": window["days"], "month": window["month"],
+                  "before": window["before"],
+                  "month_label": window_label(window["month"], window["days"]),
+                  "short": window_label(window["month"], window["days"], year=False),
+                  "before_label": window_label(window["before"], window["days"], year=False),
+                  "districts": vrows,
+                  "total": sum(r["now"]["count"] for r in vrows),
+                  "total_before": sum(r["was"]["count"] for r in vrows),
+                  "map": city.pop("volume_map", {}), "swings": city.pop("volume_swings", [])}
     picks.sort(key=lambda r: (r["kind"] != "신고가", -abs(r["pct"])))
     return {"month": ym, "month_label": month_label(ym),
             "before": before, "before_label": month_label(before), "districts": rows,
@@ -622,25 +705,34 @@ def collect(cfg, run_date: str, focus: list[str] | None = None) -> dict:
                        for r in rows if r.get("jeonse")],
             "rent": [{"name": r["name"], **r["rent"]} for r in rows if r.get("rent")],
             "sizes": size_change(size_mix(all_now), size_mix(all_was)),
-            **_city_block(cfg, ym, before, settings),
+            **{k: v for k, v in city.items() if not k.startswith("volume_")},
+            # 거래 건수는 이걸로 보여 준다 (volume_view). 비어 있으면 위의 달 전체 값.
+            "volume": volume,
             "warnings": suspect_drops(rows),
             "history_months": months_back,
             "total": sum(r["now"]["count"] for r in rows),
             "total_before": sum(r["was"]["count"] for r in rows)}
 
 
-def _city_block(cfg, ym: str, before: str, settings: dict) -> dict:
-    """서울 한 바퀴 결과를 collect 가 내놓는 모양으로. 꺼져 있으면 빈 칸만 돌려준다."""
+def _city_block(cfg, ym: str, before: str, settings: dict, window: dict | None = None) -> dict:
+    """서울 한 바퀴 결과를 collect 가 내놓는 모양으로. 꺼져 있으면 빈 칸만 돌려준다.
+
+    창이 있으면 건수 지도·급변 구는 창으로 세어 `volume_map`·`volume_swings` 에 두고, 맨 위
+    `map`·`swings` 는 비웁니다 — 같은 25개 구를 달 전체로 한 번 더 부르면 호출이 25번 늘어납니다.
+    """
     if not settings.get("map", True):
         return {"map": {}, "map_jeonse": {}, "swings": []}
-    city = city_wide(cfg, ym, before, jeonse=bool(settings.get("jeonse", True)))
-    return {"map": city.get("counts", {}),
-            "map_jeonse": city.get("jeonse", {}),
-            "swings": district_swings(city.get("counts", {}), city.get("before", {}),
-                                      city.get("hotspots", {}))}
+    city = city_wide(cfg, ym, before, jeonse=bool(settings.get("jeonse", True)), window=window)
+    swings = district_swings(city.get("counts", {}), city.get("before", {}), city.get("hotspots", {}),
+                             before_hotspots=city.get("before_hotspots", {}))
+    if window:
+        return {"map": {}, "map_jeonse": city.get("jeonse", {}), "swings": [],
+                "volume_map": city.get("counts", {}), "volume_swings": swings}
+    return {"map": city.get("counts", {}), "map_jeonse": city.get("jeonse", {}), "swings": swings}
 
 
-def city_wide(cfg, ym: str, before: str = "", *, jeonse: bool = True) -> dict:
+def city_wide(cfg, ym: str, before: str = "", *, jeonse: bool = True,
+              window: dict | None = None) -> dict:
     """서울 25개 구를 한 바퀴 돈다. 지도 두 장과 구 단위 급변을 여기서 얻는다.
 
     표에 올리는 8개 구는 지난 달들까지 받지만, 여기서는 **그 달(과 전달) 한 번씩**만
@@ -653,20 +745,33 @@ def city_wide(cfg, ym: str, before: str = "", *, jeonse: bool = True) -> dict:
     was: dict[str, int] = {}
     ratios: dict[str, float] = {}
     hotspots: dict[str, dict] = {}
+    before_hotspots: dict[str, dict] = {}       # 줄어든 구는 앞 기간의 몰림이 이유다
     for name, code in SEOUL_CODES.items():
-        deals = apt_trades(cfg, code, ym)
-        if deals:
-            counts[name] = len(deals)
-            hotspots[name] = _busiest_dong(deals)
-        if before:
-            prior = apt_trades(cfg, code, before)
-            if prior:
-                was[name] = len(prior)
+        got: dict[str, list[dict]] = {}          # 창의 전달이 곧 ym 인 날이 많아 한 번만 부른다
+
+        def fetch(month: str, _code: str = code) -> list[dict]:
+            if month not in got:
+                got[month] = apt_trades(cfg, _code, month)
+            return got[month]
+
+        deals = fetch(ym)
+        if window:
+            counted = within_days(fetch(window["month"]), window["days"])
+            prior = within_days(fetch(window["before"]), window["days"])
+        else:
+            counted, prior = deals, (fetch(before) if before else [])
+        if counted:
+            counts[name] = len(counted)
+            hotspots[name] = _busiest_dong(counted)
+        if prior:
+            was[name] = len(prior)
+            before_hotspots[name] = _busiest_dong(prior)
         if jeonse and deals:
             ratio = jeonse_ratio(deals, apt_rents(cfg, code, ym))
             if ratio:
                 ratios[name] = ratio["median"]
-    return {"counts": counts, "before": was, "jeonse": ratios, "hotspots": hotspots}
+    return {"counts": counts, "before": was, "jeonse": ratios, "hotspots": hotspots,
+            "before_hotspots": before_hotspots}
 
 
 def _busiest_dong(deals: list[dict]) -> dict:
@@ -683,7 +788,7 @@ def _busiest_dong(deals: list[dict]) -> dict:
 
 def district_swings(counts: dict, before: dict, hotspots: dict | None = None, *,
                     pct: float = 20.0, min_count: int = 40, limit: int = 4,
-                    concentrated: float = 40.0) -> list[dict]:
+                    concentrated: float = 40.0, before_hotspots: dict | None = None) -> list[dict]:
     """구 단위로 거래가 크게 늘거나 준 곳. 단지 단위 신고가와는 다른 이야기다.
 
     표의 '전달 대비' 는 우리가 고른 여덟 곳만 보여 줍니다. 스물다섯 곳을 다 세고 나면
@@ -693,6 +798,10 @@ def district_swings(counts: dict, before: dict, hotspots: dict | None = None, *,
     **한 동네에 몰린 경우를 밝힙니다.** 2026년 7월 중랑구가 208→501건으로 늘었는데
     501건 가운데 332건이 묵동이었습니다. 이런 달은 구 전체가 달아오른 게 아니라 큰 단지
     한 곳이 한꺼번에 신고된 것입니다. 비중이 `concentrated` 를 넘으면 그 동네를 함께 답니다.
+
+    **줄어든 구는 앞 기간을 봅니다** (`before_hotspots`, 2026-09-13). 그 묵동 몰림이 7월 1~14일에
+    있어서, 8월 1~14일과 견주면 중랑구가 −81% 로 잡혔습니다. 줄어든 이유는 지금이 아니라 앞 기간의
+    몰림이라 그쪽 동네를 달고 `when: "before"` 로 표시합니다.
     """
     found = []
     for name, now in counts.items():
@@ -702,10 +811,12 @@ def district_swings(counts: dict, before: dict, hotspots: dict | None = None, *,
         change = (now / prior - 1) * 100
         if abs(change) < pct:
             continue
-        spot = (hotspots or {}).get(name) or {}
+        when = "before" if change < 0 and before_hotspots is not None else "now"
+        spot = ((before_hotspots if when == "before" else hotspots) or {}).get(name) or {}
         # 템플릿이 StrictUndefined 라 항목은 늘 있어야 한다. 몰린 곳이 없으면 None.
         found.append({"name": name, "now": now, "before": prior, "pct": round(change, 1),
-                      "hotspot": spot if spot.get("share", 0) >= concentrated else None})
+                      "hotspot": ({**spot, "when": when}
+                                  if spot.get("share", 0) >= concentrated else None)})
     found.sort(key=lambda r: -abs(r["pct"]))
     return found[:limit]
 

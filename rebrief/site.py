@@ -171,8 +171,11 @@ def _stats_entries(day: Path) -> list[dict]:
     rows = data.get("districts") or []
     if not rows:
         return []
+    from .stats import volume_view
 
-    numbers = [{"label": f"{r['name']} 거래", "value": r["now"]["count"], "unit": "건"} for r in rows]
+    vol = volume_view(data)
+    numbers = [{"label": f"{r['name']} 거래", "value": r["now"]["count"], "unit": "건"}
+               for r in vol["districts"]]
     numbers += [{"label": f"{r['name']} 평균 거래가",
                  "value": round(r["now"]["avg"] / 100_000_000, 1), "unit": "억"} for r in rows]
     numbers += [{"label": f"{j['name']} 전세가율", "value": j["median"], "unit": "%"}
@@ -184,8 +187,8 @@ def _stats_entries(day: Path) -> list[dict]:
     return [{
         "title": f"실거래 집계 — {label}",
         "category": "실거래",
-        "one_liner": f"{label} 신고 매매 {data.get('total', 0):,}건 "
-                     f"({data.get('before_label', '')} {data.get('total_before', 0):,}건). "
+        "one_liner": f"{vol.get('month_label', label)} 매매 {vol.get('total', 0):,}건 "
+                     f"({vol.get('before_label', '')} {vol.get('total_before', 0):,}건). "
                      f"지역별 거래·평균가·전세가율·신고가.",
         "numbers": numbers,
         "href": "stats.html",

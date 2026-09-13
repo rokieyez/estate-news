@@ -2930,3 +2930,92 @@ def test_cards_put_record_prices_right_after_the_issue_that_mentions_them(cfg):
     # 상한 안에 든다
     assert len(images.cards(brief, date="2026-09-10", deals=deals, max_cards=4)) == 4
     assert images._eok(598000000) == "6억" and images._eok(720000000) == "7.2억"
+
+
+# ── 거래 건수: 신고 기한이 지난 앞쪽 날짜 창 (2026-09-13 사용자 지적 "아직도 7월 통계") ──
+
+
+def test_volume_window_counts_the_settled_days_of_the_newest_month():
+    from rebrief.stats import volume_window, window_label
+
+    # 9월 14일 — 8월 14일까지 계약분은 신고 기한(30일)+하루가 지났다
+    assert volume_window("2026-09-14") == {"month": "202608", "before": "202607", "days": 14}
+    assert window_label("202608", 14) == "2026년 8월 1~14일"
+    assert window_label("202607", 14, year=False) == "7월 1~14일"
+    assert window_label("202602", 30, year=False) == "2월"        # 그 달 날수를 넘으면 달 이름만
+    # 월초엔 날짜가 적어 흔들린다 — 창 없이 예전처럼 다 들어온 달 전체
+    assert volume_window("2026-09-07") is None
+    assert volume_window("2026-10-10") is None                      # 9월 9일까지 = 9일치
+    assert volume_window("2026-10-11")["days"] == 10
+    # 8월이 통째로 찬 날엔 창이 필요 없다 (month_of 가 8월)
+    assert volume_window("2026-09-30") is None
+    # 해를 넘어가도
+    assert volume_window("2026-01-15") == {"month": "202512", "before": "202511", "days": 15}
+
+
+def test_stats_collect_counts_the_window_but_keeps_the_settled_month(cfg, monkeypatch, tmp_path):
+    """건수는 8월 1~14일 대 7월 1~14일, 전세가율·장부는 다 들어온 7월 그대로."""
+    from rebrief import stats as S
+    from rebrief.images import trade_volume_bar
+    from rebrief.render import Renderer, stats_block_markdown
+    from rebrief.notify import stats_lines
+
+    monkeypatch.setenv("DATA_GO_KR_KEY", "테스트키")
+
+    class Resp:
+        def __init__(self, text): self.text = text
+        def raise_for_status(self): pass
+
+    def items(month, days):
+        return "".join(
+            f"<item><aptNm>단지{d}</aptNm><dealAmount>100,000</dealAmount><excluUseAr>84.0</excluUseAr>"
+            f"<dealYear>2026</dealYear><dealMonth>{month}</dealMonth><dealDay>{d}</dealDay>"
+            f"<umdNm>대치동</umdNm></item>" for d in days)
+
+    # 7월: 1~14일 5건 + 뒤쪽 5건(전체 10) · 8월: 1~14일 3건 + 뒤쪽 1건(아직 차는 중)
+    xml = {"202607": items(7, [1, 3, 5, 9, 14, 15, 20, 25, 28, 31]),
+           "202608": items(8, [2, 7, 14, 20])}
+
+    def fake_get(url, params=None, **kw):
+        body = "" if "Rent" in url else xml.get(params["DEAL_YMD"], "")
+        return Resp(f"<response><body><items>{body}</items></body></response>")
+
+    monkeypatch.setattr(S, "_get", fake_get)
+    monkeypatch.setitem(cfg.settings, "stats", {
+        "enabled": True, "max_districts": 2, "jeonse": False, "map": False, "history_months": 1,
+        "districts": [{"name": "강남구", "code": "11680"}, {"name": "송파구", "code": "11710"}]})
+
+    data = S.collect(cfg, "2026-09-14")                               # 그림은 두 구 이상일 때 그린다
+    assert data["month"] == "202607" and data["total"] == 20          # 장부·전세가율 쪽은 다 들어온 달
+    vol = S.volume_view(data)
+    assert vol["window"] and vol["month_label"] == "2026년 8월 1~14일"
+    assert vol["total"] == 6 and vol["total_before"] == 10             # 15일 뒤 계약은 세지 않는다
+    assert vol["districts"][0]["change"] == -2
+
+    # 보여 주는 곳은 모두 창을 쓴다 — 그림·블로그 상자·알림·통계 페이지
+    img = trade_volume_bar(data, "2026-09-14")
+    assert "2026년 8월 1~14일 아파트 매매 거래 건수" in img.title
+    assert "7월 1~14일 대비" in img.svg and "14일까지 계약분만" in img.svg
+    assert "2026년 8월 1~14일 아파트 실거래" in stats_block_markdown(data)
+    assert stats_lines(data)[0].startswith("🏢 8월 1~14일 계약 매매 6건 (7월 1~14일 대비 -4건)")
+    body = Renderer(cfg, tmp_path, "2026-09-14").stats(data).read_text(encoding="utf-8")
+    assert "실거래가로 본 2026년 8월 1~14일" in body and "| 강남구 | 3건 | -2 |" in body
+
+    # 월초(창 없음)에는 예전 그대로 — 7월 전체
+    assert S.volume_view(S.collect(cfg, "2026-09-07"))["month_label"] == "2026년 7월"
+
+
+def test_swings_blame_the_earlier_period_when_a_district_drops():
+    """줄어든 구는 앞 기간에 한 단지가 몰려 신고된 탓일 수 있다 (9/14 창에서 중랑구 −81%)."""
+    from rebrief.render import _swing_spot
+    from rebrief.stats import district_swings
+
+    got = district_swings({"중랑구": 50, "노원구": 300}, {"중랑구": 250, "노원구": 200},
+                          {"중랑구": {"dong": "면목동", "count": 10, "share": 20.0},
+                           "노원구": {"dong": "상계동", "count": 150, "share": 50.0}},
+                          before_hotspots={"중랑구": {"dong": "묵동", "count": 180, "share": 72.0}})
+    by = {g["name"]: g for g in got}
+    assert by["중랑구"]["hotspot"]["dong"] == "묵동" and by["중랑구"]["hotspot"]["when"] == "before"
+    assert by["노원구"]["hotspot"]["when"] == "now"
+    assert _swing_spot(by["중랑구"], "7월 1~14일") == ", 7월 1~14일엔 묵동에 72.0% 몰렸음"
+    assert _swing_spot(by["노원구"]) == ", 상계동에 50.0% 몰림"
