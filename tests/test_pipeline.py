@@ -571,6 +571,24 @@ def test_tts_text_follows_the_script_templates(cfg, tmp_path):
         assert noise not in longform
 
 
+def test_speakable_spells_out_symbols_tts_trips_on():
+    """TTS 가 건너뛰거나 틀리게 읽는 기호·단위만 풀어 쓰고, 숫자와 줄 수는 그대로 둔다."""
+    from rebrief.tts import speakable
+
+    cases = {
+        "강남·서초·송파 아파트값이 -0.03% 내렸습니다.": "강남, 서초, 송파 아파트값이 마이너스 0.03퍼센트 내렸습니다.",
+        "벽산 84.8㎡는 10.8억(+25.6%)에 팔렸습니다.": "벽산 84.8제곱미터는 10.8억(플러스 25.6퍼센트)에 팔렸습니다.",
+        "8월 1~14일 계약분은 1,094건→797건입니다.": "8월 1일에서 14일 계약분은 1,094건에서 797건입니다.",
+        "강북구가 0.46%↑, 3~5%p 차이": "강북구가 0.46퍼센트 상승, 3퍼센트포인트에서 5퍼센트포인트 차이",
+        "2026-09-14 기준 ▲52건": "2026년 9월 14일 기준 52건 증가",
+        "1~14일까지 봤습니다": "1일에서 14일까지 봤습니다",          # 조사는 단위로 먹지 않는다
+        "KTX-이음 1-2호선 3곳": "KTX-이음 1-2호선 3곳",              # 하이픈 이름·숫자는 그대로
+    }
+    for src, want in cases.items():
+        assert speakable(src) == want, src
+    assert speakable("가·나\n\n다") == "가, 나\n\n다"               # 줄 수는 그대로
+
+
 def test_site_script_pages_have_a_tts_copy_button(cfg, monkeypatch, tmp_path):
     """쇼츠·롱폼 페이지에만 「자막만 복사」 버튼이 붙고, 담긴 글은 이스케이프된다."""
     from rebrief.site import build_site
@@ -587,6 +605,8 @@ def test_site_script_pages_have_a_tts_copy_button(cfg, monkeypatch, tmp_path):
     shorts = (day / "script-shorts.html").read_text(encoding="utf-8")
     longform = (day / "script-longform.html").read_text(encoding="utf-8")
     assert 'id="tts-copy"' in shorts and 'id="tts-copy"' in longform
+    # 기호를 풀어 쓴 두 번째 버튼 — 쇼츠에 '-0.03%' 가 있어 생긴다
+    assert 'data-target="tts-read"' in shorts and "마이너스 0.03퍼센트" in shorts
     assert "국토부가 전세사기 피해자 지원을 확대한다고 밝혔습니다." in longform
     assert "&lt;script&gt;x&lt;/script&gt;" in shorts and "<script>x</script>" not in shorts
     for other in ("brief.html", "sources.html"):

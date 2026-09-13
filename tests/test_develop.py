@@ -3036,3 +3036,37 @@ def test_recaps_skip_count_charts_drawn_for_a_window(cfg, tmp_path):
     out.mkdir()
     got = copy_stats_images(cfg, out, "2026-09-20")
     assert got["from"] == "2026-09-07" and (out / "img-stats-map.png").exists()
+
+
+def test_cards_add_a_trade_volume_card_before_the_rest(cfg):
+    """구별 거래 건수 카드 한 장 — 이슈 카드들 뒤, '그 밖의 소식' 앞 (2026-09-13 사용자 선택)."""
+    from rebrief import images
+
+    vol = {"window": True, "days": 14, "month": "202608", "short": "8월 1~14일",
+           "before_label": "7월 1~14일", "total": 468, "total_before": 615,
+           "districts": [{"name": n, "now": {"count": c}, "was": {"count": w}, "change": c - w}
+                         for n, c, w in (("강남구", 50, 88), ("노원구", 273, 340), ("강서구", 145, 187))]}
+    got = images.cards(_brief_for_cards(7), date="2026-09-14", volume=vol)
+    slugs = [g.slug for g in got]
+    vols = [k for k, s in enumerate(slugs) if s.endswith("-volume")]
+    assert len(vols) == 1
+    i = vols[0]
+    assert all(s.endswith(("-cover", "-numbers", "-issue", "-deals")) for s in slugs[:i])
+    assert all(s.endswith(("-rest", "-deals")) for s in slugs[i + 1:])
+    card = got[i]
+    assert "8월 1~14일 아파트 거래" == card.title
+    assert "노원구" in card.svg and "▼67건" in card.svg and "신고 기한" in card.svg
+    assert card.svg.index("노원구") < card.svg.index("강서구") < card.svg.index("강남구")   # 많은 순
+    from rebrief.site import _asset_label
+    assert _asset_label(f"{card.slug}.png") == f"카드뉴스 {i + 1} 거래 건수"      # 그림 장의 이름표
+
+    # 구가 하나뿐이면 장을 만들지 않고, 상한은 그대로 지킨다
+    one = dict(vol, districts=vol["districts"][:1])
+    assert not any(g.slug.endswith("-volume")
+                   for g in images.cards(_brief_for_cards(7), date="2026-09-14", volume=one))
+    assert len(images.cards(_brief_for_cards(9), date="2026-09-14", volume=vol)) == 10
+    # 창이 없는 날(달 전체)은 달 이름만, 맨 아래 안내도 없다
+    month = dict(vol, window=False, month="202607", before_label="2026년 6월")
+    card = next(g for g in images.cards(_brief_for_cards(3), date="2026-09-07", volume=month)
+                if g.slug.endswith("-volume"))
+    assert card.title == "7월 아파트 거래" and "신고 기한" not in card.svg

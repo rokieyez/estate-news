@@ -10,6 +10,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # 공통 파일 짝 맞춤 시험(tests/test_shared_files.py)이 견줄 옆 저장소. 둘 다 공개라 토큰이 필요 없다.
+      - uses: actions/checkout@v7
+        with:
+          repository: rokieyez/${{ github.event.repository.name == 'estate-news' && 'politics-news' || 'estate-news' }}
+          path: _sibling
       - uses: actions/setup-python@v7
         with:
           python-version: "3.11"
@@ -17,3 +22,5 @@ jobs:
           cache-dependency-path: requirements-dev.txt
       - run: pip install -r requirements-dev.txt
       - run: python -m pytest tests/ -q
+        env:
+          REBRIEF_SIBLING: ${{ github.workspace }}/_sibling

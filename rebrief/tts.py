@@ -165,3 +165,59 @@ def narration(filename: str, md: str) -> str:
     if filename == "script-longform.md":
         return longform_text(md)
     return ""
+
+
+# ── TTS 가 틀리게 읽기 쉬운 기호·단위를 풀어 쓴 글 (2026-09-13, 마무리 아이디어 3) ─────────
+#
+# 숫자 자체는 그대로 둡니다. 요즘 TTS 는 「3곳」을 「세 곳」, 「84.8」을 「팔십사 점 팔」로 문맥에
+# 맞춰 읽는데, 우리가 한글로 바꿔 넣으면 「삼 곳」 같은 틀린 읽기를 우리가 만들게 됩니다.
+# 틀리기 쉬운 것은 **기호**입니다 — ㎡ 를 건너뛰거나 「m2」로, %p 를 「퍼센트 피」로, 1~14일 의 ~ 를
+# 소리 없이, → 를 읽지 않거나 「화살표」로. 그것만 말로 풀어 씁니다.
+# **줄은 늘리거나 줄이지 않습니다** — motion-studio 가 줄과 쉼으로 음성에 자막을 맞춥니다.
+# 자막(SRT)과 글자가 달라지므로 motion-studio 에 **대본으로 넣을 글은 「자막만 복사」** 쪽입니다.
+
+_NUM = r"\d+(?:[.,]\d+)*"
+# 수 뒤에 붙는 단위 — 긴 것부터. 조사까지 먹지 않게 아는 단위만 받는다(「1~14일까지」의 '까').
+_UNIT_ALT = "|".join(re.escape(u) for u in (
+    "%p", "%", "㎡", "억원", "만원", "조원", "퍼센트", "억", "만", "조", "원", "일", "월", "년", "주",
+    "시", "분", "초", "명", "건", "곳", "개", "채", "배", "층", "위", "호", "대", "세", "살", "차", "회", "평"))
+_RANGE = re.compile(r"(" + _NUM + r")\s*[~∼〜]\s*(" + _NUM + r")(" + _UNIT_ALT + r")?")
+_ISO_DATE = re.compile(r"(?<!\d)(\d{4})-(\d{1,2})-(\d{1,2})(?!\d)")
+_ARROW = re.compile(r"\s*(?:→|⇒|->)\s*")
+_AMOUNT = r"(" + _NUM + r"(?:" + _UNIT_ALT + r")?)"
+_UP = re.compile(_AMOUNT + r"\s*[↑▲]")
+_DOWN = re.compile(_AMOUNT + r"\s*[↓▼]")
+_MARK_UP = re.compile(r"▲\s*" + _AMOUNT)
+_MARK_DOWN = re.compile(r"▼\s*" + _AMOUNT)
+_SIGN = re.compile(r"(^|[\s(\[「'\"])([+\-−])(?=\d)")
+_DOT = re.compile(r"(?<=[가-힣A-Za-z0-9])\s*[·ㆍ]\s*(?=[가-힣A-Za-z0-9])")
+_UNITS = (
+    (re.compile(r"%\s*[pP](?![A-Za-z])"), "퍼센트포인트"),
+    (re.compile(r"%"), "퍼센트"),
+    (re.compile(r"㎡|(?<=\d)\s?m²|(?<=\d)\s?m2(?![0-9A-Za-z])"), "제곱미터"),
+    (re.compile(r"㎢"), "제곱킬로미터"),
+    (re.compile(r"㎞|(?<=\d)\s?km(?![A-Za-z])"), "킬로미터"),
+    (re.compile(r"(?<![A-Za-z])vs\.?(?![A-Za-z])", re.I), "대"),
+)
+
+
+def _speak_line(line: str) -> str:
+    if not line.strip():
+        return line
+    s = _ISO_DATE.sub(lambda m: f"{m[1]}년 {int(m[2])}월 {int(m[3])}일", line)
+    s = _RANGE.sub(lambda m: f"{m[1]}{m[3] or ''}에서 {m[2]}{m[3] or ''}", s)
+    s = _MARK_UP.sub(r"\1 증가", s)
+    s = _MARK_DOWN.sub(r"\1 감소", s)
+    s = _UP.sub(r"\1 상승", s)
+    s = _DOWN.sub(r"\1 하락", s)
+    s = _ARROW.sub("에서 ", s)
+    s = _SIGN.sub(lambda m: m[1] + ("플러스 " if m[2] == "+" else "마이너스 "), s)
+    for pattern, word in _UNITS:
+        s = pattern.sub(word, s)
+    s = _DOT.sub(", ", s)
+    return re.sub(r"[ \t]{2,}", " ", s).strip()
+
+
+def speakable(text: str) -> str:
+    """읽는 말에서 TTS 가 틀리게 읽기 쉬운 기호·단위만 말로 풀어 쓴다. 줄 수는 그대로."""
+    return "\n".join(_speak_line(line) for line in (text or "").split("\n"))

@@ -1172,7 +1172,7 @@ CARD_PAPER = ("#dfeaf4", "#0a2f4f", "#3a6588", "#b9d0e3", "#0b6a8f")
 
 # 일곱 장의 박자. 표지·목록은 남색, 숫자는 짙은 남색, 이슈는 밝은 청사진.
 CARD_FACES = {"cover": CARD_DARK, "numbers": CARD_FLOOD, "issue": CARD_PAPER,
-              "rest": CARD_DARK, "deals": CARD_FLOOD}
+              "rest": CARD_DARK, "deals": CARD_FLOOD, "volume": CARD_FLOOD}
 
 CARD_LIGHT = "#ffffff"     # 소제목·사진 위 글씨. 어느 낯에서든 흰색이다.
 CARD_GRID = 60             # 제도 격자 한 칸
@@ -1955,6 +1955,65 @@ def _deals_card(deals: list[dict], month_label: str, n: int, total: int,
     return Image(f"card-{n}-deals", _embed_fonts("\n".join(p)), title)
 
 
+def _volume_card(vol: dict, n: int, total: int, date: str, channel: str) -> Image:
+    """구별 아파트 매매 거래 건수 — 같은 기간 전달 대비. 우리가 직접 센 값이라 모델을 거치지 않는다.
+
+    2026-09-13 사용자 선택(마무리 아이디어 4). 건수는 `stats.volume_view` 를 씁니다 — 신고 기한이
+    지난 날짜 창(예: 8월 1~14일)이 있으면 그것, 없으면 다 들어온 달 전체. 창일 때는 맨 아래에 밝힙니다.
+    """
+    w, h = CARD_SIZE
+    face = CARD_FACES["volume"]
+    ground, ink, dim, rule, signal = face
+    p, top, bottom = _card_frame(face, n, total, date=date, channel=channel)
+    inner = w - 192
+
+    month = str(vol.get("month") or "")
+    if vol.get("window"):
+        period = str(vol.get("short") or "")
+    elif len(month) == 6 and month.isdigit():
+        period = f"{int(month[4:6])}월"
+    else:
+        period = str(vol.get("month_label") or "")
+    title = f"{period} 아파트 거래" if period else "아파트 거래 건수"
+    lines, size = _fit(title, 68, inner, 1, floor=48)
+    p.append(f'<text x="{w/2:.0f}" y="{top+66:.0f}" font-size="{size:.0f}" font-weight="800" '
+             f'letter-spacing="-1" text-anchor="middle" fill="{CARD_LIGHT}">{esc(lines[0])}</text>')
+    tot, before = int(vol.get("total") or 0), int(vol.get("total_before") or 0)
+    sub = f"{vol.get('before_label', '')} 대비 · 합계 {tot:,}건 ({tot - before:+,})"
+    p.append(f'<text x="{w/2:.0f}" y="{top+116:.0f}" font-size="30" text-anchor="middle" '
+             f'fill="{dim}">{esc(sub)}</text>')
+    head_h = 160
+    foot_h = 48 if vol.get("window") else 0
+    room = bottom - top - head_h - foot_h
+
+    ranked = sorted((r for r in (vol.get("districts") or []) if (r.get("now") or {}).get("count")),
+                    key=lambda r: -r["now"]["count"])
+    row_h = 104
+    rows = ranked[: max(1, min(6, int(room // row_h)))]
+    y = top + head_h + max(0, (room - len(rows) * row_h) / 2)
+    for i, r in enumerate(rows):
+        count = int(r["now"]["count"])
+        was = int((r.get("was") or {}).get("count") or 0)
+        change = int(r.get("change", count - was))
+        base = y + 46
+        p.append(f'<text x="96" y="{base:.0f}" font-size="44" font-weight="800" letter-spacing="-1" '
+                 f'fill="{ink}">{esc(r.get("name", ""))}</text>')
+        _numeral(p, f"{count:,}건", w - 96, base + 4, 56, signal, anchor="end")
+        if was:
+            mark = "▲" if change > 0 else ("▼" if change < 0 else "")
+            note = f"{mark}{abs(change)}건 · {change / was * 100:+.1f}%" if change else "변화 없음"
+            p.append(f'<text x="96" y="{base + 42:.0f}" font-size="28" fill="{dim}">{esc(note)}</text>')
+        y += row_h
+        if i < len(rows) - 1:
+            p.append(f'<line x1="96" y1="{y-4:.0f}" x2="{w-96}" y2="{y-4:.0f}" '
+                     f'stroke="{ink}" stroke-width="1.5" opacity="0.28"/>')
+    if foot_h:
+        p.append(f'<text x="{w/2:.0f}" y="{bottom - 12:.0f}" font-size="24" text-anchor="middle" '
+                 f'fill="{dim}">{esc("신고 기한(계약 후 30일)이 지난 계약분만 셌습니다")}</text>')
+    p.append("</svg>")
+    return Image(f"card-{n}-volume", _embed_fonts("\n".join(p)), title)
+
+
 def _list_card(title: str, items: list[str], slug: str, n: int, total: int,
                date: str, channel: str) -> Image:
     """제목 하나에 항목 몇 줄. 번호가 도면의 부품 번호처럼 붙는다."""
@@ -2024,7 +2083,8 @@ def _drop_repeats(issues: list[dict], threshold: float = 0.40) -> list[dict]:
 def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[dict] | None = None,
           max_cards: int = 10,
           art: list[Path | tuple[Path, str]] | None = None,
-          deals: list[dict] | None = None, deals_label: str = "") -> list[Image]:
+          deals: list[dict] | None = None, deals_label: str = "",
+          volume: dict | None = None) -> list[Image]:
     """하루치 브리핑을 유튜브 게시물용 카드 5~7장으로.
 
     **모델을 새로 부르지 않습니다.** 이미 만들어 둔 브리핑(headline·issues·numbers·
@@ -2039,6 +2099,9 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
     `deals` 는 그달 실거래 신고가 목록(`stats.highlights`)입니다. 이슈가 신고가·최고가를
     말하는 날 **그 이슈 카드 바로 다음 장**에 단지와 금액을 싣습니다 (2026-09-10 사용자 요청).
     수치가 없거나 그런 이슈가 없으면 장이 생기지 않습니다.
+
+    `volume` 은 구별 거래 건수(`stats.volume_view`)입니다. 두 구 이상이면 이슈 카드들 뒤,
+    '그 밖의 소식' 앞에 한 장을 싣습니다 (2026-09-13). 짙은 남색이라 앞뒤 낯과 박자가 맞습니다.
 
     `art` 를 넘기면 표지와 이슈 카드 위쪽에 **그날 만든 인포그래픽**을 얹습니다.
     기사 사진이 아닙니다 — 남의 사진은 저작권이 있어 쓸 수 없고 수집하지도 않습니다.
@@ -2066,6 +2129,8 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
             break
     deal_rows = [d for d in (deals or []) if d.get("kind", "신고가") == "신고가" and d.get("amount")]
     has_deals = bool(deal_rows) and any(_mentions_deals(i) for i in issues)
+    vol_rows = [r for r in ((volume or {}).get("districts") or []) if (r.get("now") or {}).get("count")]
+    has_volume = len(vol_rows) >= 2
 
     # 장수를 먼저 정한다 — 쪽번호(02 / 07)를 찍어야 하므로.
     #
@@ -2073,7 +2138,7 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
     # 적은 날은 줄어듭니다. `max_cards` 는 상한일 뿐 목표가 아닙니다 — 억지로 채우면
     # 내용 없는 카드가 한 장 더 붙습니다.
     def layout(with_numbers: bool) -> tuple[int, list[dict]]:
-        fixed = 1 + int(with_numbers) + int(has_deals)     # 표지·숫자·신고가
+        fixed = 1 + int(with_numbers) + int(has_deals) + int(has_volume)   # 표지·숫자·신고가·거래 건수
         room = max(1, max_cards - fixed)                   # 이슈에 쓸 수 있는 장수
         n = min(len(issues), max(1, room - 1))             # '그 밖의 소식' 한 장을 남겨 둔다
         tail = issues[n:]
@@ -2104,6 +2169,8 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
         if has_deals and not placed and _mentions_deals(issues[i]):
             plan.append("deals")           # 신고가를 말한 이슈 바로 다음 장
             placed = True
+    if has_volume:
+        plan.append("volume")              # 이슈를 다 본 뒤, 목록 장 앞에
     if rest:
         plan.append("rest")
     if has_deals and not placed:           # 그 이슈가 '그 밖의 소식' 에 묶인 날
@@ -2138,4 +2205,6 @@ def cards(brief: dict, *, date: str = "", channel: str = "", key_numbers: list[d
                                   "rest", n, total, date, channel))
         elif kind == "deals":
             out.append(_deals_card(deal_rows, deals_label, n, total, date, channel))
+        elif kind == "volume":
+            out.append(_volume_card(volume or {}, n, total, date, channel))
     return out

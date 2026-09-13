@@ -290,6 +290,10 @@ class Renderer:
         if not (cfg.get("enabled", True) and cfg.get("cards", True)):
             return []
         payload = brief.model_dump() if hasattr(brief, "model_dump") else dict(brief)
+        from .stats import volume_view
+
+        # 구별 거래 건수 한 장 (images.cards_volume 으로 끔). 건수는 신고 기한이 지난 날짜 창.
+        volume = volume_view(stats) if stats and cfg.get("cards_volume", True) else None
         made = images_mod.cards(
             payload,
             date=self.date,
@@ -303,6 +307,7 @@ class Renderer:
             deals_label=_deals_months((stats or {}).get("highlights") or [], year=False)
                         or str((stats or {}).get("highlights_short")
                                or (stats or {}).get("month_label", "") or ""),
+            volume=volume,
         )
         # 카드는 밑그림이 이미 1080×1080 입니다. 2배로 뽑으면 2160 이 되는데, 올릴 곳인
         # 유튜브 커뮤니티 게시물은 어차피 1080 언저리로 줄여 보여 줍니다 — 늘어난 화소는

@@ -59,6 +59,8 @@
   }
   .tts button.done { background: #1f8a4c; }
   .tts .note { margin: 10px 0 0; font-size: 14px; color: #4a4f55; }
+  .tts button.alt { margin-top: 8px; background: #fff; color: #256abf; border: 1px solid #256abf; }
+  .tts button.alt.done { background: #1f8a4c; color: #fff; border-color: #1f8a4c; }
   .tts pre { white-space: pre-wrap; font-size: 14px; line-height: 1.7; max-height: 320px; overflow-y: auto; margin: 8px 0 0; }
 </style>
 </head>
@@ -78,11 +80,21 @@
 {% if tts|default('', true) %}
   {# 대본 페이지 — 화면 지시·자료화면을 뺀 읽는 말만 TTS 서비스에 붙여 넣게 #}
   <div class="card tts">
-    <button type="button" id="tts-copy">🎙 자막만 복사 (TTS 붙여넣기용)</button>
-    <p class="note">화면 지시·자료화면·제목은 빼고 읽는 말만 담깁니다 · 약 {{ tts|length }}자</p>
+    <button type="button" id="tts-copy" data-target="tts-text">🎙 자막만 복사 (TTS 붙여넣기용)</button>
+{% set tts_alt = tts_read|default('', true) and tts_read != tts %}
+{% if tts_alt %}
+    <button type="button" class="alt" data-target="tts-read">🔢 숫자·기호 풀어 쓴 글 복사</button>
+{% endif %}
+    <p class="note">화면 지시·자료화면·제목은 빼고 읽는 말만 담깁니다 · 약 {{ tts|length }}자{% if tts_alt %}<br>
+      TTS 가 ㎡·%·~·→ 같은 기호를 건너뛰거나 틀리게 읽으면 아래 버튼을 쓰세요. 자막 파일과 글자가 달라지니
+      motion-studio 에 대본으로 넣을 때는 위 버튼 글을 쓰세요.{% endif %}</p>
     <details>
       <summary>복사될 글 미리보기</summary>
       <pre id="tts-text">{{ tts }}</pre>
+{% if tts_alt %}
+      <p class="note">풀어 쓴 글</p>
+      <pre id="tts-read">{{ tts_read }}</pre>
+{% endif %}
     </details>
   </div>
 {% endif %}
@@ -92,9 +104,9 @@
 </div>
 {% if tts|default('', true) %}
 <script>
-document.getElementById("tts-copy").addEventListener("click", function () {
+document.querySelectorAll(".tts button[data-target]").forEach(function (b) { b.addEventListener("click", function () {
   var btn = this;
-  var text = document.getElementById("tts-text").textContent;
+  var text = document.getElementById(btn.dataset.target).textContent;
   function flash() {
     var original = btn.textContent;
     btn.textContent = "복사됨 ✓ TTS 에 붙여 넣으세요";
@@ -117,7 +129,7 @@ document.getElementById("tts-copy").addEventListener("click", function () {
   } else {
     fallback();
   }
-});
+}); });
 </script>
 {% endif %}
 </body>

@@ -22,7 +22,7 @@ import markdown as markdown_lib
 from .config import Config
 from .render import make_env
 from .sanitize import clean_html
-from .tts import narration
+from .tts import narration, speakable
 
 log = logging.getLogger(__name__)
 
@@ -507,12 +507,14 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
         else:
             href = filename.replace(".md", ".html")
             text = source_file.read_text(encoding="utf-8")
+            said = narration(filename, text)
             html = env.get_template("site_page.html.j2").render(
                 title=label,
                 date=day.name,
                 age_days=_age_days(day.name),
                 body_html=md_to_html(text),
-                tts=narration(filename, text),     # 대본이면 「자막만 복사」 버튼
+                tts=said,                          # 대본이면 「자막만 복사」 버튼
+                tts_read=speakable(said),          # 그리고 기호·단위를 풀어 쓴 글
                 meta=meta_tags(
                     site_base(cfg),
                     title=f"{info['headline'] or label} — {day.name}",
@@ -613,7 +615,7 @@ def _copy_assets(day: Path, dest: Path) -> list[dict]:
 
 # 카드 파일 이름(card-<쪽>-<낯>.png)에서 낯을 사람 말로 옮긴다.
 _CARD_FACES = {"cover": "표지", "numbers": "오늘의 숫자", "issue": "이슈",
-               "rest": "나머지 이슈", "deals": "신고가",
+               "rest": "나머지 이슈", "deals": "신고가", "volume": "거래 건수",
                "watch": "내일 볼 것"}   # 2026-09-09 전 카드에만 있는 낯. 지난 날짜 이름표용
 _CARD_NAME = re.compile(r"^card-(\d+)-([a-z]+)$")
 
