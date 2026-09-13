@@ -3019,3 +3019,20 @@ def test_swings_blame_the_earlier_period_when_a_district_drops():
     assert by["노원구"]["hotspot"]["when"] == "now"
     assert _swing_spot(by["중랑구"], "7월 1~14일") == ", 7월 1~14일엔 묵동에 72.0% 몰렸음"
     assert _swing_spot(by["노원구"]) == ", 상계동에 50.0% 몰림"
+
+
+def test_recaps_skip_count_charts_drawn_for_a_window(cfg, tmp_path):
+    """결산 글은 다 들어온 달을 말한다 — '8월 1~14일' 그림을 가져오면 글과 그림의 달이 갈린다."""
+    import json
+
+    from rebrief.render import copy_stats_images
+
+    for day, window in (("2026-09-15", True), ("2026-09-07", False)):
+        d = cfg.output_dir / day
+        d.mkdir(parents=True)
+        (d / "img-stats-map.png").write_bytes(b"\x89PNG")
+        (d / "stats.json").write_text(json.dumps({"volume": {"window": window}}), encoding="utf-8")
+    out = tmp_path / "recap"
+    out.mkdir()
+    got = copy_stats_images(cfg, out, "2026-09-20")
+    assert got["from"] == "2026-09-07" and (out / "img-stats-map.png").exists()

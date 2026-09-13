@@ -1562,12 +1562,27 @@ def _now() -> str:
     return datetime.now().strftime("%Y-%m-%d %H:%M")
 
 
+def _counted_window(day: Path) -> bool:
+    """그날 거래 건수를 1~N일 창으로 셌는지 (stats.json 의 volume). 못 읽으면 아니라고 본다."""
+    import json as _json
+
+    try:
+        data = _json.loads((day / "stats.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return False
+    return bool((data.get("volume") or {}).get("window"))
+
+
 def copy_stats_images(cfg, out_dir: Path, upto: str, *, back: int = 40) -> dict[str, str]:
     """결산 폴더에 그날의 실거래 그림을 복사해 온다.
 
     결산에는 표만 있고 그림이 없었습니다. 같은 달 수치를 그린 그림을 이미 날마다 만들고
     있으니 새로 그릴 것 없이 가져다 씁니다. `upto` 부터 거꾸로 훑어 **가장 최근에 만든**
     그림을 씁니다 — 통계가 없는 날도 있기 때문입니다.
+
+    **건수 창(1~N일)을 센 날은 건너뜁니다** (2026-09-13). 결산 글은 장부의 '다 들어온 달' 을 말하는데
+    그날 그림은 '8월 1~14일' 이라, 글은 7월·그림은 8월이 됩니다. 창이 없는 날(월초·말일 무렵)의
+    그림은 장부와 같은 달이라 그걸 씁니다.
     """
     import shutil
     from datetime import date as _date
@@ -1582,6 +1597,8 @@ def copy_stats_images(cfg, out_dir: Path, upto: str, *, back: int = 40) -> dict[
     for i in range(back):
         day = cfg.output_dir / (last - _td(days=i)).isoformat()
         if not (day / wanted["map"]).exists() and not (day / wanted["volume"]).exists():
+            continue
+        if _counted_window(day):
             continue
         made: dict[str, str] = {}
         for key, name in wanted.items():
