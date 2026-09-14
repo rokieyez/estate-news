@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>분양가상한제 건축비 인상, 4.07%…9월 15일 부돌보 브리핑</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
+  body {
+    margin: 0; padding: 0 16px 80px;
+    color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.8; font-size: 16px;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    margin: 0 -16px 20px; padding: 12px 16px;
+    background: #03c75a; color: #fff;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .bar strong { margin-right: auto; font-size: 15px; }
+  .bar button {
+    border: 0; border-radius: 6px; padding: 8px 14px;
+    background: rgba(255,255,255,.18); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .bar button:hover { background: rgba(255,255,255,.3); }
+  .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
+  .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
+  #post p { margin: 0 0 18px; }
+  #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
+  #post li { margin-bottom: 8px; }
+  #post table { border-collapse: collapse; width: 100%; margin: 0 0 20px; font-size: 15px; }
+  #post th, #post td { border: 1px solid #ddd; padding: 9px 12px; text-align: left; }
+  #post th { background: #f2f4f6; font-weight: 700; }
+  #post blockquote {
+    margin: 0 0 18px; padding: 12px 16px;
+    background: #f7f8fa; border-left: 4px solid #03c75a; color: #444;
+  }
+  #post a { color: #0068c3; }
+  .imgslot {
+    margin: 0 0 20px; padding: 22px 16px; text-align: center;
+    border: 2px dashed #c9cdd2; border-radius: 8px;
+    background: #fafbfc; color: #6b7178; font-size: 14px;
+  }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .photo-links { margin: -12px 0 20px; font-size: 13px; color: #6b7178; text-align: center; }
+  .photo-links a { color: #0068c3; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
+  .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
+  .hint {
+    max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    font-size: 14px; line-height: 1.75; color: #5f4b16;
+  }
+  .hint ol { margin: 8px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>네이버 블로그 붙여넣기</strong>
+  <button type="button" data-copy="title">제목 복사</button>
+  <button type="button" data-copy="post">본문 복사</button>
+  <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="https://blog.naver.com/rikiwiki/postwrite" target="_blank" rel="noopener">글쓰기 열기</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1 class="title" id="title">분양가상한제 건축비 인상, 4.07%…9월 15일 부돌보 브리핑</h1>
+    <div class="meta">2026-09-15 · 부동산</div>
+
+    <div id="post">
+<div class="imgslot has-file">📷 대표 이미지 — 검색 목록에 이 그림이 썸네일로 뜹니다<br><small>→ 파일 <b>img-0-cover.png</b> 을 <b>글 맨 위</b>에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-0-cover.png" alt="대표 이미지"><p style="margin:0 0 14px;font-size:14px;color:#767676">이 글은 2026년 9월 15일 기준으로 정리한 내용입니다. 실거래 거래 건수는 2026년 8월 1~15일 계약분(신고 기한이 지난 것), 전세가율 등은 2026년 7월 신고분입니다.</p><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px"><b style="font-size:15px">3줄 요약</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">분양가상한제 건축비 인상이 두 달 새 4.07%로 확정 수순입니다.</li><li style="margin-bottom:6px">강남·서초·송파·용산과 3기 신도시 공공분양에 적용됩니다.</li><li style="margin-bottom:6px">청약 대기자라면 분양가 산정 항목부터 확인해 보세요.</li></ul></div><p>오늘 부동산 소식의 중심은 <strong>분양가상한제 건축비 인상</strong>입니다. 두 달 새 <span class="hl" style="background-color:#fff59d"><strong>4.07%</strong></span> 오르는 것으로 나타났습니다.</p>
+<p>적용 대상은 강남·서초·송파·용산 등 서울 핵심 지역과 3기 신도시 공공분양입니다. 청약을 준비 중이시라면 눈여겨보실 대목입니다.</p>
+<div class="imgslot has-file">📷 이미지 — 분상제 기본형 건축비 인상률 4.07%를 보여주는 그래픽<br><small>→ 파일 <b>img-1-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-1-stat-card.png" alt="분상제 기본형 건축비 인상률 4.07%를 보여주는 그래픽">
+<h2>분양가상한제 건축비 인상, 숫자로 보면</h2>
+<p>분양가상한제는 아파트 분양가를 땅값과 건축비를 더한 금액 아래로 제한하는 제도입니다. 그 건축비의 기준이 되는 값이 '기본형 건축비'입니다.</p>
+<p>이번에 발표된 수치는 아래와 같습니다.</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>인상률</td>
+<td>4.07% (두 달 새)</td>
+</tr>
+<tr>
+<td>배경</td>
+<td>재해방지 등 안전비용 증가</td>
+</tr>
+<tr>
+<td>적용</td>
+<td>강남·서초·송파·용산, 3기 신도시 공공분양</td>
+</tr>
+</tbody>
+</table>
+<p>출처는 한국경제·매일경제 부동산 보도입니다. 다만 한국경제 기사는 본문 요약이 제공되지 않아, 이 상승률 외 세부 내용은 확인되지 않았습니다.</p>
+<hr><h2>분양가상한제 건축비 인상이 청약자에게 뜻하는 것</h2>
+<p>건축비 기준이 오르면 분양가상한제가 적용되는 민간·공공 아파트의 분양가도 함께 영향을 받을 수 있습니다.</p>
+<p>즉 앞서 본 인상 폭만큼 곧바로 분양가가 오른다고 단정할 수는 없지만, 실수요자의 자금 부담이 커질 가능성은 열려 있습니다.</p>
+<p>여러분이 해당 지역 청약을 준비하고 계신다면, 관심 단지의 모집공고에서 건축비 산정 기준이 언제 것으로 적용됐는지부터 확인해 보시는 편이 좋겠습니다.</p>
+<div class="imgslot">📷 이미지 — 아파트 건설 현장과 타워크레인 모습</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/apartment-construction-site-crane" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/apartment%20construction%20site%20crane/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/apartment%20construction%20site%20crane/" target="_blank" rel="noopener">픽사베이</a></div>
+<hr><h2>3기 신도시 분양전환 임대는 어떻게 되나</h2>
+<p>홍지선 국토교통부 장관 후보자는 인사청문회에서, 3기 신도시 분양전환 공공임대 계획 물량 <span class="hl" style="background-color:#fff59d"><strong>1.2만호</strong></span> 가운데 일부를 순수 공공임대주택으로 돌리는 방안을 검토하겠다고 밝혔습니다.</p>
+<p>분양전환 공공임대는 일정 기간 임대로 살다가 분양을 받을 수 있는 유형입니다. 순수 공공임대로 바뀌면 그 기회는 줄어들 수 있습니다.</p>
+<p>다만 사전청약·착공 물량은 제외하는 방향으로 검토 중이며, 전환 대상의 정확한 규모와 지역별 계획은 아직 공개되지 않았습니다.</p>
+<div class="imgslot has-file">📷 이미지 — 3기신도시 분양전환 공공임대 계획 물량 1.2만호를 보여주는 그래픽<br><small>→ 파일 <b>img-3-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-3-stat-card.png" alt="3기신도시 분양전환 공공임대 계획 물량 1.2만호를 보여주는 그래픽">
+<hr><h2>그 밖의 오늘 소식</h2>
+<ul>
+<li>홍 후보자, 고가·비거주 주택 세제개편 방향에 공감 표명</li>
+<li>홍 후보자, 실수요자 우선공급·재건축 규제완화 필요성 언급</li>
+<li>성북·동대문, 광명·수지 등 서울과 가격 격차 좁히는 '키 맞추기'</li>
+<li>직방 분석, 광명은 서울 평균보다 비싸진 것으로 나타나</li>
+<li>중랑구 신내6대주 49.77㎡, <span class="hl" style="background-color:#fff59d"><strong>7억</strong></span> 1,000만원 최근 <span class="hl" style="background-color:#fff59d">3년</span> 신고가</li>
+<li>종로구 창신쌍용2 64.66㎡, 8억9000만원 최근 3년 신고가</li>
+<li>중랑구 신내동 동성3 59.4㎡, 6억5000만원 최근 3년 신고가</li>
+</ul>
+<hr><h2>오늘의 체크포인트</h2>
+<ol>
+<li>분양가상한제 건축비 인상률은 두 달 새 4.07%, 안전비용 증가가 배경입니다.</li>
+<li>3기 신도시 분양전환 임대 1.2만호 중 일부는 순수 공공임대 전환이 검토됩니다.</li>
+<li>중랑·종로 신고가와 수도권 키 맞추기로 상승 압력 신호가 감지된다는 해석이 나옵니다.</li>
+</ol><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:26px 0 0"><b style="font-size:15px">그래서 나는?</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">청약 대기자라면, 분양가 산정 기준 변경 시점부터 확인해 보세요.</li><li style="margin-bottom:6px">3기 신도시 임대 입주 예정자라면, 분양전환 여부 공고를 살펴보세요.</li><li style="margin-bottom:6px">중랑·종로 매수 희망자라면, 인근 실거래가를 함께 비교해 보세요.</li></ul></div><div style="margin:28px 0 0;padding:16px 18px"><b>직접 센 숫자 — 2026년 8월 1~15일 아파트 실거래</b><p style="margin:10px 0 0">서울 8개 구에서 계약된 매매는 <b>550건</b>입니다. 7월 1~15일 1134건과 견주면 -584건입니다.</p><p style="margin:8px 0 0;font-size:15px;color:#555555">거래가 많은 곳: 성북구 100건(-64) · 동대문구 86건(-32) · 중랑구 78건(-307)</p><p style="margin:6px 0 0;font-size:13px;color:#888888">신고 기한(계약 후 30일)이 지난 15일까지 계약분끼리 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">중랑구 전세가율(전세 보증금 ÷ 매매가)은 가운뎃값 <b>62.0%</b>입니다. 같은 단지·같은 면적 35곳을 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">서울 25개 구 가운데 거래가 가장 크게 움직인 곳: 중랑구 -79.7%(385→78건, 7월 1~15일엔 묵동에 77.4% 몰렸음) · 영등포구 -49.2%(132→67건)</p><p style="margin:12px 0 4px"><b>2026년 8~9월 계약 신고가</b></p><ul style="margin:0;padding-left:18px;font-size:15px"><li>중랑구 극동늘푸른 84.08㎡ — 8.2억 (이전 최고 4.8억, +71.9%, 8월 15일 계약)</li><li>중랑구 엘지,쌍용아파트 84.67㎡ — 9.3억 (이전 최고 7.5억, +23.6%, 9월 2일 계약)</li></ul><img class="preview nocopy" src="img-stats-volume.png" alt="지역별 거래 건수" style="max-width:100%;margin-top:12px"><p style="margin:6px 0 0;font-size:13px;color:#888888">→ 그림 파일 <b>img-stats-volume.png</b> 을 이 자리에 올리세요</p><p style="margin:12px 0 0;font-size:13px;color:#888888">국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다.</p></div><div style="margin:24px 0 0;padding:14px 16px"><b>오늘 나온 정부 발표 원문</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:8px"><a href="https://www.korea.kr/briefing/pressReleaseView.do?newsId=156781511">분양가상한제 기본형건축비 9월 정기고시</a> <span style="color:#888888;font-size:13px">(국토교통부 2026-09-14)</span><br><span style="font-size:13px">첨부 <a href="https://www.korea.kr/common/download.do?fileId=198551799&amp;tblKey=GMN">260915(조간) 분양가상한제 기본형건축비 9월 정기고시(주택정책과).</a> · <a href="https://www.korea.kr/common/download.do?fileId=198551800&amp;tblKey=GMN">260915(조간) 분양가상한제 기본형건축비 9월 정기고시(주택정책과).</a></span></li></ul></div><p style="padding:14px 16px;margin:28px 0 0"><b>여러분이 관심을 두고 계신 단지는 분양가상한제 적용 지역인가요, 아닌가요?</b><br><span style="font-size:14px;color:#666666">댓글로 알려 주시면 다음 글에 반영하겠습니다.</span></p>
+      <p class="tags" id="tags">#분양가상한제 #기본형건축비 #건축비인상 #3기신도시 #공공임대 #분양전환 #청약 #아파트청약 #국토교통부 #홍지선 #부동산세제 #재건축규제완화 #중랑구 #종로구 #성북구 #동대문구 #광명 #수지 #서울 #서울아파트값 #수도권집값 #신고가거래 #실거래가 #내집마련 #무주택자 #다주택자 #부동산뉴스 #부동산브리핑 #부돌보브리핑 #키맞추기</p>
+    </div>
+  </div>
+
+  <div class="hint">
+    <strong>쓰는 법</strong>
+    <ol>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다.
+        네이버는 <b>지금 로그인된 계정</b>의 블로그를 엽니다 — 다른 블로그가 열리면
+        <a href="https://nid.naver.com/nidlogin.logout?returl=https%3A%2F%2Fblog.naver.com%2Frikiwiki%2Fpostwrite" target="_blank" rel="noopener">계정 바꿔 열기</a>를 누르고
+<b>rikiwiki</b> 계정으로 다시 로그인하세요. 바로 글쓰기로 갑니다.</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
+      <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
+      <li><span style="background-color:#fff59d">형광펜</span>은 오늘의 핵심 수치가 <b>처음 나온 자리</b>에만 칠합니다.
+        같은 수치가 다시 나와도 표시하지 않습니다 — 강조가 많으면 아무것도 강조가 아니니까요.
+        붙여넣으면 그대로 따라가고, 마음에 안 들면 에디터에서 지우세요.</li>
+      <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
+    </ol>
+    이 안내문은 복사에 포함되지 않습니다.
+  </div>
+</div>
+
+<script>
+// 버튼이 지정한 영역만 클립보드에 담는다. 안내문과 상단 바는 복사되지 않는다.
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var node = document.getElementById(btn.dataset.copy);
+    if (!node) return;
+
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
+
+    // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
+    // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
+    var range = document.createRange();
+    range.selectNodeContents(copyNode);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    clone.remove();
+
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
+        alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
+      });
+      return;
+    }
+    flash();
+
+    function flash() {
+      var original = btn.textContent;
+      btn.textContent = "복사됨 ✓";
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1400);
+    }
+  });
+});
+</script>
+</body>
+</html>
