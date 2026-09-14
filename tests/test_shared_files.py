@@ -35,6 +35,7 @@ SHARED = [
     "rebrief/templates/site_images.html.j2",
     "rebrief/templates/site_search.html.j2",
     "tests/test_shared_files.py",
+    "tests/test_subscription.py",                # 구독 호출이 나뉜 답·안전 검사에서 다시 묻는지 (2026-09-14)
 ]
 
 
