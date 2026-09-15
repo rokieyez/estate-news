@@ -155,7 +155,7 @@ def chip(x: float, y: float, text: str, *, fill: str | None = None, color: str |
 def head_height(w: float, title: str, subtitle: str = "", header: bool = True) -> float:
     """머리말(채널·날짜·제목·구분선)이 차지하는 높이 = 본문이 시작되는 y."""
     inner = w - (M + P) * 2
-    y = M + P + 22 + (34 if header else 0)
+    y = M + P + 22 + (34 if header and not _BACKDROP else 0)
     y += 44 * len(wrap(title, 34, inner)[:2])
     if subtitle:
         y += 34
@@ -185,6 +185,9 @@ def frame_open(w: float, h: float, *, title: str, subtitle: str = "",
         p.append(f'<rect x="{M}" y="{M}" width="{w - M * 2:g}" height="{h - M * 2:g}" rx="22" '
                  f'fill="{CARD}" stroke="{CARD_EDGE}" stroke-width="1.5"/>')
 
+    if _BACKDROP:
+        # 사진 배경 판은 머리말 없이 제목부터. 날짜는 출처 줄에 이미 있다 (2026-09-15 "글밥을 간결하게").
+        channel = date = ""
     head_y = M + P + 22
     if channel:
         p.append(f'<rect x="{x}" y="{head_y - 15}" width="5" height="20" rx="2.5" fill="{BLUE}"/>')
@@ -267,7 +270,7 @@ def seoul_district_map(dp: dict, date: str, extra: dict | None = None) -> Image 
         return None
 
     tw, th, gap = 128, 84, 10
-    notes = ["※ 실제 지형이 아닌 위치 도식입니다. 칸의 모양·크기는 면적과 무관합니다."]
+    notes = ["※ 위치 도식 · 칸 크기는 면적과 무관"]
     if dp.get("context"):
         notes.append(f'※ {dp["context"]}')
     notes.append(_source_line(dp, date))
@@ -327,9 +330,8 @@ def index_comparison(dp: dict, date: str, extra: dict | None = None) -> Image | 
     period = dp.get("period", "") or "이전"
 
     notes = [
-        f'※ 보도된 {m.group(1)}율({dp["value"]}{dp["unit"]})로 지수화한 값입니다. '
-        f'구간별 실제 수치는 보도에 제시되지 않았습니다.',
-        (_source_line(dp, date) + (f' — {dp["context"]}' if dp.get("context") else "")).strip(),
+        f'※ 보도된 {m.group(1)}율로 계산한 지수 (구간별 실제 값은 보도에 없음)',
+        _source_line(dp, date),
     ]
     w = 1000
     title = dp["label"].replace(m.group(0), "").strip() or dp["label"]
@@ -421,7 +423,7 @@ def time_series(dp: dict, date: str, extra: dict | None = None) -> Image | None:
         return None                       # 오늘 값이 없는 지표의 옛 추이는 오늘 그림이 아니다
 
     notes = [
-        "※ 매일 기사에서 뽑힌 값을 그대로 이은 것입니다. 발표 기관·기준이 날마다 다를 수 있습니다.",
+        "※ 날마다 기사에서 뽑은 값을 이음 · 기관·기준이 다를 수 있음",
         _source_line(dp, date),
     ]
     w = 1000
@@ -548,11 +550,9 @@ def trade_volume_bar(data: dict, date: str, extra: dict | None = None) -> "Image
         sub = f"{vol.get('before_label', '')} 대비 · 같은 기간 계약분"
     else:
         sub = f"{vol.get('before_label', '')} 대비 · 신고분 기준"
-    notes = ["※ 국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다."]
-    if vol.get("window"):
-        notes.append(f"※ 신고 기한(계약 후 30일)이 지난 {vol['days']}일까지 계약분만 셌습니다. "
-                     "그 뒤 계약은 아직 신고가 차는 중입니다.")
-    notes.append(f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계")
+    notes = ["※ 해제(계약 취소) 신고분 제외"
+             + (f" · 신고 기한(계약 후 30일)이 지난 {vol['days']}일까지 계약분" if vol.get("window") else "")]
+    notes.append(f"출처 국토교통부 실거래가 · {date} 집계")
     w = 1000
     row_h = 60
     content = len(rows) * row_h + 30
@@ -608,7 +608,7 @@ MAP_METRICS = {
         "sub": "신고분 기준 · 해제분 제외",
         "fmt": lambda v: f"{v:,}",
         "legend": lambda a, b: (f"{a:,.0f}~{b:,.0f}건" if b > a else f"{a:,.0f}건"),
-        "note": "※ 색은 다섯 칸에 구가 고르게 들어가도록 순위로 나눴습니다. 칸마다 실제 건수를 적었습니다.",
+        "note": "※ 색은 순위 5단계 · 칸마다 실제 건수",
     },
     "jeonse": {
         "key": "map_jeonse", "slug": "stats-map-jeonse",
@@ -616,7 +616,7 @@ MAP_METRICS = {
         "sub": "같은 단지·같은 면적의 전세 보증금 ÷ 매매가 (가운뎃값)",
         "fmt": lambda v: f"{v:.1f}%",
         "legend": lambda a, b: (f"{a:.0f}~{b:.0f}%" if b - a >= 1 else f"{a:.1f}%"),
-        "note": "※ 월세가 붙은 계약과 갱신 계약은 뺐습니다. 짝지을 단지가 2곳 미만인 구는 비워 두었습니다.",
+        "note": "※ 월세·갱신 계약 제외 · 짝지을 단지가 2곳 미만인 구는 빈칸",
     },
 }
 
@@ -643,13 +643,12 @@ def district_choropleth(data: dict, date: str, extra: dict | None = None, *,
     title = spec["title"].format(label=label)
     sub = spec["sub"]
     notes = [
-        "※ 실제 지형이 아닌 위치 도식입니다. 칸의 크기는 면적·인구와 무관합니다.",
-        spec["note"],
+        f"※ 위치 도식(칸 크기는 면적과 무관) · {spec['note'][2:]}",
     ]
     if metric == "count" and source.get("window"):
         sub = "신고 기한이 지난 계약분 · 해제분 제외"
-        notes.append(f"※ 신고 기한(계약 후 30일)이 지난 {source['days']}일까지 계약분만 셌습니다.")
-    notes.append(f"출처: 국토교통부 실거래가 공개시스템 · {date} 집계")
+        notes.append(f"※ 신고 기한(계약 후 30일)이 지난 {source['days']}일까지 계약분")
+    notes.append(f"출처 국토교통부 실거래가 · {date} 집계")
 
     tw, th, gap = 128, 92, 10
     ramp = BLUE_RAMP[1:]                    # 맨 옅은 단계는 '자료 없음' 과 헷갈려 뺀다
@@ -718,8 +717,8 @@ def price_index_line(series: dict, date: str, extra: dict | None = None) -> "Ima
     title = f"주간 아파트 가격지수 · {region}"
     sub = f"{first[0].get('when') or first[0]['time']} ~ {first[-1].get('when') or first[-1]['time']}"
     notes = [
-        "※ 값 자체가 가격이 아니라 기준 시점 대비 상대값입니다. 두 선의 높낮이가 아니라 기울기를 보세요.",
-        f"출처: 한국부동산원 R-ONE · {date} 조회",
+        "※ 기준 시점 대비 상대값 — 높낮이보다 기울기를 보세요",
+        f"출처 한국부동산원 R-ONE · {date} 조회",
     ]
     w, plot_h = 1000, 300
     h = card_height(w, title, sub, plot_h + 110, notes)
@@ -785,9 +784,8 @@ def jeonse_history_line(rows: list[dict], region: str, date: str,
     title = f"{region} 전세가율 — 우리 집계 추이"
     sub = f"{points[0]['date']} ~ {points[-1]['date']} 집계 · 같은 단지·같은 면적 비교"
     notes = [
-        "※ 전세 보증금 ÷ 매매가입니다. 월세가 붙은 계약과 갱신 계약은 뺐습니다. "
-        "견준 단지 수가 적은 날은 값이 크게 흔들립니다.",
-        "출처: 국토교통부 실거래가 공개시스템 · 날마다 직접 집계",
+        "※ 전세 보증금 ÷ 매매가 · 월세·갱신 제외 · 견준 단지가 적은 날은 흔들림",
+        "출처 국토교통부 실거래가 · 날마다 직접 집계",
     ]
     w, plot_h = 1000, 260
     h = card_height(w, title, sub, plot_h + 96, notes)
@@ -840,9 +838,8 @@ def trade_history_line(rows: list[dict], region: str, date: str,
     title = f"{region} 아파트 매매 거래 건수 — 우리 집계 추이"
     sub = f"{points[0]['date']} ~ {points[-1]['date']} 집계"
     notes = [
-        "※ 같은 달이라도 신고가 늦게 들어와 집계일마다 값이 조금씩 커집니다. "
-        "가격 변화가 아니라 신고가 쌓이는 속도를 보는 그림입니다.",
-        "출처: 국토교통부 실거래가 공개시스템 · 날마다 직접 집계",
+        "※ 가격 변화가 아니라 신고가 쌓이는 속도를 보는 그림",
+        "출처 국토교통부 실거래가 · 날마다 직접 집계",
     ]
     w, plot_h = 1000, 260
     h = card_height(w, title, sub, plot_h + 96, notes)
@@ -897,11 +894,11 @@ def supply_line(item: dict, date: str, extra: dict | None = None) -> "Image | No
     unit = item.get("unit", "호")
     title = f"{item.get('name', '')} 추이 — {rows[-1]['label']}까지"
     sub = f"{rows[0]['label']} ~ {rows[-1]['label']} · 서울"
-    kind = {"stock": "그 시점에 남아 있는 물량입니다(재고).",
-            "cumulative": "원자료가 연초부터의 누계라 그 달치로 되돌린 값입니다.",
-            }.get(item.get("mode", ""), "그 달 실적입니다.")
-    notes = ["※ " + kind + (f" {item['note']}." if item.get("note") else ""),
-             f"출처: 한국부동산원 R-ONE · {date} 조회"]
+    kind = {"stock": "그 시점에 남은 물량(재고)",
+            "cumulative": "연초부터의 누계라 그 달치로 되돌린 값",
+            }.get(item.get("mode", ""), "그 달 실적")
+    notes = ["※ " + kind + (f" · {item['note']}" if item.get("note") else ""),
+             f"출처 한국부동산원 R-ONE · {date} 조회"]
 
     w, plot_h = 1000, 250
     h = card_height(w, title, sub, plot_h + 96, notes)

@@ -1640,7 +1640,7 @@ def test_jeonse_map_is_a_separate_metric():
     assert count_img.slug == "stats-map" and jeonse_img.slug == "stats-map-jeonse"
     assert "전세가율" in jeonse_img.title
     assert "38.8%" in jeonse_img.svg          # 칸에 %가 붙어야 한다 (건수 지도와 다른 형식)
-    assert "갱신 계약은 뺐습니다" in jeonse_img.svg
+    assert "갱신 계약 제외" in jeonse_img.svg
     # 없는 지표를 달라고 하면 조용히 안 그린다
     assert images.district_choropleth(data, "2026-09-07", metric="없는것") is None
     # 전세가율은 짝이 없는 구가 빠지므로 절반만 차면 그리지 않는다
@@ -2995,7 +2995,7 @@ def test_stats_collect_counts_the_window_but_keeps_the_settled_month(cfg, monkey
     # 보여 주는 곳은 모두 창을 쓴다 — 그림·블로그 상자·알림·통계 페이지
     img = trade_volume_bar(data, "2026-09-14")
     assert "2026년 8월 1~14일 아파트 매매 거래 건수" in img.title
-    assert "7월 1~14일 대비" in img.svg and "14일까지 계약분만" in img.svg
+    assert "7월 1~14일 대비" in img.svg and "14일까지 계약분" in img.svg
     assert "2026년 8월 1~14일 아파트 실거래" in stats_block_markdown(data)
     assert stats_lines(data)[0].startswith("🏢 8월 1~14일 계약 매매 6건 (7월 1~14일 대비 -4건)")
     body = Renderer(cfg, tmp_path, "2026-09-14").stats(data).read_text(encoding="utf-8")
