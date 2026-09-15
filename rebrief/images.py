@@ -18,7 +18,7 @@ import re
 import shutil
 import subprocess
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 
 log = logging.getLogger(__name__)
@@ -42,6 +42,10 @@ GOOD = "#006300"
 # 맥(Apple SD Gothic Neo) → 리눅스 러너(Noto Sans CJK KR, 워크플로에서 설치) → 그 외 순서.
 # 러너에 한글 글꼴이 없으면 PNG 의 한글이 전부 네모로 깨진다 (2026-09-07 실제로 그랬음).
 FONT = "'Apple SD Gothic Neo','Noto Sans CJK KR','Noto Sans KR','NanumGothic',system-ui,-apple-system,sans-serif"
+ON_ACCENT = "#ffffff"    # 강조색(BLUE) 칸·막대 위에 얹는 글씨
+# 블로그 첨부 그림의 사진 배경 판이 켜져 있는 동안 `blogstyle.backdrop()` 이 사진과 판 이름을 넣습니다
+# (2026-09-15). 비어 있으면 예전 흰 카드입니다.
+_BACKDROP: dict | None = None
 
 # 서울 25개 자치구의 상대 위치 도식. 칸의 크기·모양은 실제 면적과 무관하지만, **줄과 칸의
 # 순서는 실제 위경도 순서를 지킵니다** — 같은 세로줄은 동서로 비슷한 자리, 같은 가로줄은
@@ -76,6 +80,7 @@ class Image:
     slug: str
     svg: str
     title: str
+    covers: list[str] = field(default_factory=list)   # 이 그림이 함께 실은 다른 수치의 라벨
 
 
 # ── 공통 헬퍼 ────────────────────────────────────────────────
@@ -114,10 +119,13 @@ def bar_path(x: float, y: float, w: float, h: float, r: float = 4) -> str:
             f"V{y + h - r} A{r},{r} 0 0 1 {x + w - r},{y + h} H{x} Z")
 
 
-def svg_open(w: float, h: float) -> list[str]:
-    return [f'<svg xmlns="http://www.w3.org/2000/svg" width="{w:g}" height="{h:g}" '
-            f'viewBox="0 0 {w:g} {h:g}" font-family="{FONT}">',
-            f'<rect width="{w:g}" height="{h:g}" fill="{SURFACE}"/>']
+def svg_open(w: float, h: float, *, cover: bool = False) -> list[str]:
+    head = (f'<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" '
+            f'width="{w:g}" height="{h:g}" viewBox="0 0 {w:g} {h:g}" font-family="{FONT}">')
+    if _BACKDROP:                       # 사진 배경 판 — 흰 바탕 대신 사진 층
+        from .blogstyle import layers
+        return [head, *layers(w, h, cover=cover)]
+    return [head, f'<rect width="{w:g}" height="{h:g}" fill="{SURFACE}"/>']
 
 
 def footnotes(parts: list[str], x: float, y: float, size: float = 16) -> list[str]:
@@ -133,9 +141,10 @@ CHIP_BG = "#eef4fd"
 M, P = 40, 44
 
 
-def chip(x: float, y: float, text: str, *, fill: str = CHIP_BG, color: str = BLUE,
+def chip(x: float, y: float, text: str, *, fill: str | None = None, color: str | None = None,
          size: float = 20) -> str:
     """작은 알약 라벨. 기준 시점·구분 표시에 쓴다."""
+    fill, color = fill or CHIP_BG, color or BLUE      # 기본값을 그릴 때 읽어야 판 색을 따른다
     w = text_width(text, size) + size * 1.6
     h = size * 1.9
     return (f'<rect x="{x:g}" y="{y:g}" width="{w:g}" height="{h:g}" rx="{h / 2:g}" fill="{fill}"/>'
@@ -169,8 +178,12 @@ def frame_open(w: float, h: float, *, title: str, subtitle: str = "",
     x = M + P
     inner = w - (M + P) * 2
     p = svg_open(w, h)
-    p.append(f'<rect x="{M}" y="{M}" width="{w - M * 2:g}" height="{h - M * 2:g}" rx="22" '
-             f'fill="{CARD}" stroke="{CARD_EDGE}" stroke-width="1.5"/>')
+    if _BACKDROP:
+        from .blogstyle import panel
+        p += panel(w, h)
+    else:
+        p.append(f'<rect x="{M}" y="{M}" width="{w - M * 2:g}" height="{h - M * 2:g}" rx="22" '
+                 f'fill="{CARD}" stroke="{CARD_EDGE}" stroke-width="1.5"/>')
 
     head_y = M + P + 22
     if channel:
@@ -291,7 +304,7 @@ def seoul_district_map(dp: dict, date: str, extra: dict | None = None) -> Image 
             else:
                 p.append(f'<rect x="{gx}" y="{gy}" width="{tw}" height="{th}" rx="10" fill="{BLUE}"/>')
                 p.append(f'<text x="{gx + tw / 2:g}" y="{gy + th / 2 + 9:g}" font-size="24" '
-                         f'font-weight="600" text-anchor="middle" fill="#ffffff">{gu}</text>')
+                         f'font-weight="600" text-anchor="middle" fill="{ON_ACCENT}">{gu}</text>')
     frame_close(p, notes, g)
     return Image("district-map", _embed_fonts("\n".join(p)), dp["label"])
 
@@ -347,7 +360,7 @@ def index_comparison(dp: dict, date: str, extra: dict | None = None) -> Image | 
         inside = width > 96
         lx = bx + width - 18 if inside else bx + width + 16
         # 옅은 막대 위에 흰 글씨를 얹으면 읽히지 않는다. 막대 색에 따라 글자색을 고른다.
-        color = ("#ffffff" if dark else INK) if inside else INK
+        color = (ON_ACCENT if dark else INK) if inside else INK
         p.append(f'<text x="{lx:g}" y="{by + 38}" font-size="26" font-weight="700" '
                  f'text-anchor="{"end" if inside else "start"}" fill="{color}">{val:g}</text>')
     p.append(f'<line x1="{bx}" y1="{top - 8}" x2="{bx}" y2="{top + 84 + 56 + 8}" '
@@ -473,6 +486,9 @@ def stat_card(dp: dict, date: str, extra: dict | None = None) -> Image | None:
     """어떤 수치든 받아 큰 숫자 카드로 만든다. 마지막 수단."""
     if not dp.get("value"):
         return None
+    if _BACKDROP:       # 사진 배경 판에서는 생김새대로 두 막대·몫·큰 숫자 (blogstyle.stat_card)
+        from .blogstyle import stat_card as styled
+        return styled(dp, date, extra)
     w = 1000
     notes = []
     if dp.get("context"):
@@ -498,7 +514,13 @@ def stat_card(dp: dict, date: str, extra: dict | None = None) -> Image | None:
         p.append(chip(x, y + 150, f'기준 {dp["period"]}'))
     frame_close(p, notes, g)
     return Image("stat-card", _embed_fonts("\n".join(p)), dp["label"])
-SPECIFIC = (time_series, seoul_district_map, index_comparison)
+def poll_chart(dp: dict, date: str, extra: dict | None = None) -> Image | None:
+    """여론조사 % 를 0~100 막대로 (2026-09-15 사용자 요청). 그리기는 두 저장소 공통인 blogstyle 에."""
+    from .blogstyle import poll_chart as draw
+    return draw(dp, date, extra)
+
+
+SPECIFIC = (poll_chart, time_series, seoul_district_map, index_comparison)
 FALLBACK = (stat_card,)
 GENERATORS = SPECIFIC + FALLBACK
 
@@ -922,7 +944,8 @@ def supply_line(item: dict, date: str, extra: dict | None = None) -> "Image | No
 
 
 def build(datapoints: list[dict], date: str, headline: str = "", limit: int = 3,
-          history: list[dict] | None = None) -> list[Image]:
+          history: list[dict] | None = None, *, pool: list[dict] | None = None,
+          polls: list[dict] | None = None) -> list[Image]:
     """수치 목록에서 그릴 수 있는 그림을 최대 limit 개 만든다.
 
     특수 형태(지도·지수)를 먼저 훑고, 자리가 남으면 기본 카드로 채운다.
@@ -931,6 +954,8 @@ def build(datapoints: list[dict], date: str, headline: str = "", limit: int = 3,
     built: list[Image] = []
     used_rows: set[int] = set()
     slug_counts: dict[str, int] = {}
+    extra = {"subtitle": headline, "history": history or [], "datapoints": pool or datapoints,
+             "polls": polls or []}
 
     for generators in (SPECIFIC, FALLBACK):
         for row, dp in enumerate(datapoints):
@@ -940,7 +965,7 @@ def build(datapoints: list[dict], date: str, headline: str = "", limit: int = 3,
                 continue
             for gen in generators:
                 try:
-                    img = gen(dp, date, {"subtitle": headline, "history": history or []})
+                    img = gen(dp, date, extra)
                 except Exception:        # 그림 하나가 파이프라인 전체를 죽이지 않게 한다
                     log.exception("그림 생성 실패: %s", dp.get("label"))
                     continue
@@ -952,6 +977,8 @@ def build(datapoints: list[dict], date: str, headline: str = "", limit: int = 3,
                     img.slug = f"{img.slug}-{n}"
                 built.append(img)
                 used_rows.add(row)
+                # 함께 실은 수치는 제 그림을 또 만들지 않는다 (긍정·부정 막대, 보유·실거주 두 막대)
+                used_rows |= {i for i, d in enumerate(datapoints) if d.get("label") in img.covers}
                 break
     return built
 
@@ -992,7 +1019,7 @@ def match_datapoint(label: str, datapoints: list[dict]) -> int | None:
 
 def build_for_slots(datapoints: list[dict], date: str, slot_labels: list[str], *,
                     headline: str = "", history: list[dict] | None = None,
-                    limit: int = 3) -> tuple[dict[int, Image], list[Image]]:
+                    limit: int = 3, polls: list[dict] | None = None) -> tuple[dict[int, Image], list[Image]]:
     """블로그의 이미지 자리(라벨 목록)에 맞춰 그림을 만든다.
 
     돌려주는 것: (자리 번호 → 그림, 자리 밖 여분 그림). 자리 그림은 파일명이
@@ -1000,7 +1027,7 @@ def build_for_slots(datapoints: list[dict], date: str, slot_labels: list[str], *
     라벨이 비었거나 맞는 수치가 없는 자리는 비워 두고(사진 자리), 남는 장수는
     아직 안 쓴 수치로 채운다.
     """
-    extra = {"subtitle": headline, "history": history or []}
+    extra = {"subtitle": headline, "history": history or [], "datapoints": datapoints, "polls": polls or []}
     by_slot: dict[int, Image] = {}
     used: set[int] = set()
     for slot_no, label in enumerate(slot_labels, start=1):
@@ -1013,10 +1040,12 @@ def build_for_slots(datapoints: list[dict], date: str, slot_labels: list[str], *
         img.slug = f"{slot_no}-{img.slug}"
         by_slot[slot_no] = img
         used.add(idx)
+        used |= {i for i, d in enumerate(datapoints) if d.get("label") in img.covers}
 
     remaining = max(0, limit - len(by_slot))
     leftovers = [dp for i, dp in enumerate(datapoints) if i not in used]
-    extras = build(leftovers, date, headline=headline, limit=remaining, history=history) if remaining else []
+    extras = build(leftovers, date, headline=headline, limit=remaining, history=history,
+                   pool=datapoints, polls=polls) if remaining else []
     return by_slot, extras
 
 
@@ -1264,7 +1293,13 @@ def _embed_fonts(svg: str) -> str:
     글꼴을 먼저 넣고 글을 나중에 그리므로, 그릴 때는 자리만 잡아 두고 마지막에 바꿉니다.
     """
     chars = "".join(re.findall(r">([^<>]*)<", svg))
-    return svg.replace(_FONT_CSS_TOKEN, f"<style>{_font_css(chars)}</style>")
+    css = _font_css(chars)
+    if _BACKDROP:
+        # 사진 배경 판은 글 전체가 'Pretendard' 라 굵은 글씨(700)도 같은 이름으로 한 벌 더 건다.
+        # 안 걸면 크롬이 보통 굵기를 억지로 두껍게 그린다.
+        css += "".join(m.replace("'PretendardBold'", "'Pretendard'")
+                       for m in re.findall(r"@font-face\{font-family:'PretendardBold';[^}]*\}", css))
+    return svg.replace(_FONT_CSS_TOKEN, f"<style>{css}</style>")
 
 
 def _png_size(path: Path) -> tuple[int, int]:

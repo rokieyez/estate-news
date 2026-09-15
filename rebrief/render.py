@@ -12,6 +12,7 @@ from urllib.parse import quote
 import markdown as markdown_lib
 from jinja2 import Environment, FileSystemLoader, StrictUndefined, select_autoescape
 
+from . import blogstyle
 from . import images as images_mod
 from . import photos as photos_mod
 from . import keynumbers as kn
@@ -53,6 +54,7 @@ class Renderer:
         self.env = make_env()
         self.written: list[Path] = []
         self.last_link_status: dict = {}
+        self._blog_photos: list | None = None     # 블로그 첨부 그림 바탕 사진 (하루 몇 장을 돌려 씀)
         out_dir.mkdir(parents=True, exist_ok=True)
 
     # ── 개별 산출물 ──────────────────────────────────────────
@@ -347,8 +349,30 @@ class Renderer:
                 if not f.name.startswith("img-0-cover")]
         return out
 
+    def _backdrop(self, brief: dict | None = None, start: int = 0):
+        """블로그 첨부 그림(표지·수치 그림·통계 그림)의 사진 배경 판 (`images.blog_style`, 2026-09-15).
+
+        설정이 비어 있으면 아무것도 바꾸지 않아 예전 흰 카드로 그려집니다. 사진은 하루에 몇 장만
+        받아(`images.blog_photos`) 그림마다 돌려 씁니다 — 그림 수만큼 받으면 검색이 열 번씩 나갑니다.
+        인증키가 없거나 망이 막힌 날에도 판은 그대로이고 바탕만 짙은 색이 됩니다.
+        """
+        cfg = self.cfg.get("images", {}) or {}
+        style = str(cfg.get("blog_style", "") or "")
+        if style and self._blog_photos is None:
+            self._blog_photos = []
+            if cfg.get("photos", True):
+                found = photos_mod.fetch(
+                    brief or {},
+                    cache_dir=self.cfg.state_dir / "photos",
+                    ledger=self.cfg.state_dir / "photos.json",
+                    count=int(cfg.get("blog_photos", 3) or 0),
+                )
+                self._blog_photos = [(ph.path, f"사진 {ph.credit} / {ph.source} · 본문과 무관"
+                                      if ph.credit else f"사진 {ph.source} · 본문과 무관") for ph in found]
+        return blogstyle.backdrop(style, self._blog_photos or [], start=start)
+
     def images(self, brief: DailyBrief, history: list[dict] | None = None,
-               post: BlogPost | None = None) -> dict[int, str]:
+               post: BlogPost | None = None, polls: list[dict] | None = None) -> dict[int, str]:
         """수치를 인포그래픽으로 만든다. 블로그 글이 있으면 그 이미지 자리에 맞춰 만든다.
 
         돌려주는 값은 {자리 번호: 파일명}. 그릴 게 없는 날은 빈 dict.
@@ -359,12 +383,15 @@ class Renderer:
         datapoints = flatten_datapoints(brief)
         limit = int(cfg.get("max", 3))
         slot_labels = [s.datapoint_label for s in (post.image_slots if post else [])]
-        by_slot, extras = images_mod.build_for_slots(
-            datapoints, self.date, slot_labels,
-            headline=brief.headline, history=history or [], limit=limit,
-        ) if slot_labels else ({}, images_mod.build(
-            datapoints, self.date, headline=brief.headline, limit=limit, history=history or [],
-        ))
+        # 표지가 첫 사진을 쓰므로 수치 그림은 둘째 사진부터
+        with self._backdrop(brief.model_dump(), start=1):
+            by_slot, extras = images_mod.build_for_slots(
+                datapoints, self.date, slot_labels,
+                headline=brief.headline, history=history or [], limit=limit, polls=polls,
+            ) if slot_labels else ({}, images_mod.build(
+                datapoints, self.date, headline=brief.headline, limit=limit, history=history or [],
+                polls=polls,
+            ))
 
         slot_files: dict[int, str] = {}
         for slot_no, img in by_slot.items():
@@ -383,11 +410,13 @@ class Renderer:
             return ""
         sub = (post.summary_lines or [""])[0]
         badge = key_numbers[0].display if key_numbers else ""
-        img = images_mod.thumbnail(
-            post.title, sub=sub, badge=badge, size=(1200, 630),
-            channel=str((self.cfg.get("video", {}) or {}).get("channel_name", "") or ""),
-            date=self.date,
-        )
+        channel = str((self.cfg.get("video", {}) or {}).get("channel_name", "") or "")
+        with self._backdrop(start=0) as styled:
+            if styled:             # 사진 배경 판 — 부제는 싣지 않는다(시안 그대로 제목 하나)
+                img = blogstyle.cover(post.title, badge=badge, channel=channel, date=self.date)
+            else:
+                img = images_mod.thumbnail(post.title, sub=sub, badge=badge, size=(1200, 630),
+                                           channel=channel, date=self.date)
         img.slug = "0-cover"
         return self._write_image(img, cfg)
 
@@ -460,19 +489,21 @@ class Renderer:
         files: dict[str, str] = {}
         if cfg.get("enabled", True):
             extra = {"channel": str((self.cfg.get("video", {}) or {}).get("channel_name", "") or "")}
-            made = (
-                ("volume", images_mod.trade_volume_bar(data, self.date, extra)),
-                ("index", images_mod.price_index_line(series or {}, self.date, extra)),
-                ("history", images_mod.trade_history_line(history or [], history_region,
-                                                          self.date, extra)),
-                ("jeonse", images_mod.jeonse_history_line(jeonse_history or [], history_region,
-                                                          self.date, extra)),
-                ("map", images_mod.district_choropleth(data, self.date, extra)),
-                ("map_jeonse", images_mod.district_choropleth(data, self.date, extra,
-                                                             metric="jeonse")),
-                # 공급 그림은 첫 항목(미분양)만. 셋을 다 그리면 페이지가 그림밭이 된다.
-                ("supply", images_mod.supply_line((supply or [{}])[0], self.date, extra)),
-            )
+            # 통계 그림도 블로그에 붙으므로 같은 판. 표지가 첫 사진을 쓰니 둘째부터.
+            with self._backdrop(start=1):
+                made = (
+                    ("volume", images_mod.trade_volume_bar(data, self.date, extra)),
+                    ("index", images_mod.price_index_line(series or {}, self.date, extra)),
+                    ("history", images_mod.trade_history_line(history or [], history_region,
+                                                              self.date, extra)),
+                    ("jeonse", images_mod.jeonse_history_line(jeonse_history or [], history_region,
+                                                              self.date, extra)),
+                    ("map", images_mod.district_choropleth(data, self.date, extra)),
+                    ("map_jeonse", images_mod.district_choropleth(data, self.date, extra,
+                                                                 metric="jeonse")),
+                    # 공급 그림은 첫 항목(미분양)만. 셋을 다 그리면 페이지가 그림밭이 된다.
+                    ("supply", images_mod.supply_line((supply or [{}])[0], self.date, extra)),
+                )
             scale = int(cfg.get("png_scale_stats", 1) or cfg.get("png_scale", 2))
             for key, img in made:
                 if img:

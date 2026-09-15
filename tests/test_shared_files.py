@@ -23,6 +23,7 @@ SHARED = [
     ".github/workflows/publish-log.yml",
     ".github/workflows/title-log.yml",
     "rebrief/__main__.py",
+    "rebrief/blogstyle.py",                     # 블로그 첨부 그림의 사진 배경 판 (2026-09-15)
     "rebrief/keynumbers.py",
     "rebrief/linkcheck.py",
     "rebrief/related.py",
@@ -34,6 +35,7 @@ SHARED = [
     "rebrief/templates/script_longform.md.j2",
     "rebrief/templates/site_images.html.j2",
     "rebrief/templates/site_search.html.j2",
+    "tests/test_blogstyle.py",
     "tests/test_shared_files.py",
     "tests/test_subscription.py",                # 구독 호출이 나뉜 답·안전 검사에서 다시 묻는지 (2026-09-14)
 ]

@@ -124,6 +124,12 @@ images:
   # 받은 사진은 state/photos/ 에만 두고 저장소에는 올리지 않습니다(한 장 3~6MB).
   photos: true
   photos_max: 4
+  # 블로그 첨부 그림(표지·수치 그림·통계 그림)의 판. 무료 사진을 어둡게 깔고 흰 글씨,
+  # 숫자는 그래프로 (2026-09-15 시안 다섯 개 중 사용자가 고름: 부돌보 브리핑 → 유리판(시안 4)).
+  # cinema · glass 둘 중 하나. 비우면 예전 흰 카드로 돌아갑니다. 판 모양은 rebrief/blogstyle.py.
+  blog_style: glass
+  # 바탕 사진은 하루 이만큼만 받아 그림마다 돌려 씁니다 (그림 수만큼 받으면 검색이 열 번씩 나감).
+  blog_photos: 3
 
 verify:
   numbers: true             # 브리핑 수치가 기사 제목·본문에 실제로 있는지 대조 (LLM 호출 없음)

@@ -375,7 +375,7 @@ def test_blog_gets_cover_and_expanded_tags(cfg, tmp_path):
     cover = renderer.cover(post, [KeyNumber("22개구", "22개구", "종부세 대상")])
     assert cover == "img-0-cover.svg"
     svg = (tmp_path / "out" / cover).read_text(encoding="utf-8")
-    assert "송파구" in svg and ">22개구</text>" in svg      # 제목과 핵심 수치 배지
+    assert "송파구" in svg and "22개구" in svg      # 제목과 핵심 수치 배지 (유리판은 아래 줄 「오늘의 숫자 22개구 | 날짜」)
 
     html = renderer.blog_naver(post, cover=cover).read_text(encoding="utf-8")
     assert html.index("대표 이미지") < html.index("첫 줄 요약입니다")
