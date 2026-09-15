@@ -294,6 +294,26 @@ class TitleLog:
         entry["type"] = title_type(entry["title"])
         return entry
 
+    def note_used(self, run_date: str, kind: str = "blog", views: int | None = None) -> dict | None:
+        """후보가 하나뿐인 종류(블로그)를 '쓴 제목' 으로 적는다.
+
+        블로그 제목은 파이프라인이 만든 **하나**를 그대로 붙여넣으므로 고를 것이 없다
+        (`_record_titles(..., blog=[post.title])`). 번호를 묻는 `log_pick` 은 답이 언제나
+        1번이라 사람에게 물을 이유가 없었고, 그래서 10일 동안 아무도 적지 않았다
+        (2026-09-16 실측: 후보 28묶음에 기록 0건). 이제 발행을 적을 때 함께 불린다.
+        그날 글을 안 만들었으면(후보가 없으면) 아무것도 하지 않는다.
+        """
+        entry = self.days.get(run_date, {}).get(kind)
+        if not entry or not entry.get("candidates"):
+            return None
+        if not entry.get("pick"):
+            entry["pick"] = 1
+            entry["title"] = entry["candidates"][0]
+            entry["type"] = title_type(entry["title"])
+        if views is not None:
+            entry["views"] = int(views)
+        return entry
+
     def picked(self) -> list[dict]:
         rows = []
         for d, kinds in sorted(self.days.items(), reverse=True):

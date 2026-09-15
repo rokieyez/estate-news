@@ -330,3 +330,54 @@ def test_그림이_있는_자리에는_검색_링크가_없다():
     from rebrief.render import to_naver_html
     html = to_naver_html("[이미지: 지도]", {1: "img-1-district-map.png"}, {1: [("x", "https://x")]})
     assert "photo-links" not in html
+
+
+# ── 측정 고리: 발행을 적으면 제목·조회수가 따라 쌓인다 (2026-09-16) ──
+
+
+def test_후보가_하나인_블로그는_번호_없이_쓴_제목이_된다(tmp_path):
+    log = TitleLog(tmp_path / "titles.json")
+    log.record_candidates("2026-09-15", "blog", ["오늘의 제목 11%"])
+    e = log.note_used("2026-09-15", "blog", views=340)
+    assert e["pick"] == 1 and e["title"] == "오늘의 제목 11%" and e["type"] == "수치형"
+    assert e["views"] == 340 and log.by_type() == {"수치형": {"count": 1, "avg_views": 340}}
+
+
+def test_글을_안_만든_날은_아무것도_적지_않는다(tmp_path):
+    log = TitleLog(tmp_path / "titles.json")
+    assert log.note_used("2026-09-15", "blog") is None      # 그날 자체가 없음
+    log.record_candidates("2026-09-15", "blog", [])
+    assert log.note_used("2026-09-15", "blog") is None      # 후보가 비었음
+
+
+def test_발행을_적으면_제목도_함께_남는다(cfg, monkeypatch, capsys):
+    from rebrief import cli
+    monkeypatch.setattr(cli, "load_config", lambda *a, **k: cfg)
+    log = TitleLog(cfg.state_dir / "titles.json")
+    log.record_candidates("2026-09-15", "blog", ["오늘의 제목 11%"])
+    log.save()
+    assert cli.main(["publish", "--date", "2026-09-15",
+                     "--url", "https://blog.naver.com/x/1", "--views", "512"]) == 0
+    out = capsys.readouterr().out
+    assert "조회수 512" in out and "오늘의 제목 11%" in out
+    [row] = TitleLog(cfg.state_dir / "titles.json").picked()
+    assert row["views"] == 512 and row["title"] == "오늘의 제목 11%"
+
+
+def test_조회수가_빈_날을_아침_알림이_짚는다():
+    from rebrief.notify import build_record_reminder, build_run_message, pending_view_days
+    days = {
+        "2026-09-14": {"blog": {"candidates": ["가"], "views": 100}},
+        "2026-09-15": {"blog": {"candidates": ["나"], "views": None}},
+        "2026-09-16": {"blog": {"candidates": ["오늘"], "views": None}},
+    }
+    assert pending_view_days(days, "2026-09-16") == ["2026-09-15"]   # 오늘 것은 안 짚는다
+    line = build_record_reminder(days, "2026-09-16", "rokieyez/estate-news")
+    assert "2026-09-15" in line and "publish-log.yml" in line
+    # 다 적었으면 알림에 한 줄도 붙지 않는다
+    assert build_record_reminder({"2026-09-15": {"blog": {"candidates": ["가"], "views": 7}}},
+                                 "2026-09-16") == ""
+    msg = build_run_message(date="2026-09-16", headline="h", issues=1, articles=2,
+                            site_url="https://x.test/", warnings=[], llm_used=True,
+                            record_hint=line)
+    assert line in msg

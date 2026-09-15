@@ -50,7 +50,7 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
                       site_url: str, warnings: list[str], llm_used: bool,
                       images: int = 0, stats: dict | None = None,
                       usd: float = 0.0, krw_per_usd: float = 1400,
-                      quiet: bool = False, paste_url: str = "") -> str:
+                      quiet: bool = False, paste_url: str = "", record_hint: str = "") -> str:
     lines = [f"📅 {date} 부돌보 브리핑"]
     if headline:
         lines.append(headline)
@@ -70,6 +70,8 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
         if paste_url and w.startswith("붙여넣기 차례"):
             continue                      # 위에 이미 링크로 적었다
         lines.append(f"⚠️ {w}")
+    if record_hint:
+        lines.append(record_hint)
     if site_url:
         lines.append(f"🔗 {site_url.rstrip('/')}/latest/")
     return "\n".join(lines)
@@ -115,3 +117,30 @@ def build_failure_message(*, date: str, site_url: str = "", run_url: str = "", s
     if run_url:
         lines.append(run_url)
     return "\n".join(lines)
+
+
+def pending_view_days(days: dict, today: str, back: int = 7) -> list[str]:
+    """조회수를 아직 안 적은 날 (오늘은 빼고, 최근 것부터).
+
+    기준은 '그날 블로그 글을 만들었는가' 다 — 발행 기록이 있는 날로 좁히면, 발행 자체를
+    안 적는 동안에는 알림이 영영 안 울린다 (그래서 10일이 빈 채로 지났다).
+    """
+    out = []
+    for day in sorted((k for k in days if k < today), reverse=True)[:back]:
+        blog = (days.get(day) or {}).get("blog") or {}
+        if blog.get("candidates") and blog.get("views") is None:
+            out.append(day)
+    return out
+
+
+def build_record_reminder(days: dict, today: str, repo: str = "", back: int = 7) -> str:
+    """아침 알림에 붙일 '어제 것 적기' 한 줄. 적을 게 없으면 빈 문자열."""
+    pend = pending_view_days(days, today, back)
+    if not pend:
+        return ""
+    day = pend[0]
+    more = f" (밀린 날 {len(pend)}일)" if len(pend) > 1 else ""
+    where = (f"https://github.com/{repo}/actions/workflows/publish-log.yml"
+             if repo else "깃허브 Actions → 발행 기록")
+    # 날짜를 그대로 적어 준다 — date 칸을 비우면 '오늘' 이 되어 엉뚱한 날에 붙는다.
+    return f"📊 {day} 글 조회수 적기{more} — 발행 기록의 date 칸에 {day} · {where}"

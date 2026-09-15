@@ -290,7 +290,10 @@ def _message_from_output(cfg, date_str: str) -> str:
 
 def _notify_result(cfg, result) -> None:
     """토큰이 설정돼 있을 때만 실행 결과를 보낸다. 없으면 아무 말 없이 지나간다."""
-    from .notify import build_run_message, send_telegram, telegram_configured
+    import os
+
+    from .notify import build_record_reminder, build_run_message, send_telegram, telegram_configured
+    from .store import TitleLog
 
     if not telegram_configured():
         return
@@ -310,6 +313,9 @@ def _notify_result(cfg, result) -> None:
         usd=float(getattr(result.usage, "estimated_usd", 0) or 0) if result.usage else 0.0,
         krw_per_usd=float(cfg.get("llm.krw_per_usd", 1400)),
         quiet=bool(getattr(result, "quiet", False)),
+        record_hint=build_record_reminder(
+            TitleLog(cfg.state_dir / "titles.json").days, result.date,
+            os.environ.get("GITHUB_REPOSITORY", "")),
         paste_url=str(getattr(result, "paste_url", "") or ""),
     )
     print("📨 텔레그램 알림 " + ("전송" if send_telegram(text) else "실패"))
@@ -500,17 +506,29 @@ def _cmd_stats(cfg, args) -> int:
 
 
 def _cmd_publish(cfg, args) -> int:
-    from .store import PublishLog
+    from .render import update_index
+    from .store import PublishLog, TitleLog
 
     date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
     log_ = PublishLog(cfg.state_dir / "published.json")
     entry = log_.record(date_str, url=args.url, note=args.note, views=args.views)
     log_.save()
+
+    # 그날 블로그 제목을 '쓴 제목' 으로 함께 적는다. 블로그 후보는 하나뿐이라 고를 것이
+    # 없고(store.TitleLog.note_used 설명), 이래야 유형별 조회수가 번호 입력 없이 쌓인다.
+    titles = TitleLog(cfg.state_dir / "titles.json")
+    marked = titles.note_used(date_str, "blog", views=args.views)
+    if marked:
+        titles.save()
+        update_index(cfg)
+
     bits = [f"{date_str} 발행 기록"]
     if entry.get("url"):
         bits.append(entry["url"])
     if entry.get("views") is not None:
         bits.append(f"조회수 {entry['views']:,}")
+    if marked:
+        bits.append(f"제목 「{marked['title']}」 ({marked['type']})")
     print(" · ".join(bits))
     print("사이트를 다시 만들면 '발행함' 으로 표시됩니다.")
     return 0
