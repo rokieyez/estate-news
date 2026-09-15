@@ -238,7 +238,7 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
                               "이슈를 모두 길게 설명하면 글이 늘어집니다. 메인 하나만 깊게 쓰고 나머지는 한 줄씩 모으세요."))
         elif len(heads) > 6:
             items.append(Item("shape", WARN, f"소제목이 {len(heads)}개로 많습니다",
-                              "메인 이슈 2~3개 + 그 밖의 소식 + 체크포인트면 충분합니다."))
+                              "메인 이슈 2~3개 + 그 밖의 소식이면 충분합니다."))
         else:
             items.append(Item("shape", OK, f"소제목 {len(heads)}개 · 메인 하나에 집중"))
 

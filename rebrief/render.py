@@ -102,11 +102,13 @@ class Renderer:
                        + lead_block_markdown(post.summary_lines),
             tail_block=takeaways_block_markdown(post.takeaways)
                        + stats_block_markdown(stats, stats_image)
-                       + policy_block_markdown(policies)
+                       # 정부 발표 원문은 사이트 정책 페이지에만 (2026-09-15 사용자 선택, `blog.policies_in_post`)
+                       + (policy_block_markdown(policies) if blog_cfg.get("policies_in_post", False) else "")
                        + tail_block_markdown(post.closing_question, related),
             key_card="",       # 3줄 요약과 같은 수치를 한 번 더 말하고 있었습니다
-            body_markdown=place_images_markdown(post.body_markdown, slot_files or {}),
-            clusters=clusters,
+            body_markdown=place_images_markdown(
+                tidy_body(post.body_markdown, int(blog_cfg.get("other_news_max", 3) or 0)), slot_files or {}),
+            references=pick_references(clusters, int(blog_cfg.get("references_per_issue", 2) or 2)),
             date=self.date,
             frontmatter=bool(blog_cfg.get("frontmatter", True)),
             category=blog_cfg.get("category", "부동산"),
@@ -133,7 +135,8 @@ class Renderer:
             date=self.date,
             category=blog_cfg.get("category", "부동산"),
             body_html=to_naver_html(
-                post.body_markdown, slot_files or {}, photo_links,
+                tidy_body(post.body_markdown, int(blog_cfg.get("other_news_max", 3) or 0)),
+                slot_files or {}, photo_links,
                 highlight_min=int(blog_cfg.get("highlight_repeats", 3) or 0),
                 key_numbers=key_numbers,
                 summary_lines=post.summary_lines,
@@ -142,7 +145,7 @@ class Renderer:
                 cover=cover,
                 terms=self._terms(post),
                 takeaways=post.takeaways,
-                policies=policies,
+                policies=policies if blog_cfg.get("policies_in_post", False) else None,
                 stats=stats,
                 stats_image=stats_image,
                 date=self.date,
@@ -647,6 +650,71 @@ def to_naver_html(body_markdown: str, slot_files: dict[int, str] | None = None,
             + stats_block_html(stats, stats_image) + policy_block_html(policies)
             + tail_block_html(closing_question, related))
 
+
+
+_OTHER_NEWS = re.compile(r"(^##[ \t]*그 밖의[^\n]*\n)(.*?)(?=^##[ \t]|\Z)", re.M | re.S)
+
+
+def tidy_body(body_markdown: str, other_max: int = 3) -> str:
+    """글 끝 '오늘의 체크포인트' 는 빼고 '그 밖의 오늘 소식' 은 other_max 줄까지.
+
+    2026-09-15 사용자 "블로그 본문글이 좀 더 간결했으면, 지금은 지저분한 느낌". 체크포인트는 맨 위 3줄
+    요약과 같은 말이었습니다(9/14 부동산 글은 문장까지 같았음). 프롬프트로도 막지만, 모델이 옛 버릇대로
+    쓰거나 예전 틀의 붙여넣기 답이 들어와도 글에는 싣지 않도록 여기서 한 번 더 거릅니다.
+    """
+    # 체크포인트 소제목과 그 아래 목록만 뺀다. 목록 뒤에 이어진 문단은 남긴다 — 금지 표현 고쳐쓰기처럼
+    # 본문 끝에 문장이 덧붙는 경우가 있다 (test_파이프라인이_금지_표현을_고쳐_쓰고_점검표에_적는다).
+    kept_lines, skipping = [], False
+    for line in (body_markdown or "").split("\n"):
+        if re.match(r"^##[ \t]*오늘의 체크포인트", line):
+            skipping = True
+            continue
+        if skipping and (not line.strip() or re.match(r"\s*(?:[-*]|\d+[.)])\s+", line)):
+            continue
+        skipping = False
+        kept_lines.append(line)
+    body = "\n".join(kept_lines)
+
+    def trim(m: re.Match) -> str:
+        kept, bullets = [], 0
+        for line in m.group(2).split("\n"):
+            if re.match(r"\s*[-*]\s+", line):
+                bullets += 1
+                if bullets > other_max:
+                    continue
+            kept.append(line)
+        return m.group(1) + "\n".join(kept)
+
+    if other_max > 0:
+        body = _OTHER_NEWS.sub(trim, body)
+    return body.rstrip() + "\n"
+
+
+_DOMAIN_NAME = re.compile(r"[\w.-]+\.[a-z]{2,}")
+
+
+def pick_references(clusters: list, per_issue: int = 2) -> list[tuple[str, list[tuple[str, str]]]]:
+    """글 끝 '참고한 기사' — 이슈마다 per_issue 개, 언론사 이름이 있는 링크부터 (2026-09-15 사용자 선택).
+
+    예전엔 이슈마다 4개씩 실어 이 목록만 평균 2,100자(정치)·3,200자(부동산)였고, 'v.daum.net' 같은 주소
+    조각이 언론사 이름 자리에 들어가 지저분했습니다. 같은 언론사(뉴시스·정치 두 건)는 한 번만 싣습니다.
+    """
+    out = []
+    for c in clusters:
+        found = [(bool(_DOMAIN_NAME.fullmatch(name)), name, a.url)
+                 for a in c.articles if (name := a.publisher or a.feed_name) and a.url]
+        found.sort(key=lambda row: row[0])          # 이름 있는 곳 먼저 (정렬은 순서를 지킨다)
+        seen, links = set(), []
+        for _, name, url in found:
+            outlet = name.split("·")[0]
+            if outlet in seen:
+                continue
+            seen.add(outlet)
+            links.append((name, url))
+            if len(links) >= per_issue:
+                break
+        out.append((c.lead.title, links))
+    return out
 
 
 def section_dividers(html: str) -> str:

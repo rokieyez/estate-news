@@ -24,10 +24,10 @@ description: "{{ post.meta_description }}"
 
 ### 참고한 기사
 
-{% for c in clusters %}
-{{ loop.index }}. **{{ c.lead.title }}**
-{% for a in c.articles[:4] %}
-   - [{{ a.publisher or a.feed_name }}]({{ a.url }})
+{% for title, links in references %}
+{{ loop.index }}. **{{ title }}**
+{% for name, url in links %}
+   - [{{ name }}]({{ url }})
 {% endfor %}
 {% endfor %}
 

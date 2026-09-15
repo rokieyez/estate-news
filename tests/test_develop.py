@@ -3070,3 +3070,27 @@ def test_cards_add_a_trade_volume_card_before_the_rest(cfg):
     card = next(g for g in images.cards(_brief_for_cards(3), date="2026-09-07", volume=month)
                 if g.slug.endswith("-volume"))
     assert card.title == "7월 아파트 거래" and "신고 기한" not in card.svg
+
+
+# ── 블로그 본문 덜어내기 (2026-09-15) ────────────────────────
+
+
+def test_blog_body_drops_the_closing_checkpoint_and_trims_other_news():
+    from rebrief.render import tidy_body
+
+    body = ("도입입니다.\n\n## 메인 이슈\n\n본문\n\n## 그 밖의 오늘 소식\n\n- 하나\n- 둘\n- 셋\n- 넷\n\n"
+            "## 오늘의 체크포인트\n\n1. 요약 하나\n2. 요약 둘\n")
+    out = tidy_body(body, 3)
+    assert "체크포인트" not in out and "요약 하나" not in out      # 맨 위 3줄 요약과 같은 말
+    assert "- 셋" in out and "- 넷" not in out and "## 메인 이슈" in out
+
+
+def test_references_keep_two_named_outlets_per_issue():
+    from types import SimpleNamespace as NS
+
+    from rebrief.render import pick_references
+
+    arts = [NS(publisher="v.daum.net", feed_name="", url="u1"), NS(publisher="뉴시스·정치", feed_name="", url="u2"),
+            NS(publisher="뉴시스·정치", feed_name="", url="u3"), NS(publisher="연합뉴스", feed_name="", url="u4")]
+    assert pick_references([NS(lead=NS(title="제목"), articles=arts)], 2) == [
+        ("제목", [("뉴시스·정치", "u2"), ("연합뉴스", "u4")])]

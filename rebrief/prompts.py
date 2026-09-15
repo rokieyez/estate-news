@@ -96,9 +96,8 @@ def _blog_user_markdown(blog: dict) -> str:
     return f"""위 브리핑을 바탕으로 블로그 글 한 편을 완성하세요.
 
 - 분량: 본문 {min_chars}~{max_chars}자
-- 구조: 도입(오늘 시장 한 문단) → 이슈별 H2 소제목 → 정리/체크포인트
+- 구조: 도입(오늘 시장 한 문단) → 이슈별 H2 소제목
 - 수치는 표(마크다운 테이블)로 정리하면 읽기 좋습니다. 수치가 2개 이상인 이슈는 표를 쓰세요.
-- 마지막에 '오늘의 체크포인트' 3줄 요약을 붙입니다.
 - title 은 검색해서 들어올 만한 제목으로 짓되, 과장하거나 낚지 않습니다.
 - 글 안에서 독자를 '여러분'으로 부르고, 존댓말로 씁니다.
 - tags 는 5~8개. image_slots 는 빈 배열로 두세요."""
@@ -117,6 +116,7 @@ def _blog_user_naver(cfg: Config, blog: dict, regions: list[str] | None = None) 
     tag_count = int(naver.get("tag_count", 20))
     image_slots = int(naver.get("image_slots", 3))
     para_max = int(naver.get("paragraph_max_chars", 120))
+    other_max = int(blog.get("other_news_max", 3) or 3)
 
     region_rule = ""
     if regions:
@@ -169,8 +169,8 @@ def _blog_user_naver(cfg: Config, blog: dict, regions: list[str] | None = None) 
 - 순서를 이렇게 잡습니다:
   1) 도입 2~3문장 — 결론부터
   2) 메인 이슈 `##` 소제목 2~3개 — 무슨 일 → 숫자 → 그래서 어떤 뜻인지
-  3) `## 그 밖의 오늘 소식` — 나머지 이슈를 **한 줄씩** 불릿으로. 한 줄 45자 이내, 설명하지 말고 사실만.
-  4) `## 오늘의 체크포인트` — 3줄 요약
+  3) `## 그 밖의 오늘 소식` — 나머지 이슈 가운데 중요한 것 **{other_max}개까지 한 줄씩** 불릿으로. 한 줄 45자 이내, 설명하지 말고 사실만.
+- 글 끝에 체크포인트·정리 요약을 다시 붙이지 마세요. 맨 위 3줄 요약(summary_lines)과 같은 말이 됩니다.
 - **한 문단은 2~3문장, {para_max}자 이내.** 휴대폰 화면에서 벽처럼 보이면 읽지 않습니다.
 - 문단 사이는 반드시 빈 줄로 띄웁니다.
 - 어려운 말은 **처음 나올 때 괄호로 짧게** 풉니다. 예: 종부세(공시가격 합이 기준을 넘으면 내는 세금).

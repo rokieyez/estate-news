@@ -263,6 +263,12 @@ blog:
   # 메인 1개만 깊게 쓰고 나머지는 '그 밖의 오늘 소식' 에 한 줄씩 (프롬프트 규칙).
   min_chars: 1200
   max_chars: 2000
+  # 글 뒤쪽 덜어내기 (2026-09-15 사용자 선택 "글밥이 좀 더 간결했으면"). 끝의 '오늘의 체크포인트'(맨 위
+  # 3줄 요약과 같은 말)는 싣지 않고, '그 밖의 오늘 소식' 은 이 줄 수까지, '참고한 기사' 는 이슈마다 이 개수까지.
+  other_news_max: 3
+  references_per_issue: 2
+  # 정부 발표 원문 목록을 블로그 글에도 붙일지. 사이트의 정책 페이지에는 늘 남습니다.
+  policies_in_post: false
   frontmatter: true         # blog.md 에 YAML 머리말 포함 (Jekyll/Hugo/Obsidian 호환)
   category: "부동산"
   disclaimer: "본 글은 공개된 언론 보도를 정리한 것이며, 투자 판단의 책임은 이용자 본인에게 있습니다."
