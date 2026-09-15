@@ -231,7 +231,7 @@ def _cinema_cover(p: list[str], w: float, h: float, title: str, badge: str, chan
     last = h - 82
     first = last - line_h * (len(lines) - 1)
     if badge:
-        text = badge
+        text = f"오늘의 숫자 {badge}"
         bw = im.text_width(text, 22) + 44
         by = first - size - 56
         p.append(f'<rect x="{x}" y="{by:.0f}" width="{bw:.0f}" height="42" rx="21" fill="{im.BLUE}"/>')
@@ -258,7 +258,7 @@ def _glass_cover(p: list[str], w: float, h: float, title: str, badge: str, chann
     for i, line in enumerate(lines):
         p.append(f'<text x="{w / 2:g}" y="{py + 84 + line_h * (i + 1) - line_h * 0.22:.0f}" font-size="{size:g}" '
                  f'font-weight="800" text-anchor="middle" fill="{im.INK}">{im.esc(line)}</text>')
-    foot = "  |  ".join(b for b in (badge, date.replace("-", ".")) if b)
+    foot = "  |  ".join(b for b in (f"오늘의 숫자 {badge}" if badge else "", date.replace("-", ".")) if b)
     if foot:
         p.append(f'<text x="{w / 2:g}" y="{py + ph - 40:.0f}" font-size="22" text-anchor="middle" '
                  f'fill="{im.INK}">{im.esc(foot)}</text>')
@@ -341,27 +341,6 @@ def share_value(dp: dict) -> float | None:
     return v if v is not None and 0 < v <= 100 else None
 
 
-def _period(dp: dict) -> str:
-    """'기준 9월 둘째 주'. 모르는 시점('미상…')은 적지 않는다 — 글밥만 늘고 알려 주는 게 없다."""
-    period = (dp.get("period") or "").strip()
-    if not period or "미상" in period:
-        return ""
-    return period if "기준" in period else f"기준 {period}"
-
-
-def _shared_head(a: dict, b: dict) -> tuple[str, dict[int, str]]:
-    """두 라벨의 겹치는 앞말은 제목으로 한 번만. '이형일 후보자 과천 아파트 보유 기간' / '… 실거주 기간'
-    → 제목 '이형일 후보자 과천 아파트', 막대 '보유 기간' · '실거주 기간'. 겹치는 게 없으면 이슈 이름이 제목."""
-    wa, wb = a["label"].split(), b["label"].split()
-    k = 0
-    while k < min(len(wa), len(wb)) - 1 and wa[k] == wb[k]:
-        k += 1
-    head = " ".join(wa[:k])
-    if len(head) >= 4:
-        return head, {id(a): " ".join(wa[k:]), id(b): " ".join(wb[k:])}
-    return a.get("issue") or a["label"], {id(a): a["label"], id(b): b["label"]}
-
-
 def stat_card(dp: dict, date: str, extra: dict | None = None) -> im.Image | None:
     """사진 배경 판의 수치 그림. `images.stat_card` 가 판이 켜져 있을 때 넘깁니다.
 
@@ -377,10 +356,16 @@ def stat_card(dp: dict, date: str, extra: dict | None = None) -> im.Image | None
     share = None if other else share_value(dp)
     ring = active_style() == "glass"
 
-    # 글밥은 출처 한 줄만 (2026-09-15 "간결하게"). 기사 맥락 문장은 블로그 본문이 이미 말한다.
-    notes = [src] if (src := im._source_line(dp, date)) else []
-    sub = _period(dp)
-    title, names = _shared_head(dp, other) if other else (dp["label"], {})
+    notes = _note_lines(dp["context"], inner) if dp.get("context") else []
+    if other:
+        same_unit = (other.get("unit") or "") == (dp.get("unit") or "")
+        notes.append("※ 막대 길이는 두 수치의 크기를 견준 것입니다."
+                     + ("" if same_unit else " 서로 다른 단위는 같은 단위로 환산했습니다."))
+    if src := im._source_line(dp, date):
+        notes.append(src)
+    sub = f'기준 {dp["period"]}' if dp.get("period") else ""
+    # 두 막대면 막대마다 라벨이 붙으므로 제목은 이슈 이름 — 첫 막대 라벨을 제목에 또 쓰지 않는다
+    title = (dp.get("issue") or dp["label"]) if other else dp["label"]
     content = 2 * 112 if other else (270 if share is not None and ring else 230 if share is not None else 150)
     h = im.card_height(w, title, sub, content, notes)
     p, g = im.frame_open(w, h, title=title, subtitle=sub, channel=im._channel(extra), date=date)
@@ -394,7 +379,7 @@ def stat_card(dp: dict, date: str, extra: dict | None = None) -> im.Image | None
             top = y + i * 112
             mine = row is dp
             p.append(f'<text x="{x}" y="{top + 16}" font-size="21" fill="{im.INK_2}">'
-                     f'{im.esc(_clip(names[id(row)], 21, inner))}</text>')
+                     f'{im.esc(_clip(row.get("label", ""), 21, inner))}</text>')
             width = max(6.0, bar_w * _measure(row)[1] / biggest)
             p.append(f'<path d="{im.bar_path(x, top + 34, width, 46, 6)}" fill="{im.BLUE if mine else im.BLUE_SOFT}"/>')
             p.append(numeral(x + width + 18, top + 72, row, 40, im.INK))
@@ -480,19 +465,20 @@ def poll_chart(dp: dict, date: str, extra: dict | None = None) -> im.Image | Non
     found = _MARGIN.search(" ".join(f'{r.get("context", "")} {r.get("source", "")}' for r in rows) + " " + overview)
     margin = float(found.group(1)) if found else None
 
-    # 글밥은 줄이되 선거법이 요구하는 것(조사 개요·심의위원회 안내)은 남긴다 (2026-09-15 "간결하게").
+    notes = _note_lines(dp["context"], inner) if dp.get("context") and len(rows) == 1 else []
     if overview:
-        notes = _note_lines(overview, inner) + [DISCLOSURE]
+        notes += _note_lines(f"조사 개요: {overview}", inner)
     else:
-        notes = ["※ 조사 개요(기관·기간·표본·오차범위)는 보도에 없음", DISCLOSURE]
+        notes.append("※ 보도에 조사기관·조사기간·표본 수·오차범위가 나오지 않았습니다.")
+    if margin:
+        notes.append(f"※ 옅은 띠는 오차범위(±{margin:g}%p)입니다. 띠 안의 차이는 앞섰다고 볼 수 없습니다.")
+    notes.append(DISCLOSURE)
     if src := im._source_line(dp, date):
         notes.append(src)
 
-    single = len(rows) == 1
-    title = dp["label"] if single or not dp.get("issue") else dp["issue"]
-    sub = " · ".join(b for b in (_period(dp), f"옅은 띠 = 오차범위 ±{margin:g}%p" if margin else "") if b)
-    row_h = 64 if single else 100
-    label_h = 0 if single else 44           # 막대가 하나면 제목이 곧 라벨이다
+    title = dp["issue"] if len(rows) > 1 and dp.get("issue") else dp["label"]
+    sub = f'기준 {dp["period"]}' if dp.get("period") else ""
+    row_h = 100
     h = im.card_height(w, title, sub, 30 + row_h * len(rows), notes)
     p, g = im.frame_open(w, h, title=title, subtitle=sub, channel=im._channel(extra), date=date)
     x, y = g["x"], g["top"] + 20
@@ -504,18 +490,17 @@ def poll_chart(dp: dict, date: str, extra: dict | None = None) -> im.Image | Non
              f'stroke="{im.BASELINE}" stroke-width="1.5" stroke-dasharray="4 4"/>')
     for i, row in enumerate(rows):
         v = poll_value(row)
-        bar = y + i * row_h + label_h
-        if not single:
-            p.append(f'<text x="{x}" y="{bar - 14}" font-size="21" fill="{im.INK_2}">'
-                     f'{im.esc(_clip(row.get("label", ""), 21, inner))}</text>')
-        p.append(f'<rect x="{x}" y="{bar}" width="{bar_w:g}" height="38" rx="6" fill="{im.GRID}"/>')
-        p.append(f'<path d="{im.bar_path(x, bar, bar_w * v / 100, 38, 6)}" '
+        top = y + i * row_h
+        p.append(f'<text x="{x}" y="{top + 30}" font-size="21" fill="{im.INK_2}">'
+                 f'{im.esc(_clip(row.get("label", ""), 21, inner))}</text>')
+        p.append(f'<rect x="{x}" y="{top + 44}" width="{bar_w:g}" height="38" rx="6" fill="{im.GRID}"/>')
+        p.append(f'<path d="{im.bar_path(x, top + 44, bar_w * v / 100, 38, 6)}" '
                  f'fill="{im.BLUE if i == 0 else im.BLUE_SOFT}"/>')
         if margin:
             lo, hi = max(0.0, v - margin), min(100.0, v + margin)
-            p.append(f'<rect x="{x + bar_w * lo / 100:.1f}" y="{bar - 6}" width="{bar_w * (hi - lo) / 100:.1f}" '
+            p.append(f'<rect x="{x + bar_w * lo / 100:.1f}" y="{top + 38}" width="{bar_w * (hi - lo) / 100:.1f}" '
                      f'height="50" rx="4" fill="{im.INK}" opacity=".22"/>')
-        p.append(f'<text x="{x + bar_w + 18:g}" y="{bar + 31}" font-size="34" font-weight="700" '
+        p.append(f'<text x="{x + bar_w + 18:g}" y="{top + 75}" font-size="34" font-weight="700" '
                  f'font-family="{im.DISPLAY}" fill="{im.INK}">{v:g}%</text>')
     im.frame_close(p, notes, g)
     return im.Image("poll-chart", im._embed_fonts("\n".join(p)), title,

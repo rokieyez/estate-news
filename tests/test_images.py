@@ -66,7 +66,7 @@ def test_감소율은_지수막대로_그린다():
     assert ">100<" in img.svg and ">19<" in img.svg     # 100 → 19
     assert "▼" in img.svg and "감소" in img.svg          # 색만으로 뜻을 전하지 않는다
     # 없는 숫자를 지어내지 않았다고 밝혀야 한다
-    assert "보도에 없음" in img.svg
+    assert "제시되지 않았습니다" in img.svg
 
 
 def test_증가율은_위쪽_화살표로_그린다():

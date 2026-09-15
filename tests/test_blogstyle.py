@@ -76,9 +76,7 @@ def test_two_numbers_of_one_issue_become_a_bar_comparison():
         built = images.build(pool, DATE)
     assert len(built) == 1                                   # 둘째 수치는 첫 그림에 이미 실렸다
     svg = built[0].svg
-    text = "".join(re.findall(r">([^<>]*)<", svg))
-    assert "보유 기간" in text and "실거주 기간" in text
-    assert text.count("과천 아파트") == 1                    # 겹치는 앞말은 제목에 한 번만
+    assert "보유 기간" in svg and "실거주 기간" in svg and "환산" in svg
 
 
 def test_numbers_that_measure_different_things_are_not_paired():
@@ -108,7 +106,7 @@ def test_poll_numbers_become_bars_with_the_disclosure_line():
     svg = built[0].svg
     assert "37.4%" in svg and "55.1%" in svg
     assert "중앙선거여론조사심의위원회" in svg
-    assert "보도에 없음" in svg                                # 개요가 없으면 없다고 적고 지어내지 않는다
+    assert "나오지 않았습니다" in svg                          # 개요가 없으면 없다고 적고 지어내지 않는다
 
 
 def test_poll_chart_takes_the_overview_from_the_registry_when_the_agency_is_named():
@@ -118,7 +116,7 @@ def test_poll_chart_takes_the_overview_from_the_registry_when_the_agency_is_name
     by_slot, _ = images.build_for_slots([dp(label=label, value="41", unit="%", issue="정당")], DATE, [label],
                                         polls=polls)
     svg = by_slot[1].svg
-    assert "1,002명" in svg and "오차범위 ±3.1%p" in svg
+    assert "1,002명" in svg and "오차범위(±3.1%p)" in svg
 
 
 def test_poll_point_changes_are_not_poll_bars():
