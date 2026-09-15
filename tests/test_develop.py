@@ -2262,10 +2262,12 @@ def test_photo_search_picks_words_from_the_day(cfg):
     }, limit=3)
     assert len(got) == 3 and len(set(got)) == 3            # 세 장이 다 달라야 한다
     assert got[0] == photos.DEFAULT_QUERY                  # 표지는 그날 전체를 받는다
-    assert any("window" in q for q in got)                 # 전세 → 아파트 외벽
+    assert "seoul apartments" in got                       # 전세 → 서울 아파트
     assert any("real estate" in q for q in got)            # 금리 → 부동산
     # 낱말마다 서울·한국이 들어가야 서양 주택 사진이 안 온다 (2026-09-08 실측)
     assert all("seoul" in q or "korea" in q for _, q in photos.QUERY_MAP)
+    # 'window'·'complex' 를 붙이면 외국 사진이 더 많이 온다 (2026-09-15 실측: 외국 9·4장)
+    assert not any(w in q for _, q in photos.QUERY_MAP for w in ("window", "complex"))
 
 
 def test_photo_search_survives_a_missing_key_and_a_dead_network(cfg, tmp_path, monkeypatch):
@@ -2307,6 +2309,41 @@ def test_photo_search_does_not_repeat_yesterdays_picture(cfg, tmp_path, monkeypa
     assert [p.ident for p in got] == ["222"]
     assert got[0].credit == "오늘 그 사람" and got[0].path.exists()
     assert json.loads(ledger.read_text()) == ["111", "222"]      # 장부에 쌓인다
+
+
+def test_photo_fetch_prefers_pictures_that_name_korea(tmp_path, monkeypatch):
+    """설명글에 한국 지명이 없는 사진은 뒤로 민다 (2026-09-15).
+
+    politics-news 가 'seoul government building' 으로 조지아 트빌리시 대통령궁을 받았고, 이 저장소의
+    'seoul apartment window' 는 40장 중 외국 지명(두바이·타이베이…)이 한국 지명보다 많았습니다.
+    """
+    import json
+
+    from rebrief import photos
+
+    dubai = {"id": "1", "alt": "Symmetrical facade of a Dubai apartment building with green windows.",
+             "photographer": "a", "src": {"landscape": "https://x/1.jpg"}}
+    seoul = {"id": "2", "alt": "A modern high-rise apartment building facade with balconies in Seoul, South Korea.",
+             "photographer": "b", "src": {"landscape": "https://x/2.jpg"}}
+    monkeypatch.setattr(photos, "_pexels", lambda q, key, per_page=40: [dubai, seoul])
+    monkeypatch.setattr(photos, "_get", lambda url, headers: b"\xff\xd8\xff\xe0jpeg")
+    brief = {"headline": "전세 보증금"}
+    kw = {"cache_dir": tmp_path / "c", "count": 1, "key": "k"}
+    assert [p.ident for p in photos.fetch(brief, ledger=tmp_path / "l.json", **kw)] == ["2"]
+
+    # 한국 사진을 어제 썼어도, 처음 보는 외국 사진보다 먼저 다시 쓴다
+    ledger = tmp_path / "l2.json"
+    ledger.write_text(json.dumps(["2"]), encoding="utf-8")
+    assert [p.ident for p in photos.fetch(brief, ledger=ledger, **kw)] == ["2"]
+
+    # 한국 지명이 하나도 없으면 그래도 한 장은 쓴다 — 표로 돌아가는 것보다 낫다
+    monkeypatch.setattr(photos, "_pexels", lambda q, key, per_page=40: [dubai])
+    assert [p.ident for p in photos.fetch(brief, ledger=tmp_path / "l3.json", **kw)] == ["1"]
+
+    # 지명은 낱말 단위로만 본다 — 'figurine' 안의 guri 는 경기도 구리가 아니다
+    assert photos._names_korea({"alt": "Seoul's skyline"}) and photos._names_korea({"alt": "a South Korean flag"})
+    assert photos._names_korea({"alt": "Skyline of high-rise apartments in Yongin"})
+    assert not photos._names_korea({"alt": "A small figurine on a desk"}) and not photos._names_korea({})
 
 
 def test_cards_credit_the_photo_and_say_it_is_unrelated(cfg, tmp_path):

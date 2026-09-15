@@ -20,6 +20,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import urllib.parse
 import urllib.request
 from dataclasses import dataclass
@@ -33,8 +34,8 @@ PEXELS_SEARCH = "https://api.pexels.com/v1/search"
 # 한국어로 넣으면 몇 건 안 나오는 것을 확인하고 영어 낱말로 짝지어 두었습니다.
 QUERY_MAP: list[tuple[tuple[str, ...], str]] = [
     (("재건축", "재개발", "정비사업", "공사비", "착공"), "seoul construction site"),
-    (("전세", "월세", "임대", "보증금"), "seoul apartment window"),
-    (("분양", "청약", "미분양", "입주"), "korea apartment complex"),
+    (("전세", "월세", "임대", "보증금"), "seoul apartments"),
+    (("분양", "청약", "미분양", "입주"), "seoul high rise apartments"),
     (("대출", "금리", "이자", "주담대", "은행"), "korea real estate agency"),
     (("정책", "규제", "정부", "국토부", "세금", "종부세"), "seoul government building"),
     (("거래", "매매", "시세", "집값", "가격"), "seoul housing"),
@@ -43,10 +44,30 @@ QUERY_MAP: list[tuple[tuple[str, ...], str]] = [
 # 'korean won money' 로 찾았더니 버스 교통카드 단말기가 올라왔습니다 (2026-09-08).
 # 부동산 글에는 어떤 이야기든 아파트·도시 사진이 어울리므로, 낱말을 그쪽으로 되돌려
 # 두었습니다. 결이 조금 덜 맞아도 엉뚱한 것보다 낫습니다.
+# **'window'·'complex' 를 붙이면 서울이 흐려집니다** (2026-09-15, per_page 40 실측). 'seoul apartment
+# window' 는 한국 지명 5장·외국 지명 9장, 'korea apartment complex' 는 8장·4장(베이징·톈진·벵갈루루·
+# 홍콩)이었습니다. 'seoul apartments'(25·0)·'seoul high rise apartments'(17·1)로 바꿨습니다.
 # 표지에 쓰는 기본값. **낱말마다 '서울' 이나 '한국' 을 넣습니다** — 빼고 찾으면 서양 주택
 # 사진이 올라옵니다. 2026-09-08 에 실제로 '아파트 실내' 로 찾았더니 벽돌벽 로프트가
 # 표지에 붙었습니다. 'seoul' 을 넣은 뒤로는 서울 아파트 단지가 나옵니다.
 DEFAULT_QUERY = "seoul apartment buildings"
+
+
+# 설명글(alt)에 이 지명이 나오면 한국에서 찍은 사진입니다. **검색어에 'seoul' 을 넣어도 남의 나라
+# 사진이 섞입니다** — 2026-09-15 politics-news 가 'seoul government building' 으로 조지아 트빌리시
+# 대통령궁을 받았고(설명글에 지명 없음), 이 저장소의 'seoul apartment window' 는 40장 중 한국 지명이
+# 5장, 두바이·타이베이·호찌민 같은 외국 지명이 9장이었습니다. 설명글에 지명이 없다고 다 외국은
+# 아니지만, 한국 지명이 적힌 사진부터 씁니다. 실측 표는 CLAUDE.md 의 사진 절에 있습니다.
+KOREA_WORDS = re.compile(
+    r"\b(?:seoul|korea|korean|han river|hangang|gyeongbokgung|gwanghwamun|yeouido|namsan|jongno|sejong"
+    r"|cheonggyecheon|bukchon|hanok|lotte world|jamsil|gangnam|yongsan|itaewon|myeongdong|dongdaemun"
+    r"|insadong|incheon|busan|daegu|daejeon|gwangju|ulsan|suwon|yongin|seongnam|goyang|guri|jeju|gyeonggi)\b",
+    re.IGNORECASE)
+
+
+def _names_korea(hit: dict) -> bool:
+    """설명글에 한국 지명이 있는가. 없는 사진은 뒤로 민다 — 서울 집값 글에 두바이 아파트가 붙으면 안 된다."""
+    return bool(KOREA_WORDS.search(str(hit.get("alt") or "")))
 
 
 @dataclass
@@ -130,7 +151,10 @@ def fetch(brief: dict, *, cache_dir: Path, ledger: Path, count: int = 3,
             continue
         # 장부에 없는 것부터 고르고, 한 장도 없으면 **그냥 앞의 것을 다시 씁니다.**
         # 되풀이를 막자고 사진을 아예 안 넣으면 카드가 표로 돌아갑니다 — 그게 더 나쁩니다.
-        fresh = [h for h in hits if str(h.get("id") or "") not in seen]
+        # 그 전에 한국 지명이 적힌 사진만 남기고, 한 장도 없을 때만 나머지를 씁니다. 장부에 있는
+        # 한국 사진을 다시 쓰는 편이 처음 보는 사진이 남의 나라 건물인 것보다 낫습니다.
+        hits = [h for h in hits if _names_korea(h)] or hits
+        fresh =[h for h in hits if str(h.get("id") or "") not in seen]
         for hit in fresh or hits:
             ident = str(hit.get("id") or "")
             if not ident:

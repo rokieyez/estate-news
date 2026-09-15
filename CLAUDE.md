@@ -834,8 +834,30 @@ rokieyez.github.io 는 5시간 6분 늦었습니다. 깃허브 문서는 「부�
   `state/photos/` 는 gitignore 이고, 쓴 사진 번호만 `state/photos.json` 에 남겨 어제 그
   사진이 오늘 또 나오지 않게 합니다(최근 40장).
 * **찾을 말은 그날 이슈에서 뽑습니다** (`photos.QUERY_MAP`). 매일 같은 낱말로 찾으면 매일 같은
-  사진이 옵니다. 재건축→공사현장, 전세→실내, 금리→금융 식입니다. **영어로 찾습니다** — 한국어로
+  사진이 옵니다. 재건축→공사현장, 전세→서울 아파트, 금리→부동산 식입니다. **영어로 찾습니다** — 한국어로
   넣으면 몇 건 안 나옵니다.
+* **검색어에 seoul 을 넣어도 남의 나라 사진이 섞입니다 — 한국 지명이 적힌 사진부터 씁니다** (`photos._names_korea`,
+  2026-09-15). politics-news 가 'seoul government building' 으로 **조지아 트빌리시 대통령궁**을 받았습니다(설명글 alt 에
+  지명 없음). 같은 날 이 저장소 검색어도 쟀더니 더 심했습니다. 이제 설명글에 한국 지명(seoul·korea·korean·han river·
+  yongin… 낱말 단위)이 있는 사진만 남기고, 한 장도 없을 때만 나머지를 씁니다. **장부에 있는 한국 사진을 다시 쓰는 편이
+  처음 보는 두바이 아파트보다 낫다**고 보았습니다. `test_photo_fetch_prefers_pictures_that_name_korea`.
+  per_page 40 실측(맥, 2026-09-15). 「외국」은 설명글에 외국 지명이 적힌 것, 「지명 없음」은 설명글로는 어느 나라인지 모르는 것입니다.
+
+  | 검색어 (쓰는 곳) | 한국 지명 | 외국 | 지명 없음 |
+  | --- | --- | --- | --- |
+  | seoul apartment buildings (표지) | 24 | 0 | 16 |
+  | seoul construction site (재건축) | 17 | 7 — 도쿄·튀르키예·바투미·모스크바·호찌민·브라티슬라바·베트남 | 15 |
+  | ~~seoul apartment window~~ (전세, 옛) | **5** | **9** — 두바이 3·타이베이 2·하이데라바드·델프트·리비우·호찌민 | 26 |
+  | ~~korea apartment complex~~ (분양, 옛) | 8 | 4 — 베이징·톈진·벵갈루루·홍콩 | 28 |
+  | korea real estate agency (금리) | 27 | 0 | 13 |
+  | seoul government building (정책) | 29 | 1 — 트빌리시, **첫 번째 결과** | 10 |
+  | seoul housing (거래) | 31 | 0 | 9 |
+  | **seoul apartments** (전세, 새) | 25 | 0 | 15 |
+  | **seoul high rise apartments** (분양, 새) | 17 | 1 — 도쿄 | 22 |
+
+  **'window'·'complex' 를 붙이면 서울이 흐려져** 전세·분양 두 검색어를 바꿨습니다(시험이 두 낱말을 막습니다).
+  재건축은 'seoul crane construction' 이 한국 1·외국 6 으로 더 나빠 그대로 두고 거르개에 맡겼습니다(한국 17장).
+  지명 없는 사진이 다 외국은 아닙니다 — politics-news 에서 미리보기로 본 넷 중 둘이 서울(KDB산업은행·DDP)이었습니다.
 * **시험은 망을 타면 안 됩니다.** `tests/conftest.py` 가 `images.photos = False` 로 끕니다.
   이 줄을 지우면 `.env` 에 키를 넣은 컴퓨터에서 시험이 조용히 인터넷을 쓰기 시작합니다.
 
