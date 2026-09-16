@@ -95,6 +95,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_pub.add_argument("--note", default="", help="메모 (선택)")
     p_pub.add_argument("--views", type=int, help="조회수 (나중에 다시 실행해 채워도 됩니다)")
 
+    p_idx = sub.add_parser("index-check", help="네이버 검색이 내 글을 잡았는지 재서 기록")
+    p_idx.add_argument("--date", help="날짜 (기본: 오늘)")
+    p_idx.add_argument("--limit", type=int, default=10, help="최근 몇 편을 잴지 (기본 10)")
+
     return parser
 
 
@@ -130,6 +134,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_titles(cfg, args)
     if args.command == "publish":
         return _cmd_publish(cfg, args)
+    if args.command == "index-check":
+        return _cmd_index_check(cfg, args)
     if args.command == "policy":
         return _cmd_policy(cfg, args)
     if args.command == "stats":
@@ -293,6 +299,7 @@ def _notify_result(cfg, result) -> None:
     import os
 
     from .notify import build_record_reminder, build_run_message, send_telegram, telegram_configured
+    from .searchindex import IndexLog, build_index_hint
     from .store import TitleLog
 
     if not telegram_configured():
@@ -316,6 +323,9 @@ def _notify_result(cfg, result) -> None:
         record_hint=build_record_reminder(
             TitleLog(cfg.state_dir / "titles.json").days, result.date,
             os.environ.get("GITHUB_REPOSITORY", "")),
+        # 색인은 파이프라인이 재지 않는다 (네이버를 부르는 별도 명령). 잰 적이 있으면 그 결과만 얹는다.
+        index_hint=build_index_hint(
+            IndexLog(cfg.state_dir / "searchindex.json").days, result.date),
         paste_url=str(getattr(result, "paste_url", "") or ""),
     )
     print("📨 텔레그램 알림 " + ("전송" if send_telegram(text) else "실패"))
@@ -531,6 +541,36 @@ def _cmd_publish(cfg, args) -> int:
         bits.append(f"제목 「{marked['title']}」 ({marked['type']})")
     print(" · ".join(bits))
     print("사이트를 다시 만들면 '발행함' 으로 표시됩니다.")
+    return 0
+
+
+def _cmd_index_check(cfg, args) -> int:
+    """네이버가 내 글을 잡았는지 재서 장부에 적는다.
+
+    못 쟀을 때 **0편으로 적지 않는다** — 막힌 것과 빠진 것은 다른 일이고, 섞어 적으면
+    나중에 곡선을 봐도 아무 말을 못 한다 (searchindex 모듈 설명).
+    """
+    from .searchindex import IndexLog, build_index_hint, check
+
+    date_str = args.date or local_now(cfg).strftime("%Y-%m-%d")
+    result = check(cfg, limit=args.limit)
+    if not result.get("ok"):
+        print(f"재지 못했습니다 — {result.get('reason', '알 수 없는 이유')}")
+        return 1
+
+    log_ = IndexLog(cfg.state_dir / "searchindex.json")
+    log_.record(date_str, result)
+    log_.save()
+
+    total = result.get("total_posts")
+    print(f"{date_str} · {result['blog_id']} · 블로그 전체 {total if total is not None else '?'}편")
+    for probe in result["probes"]:
+        mark = f"✅ {probe.rank}위" if probe.indexed else "❌ 없음"
+        print(f"  {probe.post.date}  {mark:9} {probe.post.title[:44]}")
+    print(f"→ 색인 {result['indexed']}/{result['checked']}편")
+    hint = build_index_hint(log_.days, date_str)
+    if hint:
+        print(hint)
     return 0
 
 

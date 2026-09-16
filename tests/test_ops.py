@@ -381,3 +381,130 @@ def test_조회수가_빈_날을_아침_알림이_짚는다():
                             site_url="https://x.test/", warnings=[], llm_used=True,
                             record_hint=line)
     assert line in msg
+
+
+# ── 색인 재기: 기다리는 동안 숫자가 쌓이게 (2026-09-16) ──
+
+
+class _FakeNaver:
+    """네이버 대신 답하는 가짜. 실제 그물을 쓰지 않는다."""
+
+    def __init__(self, *, indexed=(), canary=True, rss=True, total="10"):
+        self.indexed = set(indexed)
+        self.canary = canary
+        self.rss = rss
+        self.total = total
+        self.calls: list[str] = []
+
+    def __call__(self, url: str) -> str:
+        self.calls.append(url)
+        if "rss.blog.naver.com" in url:
+            if not self.rss:
+                return ""
+            items = "".join(
+                f"<item><title><![CDATA[{t}]]></title>"
+                f"<guid>https://blog.naver.com/rikiwiki/{n}</guid>"
+                f"<pubDate>Tue, 15 Sep 2026 09:00:00 +0900</pubDate></item>"
+                for n, t in [("111", "첫째 글"), ("222", "둘째 글")])
+            return f"<rss><channel>{items}</channel></rss>"
+        if "PostTitleListAsync" in url:
+            return '{"totalCount":"%s","postList":[]}' % self.total
+        if "search.naver.com" in url:
+            import urllib.parse
+            q = urllib.parse.unquote(url.split("query=")[-1])
+            if q == "강남 맛집":
+                return ("남의 글 https://blog.naver.com/someone/999"
+                        if self.canary else "아무것도 없음")
+            hit = {"첫째 글": "111", "둘째 글": "222"}.get(q)
+            out = "https://blog.naver.com/other/900 "
+            if hit and hit in self.indexed:
+                out += f"https://blog.naver.com/rikiwiki/{hit}"
+            return out
+        return ""
+
+
+class _Cfg:
+    def __init__(self, state_dir, **vals):
+        self._v = {"blog.naver.write_url": "https://blog.naver.com/rikiwiki/postwrite", **vals}
+        self.state_dir = state_dir
+
+    def get(self, path, default=None):
+        return self._v.get(path, default)
+
+
+def test_설정에_없어도_글쓰기_주소에서_블로그_아이디를_읽는다(tmp_path):
+    from rebrief.searchindex import blog_id
+
+    assert blog_id(_Cfg(tmp_path)) == "rikiwiki"
+    assert blog_id(_Cfg(tmp_path, **{"blog.naver.blog_id": "keyboardpolitics"})) == "keyboardpolitics"
+
+
+def test_색인된_글과_빠진_글을_가려낸다(tmp_path):
+    from rebrief.searchindex import check
+
+    out = check(_Cfg(tmp_path), fetcher=_FakeNaver(indexed=["111"]), pause=0)
+    assert out["ok"] is True
+    assert (out["indexed"], out["checked"]) == (1, 2)
+    first, second = out["probes"]
+    assert first.indexed is True and first.rank == 2   # 남의 글 다음
+    assert second.indexed is False and second.rank is None
+
+
+def test_네이버가_막히면_0편으로_적지_않는다(tmp_path):
+    """막힌 것과 빠진 것은 다른 일이다. 섞어 적으면 장부가 거짓말을 한다."""
+    from rebrief.searchindex import check
+
+    out = check(_Cfg(tmp_path), fetcher=_FakeNaver(indexed=["111"], canary=False), pause=0)
+    assert out["ok"] is False
+    assert "적지 않습니다" in out["reason"]
+
+
+def test_RSS_를_못_읽으면_재지_않는다(tmp_path):
+    from rebrief.searchindex import check
+
+    out = check(_Cfg(tmp_path), fetcher=_FakeNaver(rss=False), pause=0)
+    assert out["ok"] is False
+
+
+def test_아침_알림이_어제보다_몇_편_늘었는지_말한다(tmp_path):
+    from rebrief.searchindex import build_index_hint
+
+    days = {"2026-09-16": {"checked": 10, "indexed": 3},
+            "2026-09-15": {"checked": 10, "indexed": 1}}
+    assert build_index_hint(days, "2026-09-16") == "🔎 네이버 색인 3/10편 (+2)"
+
+
+def test_하나도_안_잡히면_블로그가_몇_편짜리인지_같이_말한다(tmp_path):
+    """열 편짜리 블로그가 검색에 없는 것은 고장이 아니라 아직일 수 있다."""
+    from rebrief.searchindex import build_index_hint
+
+    days = {"2026-09-16": {"checked": 10, "indexed": 0, "total_posts": 10}}
+    hint = build_index_hint(days, "2026-09-16")
+    assert "0/10편" in hint and "블로그 전체 10편" in hint
+
+
+def test_잰_적이_없으면_알림에_아무것도_안_붙는다():
+    from rebrief.searchindex import build_index_hint
+
+    assert build_index_hint({}, "2026-09-16") == ""
+
+
+def test_명령을_돌리면_장부에_남는다(tmp_path, monkeypatch, capsys):
+    import json
+
+    from rebrief import searchindex
+    from rebrief.searchindex import IndexLog
+
+    fake = _FakeNaver(indexed=["111", "222"])
+    monkeypatch.setattr(searchindex, "fetch", fake)
+    cfg = _Cfg(tmp_path)
+    out = searchindex.check(cfg, fetcher=fake, pause=0)
+    log = IndexLog(tmp_path / "searchindex.json")
+    log.record("2026-09-16", out)
+    log.save()
+
+    saved = json.loads((tmp_path / "searchindex.json").read_text(encoding="utf-8"))
+    day = saved["days"]["2026-09-16"]
+    assert day["indexed"] == 2 and day["checked"] == 2
+    assert day["blog_id"] == "rikiwiki" and day["total_posts"] == 10
+    assert [p["title"] for p in day["posts"]] == ["첫째 글", "둘째 글"]

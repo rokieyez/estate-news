@@ -20,6 +20,7 @@ PAIR = {"estate-news": "politics-news", "politics-news": "estate-news"}
 # 골랐고, 부동산·정치 자료를 다루는 cluster·rank·regions·결산 틀은 뺐습니다(달라져도 되는 자리).
 SHARED = [
     ".github/workflows/test.yml",
+    ".github/workflows/index-check.yml",
     ".github/workflows/publish-log.yml",
     ".github/workflows/title-log.yml",
     "rebrief/__main__.py",
@@ -28,6 +29,7 @@ SHARED = [
     "rebrief/linkcheck.py",
     "rebrief/related.py",
     "rebrief/sanitize.py",
+    "rebrief/searchindex.py",              # 색인 재기 (2026-09-16) — 두 블로그를 같은 자로 재야 비교가 된다
     "rebrief/subscription.py",
     "rebrief/tts.py",
     "rebrief/verify.py",
