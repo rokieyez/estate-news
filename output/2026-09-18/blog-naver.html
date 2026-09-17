@@ -1,0 +1,248 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>토지거래허가구역 실거주 유예 1년 연장, 9월 18일 서울 브리핑</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
+  body {
+    margin: 0; padding: 0 16px 80px;
+    color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.8; font-size: 16px;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    margin: 0 -16px 20px; padding: 12px 16px;
+    background: #03c75a; color: #fff;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .bar strong { margin-right: auto; font-size: 15px; }
+  .bar button {
+    border: 0; border-radius: 6px; padding: 8px 14px;
+    background: rgba(255,255,255,.18); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .bar button:hover { background: rgba(255,255,255,.3); }
+  .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
+  .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
+  #post p { margin: 0 0 18px; }
+  #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
+  #post li { margin-bottom: 8px; }
+  #post table { border-collapse: collapse; width: 100%; margin: 0 0 20px; font-size: 15px; }
+  #post th, #post td { border: 1px solid #ddd; padding: 9px 12px; text-align: left; }
+  #post th { background: #f2f4f6; font-weight: 700; }
+  #post blockquote {
+    margin: 0 0 18px; padding: 12px 16px;
+    background: #f7f8fa; border-left: 4px solid #03c75a; color: #444;
+  }
+  #post a { color: #0068c3; }
+  .imgslot {
+    margin: 0 0 20px; padding: 22px 16px; text-align: center;
+    border: 2px dashed #c9cdd2; border-radius: 8px;
+    background: #fafbfc; color: #6b7178; font-size: 14px;
+  }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .photo-links { margin: -12px 0 20px; font-size: 13px; color: #6b7178; text-align: center; }
+  .photo-links a { color: #0068c3; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
+  .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
+  .hint {
+    max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    font-size: 14px; line-height: 1.75; color: #5f4b16;
+  }
+  .hint ol { margin: 8px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>네이버 블로그 붙여넣기</strong>
+  <button type="button" data-copy="title">제목 복사</button>
+  <button type="button" data-copy="post">본문 복사</button>
+  <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="https://blog.naver.com/rikiwiki/postwrite" target="_blank" rel="noopener">글쓰기 열기</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1 class="title" id="title">토지거래허가구역 실거주 유예 1년 연장, 9월 18일 서울 브리핑</h1>
+    <div class="meta">2026-09-18 · 부동산</div>
+
+    <div id="post">
+<div class="imgslot has-file">📷 대표 이미지 — 검색 목록에 이 그림이 썸네일로 뜹니다<br><small>→ 파일 <b>img-0-cover.png</b> 을 <b>글 맨 위</b>에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-0-cover.png" alt="대표 이미지"><p style="margin:0 0 14px;font-size:14px;color:#767676">이 글은 2026년 9월 18일 기준으로 정리한 내용입니다. 실거래 거래 건수는 2026년 8월 1~18일 계약분(신고 기한이 지난 것), 전세가율 등은 2026년 7월 신고분입니다.</p><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px"><b style="font-size:15px">3줄 요약</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">국토부, 토지거래허가구역 실거주 유예 기한 1년 연장 발표</li><li style="margin-bottom:6px">신청기한 2027년 말까지, 갱신계약 2년 더해 최장 2029년 말 입주</li><li style="margin-bottom:6px">10월 1일 시행 이후 토허구역 매물·거래가 실제로 움직이는지 확인</li></ul></div><p>오늘 부동산 소식의 중심은 토지거래허가구역 실거주 유예입니다. 국토교통부가 9월 17일, 유예 신청 기한을 <span class="hl" style="background-color:#fff59d"><strong>1년</strong></span> 더 늘리고 인정 범위도 넓힌다고 밝혔습니다.</p>
+<p>확대된 조치는 10월 1일부터 시행됩니다. 같은 날 나온 통계에서는 서울 아파트 매매가격과 전셋값이 나란히 84주 연속 올랐습니다.</p>
+<h2>토지거래허가구역 실거주 유예, 무엇이 달라졌나</h2>
+<p>토지거래허가구역은 집을 살 때 관할 구청의 허가를 받아야 하고, 원칙적으로 매수자가 직접 들어가 살아야 하는 지역입니다. 세입자가 있는 집을 샀을 때 입주 시점을 미뤄 주는 것이 실거주 유예입니다.</p>
+<p>이번에 신청 기한이 올해 12월 31일에서 2027년 12월 31일로 1년 밀렸습니다. 인정 범위도 기존 임대차 계약의 남은 기간을 넘어, 1회에 한해 최대 <span class="hl" style="background-color:#fff59d"><strong>2년</strong></span>의 갱신계약 기간까지 더해집니다.</p>
+<div class="imgslot has-file">📷 이미지 — 토지거래허가구역 실거주 유예 신청기한이 1년 연장된다는 내용을 보여주는 도표<br><small>→ 파일 <b>img-1-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-1-stat-card.png" alt="토지거래허가구역 실거주 유예 신청기한이 1년 연장된다는 내용을 보여주는 도표">
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>내용</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>신청 기한</td>
+<td>2027년 12월 31일까지 (1년 연장)</td>
+</tr>
+<tr>
+<td>갱신계약 추가 인정</td>
+<td>1회, 최대 2년</td>
+</tr>
+<tr>
+<td>최장 입주 유예</td>
+<td>2029년 말</td>
+</tr>
+<tr>
+<td>시행</td>
+<td>10월 1일, 그날 임대 중인 주택</td>
+</tr>
+<tr>
+<td>무주택 유지 기준일</td>
+<td>2026년 5월 12일</td>
+</tr>
+<tr>
+<td>취득등기</td>
+<td>허가 후 4개월 이내</td>
+</tr>
+</tbody>
+</table>
+<p>예를 들어 2027년 말에 유예를 신청하면서 2년짜리 갱신계약을 맺으면, 매수자는 표에 적힌 시점까지 입주를 미룰 수 있습니다. 한 매체는 같은 조치를 '최대 3년 3개월'로 표현하기도 했습니다.</p>
+<p>반면 조건은 그대로입니다. 기준일부터 계속 무주택이어야 하고, 입주한 뒤에는 2년간 실제로 거주해야 합니다. 등기 기한 요건도 유지됩니다.</p>
+<hr><h2>왜 지금 토지거래허가구역 실거주 유예를 또 연장했나</h2>
+<p>배경에는 전세시장이 있습니다. 서울 아파트 전셋값은 9월 둘째 주 0.17% 올라 84주 연속 상승했고, 이 기간 누적 상승률은 11.76%입니다.</p>
+<p>8월 서울 아파트 평균 전셋값은 6억3662만원으로 역대 최고였습니다. 종전 최고치는 2022년 1월의 6억3424만원이었습니다.</p>
+<div class="imgslot has-file">📷 이미지 — 서울 아파트 평균 전셋값이 역대 최고치를 기록한 흐름을 보여주는 그래프<br><small>→ 파일 <b>img-2-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-2-stat-card.png" alt="서울 아파트 평균 전셋값이 역대 최고치를 기록한 흐름을 보여주는 그래프">
+<p>세입자가 있는 집을 사기 어려워지면 그만큼 전세 매물도 줄어듭니다. 이번 조치는 그 고리를 느슨하게 해 보려는 시도로 읽힙니다.</p>
+<p>다만 유예 연장이 두 차례 이어지면서 정책 신뢰성 논란도 함께 제기됐습니다. 시장이 이를 규제 완화 신호로 받아들여 매물 잠김이 풀릴지는 시행 이후를 지켜봐야 합니다. 이번 발표는 지난 15일 더불어민주당이 제도 보완을 제안한 지 이틀 만에 나왔습니다.</p>
+<div class="imgslot">📷 이미지 — 서울 도심 아파트 단지 전경 사진</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/seoul-apartment-complex-skyline" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/seoul%20apartment%20complex%20skyline/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/seoul%20apartment%20complex%20skyline/" target="_blank" rel="noopener">픽사베이</a></div>
+<hr><h2>그 밖의 오늘 소식</h2>
+<ul>
+<li>서울 아파트 매매가 <span class="hl" style="background-color:#fff59d"><strong>0.16%</strong></span> 상승, 84주 연속 오름세</li>
+<li>강남3구 하락 전환, 서울 상승폭은 3주째 축소</li>
+<li>대전 아파트 매매가 0.03% 상승, 상승폭은 축소</li>
+</ul><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:26px 0 0"><b style="font-size:15px">그래서 나는?</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">무주택 실수요자라면, 5월 12일 이후 무주택 유지 여부부터 확인해 보세요</li><li style="margin-bottom:6px">토허구역 매도를 앞뒀다면, 세입자 갱신계약 시점이 변수가 될 수 있습니다</li><li style="margin-bottom:6px">전세 계약을 앞뒀다면, 8월 평균 전셋값 흐름을 먼저 살펴보시면 좋습니다</li></ul></div><div style="margin:28px 0 0;padding:16px 18px"><b>직접 센 숫자 — 2026년 8월 1~18일 아파트 실거래</b><p style="margin:10px 0 0">서울 8개 구에서 계약된 매매는 <b>868건</b>입니다. 7월 1~18일 1270건과 견주면 -402건입니다.</p><p style="margin:8px 0 0;font-size:15px;color:#555555">거래가 많은 곳: 송파구 99건(-90) · 강남구 57건(-46) · 강북구 41건(-31)</p><p style="margin:6px 0 0;font-size:13px;color:#888888">신고 기한(계약 후 30일)이 지난 18일까지 계약분끼리 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">송파구 전세가율(전세 보증금 ÷ 매매가)은 가운뎃값 <b>40.0%</b>입니다. 같은 단지·같은 면적 76곳을 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">서울 25개 구 가운데 거래가 가장 크게 움직인 곳: 중랑구 -78.4%(412→89건, 7월 1~18일엔 묵동에 73.8% 몰렸음) · 영등포구 -54.7%(159→72건)</p><p style="margin:12px 0 4px"><b>2026년 8~9월 계약 신고가</b></p><ul style="margin:0;padding-left:18px;font-size:15px"><li>강서구 마곡서광(치현마을) 84.93㎡ — 7.6억 (이전 최고 6.0억, +26.7%, 8월 30일 계약)</li><li>노원구 상계주공12(고층) 41.3㎡ — 5.8억 (이전 최고 4.8억, +21.9%, 9월 9일 계약)</li></ul><img class="preview nocopy" src="img-stats-volume.png" alt="지역별 거래 건수" style="max-width:100%;margin-top:12px"><p style="margin:6px 0 0;font-size:13px;color:#888888">→ 그림 파일 <b>img-stats-volume.png</b> 을 이 자리에 올리세요</p><p style="margin:12px 0 0;font-size:13px;color:#888888">국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다.</p></div><p style="padding:14px 16px;margin:28px 0 0"><b>여러분이 지켜보는 지역은 매매와 전세 중 어느 쪽 움직임이 더 신경 쓰이시나요?</b><br><span style="font-size:14px;color:#666666">댓글로 알려 주시면 다음 글에 반영하겠습니다.</span></p>
+      <p class="tags" id="tags">#부동산 #아파트 #토지거래허가구역 #토허제 #실거주의무 #실거주유예 #국토교통부 #서울아파트값 #서울전세값 #전세난 #한국부동산원 #주간아파트가격동향 #무주택자 #내집마련 #부동산정책 #부동산규제 #갱신계약 #임대차계약 #전세매물 #매매가격 #강남3구 #서울 #강남구 #서초구 #송파구 #대전 #부동산뉴스 #부동산브리핑 #부돌보브리핑 #집값동향</p>
+    </div>
+  </div>
+
+  <div class="hint">
+    <strong>쓰는 법</strong>
+    <ol>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다.
+        네이버는 <b>지금 로그인된 계정</b>의 블로그를 엽니다 — 다른 블로그가 열리면
+        <a href="https://nid.naver.com/nidlogin.logout?returl=https%3A%2F%2Fblog.naver.com%2Frikiwiki%2Fpostwrite" target="_blank" rel="noopener">계정 바꿔 열기</a>를 누르고
+<b>rikiwiki</b> 계정으로 다시 로그인하세요. 바로 글쓰기로 갑니다.</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
+      <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
+      <li><span style="background-color:#fff59d">형광펜</span>은 오늘의 핵심 수치가 <b>처음 나온 자리</b>에만 칠합니다.
+        같은 수치가 다시 나와도 표시하지 않습니다 — 강조가 많으면 아무것도 강조가 아니니까요.
+        붙여넣으면 그대로 따라가고, 마음에 안 들면 에디터에서 지우세요.</li>
+      <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
+      <li><b>올린 뒤</b> 깃허브 → Actions → <b>발행 기록</b> 에 글 주소를 적고, 하루 이틀 뒤 같은 곳에
+        <b>조회수</b>를 적어 주세요 (date 칸에 <b>2026-09-18</b>). 이 두 숫자가 쌓여야 어떤 제목과 주제가
+        사람을 데려오는지 알 수 있습니다 — 안 적으면 아무것도 재지 못합니다.</li>
+    </ol>
+    이 안내문은 복사에 포함되지 않습니다.
+  </div>
+</div>
+
+<script>
+// 버튼이 지정한 영역만 클립보드에 담는다. 안내문과 상단 바는 복사되지 않는다.
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var node = document.getElementById(btn.dataset.copy);
+    if (!node) return;
+
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
+
+    // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
+    // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
+    var range = document.createRange();
+    range.selectNodeContents(copyNode);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    clone.remove();
+
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
+        alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
+      });
+      return;
+    }
+    flash();
+
+    function flash() {
+      var original = btn.textContent;
+      btn.textContent = "복사됨 ✓";
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1400);
+    }
+  });
+});
+</script>
+</body>
+</html>
