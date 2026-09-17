@@ -246,3 +246,20 @@ def test_site_offers_the_voice_for_download_and_the_alert_links_it(cfg, monkeypa
                              site_url="https://example.com/x/", warnings=[], llm_used=True,
                              voice_file=result.voice_file)
     assert f"https://example.com/x/{RUN_DATE}/{result.voice_file}" in text
+
+def test_shorts_prompt_teaches_the_motion_studio_direction_shape(cfg):
+    """쇼츠 화면 지시에 motion-studio 가 읽는 그래픽 모양을 붙이게 안내하는지 (2026-09-18).
+
+    motion-studio(scripts/template-suggest.mjs parseDirection)가 ` + ` 뒤의 「종류: 제목 / 내용」과
+    `/ 출처: 기관` 을 읽어 템플릿을 채웁니다. 종류 이름을 바꾸면 그쪽도 같이 바꿔야 합니다.
+    """
+    from rebrief.models import CaptionLine
+    from rebrief.prompts import build_video_user
+
+    prompt = build_video_user(cfg)
+    for kind in ("큰 숫자:", "막대:", "추세:", "순위:", "비교:", "흐름:", "목록:", "체크:"):
+        assert kind in prompt, kind
+    assert "/ 출처: 기관" in prompt and "위 자료에 있는 것만" in prompt
+    example = next(line for line in prompt.splitlines() if line.strip().startswith("예:"))
+    assert " + " in example and "/ 출처: " in example
+    assert "출처: 기관" in CaptionLine.model_json_schema()["properties"]["visual"]["description"]

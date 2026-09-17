@@ -192,7 +192,7 @@ class CaptionLine(BaseModel):
 
     at: str = Field(description="시작 타임코드. 예: '00:03'")
     text: str = Field(description="자막 문구. 한 줄 18자 이내로 끊을 것")
-    visual: str = Field(description="이 구간에 깔 화면 지시. 예: '서울 아파트 단지 드론샷 + 하락률 자막 카드'")
+    visual: str = Field(description="이 구간에 깔 화면 지시. 예: '서울 아파트 단지 드론샷 + 하락률 자막 카드'. 그래픽 줄은 ' + 막대: 제목 / 이름 값, 이름 값 / 출처: 기관' 처럼 영상 도구가 읽는 모양을 뒤에 붙인다")
 
 
 class ShortsScript(BaseModel):
