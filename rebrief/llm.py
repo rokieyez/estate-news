@@ -13,8 +13,8 @@ import anthropic
 import pydantic
 
 from .config import Config
-from .models import (BlogPost, Cluster, DailyBrief, MonthlyReview, PolicySummaries, Rewrite,
-                     VideoPack, WeeklyReview)
+from .models import (BlogPost, Cluster, DailyBrief, LongformScript, MonthlyReview, PolicySummaries, Rewrite,
+                     ShortsPack, VideoPack, WeeklyReview)
 from .prompts import (
     build_blog_user,
     build_brief_messages,
@@ -22,7 +22,9 @@ from .prompts import (
     build_shared_context,
     build_video_user,
     build_monthly_messages,
+    build_weekly_longform_messages,
     build_weekly_messages,
+    longform_daily,
 )
 
 log = logging.getLogger(__name__)
@@ -188,14 +190,16 @@ class ContentGenerator:
 
     def generate_video(self, brief: DailyBrief, stats: dict | None = None) -> VideoPack:
         log.info("영상 대본 생성 중…")
-        return self._parse(
+        pack = self._parse(
             system=self._shared(brief),
             user=build_video_user(self.cfg, stats),
-            output_format=VideoPack,
+            output_format=VideoPack if longform_daily(self.cfg) else ShortsPack,
             kind="영상 대본",
             model=self.script_model,
             max_tokens=self.script_max_tokens,
         )
+        # 쇼츠만 받은 날도 뒤쪽은 늘 VideoPack 을 다룬다 (롱폼 칸이 빈 채로)
+        return pack if isinstance(pack, VideoPack) else VideoPack(shorts=pack.shorts)
 
     def summarize_policies(self, docs: list) -> PolicySummaries:
         """정부 보도자료 여러 건을 한 번의 호출로 3줄씩. 값싼 모델로 충분하다."""
@@ -210,6 +214,13 @@ class ContentGenerator:
         system, user = build_weekly_messages(self.cfg, days, week_label)
         log.info("주간 결산 생성 중… (%d일치)", len(days))
         return self._parse(system=system, user=user, output_format=WeeklyReview, kind="주간 결산")
+
+    def generate_weekly_longform(self, days: list[dict], week_label: str, review: WeeklyReview) -> LongformScript:
+        """주간 결산 글을 바탕으로 한 롱폼 대본. 출력이 길어 대본 모델·대본 한도를 씁니다."""
+        system, user = build_weekly_longform_messages(self.cfg, days, week_label, review)
+        log.info("주간 롱폼 대본 생성 중…")
+        return self._parse(system=system, user=user, output_format=LongformScript, kind="주간 롱폼",
+                           model=self.script_model, max_tokens=self.script_max_tokens)
 
     # ── 월간 결산 (별도 system, 캐시 없음) ───────────────────
 

@@ -109,8 +109,11 @@ def blog_prompt(cfg: Config, brief: DailyBrief) -> str:
 def video_prompt(cfg: Config, brief: DailyBrief, stats: dict | None) -> str:
     from .prompts import build_shared_context, build_video_user
 
+    from .models import ShortsPack
+    from .prompts import longform_daily
+
     return chat_prompt(build_shared_context(cfg, brief), build_video_user(cfg, stats),
-                       VideoPack, STEP_TITLES["video"])
+                       VideoPack if longform_daily(cfg) else ShortsPack, STEP_TITLES["video"])
 
 
 def _fence(text: str) -> str:
@@ -436,7 +439,7 @@ def classify(data: dict) -> str:
         return "brief"
     if "body_markdown" in data:
         return "blog"
-    if "shorts" in data and "longform" in data:
+    if "shorts" in data:                 # 롱폼은 주간 결산 때만 — 날마다의 대본에는 쇼츠만 있다
         return "video"
     return ""
 
@@ -528,6 +531,7 @@ def apply(cfg: Config, date_str: str, text: str, *, issues: list[Cluster] | None
                 made["brief"] = brief
                 keys = _load_keys(paste_dir(out_dir) / "keys.json")
                 pipe._after_video(cfg, renderer, brief, pack, date_str, made, keys)
+                made["voice"] = pipe._shorts_voice(cfg, renderer, None)     # 붙여넣은 대본도 음성까지
                 (paste_dir(out_dir) / "pack.json").write_text(pack.model_dump_json(indent=1),
                                                                encoding="utf-8")
         except Exception as exc:                     # 검사 실패는 사람에게 돌려준다

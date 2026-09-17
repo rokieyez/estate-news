@@ -204,8 +204,9 @@ class Renderer:
             paths.append(self._write_raw(cuts_name, cuts))
         return paths
 
-    def longform(self, pack: VideoPack) -> Path:
-        longform = pack.longform
+    def longform(self, pack) -> Path:
+        """롱폼 대본. 날마다의 VideoPack 도, 주간 결산이 만든 LongformScript 도 받는다."""
+        longform = getattr(pack, "longform", pack)
         char_count = sum(len(s.script) for s in longform.sections) + len(longform.cold_open)
         chapters_name = self.asset_name("longform-chapters", "csv")
         path = self._write(
@@ -220,6 +221,18 @@ class Renderer:
         if chapters:
             self._write_raw(chapters_name, chapters)
         return path
+
+    def longform_notes(self, longform, *, headline: str = "", five_lines: list[str] | None = None) -> Path:
+        """주간 롱폼의 제작 메모 — 제목·썸네일 문구·설명란·태그·자료화면. 모델을 다시 부르지 않는다."""
+        video = self.cfg.get("video", {}) or {}
+        disclaimer = str((self.cfg.get("blog", {}) or {}).get("disclaimer", "") or "")
+        lines = ([headline, ""] if headline else []) + [f"· {x}" for x in (five_lines or [])]
+        lines += ([""] if five_lines else []) + chapter_lines(longform)
+        lines += [x for x in (str(video.get("cta", "") or ""), disclaimer) if x]
+        return self._write(
+            "production-notes.md", "longform_notes.md.j2",
+            l=longform, date=self.date, description="\n".join(lines).strip() + "\n",
+        )
 
     def production_notes(self, brief: DailyBrief, pack: VideoPack) -> Path:
         video = self.cfg.get("video", {}) or {}
@@ -433,11 +446,13 @@ class Renderer:
         variants = max(1, int(cfg.get("thumbnail_variants", 2)))
         jobs = []
         # 1안·2안 — 문구 후보 순서대로. 제목 기록장과 같은 번호를 쓴다.
-        for n, text in enumerate(pack.longform.thumbnail_texts[:variants], start=1):
+        longform = getattr(pack, "longform", None)      # 롱폼은 주간 결산 때만 — 없는 날은 쇼츠 표지만
+        shorts = getattr(pack, "shorts", None)
+        for n, text in enumerate((longform.thumbnail_texts if longform else [])[:variants], start=1):
             jobs.append((f"thumb-longform{'' if n == 1 else f'-{n}'}", text,
-                         (pack.longform.title_candidates or [""])[0], (1280, 720)))
-        for n, text in enumerate(pack.shorts.title_candidates[:variants], start=1):
-            jobs.append((f"thumb-shorts{'' if n == 1 else f'-{n}'}", text, pack.shorts.hook, (1080, 1920)))
+                         (longform.title_candidates or [""])[0], (1280, 720)))
+        for n, text in enumerate((shorts.title_candidates if shorts else [])[:variants], start=1):
+            jobs.append((f"thumb-shorts{'' if n == 1 else f'-{n}'}", text, shorts.hook, (1080, 1920)))
         paths: list[Path] = []
         badge = key_numbers[0].display if key_numbers else ""
         for slug, text, sub, size in jobs:
@@ -792,12 +807,8 @@ def youtube_description(brief: "DailyBrief", pack: "VideoPack", *, disclaimer: s
     if getattr(brief, "lead", ""):
         lines += [brief.lead, ""]
 
-    lines.append("── 챕터 ──")
-    lines.append("00:00 콜드오픈")
-    for section in pack.longform.sections:
-        at = (section.at or "").strip()
-        lines.append(f"{at} {section.chapter}".strip())
-    lines.append("")
+    if pack.longform is not None:           # 챕터는 롱폼에만 있다 — 쇼츠만 만든 날은 건너뛴다
+        lines += chapter_lines(pack.longform)
 
     urls: list[str] = []
     for issue in brief.issues:
@@ -813,6 +824,16 @@ def youtube_description(brief: "DailyBrief", pack: "VideoPack", *, disclaimer: s
     if disclaimer:
         lines.append(disclaimer)
     return "\n".join(lines).strip() + "\n"
+
+
+def chapter_lines(longform) -> list[str]:
+    """유튜브 설명란의 챕터 타임코드. 날마다의 설명란과 주간 롱폼 메모가 함께 쓴다."""
+    lines = ["── 챕터 ──", "00:00 콜드오픈"]
+    for section in longform.sections:
+        at = (section.at or "").strip()
+        lines.append(f"{at} {section.chapter}".strip())
+    lines.append("")
+    return lines
 
 
 def pinned_comment(brief: "DailyBrief", disclaimer: str = "") -> str:

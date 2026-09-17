@@ -4,7 +4,10 @@
   output/weekly/2026-W36/weekly-naver.html  네이버 붙여넣기용
   output/weekly/2026-W36/data.json          이번 주에 들어간 하루치 요약 모음
 
-LLM 호출은 1회. 키가 없으면 프롬프트 팩만 남긴다.
+  output/weekly/2026-W36/script-longform.md 결산 글을 바탕으로 한 롱폼 대본 (2026-09-17 부터)
+  output/weekly/2026-W36/production-notes.md 롱폼 제목·썸네일 문구·설명란·자료화면
+
+LLM 호출은 2회(결산 글 → 롱폼 대본). 키가 없으면 프롬프트 팩만 남긴다.
 """
 
 from __future__ import annotations
@@ -14,6 +17,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import date, timedelta
 from pathlib import Path
+from types import SimpleNamespace
 
 from .config import Config
 from .llm import ContentGenerator, LLMError, Usage
@@ -147,6 +151,7 @@ def run_weekly(cfg: Config, *, end_date: str | None = None, use_llm: bool | None
 
     result.llm_used = True
     _render_weekly(cfg, renderer, review, result)
+    _weekly_longform(cfg, renderer, generator, days, review, result)
     _weekly_images(cfg, renderer, result)
     _record_cost(cfg, result)
     result.warnings.extend(generator.usage.notes)
@@ -180,6 +185,35 @@ def _render_weekly(cfg: Config, renderer: Renderer, review: WeeklyReview, result
             body_markdown=f"**이번 주 다섯 줄**\n\n{five}\n\n{review.body_markdown}",
         )
         renderer.blog_naver(post, filename="weekly-naver.html")
+
+
+def _weekly_longform(cfg: Config, renderer: Renderer, generator: ContentGenerator, days: list[dict],
+                     review: WeeklyReview, result: WeeklyResult) -> None:
+    """결산 글을 바탕으로 롱폼 대본 한 편 (2026-09-17 — 롱폼은 날마다가 아니라 한 주에 한 편).
+
+    결산 글은 이미 만들어졌으므로 여기서 무엇이 터져도 글까지 버리지 않는다.
+    `video.longform` 이 weekly 가 아니면(daily·off) 건너뛴다.
+    """
+    if str(cfg.get("video.longform", "weekly") or "weekly").strip().lower() != "weekly":
+        return
+    try:
+        longform = generator.generate_weekly_longform(days, result.week, review)
+    except Exception as exc:
+        log.error("주간 롱폼 대본 생성 실패: %s", exc, exc_info=not isinstance(exc, LLMError))
+        result.warnings.append(f"주간 롱폼 대본 생성 실패 — {exc}")
+        return
+    renderer.longform(longform)
+    renderer.longform_notes(longform, headline=review.title, five_lines=review.five_lines)
+    # 썸네일 그리기는 pack.longform · pack.shorts 를 본다 — 롱폼만 든 봉투를 넘긴다
+    renderer.thumbnails(SimpleNamespace(longform=longform, shorts=None))
+    try:
+        from .store import TitleLog
+
+        titles = TitleLog(cfg.state_dir / "titles.json")
+        titles.record_candidates(result.end, "longform", list(longform.title_candidates))
+        titles.save()
+    except OSError as exc:
+        log.warning("제목 기록 실패: %s", exc)
 
 
 def _record_cost(cfg: Config, result: WeeklyResult) -> None:

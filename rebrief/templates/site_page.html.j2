@@ -61,6 +61,13 @@
   .tts .note { margin: 10px 0 0; font-size: 14px; color: #4a4f55; }
   .tts button.alt { margin-top: 8px; background: #fff; color: #256abf; border: 1px solid #256abf; }
   .tts button.alt.done { background: #1f8a4c; color: #fff; border-color: #1f8a4c; }
+  .voice a.dl {
+    display: block; padding: 14px 16px; border-radius: 10px; background: #1f8a4c; color: #fff;
+    font-size: 17px; font-weight: 700; text-align: center; text-decoration: none;
+  }
+  .voice audio { display: block; width: 100%; margin-top: 10px; }
+  .voice ul.voices { list-style: none; padding: 0; margin: 8px 0 0; }
+  .voice ul.voices li { padding: 8px 0; border-top: 1px solid #cfe0f5; font-size: 15px; }
   .tts pre { white-space: pre-wrap; font-size: 14px; line-height: 1.7; max-height: 320px; overflow-y: auto; margin: 8px 0 0; }
 </style>
 </head>
@@ -75,6 +82,26 @@
   <div class="card" style="background:#fffaf0;border:1px solid #eadfc2;color:#6b5a2e;margin-bottom:14px">
     <b>{{ age_days }}일 전 글입니다.</b> 여기 적힌 수치는 그때 기준입니다.
     <a href="{{ base|default("../") }}latest/brief.html" style="color:#0068c3">최신 브리핑 보기</a>
+  </div>
+{% endif %}
+{% if voice|default(none, true) %}
+  {# 쇼츠 음성 — 일레븐랩스로 읽힌 mp3. 듣고, 내려받고, 목소리가 마음에 안 들면 바꿔 다시 만든다 #}
+  <div class="card tts voice">
+    <a class="dl" href="{{ voice.file }}" download>🔊 음성 내려받기 (mp3 · {{ voice.size }})</a>
+    <audio controls preload="none" src="{{ voice.file }}"></audio>
+    <p class="note">목소리 <b>{{ voice.voice }}</b> · {{ voice.chars }}자를 읽었습니다.</p>
+    <details>
+      <summary>목소리 바꾸기</summary>
+      <p class="note">아래에서 들어 보고, <a href="{{ voice.change_url }}" target="_blank" rel="noopener">깃허브 「쇼츠 음성」</a>
+        → <b>Run workflow</b> 에서 목소리를 고르고 날짜 칸에 <b>{{ voice.date }}</b> 를 적어 실행하세요.
+        2~3분 뒤 이 페이지의 음성이 바뀝니다. 「앞으로도 이 목소리로」 를 켜면 내일부터도 그 목소리입니다.</p>
+      <ul class="voices">
+{% for v in voice.voices %}
+        <li><b>{{ v.name }}</b>{% if v.note %} — {{ v.note }}{% endif %}{% if v.preview %}
+          <audio controls preload="none" src="{{ v.preview }}"></audio>{% endif %}</li>
+{% endfor %}
+      </ul>
+    </details>
   </div>
 {% endif %}
 {% if tts|default('', true) %}

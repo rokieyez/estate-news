@@ -1,0 +1,61 @@
+# 주간 롱폼 제작 메모 — {{ date }}
+
+이번 주 결산 글을 바탕으로 만든 롱폼 한 편의 업로드 정보입니다. 대본은 「롱폼 대본」 페이지에 있습니다.
+
+## 1. 업로드 정보
+
+### 제목 후보
+
+{% for t in l.title_candidates %}
+{{ loop.index }}. {{ t }}
+{% endfor %}
+
+### 썸네일 문구
+
+{% for t in l.thumbnail_texts %}
+- {{ t }}
+{% endfor %}
+
+### 설명란 (복사용)
+
+```
+{{ description }}
+```
+
+### 태그 (복사용)
+
+```
+{{ l.tags|join(', ') }}
+```
+
+---
+
+## 2. 촬영 · 자료화면 체크리스트
+
+{% set ns = namespace(count=0) %}
+{% for sec in l.sections %}
+{% for b in sec.broll %}
+{% set ns.count = ns.count + 1 %}
+- [ ] `{{ sec.at }}` {{ b }}
+{% endfor %}
+{% endfor %}
+
+총 {{ ns.count }}컷.
+
+---
+
+## 3. 자막 카드로 띄울 수치
+
+{% for sec in l.sections %}
+{% for g in sec.graphics %}
+- [ ] `{{ sec.at }}` {{ g }}
+{% endfor %}
+{% endfor %}
+
+---
+
+## 4. 발행 전 최종 점검
+
+- [ ] 대본의 모든 수치를 그 주 브리핑과 대조
+- [ ] 단정적 표현이 없는지 확인
+- [ ] 썸네일 문구와 실제 내용 일치 (낚시 방지)

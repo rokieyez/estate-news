@@ -259,6 +259,31 @@ def stats_context(stats: dict | None) -> str:
 ──────────────────────────────────────"""
 
 
+def longform_daily(cfg: Config) -> bool:
+    """롱폼을 날마다 만들지. 기본은 주간 결산 때만(weekly) — 2026-09-17 사용자 요청."""
+    return str(cfg.get("video.longform", "weekly") or "weekly").strip().lower() == "daily"
+
+
+def longform_rules(cfg: Config) -> str:
+    """롱폼 대본 규칙. 날마다 만들 때도 주간 결산으로 만들 때도 같은 글을 씁니다."""
+    video = cfg.get("video", {}) or {}
+    long_min = float(video.get("longform_minutes", 8))
+    cpm = int(video.get("speaking_rate_cpm", 330))
+    cta = video.get("cta", "구독과 알림 설정 부탁드립니다.")
+    long_chars = int(long_min * cpm)
+    return f"""■ 롱폼 ({long_min}분)
+- 발화 분량 합계 약 {long_chars}자.
+- sections 는 4~6개. 각 섹션 at 은 누적 타임코드로 매깁니다.
+- script 는 실제로 읽을 원고입니다. 구어체로, 한 문장을 짧게 씁니다. 개조식으로 쓰지 마세요.
+- broll 은 구간마다 **2개까지**. 짧은 명사구로 적고, 스톡으로 될 것은 '스톡:' 을 앞에 붙입니다.
+  나쁜 예: "관련 화면". 좋은 예: "스톡: 서울 아파트 단지 항공".
+- graphics 는 구간마다 **1~2개**. 자막 카드로 띄울 수치·문구만 짧게. 브리핑 numbers 를 씁니다.
+- thumbnail_texts 는 썸네일에 크게 박을 문구 **3개**입니다. 12자 이내, 숫자를 넣으면 좋습니다.
+- title_candidates 도 **3개**면 충분합니다. 서로 다른 각도로 지으세요.
+- outro 는 다음 문장으로 마무리합니다: "{cta}"
+"""
+
+
 def build_video_user(cfg: Config, stats: dict | None = None) -> str:
     video = cfg.get("video", {}) or {}
     shorts_sec = int(video.get("shorts_seconds", 60))
@@ -269,7 +294,7 @@ def build_video_user(cfg: Config, stats: dict | None = None) -> str:
     shorts_chars = int(shorts_sec / 60 * cpm)
     long_chars = int(long_min * cpm)
 
-    return f"""위 브리핑{"과 아래 실거래 자료" if stats else ""}를 바탕으로 오늘 촬영할 영상 두 편의 제작 자료를 만드세요.
+    return f"""위 브리핑{"과 아래 실거래 자료" if stats else ""}를 바탕으로 오늘 촬영할 {'영상 두 편(쇼츠·롱폼)' if longform_daily(cfg) else '쇼츠 한 편'}의 제작 자료를 만드세요.
 {stats_context(stats)}
 
 ■ 쇼츠 ({shorts_sec}초)
@@ -287,17 +312,7 @@ def build_video_user(cfg: Config, stats: dict | None = None) -> str:
 - visual 에는 그 구간에 무엇을 띄울지 적습니다. 촬영/편집자가 그대로 보고 작업할 수 있게 구체적으로.
   나쁜 예: "관련 화면". 좋은 예: "서울 아파트 단지 항공 스톡 + 좌하단에 '-0.03%' 자막 카드".
 
-■ 롱폼 ({long_min}분)
-- 발화 분량 합계 약 {long_chars}자.
-- sections 는 4~6개. 각 섹션 at 은 누적 타임코드로 매깁니다.
-- script 는 실제로 읽을 원고입니다. 구어체로, 한 문장을 짧게 씁니다. 개조식으로 쓰지 마세요.
-- broll 은 구간마다 **2개까지**. 짧은 명사구로 적고, 스톡으로 될 것은 '스톡:' 을 앞에 붙입니다.
-  나쁜 예: "관련 화면". 좋은 예: "스톡: 서울 아파트 단지 항공".
-- graphics 는 구간마다 **1~2개**. 자막 카드로 띄울 수치·문구만 짧게. 브리핑 numbers 를 씁니다.
-- thumbnail_texts 는 썸네일에 크게 박을 문구 **3개**입니다. 12자 이내, 숫자를 넣으면 좋습니다.
-- title_candidates 도 **3개**면 충분합니다. 서로 다른 각도로 지으세요.
-- outro 는 다음 문장으로 마무리합니다: "{cta}"
-
+{longform_rules(cfg) if longform_daily(cfg) else ''}
 설명란과 고정 댓글은 쓰지 마세요. 챕터 타임코드도 출처 주소도 이미 우리가 가진 값이라
 프로그램이 만듭니다."""
 
@@ -477,6 +492,42 @@ def build_weekly_messages(cfg: Config, days: list[dict], week_label: str) -> tup
 
 ■ 태그 (tags)
 - {tag_count}개. 띄어쓰기 없이, # 기호 없이 단어만."""
+    return system, user
+
+
+def build_weekly_longform_messages(cfg: Config, days: list[dict], week_label: str, review) -> tuple[str, str]:
+    """주간 결산 글을 바탕으로 롱폼 대본을 부탁한다 (2026-09-17 — 롱폼은 이제 한 주에 한 편).
+
+    system 은 결산 글을 부탁할 때와 같습니다 — 일주일치 브리핑(사실·수치)이 거기 들어 있습니다.
+    결산 글은 user 쪽에 실어, 대본이 글의 주제 순서와 결론을 따르게 합니다.
+    """
+    system, _ = build_weekly_messages(cfg, days, week_label)
+    five = "\n".join(f"{i}. {line}" for i, line in enumerate(review.five_lines, start=1))
+    watch = "\n".join(f"- {w}" for w in review.next_week_watch)
+    user = f"""위 일주일치 브리핑 모음과 아래 **주간 결산 글**을 바탕으로, 이번 주를 정리하는 롱폼 영상 한 편의 대본을 만드세요.
+
+────────── 주간 결산 글 ({week_label}) ──────────
+제목: {review.title}
+
+이번 주 다섯 줄
+{five}
+
+{review.body_markdown}
+
+다음 주 볼 것
+{watch}
+──────────────────────────────────────
+
+■ 결산 글과 대본의 관계
+- 결산 글의 **주제 순서와 결론**을 그대로 따릅니다. 글에 없는 새 주장이나 수치를 더하지 마세요.
+  수치는 위 브리핑 모음에 있는 값 그대로 씁니다.
+- 글을 읽어 주는 것이 아니라 **말로 풀어** 씁니다. 표는 문장으로 옮깁니다.
+- cold_open 은 이번 주를 한 문장으로 잡아 주는 말로 엽니다. 다섯 줄 가운데 가장 큰 것 하나를 씁니다.
+- 마지막 섹션은 '다음 주 볼 것' 입니다.
+- 하루치가 아니라 한 주치입니다. "오늘" 이 아니라 "이번 주" 라고 말합니다.
+
+{longform_rules(cfg)}
+설명란과 고정 댓글은 쓰지 마세요. 챕터 타임코드는 프로그램이 만듭니다."""
     return system, user
 
 

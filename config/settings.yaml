@@ -159,6 +159,9 @@ video:
   persona: "부동산 뉴스를 해설하는 진행자. 어려운 용어는 반드시 한 번 풀어서 설명한다."
   shorts_seconds: 60        # 쇼츠 목표 길이
   longform_minutes: 8       # 롱폼 목표 길이
+  # 롱폼 대본을 언제 만들지 (2026-09-17 사용자 결정). weekly = 주간 결산 때 결산 글을 바탕으로 한 편,
+  # daily = 예전처럼 날마다, off = 만들지 않음. 쇼츠는 어느 쪽이든 날마다 나옵니다.
+  longform: weekly
   speaking_rate_cpm: 330    # 분당 발화 글자 수(한국어 기준) — 대본 길이 계산에 사용
   caption_max_chars: 16     # SRT 자막 한 줄 최대 글자 (세로 화면 기준)
   caption_max_lines: 2      # 한 컷에 보여 줄 최대 줄 수
@@ -293,3 +296,38 @@ blog:
     # (keyboardpolitics) 계정으로 로그인돼 있으면 그쪽이 열립니다. 붙여넣기 화면의
     # '계정 바꿔 열기' 가 로그아웃한 뒤 이 주소로 되돌아옵니다 (2026-09-10).
     write_url: "https://blog.naver.com/rikiwiki/postwrite"
+
+# ─────────────────────────────────────────────────────────────
+# 쇼츠 음성 — 쇼츠 대본이 나오면 일레븐랩스로 읽혀 mp3 로 남깁니다 (2026-09-17).
+# 열쇠는 환경변수 ELEVENLABS_API_KEY (깃허브 Secrets · 내 컴퓨터 .env). 없으면 조용히 건너뜁니다.
+# 쇼츠 한 편이 300~400자라 두 채널을 날마다 돌려도 한 달 2만 자 남짓입니다.
+# ─────────────────────────────────────────────────────────────
+voice:
+  enabled: true
+  # 기본 목소리. 아래 voices 의 id 가운데 하나(또는 일레븐랩스 voice_id 아무거나).
+  # Actions 탭 「쇼츠 음성」에서 「앞으로도 이 목소리로」를 고르면 state/voice.json 에 남고 그쪽이 이깁니다.
+  voice_id: CxErO97xpQgQXYmapDKX      # Theo — 2026-09-13 커뮤니티 쇼츠에서 로키즈가 고른 목소리
+  model: eleven_multilingual_v2
+  speed: 1.0                # 읽는 속도 (0.7~1.2). 커뮤니티 쇼츠는 1.1
+  stability: 0.45
+  similarity_boost: 0.75
+  output_format: mp3_44100_128
+  spell_out: true           # ㎡·%p·~·→ 같은 기호를 말로 풀어 읽힌다 (TTS 가 건너뛰거나 틀리게 읽는다)
+  max_chars: 1200           # 읽을 말이 이보다 길면 만들지 않는다 — 틀이 깨진 날 글자 수를 지키려고
+  # 고를 수 있는 목소리. **이름은 .github/workflows/voice.yml 의 선택 상자와 같아야 합니다** (시험이 봅니다).
+  # 목록을 새로 뽑으려면: python -m rebrief voice --list
+  voices:
+    - {name: "Theo", id: CxErO97xpQgQXYmapDKX, note: "남 · 중년 · 따뜻하고 부드러움", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/143a58485a2242a4bb727baf740ec1af/voices/CxErO97xpQgQXYmapDKX/Bbiz0wPheiDJ0CmN8nIv.mp3"}
+    - {name: "Hunmin", id: MpbDJfQJUYUnp0i1QvOZ, note: "남 · 중년 · 차분하고 또렷함", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/b9537d379c0246da8421e4272d60446f/voices/MpbDJfQJUYUnp0i1QvOZ/03375f3c-1bf0-4207-899a-949fee5f0304.mp3"}
+    - {name: "SEGU", id: Mx48CWClvl522or3Frvp, note: "남 · 중년 · 차분한 서울말", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/ceedd1461c61481eb3b4d89e727bc5ce/voices/Mx48CWClvl522or3Frvp/fMsur5ZfkmnEc248V3Oq.mp3"}
+    - {name: "Yohan Koo", id: 4JJwo477JUAx3HV0T7n7, note: "남 · 중년 · 맑고 힘 있음", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/d04bfbd4c7cb450db49e122473150f1d/voices/4JJwo477JUAx3HV0T7n7/tHnNNBfrYAs43momAwan.mp3"}
+    - {name: "Kyung Hoon", id: JsyP5NIpAZhfPw5mwSP0, note: "남 · 청년 · 차분하고 자연스러움", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/7177a2a3fd294c9dad9dbac69441ff43/voices/JsyP5NIpAZhfPw5mwSP0/ade9b041-0ef2-417e-ba83-5e15693672db.mp3"}
+    - {name: "Lee", id: R8UbZ8AmgKWL26G1NcwU, note: "남 · 청년 · 자연스럽고 또렷함", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/e1f2d81b50664ddf8ed316786bd7e119/voices/R8UbZ8AmgKWL26G1NcwU/oQZpinZ6V4TmcZ3xxGHr.mp3"}
+    - {name: "Minsoo", id: f2lXVdK3ZBbavHW9BpNk, note: "남 · 청년 · 친근하고 또렷함", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/457d12723ba04b7ebdb6768505e5cf08/voices/f2lXVdK3ZBbavHW9BpNk/PaYXJ2NZvBwyIZdQZ4At.mp3"}
+    - {name: "Jungkook", id: vsc8TcxQ3sXV07imIA0f, note: "남 · 청년 · 요즘 내레이터 말투"}
+    - {name: "Wooju", id: aixqgjRxpiH39vLhhyDb, note: "남 · 청년"}
+    - {name: "Jiyoung", id: AW5wrnG1jVizOYY7R1Oo, note: "여 · 청년 · 따뜻하고 또렷함", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/94a0a575bea341aab81cf4dc164cfd80/voices/AW5wrnG1jVizOYY7R1Oo/8PwzNgj6JZ1lLlh4hBYf.mp3"}
+    - {name: "Chloe Cha", id: 74i8I1pZi98ZjmmYLdaF, note: "여 · 청년 · 부드럽고 차분함", preview: "https://storage.googleapis.com/eleven-public-prod/database/workspace/2dd90831b957431eb88cfcfa6dea2483/voices/74i8I1pZi98ZjmmYLdaF/4QvvPh7BMvFuEA20R0p3.mp3"}
+    - {name: "Seulki", id: ksaI0TCD9BstzEzlxj4q, note: "여 · 중년", preview: "https://storage.googleapis.com/eleven-public-prod/database/user/2IzgfYjaHgaiOZ7ej6G902W3kKh1/voices/ksaI0TCD9BstzEzlxj4q/bizji0eQlVSfyOy39GQ7.mp3"}
+    - {name: "ROKIZ 풀버전", id: oB0iJUp5oiV1fgodhPeB, note: "로키즈 목소리 · 긴 영상용"}
+    - {name: "로키즈 숏버전", id: dyENwuxSJ7MlmlooUE3i, note: "로키즈 목소리 · 쇼츠용"}

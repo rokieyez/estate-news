@@ -123,6 +123,8 @@ jobs:
           REB_API_KEY: ${{ secrets.REB_API_KEY }}
           # 카드뉴스 위쪽 사진. 없으면 인포그래픽으로 갑니다.
           PEXELS_API_KEY: ${{ secrets.PEXELS_API_KEY }}
+          # 쇼츠 음성(일레븐랩스). 없으면 음성만 조용히 건너뜁니다.
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
           # 붙여넣기 모드가 이슈를 열 때 씁니다 (gh).
           GH_TOKEN: ${{ github.token }}
         run: |

@@ -51,7 +51,7 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
                       images: int = 0, stats: dict | None = None,
                       usd: float = 0.0, krw_per_usd: float = 1400,
                       quiet: bool = False, paste_url: str = "", record_hint: str = "",
-                      index_hint: str = "") -> str:
+                      index_hint: str = "", voice_file: str = "") -> str:
     lines = [f"📅 {date} 부돌보 브리핑"]
     if headline:
         lines.append(headline)
@@ -75,6 +75,9 @@ def build_run_message(*, date: str, headline: str, issues: int, articles: int,
         lines.append(record_hint)
     if index_hint:
         lines.append(index_hint)
+    if site_url and voice_file:
+        # 쇼츠 음성(mp3) — 눌러서 바로 내려받는다. 사이트가 다시 올라간 뒤(몇 분)부터 열린다.
+        lines.append(f"🔊 쇼츠 음성 {site_url.rstrip('/')}/{date}/{voice_file}")
     if site_url:
         lines.append(f"🔗 {site_url.rstrip('/')}/latest/")
     return "\n".join(lines)

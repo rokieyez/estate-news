@@ -5,6 +5,7 @@
     python -m rebrief render       저장된 원본으로 산출물만 다시 생성
     python -m rebrief doctor       RSS 피드가 살아있는지 점검
     python -m rebrief notify       실행 결과를 텔레그램으로 보내기 (토큰이 있을 때)
+    python -m rebrief voice        쇼츠 대본을 음성(mp3)으로 (일레븐랩스)
     python -m rebrief weekly       지난 7일치를 묶은 주간 결산 글
     python -m rebrief monthly      지난달 한 달치를 묶은 월간 결산 글
     python -m rebrief titles       제목 후보 보기 / 실제로 고른 것과 조회수 기록
@@ -59,6 +60,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_notify.add_argument("--date", help="대상 날짜 (기본: 오늘)")
     p_notify.add_argument("--failed", action="store_true", help="실패 알림을 보냄")
     p_notify.add_argument("--run-url", default="", help="Actions 실행 링크 (실패 알림에 붙임)")
+
+    p_voice = sub.add_parser("voice", help="쇼츠 대본을 일레븐랩스 음성(mp3)으로 — 목소리를 바꿔 다시 만들 때도")
+    p_voice.add_argument("--date", help="대상 날짜 (기본: 쇼츠 대본이 있는 가장 최근 날짜)")
+    p_voice.add_argument("--voice", default="", help="목소리 이름 (settings.yaml 의 voice.voices)")
+    p_voice.add_argument("--voice-id", default="", help="목록에 없는 목소리의 일레븐랩스 voice_id")
+    p_voice.add_argument("--keep", action="store_true", help="앞으로도 이 목소리로 (state/voice.json)")
+    p_voice.add_argument("--force", action="store_true", help="같은 글·같은 목소리여도 다시 만든다")
+    p_voice.add_argument("--list", action="store_true", help="내 일레븐랩스 목록의 한국어 목소리 보기")
 
     p_weekly = sub.add_parser("weekly", help="지난 7일치를 묶은 주간 결산 글")
     p_weekly.add_argument("--end", help="결산 마지막 날짜 (기본: 오늘, YYYY-MM-DD)")
@@ -126,6 +135,8 @@ def main(argv: list[str] | None = None) -> int:
         return _cmd_doctor(cfg, verbose=args.verbose)
     if args.command == "notify":
         return _cmd_notify(cfg, args)
+    if args.command == "voice":
+        return _cmd_voice(cfg, args)
     if args.command == "weekly":
         return _cmd_weekly(cfg, args)
     if args.command == "monthly":
@@ -320,6 +331,7 @@ def _notify_result(cfg, result) -> None:
         usd=float(getattr(result.usage, "estimated_usd", 0) or 0) if result.usage else 0.0,
         krw_per_usd=float(cfg.get("llm.krw_per_usd", 1400)),
         quiet=bool(getattr(result, "quiet", False)),
+        voice_file=str(getattr(result, "voice_file", "") or ""),
         record_hint=build_record_reminder(
             TitleLog(cfg.state_dir / "titles.json").days, result.date,
             os.environ.get("GITHUB_REPOSITORY", "")),
@@ -329,6 +341,42 @@ def _notify_result(cfg, result) -> None:
         paste_url=str(getattr(result, "paste_url", "") or ""),
     )
     print("📨 텔레그램 알림 " + ("전송" if send_telegram(text) else "실패"))
+
+
+def _cmd_voice(cfg, args) -> int:
+    """쇼츠 대본을 일레븐랩스 음성으로. 목소리를 바꿔 다시 만들 때도 이 명령이다 (워크플로 「쇼츠 음성」)."""
+    from . import voice
+    from .pipeline import _shorts_voice
+    from .render import Renderer
+
+    if args.list:
+        key = voice.api_key()
+        if not key:
+            print(f"오류: 환경변수 {voice.KEY_ENV} 가 없습니다.", file=sys.stderr)
+            return 1
+        for v in voice.account_voices(key):
+            if v["language"] in ("ko", ""):
+                print(f"{v['id']}  {v['name']}  ({v['gender'] or '-'} · {v['age'] or '-'})")
+        return 0
+
+    date_str = args.date
+    if not date_str:        # 비우면 쇼츠 대본이 있는 가장 최근 날짜
+        days = sorted(p.parent.name for p in cfg.output_dir.glob("20??-??-??/" + voice.SCRIPT))
+        date_str = days[-1] if days else local_now(cfg).strftime("%Y-%m-%d")
+    out_dir = cfg.output_dir / date_str
+    if not (out_dir / voice.SCRIPT).exists():
+        print(f"오류: {date_str} 에 쇼츠 대본이 없습니다.", file=sys.stderr)
+        return 1
+    pick = (args.voice_id or args.voice or "").strip()
+    made = _shorts_voice(cfg, Renderer(cfg, out_dir, date_str), None, pick=pick, force=args.force)
+    print(voice.summary_line(made))
+    if not made.ok:
+        return 1
+    if args.keep:
+        voice.save_choice(cfg, made.voice_id, made.voice_name)
+        print(f"앞으로도 이 목소리로 읽습니다: {made.voice_name}")
+    print(f"저장 → {_rel(cfg, out_dir / made.file)}")
+    return 0
 
 
 def _cmd_weekly(cfg, args) -> int:

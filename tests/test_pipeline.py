@@ -280,7 +280,7 @@ def test_all_templates_render(cfg, tmp_path):
 
     for name in (
         "brief.md", "blog.md", "blog-naver.html", "script-shorts.md",
-        "script-longform.md", "production-notes.md", "sources.md", "data.json",
+        "production-notes.md", "sources.md", "data.json",
     ):
         path = out / name
         assert path.exists(), f"{name} 이 생성되지 않았습니다"
@@ -394,7 +394,14 @@ class FakeGenerator:
 
     def generate_video(self, brief, stats=None):
         self.calls.append("video")
-        return make_pack()
+        from rebrief.prompts import longform_daily
+        pack = make_pack()
+        return pack if longform_daily(self.cfg) else VideoPack(shorts=pack.shorts)
+
+    def generate_weekly_longform(self, days, week_label, review):
+        self.calls.append("weekly_longform")
+        self.usage.calls += 1
+        return make_pack().longform
 
     def generate_weekly(self, days, week_label):
         self.calls.append("weekly")
@@ -423,11 +430,12 @@ def test_llm_path_writes_every_artifact(cfg, monkeypatch):
     assert not result.warnings, result.warnings
     for name in (
         "brief.md", "blog.md", "blog-naver.html", "script-shorts.md",
-        "script-longform.md", "production-notes.md",
+        "production-notes.md",
         "sources.md", "data.json",
     ):
         assert (out / name).exists(), f"{name} 이 생성되지 않았습니다"
     assert list(out.glob("script-shorts_*.srt"))      # 자막 이름에는 저장소·날짜가 붙는다
+    assert not (out / "script-longform.md").exists()  # 롱폼은 주간 결산 때만 (2026-09-17)
 
     # 키가 있을 때는 프롬프트 팩을 만들지 않는다
     assert not (out / "prompt-pack.md").exists()
@@ -590,6 +598,7 @@ def test_speakable_spells_out_symbols_tts_trips_on():
 
 
 def test_site_script_pages_have_a_tts_copy_button(cfg, monkeypatch, tmp_path):
+    cfg.settings["video"]["longform"] = "daily"      # 예전 길 — 날마다 롱폼까지
     """쇼츠·롱폼 페이지에만 「자막만 복사」 버튼이 붙고, 담긴 글은 이스케이프된다."""
     from rebrief.site import build_site
 
@@ -759,7 +768,7 @@ def test_llm_실행이_인포그래픽까지_만든다(cfg, monkeypatch):
     assert "이 글의 순서" not in naver          # 가짜 글은 소제목이 2개뿐 → 목차 없음
     assert "![대표 이미지](img-0-cover.svg)" in blog
     # 썸네일 두 장
-    assert (out / "thumb-longform.svg").exists() and (out / "thumb-shorts.svg").exists()
+    assert (out / "thumb-shorts.svg").exists() and not (out / "thumb-longform.svg").exists()
 
 
 def test_설정으로_인포그래픽을_끌_수_있다(cfg, monkeypatch):
@@ -889,7 +898,7 @@ def test_paste_mode_round_trips_three_answers_without_calling_the_model(cfg, mon
     r2 = paste.apply(cfg, RUN_DATE, "```json\n" + make_post().model_dump_json() + "\n```\n\n```json\n"
                      + make_pack().model_dump_json() + "\n```")
     assert r2.applied == ["blog", "video"] and not r2.problems and r2.done
-    for name in ("blog-naver.html", "blog.md", "script-shorts.md", "script-longform.md",
+    for name in ("blog-naver.html", "blog.md", "script-shorts.md",
                  "production-notes.md", "checklist.md"):
         assert (out / name).exists(), name
     assert list(out.glob("script-shorts_*.srt")), "자막 파일이 없습니다"
@@ -1086,7 +1095,8 @@ def _install_fake_subscription(tmp_path, monkeypatch, *, fail: bool = False):
 
     d = tmp_path / "fake-sub"
     (d / "bin").mkdir(parents=True)
-    for name, obj in (("DailyBrief", make_brief()), ("BlogPost", make_post()), ("VideoPack", make_pack())):
+    for name, obj in (("DailyBrief", make_brief()), ("BlogPost", make_post()), ("VideoPack", make_pack()),
+                      ("ShortsPack", make_pack())):
         (d / f"{name}.json").write_text(obj.model_dump_json(), encoding="utf-8")
     exe = d / "bin" / "claude"
     exe.write_text(_FAKE_SUB.format(python=sys.executable), encoding="utf-8")
@@ -1107,7 +1117,7 @@ def test_subscription_transport_runs_the_old_path_without_spending(cfg, monkeypa
     result = pipeline.run(cfg, run_date=RUN_DATE)
     out = cfg.output_dir / RUN_DATE
     assert result.llm_used and not [w for w in result.warnings if "실패" in w], result.warnings
-    for name in ("brief.md", "data.json", "blog-naver.html", "script-shorts.md", "script-longform.md",
+    for name in ("brief.md", "data.json", "blog-naver.html", "script-shorts.md",
                  "production-notes.md", "checklist.md"):
         assert (out / name).exists(), name
     assert not (out / "paste").exists()                    # 붙여넣기 흐름은 타지 않는다
@@ -1115,10 +1125,10 @@ def test_subscription_transport_runs_the_old_path_without_spending(cfg, monkeypa
 
     calls = [json.loads(x) for x in (d / "calls.log").read_text(encoding="utf-8").splitlines()]
     kinds = [c["kind"] for c in calls]
-    assert kinds[:3] == ["DailyBrief", "BlogPost", "VideoPack"], kinds
+    assert kinds[:3] == ["DailyBrief", "BlogPost", "ShortsPack"], kinds   # 날마다의 대본은 쇼츠만
     by = {c["kind"]: c["model"] for c in calls}
     assert by["DailyBrief"] == cfg.get("llm.brief_model") and by["BlogPost"] == cfg.get("llm.model")
-    assert by["VideoPack"] == cfg.get("llm.script_model")
+    assert by["ShortsPack"] == cfg.get("llm.script_model")
     assert not any(c["api_key"] for c in calls), "ANTHROPIC_API_KEY 가 claude 에 넘어갔다"
     assert all(c["cwd"] != str(cfg.repo_root) and "--bare" not in c["args"] for c in calls)
     assert all("--effort" in c["args"] for c in calls)

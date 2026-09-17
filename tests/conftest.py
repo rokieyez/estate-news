@@ -42,7 +42,8 @@ class FakeResponse:
 # **로컬은 통과하고 러너는 실패하는** 시험이 생긴다 (실제로 월간 결산 시험이 그랬다).
 @pytest.fixture(autouse=True)
 def _no_optional_keys(monkeypatch):
-    for name in ("DATA_GO_KR_KEY", "REB_API_KEY", "ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"):
+    for name in ("DATA_GO_KR_KEY", "REB_API_KEY", "ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN",
+                 "ELEVENLABS_API_KEY"):      # 시험이 진짜 음성을 만들면 글자 수가 나간다
         monkeypatch.delenv(name, raising=False)
 
 

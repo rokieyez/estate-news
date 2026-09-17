@@ -230,7 +230,14 @@ class LongformScript(BaseModel):
 
 class VideoPack(BaseModel):
     shorts: ShortsScript
-    longform: LongformScript
+    # 롱폼은 2026-09-17 부터 주간 결산 때만 만듭니다 (video.longform: weekly). 날마다의 대본에는 없습니다.
+    longform: LongformScript | None = None
+
+
+class ShortsPack(BaseModel):
+    """날마다의 영상 대본 — 쇼츠 한 편. 모델에게 보여 주는 틀에서 롱폼 칸을 아예 뺀다."""
+
+    shorts: ShortsScript
 
 
 class PolicySummary(BaseModel):

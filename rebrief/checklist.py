@@ -180,6 +180,7 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
             texts.append(("블로그", f"{post.title}\n{post.body_markdown}"))
         if pack is not None:
             texts.append(("쇼츠", "\n".join(l.text for l in pack.shorts.lines) + "\n" + pack.shorts.hook))
+        if pack is not None and pack.longform is not None:
             texts.append(("롱폼", pack.longform.cold_open + "\n" + "\n".join(s.script for s in pack.longform.sections)
                           + "\n" + pack.longform.outro))
         hits = [f"{where}: '{p}'" for where, t in texts for p in _find_phrases(t, banned)]
@@ -281,6 +282,7 @@ def build(cfg: Config, *, brief=None, post=None, pack=None, checks=None,
                               "예: " + " / ".join(stubs) + " → 종결어미로 맺는 문장으로 고치세요."))
         else:
             items.append(Item("shorts_voice", OK, f"쇼츠 자막이 문장으로 이어집니다 ({ratio * 100:.0f}%)"))
+    if pack is not None and pack.longform is not None:        # 롱폼은 주간 결산 때만 — 없는 날은 재지 않는다
         l_target = float(video.get("longform_minutes", 8)) * cpm
         l_chars = len(pack.longform.cold_open) + sum(len(s.script) for s in pack.longform.sections)
         if l_chars > l_target * 1.25 or l_chars < l_target * 0.6:

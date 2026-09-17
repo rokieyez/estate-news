@@ -242,7 +242,8 @@ def test_실행하면_제목_후보가_장부에_남는다(cfg, monkeypatch):
     pipeline.run(cfg, run_date="2026-09-06", use_llm=True)
     log = TitleLog(cfg.state_dir / "titles.json")
     day = log.days["2026-09-06"]
-    assert set(day) == {"blog", "longform", "shorts"} and day["longform"]["candidates"]
+    # 롱폼 제목 후보는 이제 주간 결산 날에 남는다 (video.longform: weekly)
+    assert set(day) == {"blog", "shorts"} and day["shorts"]["candidates"]
 
 
 def test_titles_명령(cfg, monkeypatch, capsys):

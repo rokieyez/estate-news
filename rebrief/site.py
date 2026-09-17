@@ -12,6 +12,7 @@ GitHub Pages 로 올릴 수 있는 site/ 를 만들어 두면 링크 하나만 �
 from __future__ import annotations
 
 import logging
+import os
 import re
 import shutil
 from datetime import datetime
@@ -33,6 +34,7 @@ PAGES = [
     ("blog-naver.html", "네이버 블로그 글", "버튼 눌러 복사하고 블로그에 붙여넣기"),
     ("brief.md", "오늘의 정리", "무슨 일이 있었는지 사실만 요약"),
     ("script-shorts.md", "쇼츠 대본", "60초. 자막과 화면 지시 포함"),
+    # 롱폼은 2026-09-17 부터 주간 결산 때만 만듭니다 — 그 전 날짜에만 이 파일이 있습니다.
     ("script-longform.md", "롱폼 대본", "8분. 챕터와 자료화면 포함"),
     ("production-notes.md", "제작 메모", "제목·썸네일·태그·촬영 목록"),
     ("policy.md", "정부 발표 원문", "보도자료 3줄 요약과 원본 파일"),
@@ -41,7 +43,8 @@ PAGES = [
 ]
 # 자막·컷 리스트 이름에는 저장소·날짜가 붙는다(`script-shorts_estate-news_260912.srt`).
 # 옛 이름(`script-shorts.srt`)으로 남은 지난 날짜도 함께 집도록 패턴으로 찾는다.
-EXTRA_GLOBS = ["script-shorts*.srt", "shorts-cuts*.csv", "longform-chapters*.csv", "data.json"]
+EXTRA_GLOBS = ["script-shorts*.srt", "shorts-cuts*.csv", "longform-chapters*.csv", "data.json",
+               "script-shorts*.mp3"]           # 쇼츠 음성 (일레븐랩스, 2026-09-17)
 # 그림·썸네일은 이름 패턴으로 통째로 복사한다.
 ASSET_GLOBS = ["img-*.png", "img-*.svg", "thumb-*.png", "thumb-*.svg",
                "card-*.png", "card-*.svg"]      # 유튜브 게시물용 카드뉴스
@@ -440,15 +443,29 @@ def _build_periods(env, source: Path, dest: Path, *, stem: str, title: str) -> l
         if naver.exists():
             shutil.copy2(naver, target / naver.name)
             entry["pages"].append({"href": naver.name, "label": "네이버 블로그 글"})
-        for png in sorted(period_dir.glob("img-*.png")):
-            shutil.copy2(png, target / png.name)
+        for pattern in ("img-*.png", "thumb-*.png", "longform-chapters*.csv"):
+            for extra in sorted(period_dir.glob(pattern)):
+                shutil.copy2(extra, target / extra.name)
         if md.exists():
             html = env.get_template("site_page.html.j2").render(
-                title=title, date=period_dir.name,
+                title=title, date=period_dir.name, base="../../",     # weekly/<주차>/ 는 두 칸 아래다
                 body_html=md_to_html(md.read_text(encoding="utf-8")),
             )
             (target / f"{stem}.html").write_text(html, encoding="utf-8")
             entry["pages"].append({"href": f"{stem}.html", "label": "결산 읽기"})
+        # 롱폼은 주간 결산 때만 만든다 (2026-09-17) — 대본에는 날마다의 대본처럼 「자막만 복사」 버튼이 붙는다
+        for filename, label in (("script-longform.md", "롱폼 대본"), ("production-notes.md", "롱폼 제작 메모")):
+            source_file = period_dir / filename
+            if not source_file.exists():
+                continue
+            text = source_file.read_text(encoding="utf-8")
+            said = narration(filename, text)
+            href = filename.replace(".md", ".html")
+            (target / href).write_text(env.get_template("site_page.html.j2").render(
+                title=label, date=period_dir.name, base="../../", body_html=md_to_html(text),
+                tts=said, tts_read=speakable(said),
+            ), encoding="utf-8")
+            entry["pages"].append({"href": href, "label": label})
         periods.append(entry)
     return periods
 
@@ -515,6 +532,7 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
                 body_html=md_to_html(text),
                 tts=said,                          # 대본이면 「자막만 복사」 버튼
                 tts_read=speakable(said),          # 그리고 기호·단위를 풀어 쓴 글
+                voice=_voice_card(cfg, day) if filename == "script-shorts.md" else None,
                 meta=meta_tags(
                     site_base(cfg),
                     title=f"{info['headline'] or label} — {day.name}",
@@ -600,6 +618,26 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
         )
         (dest / "index.html").write_text(html, encoding="utf-8")
     return entry
+
+
+def _voice_card(cfg: Config, day: Path) -> dict | None:
+    """쇼츠 대본 페이지의 음성 카드 — 듣기·내려받기·목소리 바꾸기. 음성이 없는 날은 None."""
+    from . import voice as voice_mod
+
+    info = voice_mod.load_sidecar(day)
+    name = str(info.get("file", "") or "")
+    if not name or not (day / name).is_file():
+        return None
+    repo = os.environ.get("GITHUB_REPOSITORY", "") or f"rokieyez/{cfg.project_name}"
+    size = (day / name).stat().st_size
+    return {
+        "file": name, "voice": info.get("voice_name", ""), "chars": int(info.get("chars", 0) or 0),
+        "size": f"{size / 1024 / 1024:.1f}MB" if size >= 1024 * 1024 else f"{size / 1024:.0f}KB",
+        "date": day.name,
+        "change_url": f"https://github.com/{repo}/actions/workflows/voice.yml",
+        "voices": [{"name": v.get("name", ""), "note": v.get("note", ""), "preview": v.get("preview", "")}
+                   for v in voice_mod.choices(cfg)],
+    }
 
 
 def _copy_assets(day: Path, dest: Path) -> list[dict]:

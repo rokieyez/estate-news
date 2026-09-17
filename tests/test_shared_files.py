@@ -23,6 +23,7 @@ SHARED = [
     ".github/workflows/index-check.yml",
     ".github/workflows/publish-log.yml",
     ".github/workflows/title-log.yml",
+    ".github/workflows/voice.yml",              # 「쇼츠 음성」 폼 — 목소리 목록이 두 채널에서 같다
     "rebrief/__main__.py",
     "rebrief/blogstyle.py",                     # 블로그 첨부 그림의 사진 배경 판 (2026-09-15)
     "rebrief/keynumbers.py",
@@ -32,13 +33,16 @@ SHARED = [
     "rebrief/searchindex.py",              # 색인 재기 (2026-09-16) — 두 블로그를 같은 자로 재야 비교가 된다
     "rebrief/subscription.py",
     "rebrief/tts.py",
+    "rebrief/voice.py",                         # 쇼츠 음성 (일레븐랩스, 2026-09-17)
     "rebrief/verify.py",
     "rebrief/templates/script_shorts.md.j2",     # tts.py 가 이 틀의 모양을 읽는다
     "rebrief/templates/script_longform.md.j2",
+    "rebrief/templates/longform_notes.md.j2",    # 주간 롱폼 제작 메모
     "rebrief/templates/site_images.html.j2",
     "rebrief/templates/site_search.html.j2",
     "tests/test_blogstyle.py",
     "tests/test_shared_files.py",
+    "tests/test_video_plan.py",                  # 롱폼은 주간 결산 때만 · 쇼츠 음성 (2026-09-17)
     "tests/test_subscription.py",                # 구독 호출이 나뉜 답·안전 검사에서 다시 묻는지 (2026-09-14)
 ]
 

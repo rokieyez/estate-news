@@ -4,23 +4,27 @@
 
 ## 1. 업로드 정보
 
+{% if l %}
 ### 제목 후보 (롱폼)
 
 {% for t in l.title_candidates %}
 {{ loop.index }}. {{ t }}
 {% endfor %}
 
+{% endif %}
 ### 제목 후보 (쇼츠)
 
 {% for t in s.title_candidates %}
 {{ loop.index }}. {{ t }}
 {% endfor %}
 
+{% if l %}
 ### 썸네일 문구
 
 {% for t in l.thumbnail_texts %}
 - {{ t }}
 {% endfor %}
+{% endif %}
 
 ### 설명란 (복사용)
 
@@ -31,7 +35,7 @@
 ### 태그 (복사용)
 
 ```
-{{ l.tags|join(', ') }}
+{{ (l.tags if l else s.hashtags)|join(', ') }}
 ```
 
 ### 고정 댓글 (복사용)
@@ -45,14 +49,19 @@
 ## 2. 촬영 · 자료화면 체크리스트
 
 {% set ns = namespace(count=0) %}
-{% for sec in l.sections %}
+{% for sec in (l.sections if l else []) %}
 {% for b in sec.broll %}
 {% set ns.count = ns.count + 1 %}
 - [ ] `{{ sec.at }}` {{ b }}
 {% endfor %}
 {% endfor %}
 
-총 {{ ns.count }}컷.
+{% for line in (s.lines if not l else []) %}
+{% set ns.count = ns.count + 1 %}
+- [ ] `{{ line.at }}` {{ line.visual }}
+{% endfor %}
+
+총 {{ ns.count }}컷.{% if not l %} 롱폼은 주간 결산 때 함께 나옵니다 (주간 결산 → 롱폼 대본).{% endif %}
 
 ---
 

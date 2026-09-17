@@ -1,0 +1,100 @@
+name: 쇼츠 음성
+
+# 쇼츠 대본을 일레븐랩스 음성(mp3)으로 다시 만듭니다 — **목소리를 바꿔 듣고 싶을 때** 쓰는 폼입니다.
+# Actions 탭 → 쇼츠 음성 → Run workflow 에서 목소리를 고르고 실행하면 2~3분 뒤 사이트의 음성이 바뀝니다.
+# 날마다의 음성은 데일리 브리핑이 알아서 만듭니다. 두 저장소 공통 파일입니다.
+#
+# 아래 목소리 이름은 config/settings.yaml 의 voice.voices 와 같아야 합니다 (시험이 봅니다).
+on:
+  workflow_dispatch:
+    inputs:
+      voice:
+        description: "목소리 (대본 페이지의 「목소리 바꾸기」에서 미리 들어 볼 수 있습니다)"
+        required: true
+        type: choice
+        default: "Theo"
+        options:
+          - "Theo"
+          - "Hunmin"
+          - "SEGU"
+          - "Yohan Koo"
+          - "Kyung Hoon"
+          - "Lee"
+          - "Minsoo"
+          - "Jungkook"
+          - "Wooju"
+          - "Jiyoung"
+          - "Chloe Cha"
+          - "Seulki"
+          - "ROKIZ 풀버전"
+          - "로키즈 숏버전"
+      date:
+        description: "날짜 (YYYY-MM-DD, 비우면 쇼츠 대본이 있는 가장 최근 날짜)"
+        required: false
+        type: string
+      keep:
+        description: "앞으로도 이 목소리로 (내일부터의 음성도 이 목소리)"
+        required: false
+        type: boolean
+        default: true
+      voice_id:
+        description: "목록에 없는 목소리를 쓰려면 일레븐랩스 voice_id 를 여기에 (적으면 위 선택보다 우선)"
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+concurrency:
+  group: shorts-voice
+  cancel-in-progress: false
+
+jobs:
+  voice:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: pip install -r requirements.txt
+      - name: 음성 만들기
+        # 입력값은 셸 문자열에 끼워 넣지 않고 환경변수로 넘긴다 (따옴표·세미콜론이 들어와도 안전).
+        env:
+          ELEVENLABS_API_KEY: ${{ secrets.ELEVENLABS_API_KEY }}
+          IN_VOICE: ${{ inputs.voice }}
+          IN_DATE: ${{ inputs.date }}
+          IN_KEEP: ${{ inputs.keep }}
+          IN_VOICE_ID: ${{ inputs.voice_id }}
+        run: |
+          if [ -z "$ELEVENLABS_API_KEY" ]; then
+            echo "::error::저장소 Secrets 에 ELEVENLABS_API_KEY 가 없습니다 (Settings → Secrets and variables → Actions)."
+            exit 1
+          fi
+          set -- voice --force --voice "$IN_VOICE"
+          [ -n "$IN_DATE" ] && set -- "$@" --date "$IN_DATE"
+          [ -n "$IN_VOICE_ID" ] && set -- "$@" --voice-id "$IN_VOICE_ID"
+          [ "$IN_KEEP" = "true" ] && set -- "$@" --keep
+          python -m rebrief "$@" | tee -a "$GITHUB_STEP_SUMMARY"
+      - name: 커밋
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add output state
+          if git diff --staged --quiet; then
+            echo "변경 사항 없음 — 커밋을 건너뜁니다."
+            exit 0
+          fi
+          git commit -m "쇼츠 음성: ${IN_VOICE_LABEL}"
+          for i in 1 2 3; do
+            git pull --rebase origin "${GITHUB_REF_NAME}" && git push && exit 0
+            git rebase --abort 2>/dev/null || true
+            sleep $((i * 5))
+          done
+          echo "푸시에 실패했습니다." >&2
+          exit 1
+        env:
+          IN_VOICE_LABEL: ${{ inputs.voice_id || inputs.voice }}
