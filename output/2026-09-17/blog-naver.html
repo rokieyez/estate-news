@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>성북구 아파트 신고가, 서울 5개구 동시 기록 9월 17일 브리핑</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
+  body {
+    margin: 0; padding: 0 16px 80px;
+    color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.8; font-size: 16px;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    margin: 0 -16px 20px; padding: 12px 16px;
+    background: #03c75a; color: #fff;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .bar strong { margin-right: auto; font-size: 15px; }
+  .bar button {
+    border: 0; border-radius: 6px; padding: 8px 14px;
+    background: rgba(255,255,255,.18); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .bar button:hover { background: rgba(255,255,255,.3); }
+  .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
+  .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
+  #post p { margin: 0 0 18px; }
+  #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
+  #post li { margin-bottom: 8px; }
+  #post table { border-collapse: collapse; width: 100%; margin: 0 0 20px; font-size: 15px; }
+  #post th, #post td { border: 1px solid #ddd; padding: 9px 12px; text-align: left; }
+  #post th { background: #f2f4f6; font-weight: 700; }
+  #post blockquote {
+    margin: 0 0 18px; padding: 12px 16px;
+    background: #f7f8fa; border-left: 4px solid #03c75a; color: #444;
+  }
+  #post a { color: #0068c3; }
+  .imgslot {
+    margin: 0 0 20px; padding: 22px 16px; text-align: center;
+    border: 2px dashed #c9cdd2; border-radius: 8px;
+    background: #fafbfc; color: #6b7178; font-size: 14px;
+  }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .photo-links { margin: -12px 0 20px; font-size: 13px; color: #6b7178; text-align: center; }
+  .photo-links a { color: #0068c3; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
+  .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
+  .hint {
+    max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    font-size: 14px; line-height: 1.75; color: #5f4b16;
+  }
+  .hint ol { margin: 8px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>네이버 블로그 붙여넣기</strong>
+  <button type="button" data-copy="title">제목 복사</button>
+  <button type="button" data-copy="post">본문 복사</button>
+  <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="https://blog.naver.com/rikiwiki/postwrite" target="_blank" rel="noopener">글쓰기 열기</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1 class="title" id="title">성북구 아파트 신고가, 서울 5개구 동시 기록 9월 17일 브리핑</h1>
+    <div class="meta">2026-09-17 · 부동산</div>
+
+    <div id="post">
+<div class="imgslot has-file">📷 대표 이미지 — 검색 목록에 이 그림이 썸네일로 뜹니다<br><small>→ 파일 <b>img-0-cover.png</b> 을 <b>글 맨 위</b>에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-0-cover.png" alt="대표 이미지"><p style="margin:0 0 14px;font-size:14px;color:#767676">이 글은 2026년 9월 17일 기준으로 정리한 내용입니다. 실거래 거래 건수는 2026년 8월 1~17일 계약분(신고 기한이 지난 것), 전세가율 등은 2026년 7월 신고분입니다.</p><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px"><b style="font-size:15px">3줄 요약</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">서울 5개 자치구에서 최근 3년 신고가 거래가 동시에 확인</li><li style="margin-bottom:6px">성북 월곡두산위브 10억5000만원, 압구정 신현대11차 97억3000만원</li><li style="margin-bottom:6px">지방은 대구 18억·부산 29억 신고가와 미분양 4.8만가구 공존</li></ul></div><p>오늘 서울 부동산 소식의 핵심은 '동시다발'입니다. 성북구 아파트 신고가를 비롯해 영등포·구로·마포·양천구까지, 서로 떨어진 다섯 개 자치구에서 최근 <span class="hl" style="background-color:#fff59d">3년</span> 내 신고가 거래가 나란히 확인됐습니다.</p>
+<p>초고가 단지인 강남구 압구정동에서는 <span class="hl" style="background-color:#fff59d"><strong>97억</strong></span><span class="hl" style="background-color:#fff59d">3000만원</span> 거래도 기록됐습니다. 중저가부터 초고가까지 폭이 넓다는 점이 오늘의 특징입니다.</p>
+<div class="imgslot">📷 이미지 — 해질 무렵 서울 아파트 단지 전경 사진</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/seoul-apartment-complex-skyline" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/seoul%20apartment%20complex%20skyline/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/seoul%20apartment%20complex%20skyline/" target="_blank" rel="noopener">픽사베이</a></div>
+<h2>성북구 아파트 신고가, 어디서 얼마에 거래됐나</h2>
+<p>성북구에서는 두 건입니다. 월곡두산위브 전용 59.855㎡가 <span class="hl" style="background-color:#fff59d"><strong>10억</strong></span>5000만원, 정릉힐스테이트3차 59.98㎡가 <span class="hl" style="background-color:#fff59d">8억</span><span class="hl" style="background-color:#fff59d">1500만원</span>에 거래됐습니다.</p>
+<p>두 건 모두 신고가(그 단지에서 지금까지 나온 거래가 가운데 가장 높은 값)로, 여기서는 최근 3년을 기준으로 한 수치입니다.</p>
+<div class="imgslot has-file">📷 이미지 — 성북구 월곡두산위브 전용 59.855㎡ 거래가를 보여주는 카드<br><small>→ 파일 <b>img-2-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-2-stat-card.png" alt="성북구 월곡두산위브 전용 59.855㎡ 거래가를 보여주는 카드">
+<hr><h2>서울 5개 자치구 신고가 한눈에 보기</h2>
+<p>같은 날 확인된 여섯 건을 표로 모았습니다. 모두 최근 3년 신고가입니다.</p>
+<table>
+<thead>
+<tr>
+<th>단지(전용면적)</th>
+<th>거래가</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>성북 월곡두산위브 59.855㎡</td>
+<td>10억 5,000만원</td>
+</tr>
+<tr>
+<td>성북 정릉힐스테이트3차 59.98㎡</td>
+<td>8억 1,500만원</td>
+</tr>
+<tr>
+<td>영등포 당산현대5차 84.69㎡</td>
+<td>19억 4,300만원</td>
+</tr>
+<tr>
+<td>구로 하버라인3단지 59.86㎡</td>
+<td>7억 7,000만원</td>
+</tr>
+<tr>
+<td>마포 성산1차 풍림 59.85㎡</td>
+<td>8억 3,000만원</td>
+</tr>
+<tr>
+<td>양천 학마을1단지 49.99㎡</td>
+<td>7억 1,500만원</td>
+</tr>
+</tbody>
+</table>
+<p>눈에 띄는 건 면적대입니다. 여섯 건 가운데 다섯 건이 전용 60㎡ 이하, 이른바 소형 구간에서 나왔습니다.</p>
+<p>당산현대5차만 84㎡대로, 앞서 본 다른 단지들과는 가격 수준 자체가 다릅니다.</p>
+<hr><h2>성북구 아파트 신고가, 어떻게 읽어야 할까</h2>
+<p>중저가·중소형 단지를 중심으로 매수세가 유지되고 있다는 신호로는 읽을 수 있습니다. 서울 곳곳에서 같은 날 확인됐다는 점도 그렇습니다.</p>
+<p>다만 한계도 분명합니다. 오늘 확인된 자료에는 거래일자와 층수, 거래 배경이 담겨 있지 않았습니다.</p>
+<p>같은 단지라도 층과 향에 따라 값 차이가 크기 때문에, 성북구 아파트 신고가 역시 시장 전체의 방향으로 넓히기보다 개별 단지 사례로 두고 보시는 편이 안전합니다.</p>
+<div class="imgslot">📷 이미지 — 스마트폰으로 대출 한도를 조회하는 손 사진</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/smartphone-mobile-banking-hand" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/smartphone%20mobile%20banking%20hand/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/smartphone%20mobile%20banking%20hand/" target="_blank" rel="noopener">픽사베이</a></div>
+<hr><h2>그 밖의 오늘 소식</h2>
+<ul>
+<li>강남구 압구정동 신현대11차, 97억3000만원에 거래</li>
+<li>카카오뱅크, 분양잔금대출(입주 때 치르는 잔금 대출) 모바일 출시</li>
+<li>지방은 대구 18억·부산 29억 신고가, 미분양은 <span class="hl" style="background-color:#fff59d"><strong>4.8만가구</strong></span></li>
+</ul><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:26px 0 0"><b style="font-size:15px">그래서 나는?</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">서울 중소형 매수 준비 중이라면, 관심 단지 최근 실거래부터 확인해 보세요</li><li style="margin-bottom:6px">1주택자라면, 내 단지가 아닌 인근 단지 사례일 수 있음을 함께 보세요</li><li style="margin-bottom:6px">지방 분양 계약자라면, 미분양 4.8만가구라는 수치를 같이 챙겨 보세요</li></ul></div><div style="margin:28px 0 0;padding:16px 18px"><b>직접 센 숫자 — 2026년 8월 1~17일 아파트 실거래</b><p style="margin:10px 0 0">서울 8개 구에서 계약된 매매는 <b>579건</b>입니다. 7월 1~17일 1084건과 견주면 -505건입니다.</p><p style="margin:8px 0 0;font-size:15px;color:#555555">거래가 많은 곳: 구로구 115건(-114) · 성북구 100건(-89) · 영등포구 68건(-83)</p><p style="margin:6px 0 0;font-size:13px;color:#888888">신고 기한(계약 후 30일)이 지난 17일까지 계약분끼리 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">구로구 전세가율(전세 보증금 ÷ 매매가)은 가운뎃값 <b>56.4%</b>입니다. 같은 단지·같은 면적 59곳을 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">서울 25개 구 가운데 거래가 가장 크게 움직인 곳: 중랑구 -79.3%(405→84건, 7월 1~17일엔 묵동에 74.6% 몰렸음) · 영등포구 -55.0%(151→68건)</p><p style="margin:12px 0 4px"><b>2026년 8월 계약 신고가</b></p><ul style="margin:0;padding-left:18px;font-size:15px"><li>구로구 영화 143.09㎡ — 10.8억 (이전 최고 8.3억, +30.1%, 8월 14일 계약)</li><li>성북구 정릉우성아파트 101~105동 46.65㎡ — 6.0억 (이전 최고 5.0억, +20.0%, 8월 21일 계약)</li></ul><img class="preview nocopy" src="img-stats-volume.png" alt="지역별 거래 건수" style="max-width:100%;margin-top:12px"><p style="margin:6px 0 0;font-size:13px;color:#888888">→ 그림 파일 <b>img-stats-volume.png</b> 을 이 자리에 올리세요</p><p style="margin:12px 0 0;font-size:13px;color:#888888">국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다.</p></div><p style="padding:14px 16px;margin:28px 0 0"><b>여러분이 지켜보는 단지는 올해 들어 실거래가가 어느 쪽으로 움직이고 있나요?</b><br><span style="font-size:14px;color:#666666">댓글로 알려 주시면 다음 글에 반영하겠습니다.</span></p>
+      <p class="tags" id="tags">#부동산 #아파트 #성북구 #성북구아파트 #성북구신고가 #서울아파트 #서울아파트값 #영등포구 #당산현대5차 #구로구 #마포구 #양천구 #강남구 #압구정 #신현대11차 #월곡두산위브 #정릉힐스테이트 #하버라인3단지 #학마을1단지 #실거래가 #아파트신고가 #내집마련 #분양잔금대출 #카카오뱅크대출 #집단대출 #주택담보대출 #지방미분양 #대구아파트 #부산아파트 #부돌보브리핑</p>
+    </div>
+  </div>
+
+  <div class="hint">
+    <strong>쓰는 법</strong>
+    <ol>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다.
+        네이버는 <b>지금 로그인된 계정</b>의 블로그를 엽니다 — 다른 블로그가 열리면
+        <a href="https://nid.naver.com/nidlogin.logout?returl=https%3A%2F%2Fblog.naver.com%2Frikiwiki%2Fpostwrite" target="_blank" rel="noopener">계정 바꿔 열기</a>를 누르고
+<b>rikiwiki</b> 계정으로 다시 로그인하세요. 바로 글쓰기로 갑니다.</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
+      <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
+      <li><span style="background-color:#fff59d">형광펜</span>은 오늘의 핵심 수치가 <b>처음 나온 자리</b>에만 칠합니다.
+        같은 수치가 다시 나와도 표시하지 않습니다 — 강조가 많으면 아무것도 강조가 아니니까요.
+        붙여넣으면 그대로 따라가고, 마음에 안 들면 에디터에서 지우세요.</li>
+      <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
+      <li><b>올린 뒤</b> 깃허브 → Actions → <b>발행 기록</b> 에 글 주소를 적고, 하루 이틀 뒤 같은 곳에
+        <b>조회수</b>를 적어 주세요 (date 칸에 <b>2026-09-17</b>). 이 두 숫자가 쌓여야 어떤 제목과 주제가
+        사람을 데려오는지 알 수 있습니다 — 안 적으면 아무것도 재지 못합니다.</li>
+    </ol>
+    이 안내문은 복사에 포함되지 않습니다.
+  </div>
+</div>
+
+<script>
+// 버튼이 지정한 영역만 클립보드에 담는다. 안내문과 상단 바는 복사되지 않는다.
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var node = document.getElementById(btn.dataset.copy);
+    if (!node) return;
+
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
+
+    // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
+    // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
+    var range = document.createRange();
+    range.selectNodeContents(copyNode);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    clone.remove();
+
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
+        alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
+      });
+      return;
+    }
+    flash();
+
+    function flash() {
+      var original = btn.textContent;
+      btn.textContent = "복사됨 ✓";
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1400);
+    }
+  });
+});
+</script>
+</body>
+</html>
