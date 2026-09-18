@@ -19,6 +19,7 @@ from . import keynumbers as kn
 from .config import Config
 from .models import BlogPost, CaptionLine, Cluster, DailyBrief, VideoPack
 from .sanitize import clean_html
+from .tts import spoken_extras
 
 TEMPLATE_DIR = Path(__file__).parent / "templates"
 
@@ -191,7 +192,7 @@ class Renderer:
             )
         ]
         video_cfg = self.cfg.get("video", {}) or {}
-        srt = to_srt(shorts.lines, shorts.estimated_seconds,
+        srt = to_srt(spoken_caption_lines(shorts, int(video_cfg.get("caption_max_chars", 16))), shorts.estimated_seconds,
                      int(video_cfg.get("caption_max_chars", 16)),
                      int(video_cfg.get("caption_max_lines", 2)))
         if srt:
@@ -1399,6 +1400,56 @@ def _srt_stamp(seconds: float) -> str:
     return f"{hours:02d}:{minutes:02d}:{secs:02d},{millis:03d}"
 
 
+# 자막 표 밖에서 음성으로만 읽히는 훅·마무리 줄에 붙이는 화면 지시
+_HOOK_VISUAL = "훅 — 제목 카드"
+_CTA_VISUAL = "마무리 — 채널 로고 + 다음 브리핑 안내"
+_SECONDS_PER_CHAR = 0.2      # 한국어 TTS 가 한 글자에 쓰는 시간 어림 (motion-studio 가 음성으로 다시 맞춘다)
+
+
+def _mmss(seconds: float) -> str:
+    whole = int(round(seconds))
+    return f"{whole // 60:02d}:{whole % 60:02d}"
+
+
+def _caption_pieces(text: str, width: int) -> list[str]:
+    """한 화면 자막으로 긴 말을 비슷한 길이 조각으로 — 16자 넘는 마무리가 두 줄로 부풀지 않게."""
+    words = text.split()
+    if len(text) <= width or len(words) < 2:
+        return [text]
+    count = -(-len(text) // width)
+    # 조각 수는 가장 적게, 그 안에서 폭은 가장 좁게 (고르게 나뉜다)
+    for w in range(-(-len(text) // count), width + 1):
+        pieces = _greedy_lines(words, w)
+        if len(pieces) <= count:
+            return pieces
+    return _greedy_lines(words, width)
+
+
+def spoken_caption_lines(shorts, max_chars: int = 16) -> list[CaptionLine]:
+    """자막 파일·컷 CSV 에 들어갈 줄 — 자막 표 + 음성에만 읽히던 훅·마무리 (2026-09-18 사용자 결정 A).
+
+    음성(`tts.shorts_text`)은 표 밖의 훅·마무리도 읽는다. 자막 파일에 그 줄이 없으면 motion-studio 가
+    음성의 끝을 표의 마지막 줄로 알고 맞춰, 마지막 화면이 안 생기고 뒤 씬이 늘어졌다.
+    붙일지는 `tts.spoken_extras` 한 곳이 정한다 — 음성과 자막이 늘 같은 말이 되게.
+    마침표는 붙이지 않는다 (자막 표와 같은 모양).
+    """
+    lines = list(shorts.lines or [])
+    if not lines:
+        return lines
+    first = parse_timecode(lines[0].at)
+    head, tail = spoken_extras([line.text for line in lines], bool(first),
+                               str(getattr(shorts, "hook", "") or ""), str(getattr(shorts, "cta", "") or ""))
+    if head:
+        lines.insert(0, CaptionLine(at="00:00", text=head.rstrip(". "), visual=_HOOK_VISUAL))
+    if tail:
+        last = max((parse_timecode(line.at) or 0.0) for line in lines)
+        at = last + max(2.0, len(lines[-1].text) * _SECONDS_PER_CHAR)
+        for piece in _caption_pieces(tail.rstrip(". "), max_chars):
+            lines.append(CaptionLine(at=_mmss(at), text=piece, visual=_CTA_VISUAL))
+            at += max(1.0, len(piece) * _SECONDS_PER_CHAR)
+    return lines
+
+
 def caption_timings(lines: list[CaptionLine], total_seconds: int | None = None) -> list[tuple[float, float]]:
     """자막 줄마다 (시작, 끝) 초.
 
@@ -1518,13 +1569,14 @@ _GRAPHIC_WORDS = ("자막", "카드", "그래픽", "차트", "표", "수치")
 
 def shorts_cut_csv(shorts, image_files: list[str] | None = None, fps: int = 30) -> str:
     """쇼츠 편집용 컷 리스트. 컷마다 시각·자막·화면 지시·쓸 그림을 한 줄에 담는다."""
-    timings = caption_timings(shorts.lines, shorts.estimated_seconds)
+    lines = spoken_caption_lines(shorts)
+    timings = caption_timings(lines, shorts.estimated_seconds)
     if not timings:
         return ""
     pictures = list(image_files or [])
     used = 0
     rows = [["컷", "시작(TC)", "끝(TC)", "시작(초)", "길이(초)", "자막", "화면 지시", "쓸 그림"]]
-    for i, (line, (start, end)) in enumerate(zip(shorts.lines, timings), start=1):
+    for i, (line, (start, end)) in enumerate(zip(lines, timings), start=1):
         picture = ""
         if pictures and any(w in (line.visual or "") for w in _GRAPHIC_WORDS):
             picture = pictures[used % len(pictures)]

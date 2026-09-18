@@ -263,3 +263,39 @@ def test_shorts_prompt_teaches_the_motion_studio_direction_shape(cfg):
     example = next(line for line in prompt.splitlines() if line.strip().startswith("예:"))
     assert " + " in example and "/ 출처: " in example
     assert "출처: 기관" in CaptionLine.model_json_schema()["properties"]["visual"]["description"]
+
+
+def test_subtitles_carry_every_line_the_voice_reads():
+    """음성에만 있고 자막 파일·컷 CSV 에는 없는 말이 없게 (2026-09-18 사용자 결정 A).
+
+    9/18 부동산 쇼츠는 마무리가 표 밖에만 있어 음성에만 읽혔고, motion-studio 가 음성 끝을 표의 마지막
+    줄로 알고 맞춰 마지막 화면이 안 생겼다. 훅(자막이 00:03 부터일 때)도 같은 규칙이다.
+    """
+    from rebrief.models import CaptionLine, ShortsScript
+    from rebrief.render import shorts_cut_csv, spoken_caption_lines, to_srt
+    from rebrief.tts import spoken_extras
+
+    rows = [CaptionLine(at="00:03", text="강남 거래가 줄었고", visual="막대"),
+            CaptionLine(at="00:06", text="확인될 예정입니다", visual="달력")]
+    shorts = ShortsScript.model_construct(title_candidates=[], hook="강남 거래 반토막, 무슨 일일까요?", lines=rows,
+                                          cta="다음주 발표될 통계 부돌보 브리핑에서 확인하세요.", hashtags=[],
+                                          estimated_seconds=15)
+    lines = spoken_caption_lines(shorts)
+    texts = [line.text for line in lines]
+    assert texts[0] == "강남 거래 반토막, 무슨 일일까요?"           # 00:03 부터라 훅이 앞에
+    assert texts[1:3] == ["강남 거래가 줄었고", "확인될 예정입니다"]
+    tail = texts[3:]
+    assert len(tail) == 2 and all(len(t) <= 16 for t in tail)     # 긴 마무리는 화면 한 줄씩으로
+    assert " ".join(tail) == "다음주 발표될 통계 부돌보 브리핑에서 확인하세요"
+    assert all(l.visual.startswith("마무리") for l in lines[3:])
+    srt, csv = to_srt(lines, 15), shorts_cut_csv(shorts)
+    for t in texts:
+        assert t in csv
+    assert "브리핑에서 확인하세요" in srt
+
+    # 표가 00:00 부터이고 마무리가 이미 끝줄에 있으면 아무것도 붙지 않는다 — 음성도 같은 판단
+    rows0 = [CaptionLine(at="00:00", text="서울 아파트값이", visual=""),
+             CaptionLine(at="00:02", text="구독과 알림 부탁드립니다", visual="")]
+    plain = shorts.model_copy(update={"lines": rows0, "cta": "구독과 알림 부탁드립니다."})
+    assert [l.text for l in spoken_caption_lines(plain)] == [r.text for r in rows0]
+    assert spoken_extras([r.text for r in rows0], False, plain.hook, plain.cta) == ("", "")

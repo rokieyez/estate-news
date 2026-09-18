@@ -114,13 +114,11 @@ def shorts_text(md: str) -> str:
                 pieces.append(piece)
     first = next((_SHORTS_ROW.match(l.strip()) for l in md.splitlines() if _SHORTS_ROW.match(l.strip())), None)
     starts_late = bool(first) and not re.search(r"`0?0:00`", first.group(0))
-    hook, cta = _section(md, "훅"), _section(md, "마무리")
+    head, tail = spoken_extras(pieces, starts_late, _section(md, "훅"), _section(md, "마무리"))
 
     sentences: list[str] = []
-    # 자막이 00:00 이 아니라 00:03 부터면 앞 3초가 훅 자리다 — 훅을 먼저 읽는다.
-    # 00:00 부터면 첫 자막이 훅을 이미 말하거나(말만 조금 다름) 훅은 화면 제목일 뿐이다 (9/6~9/11 실측).
-    if hook and starts_late:
-        sentences.append(_ends_sentence(hook)[0])
+    if head:
+        sentences.append(_ends_sentence(head)[0])
     current: list[str] = []
     for piece in pieces:
         piece, done = _ends_sentence(piece)
@@ -130,9 +128,25 @@ def shorts_text(md: str) -> str:
             current = []
     if current:
         sentences.append(" ".join(current))
-    if cta and not _covered(cta, pieces[::-1]):
-        sentences.append(_ends_sentence(cta)[0])    # 마무리는 제 줄에 — 「아직」 뒤에 붙지 않게
+    if tail:
+        sentences.append(_ends_sentence(tail)[0])   # 마무리는 제 줄에 — 「아직」 뒤에 붙지 않게
     return "\n".join(sentences)
+
+
+def spoken_extras(pieces: list[str], starts_late: bool, hook: str, cta: str) -> tuple[str, str]:
+    """자막 표 밖에 있는데 음성으로는 읽히는 말 — (앞에 붙일 훅, 끝에 붙일 마무리). 없으면 빈 글.
+
+    음성(`shorts_text`)과 자막 파일·컷 CSV(`render.spoken_caption_lines`)가 이 한 곳의 규칙을 같이 쓴다.
+    한쪽에만 들어가면 음성에만 있는 말 때문에 motion-studio 의 쉼 맞추기가 뒤로 밀린다
+    (2026-09-18 부동산 쇼츠 — 마무리가 음성에만 있어 마지막 화면이 안 생기고 뒤 씬이 늘어졌다).
+    자막이 00:00 이 아니라 00:03 부터면 앞 3초가 훅 자리다 — 훅을 먼저 읽는다.
+    00:00 부터면 첫 자막이 훅을 이미 말하거나(말만 조금 다름) 훅은 화면 제목일 뿐이다 (9/6~9/11 실측).
+    마무리는 자막 끝에 이미 없을 때만 붙인다.
+    """
+    hook, cta = _plain(hook or ""), _plain(cta or "")
+    head = hook if hook and starts_late else ""
+    tail = cta if cta and not _covered(cta, pieces[::-1]) else ""
+    return head, tail
 
 
 def longform_text(md: str) -> str:
