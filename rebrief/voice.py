@@ -27,7 +27,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .config import Config
-from .tts import shorts_text, speakable
+from .tts import say_as, shorts_text, speakable
 
 log = logging.getLogger(__name__)
 
@@ -117,13 +117,14 @@ def save_choice(cfg: Config, voice_id: str, name: str = "") -> Path:
     return path
 
 
-def spoken_text(out_dir: Path, spell_out: bool = True) -> str:
-    """그날 쇼츠 대본에서 읽는 말만. 기호·단위(㎡·%p·~·→)는 말로 풀어 읽힌다."""
+def spoken_text(out_dir: Path, spell_out: bool = True, table: dict | None = None) -> str:
+    """그날 쇼츠 대본에서 읽는 말만. 기호·단위(㎡·%p·~·→)는 말로 풀어 읽히고,
+    table(설정 voice.say_as)의 낱말은 소리 나는 대로 바꾼다 (「신고가」→「신고까」)."""
     path = out_dir / SCRIPT
     if not path.exists():
         return ""
     text = shorts_text(path.read_text(encoding="utf-8"))
-    return speakable(text) if spell_out else text
+    return speakable(text, table) if spell_out else say_as(text, table)
 
 
 def _fingerprint(text: str, voice_id: str, model: str, speed: float) -> str:
@@ -189,7 +190,7 @@ def make_shorts_voice(cfg: Config, out_dir: Path, filename: str, *, pick: str = 
     if not key:
         result.note = f"일레븐랩스 열쇠({KEY_ENV})가 없어 음성을 건너뛰었습니다"
         return result
-    text = spoken_text(out_dir, bool(opts.get("spell_out", True)))
+    text = spoken_text(out_dir, bool(opts.get("spell_out", True)), opts.get("say_as") or None)
     if not text:
         result.note = "쇼츠 대본에서 읽을 말을 찾지 못했습니다"
         return result

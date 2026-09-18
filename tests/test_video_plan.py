@@ -299,3 +299,18 @@ def test_subtitles_carry_every_line_the_voice_reads():
     plain = shorts.model_copy(update={"lines": rows0, "cta": "구독과 알림 부탁드립니다."})
     assert [l.text for l in spoken_caption_lines(plain)] == [r.text for r in rows0]
     assert spoken_extras([r.text for r in rows0], False, plain.hook, plain.cta) == ("", "")
+
+
+def test_voice_reads_listed_words_as_they_sound(tmp_path):
+    """「신고가」는 [신고까]로 읽힌다 — 설정 voice.say_as 의 낱말만, 음성에 보낼 글에서만 (2026-09-18 사용자 요청)."""
+    from rebrief import voice as voice_mod
+    from rebrief.tts import say_as, speakable
+
+    table = {"신고가": "신고까"}
+    assert say_as("노원은 신고가였고 신고가 거래가", table) == "노원은 신고까였고 신고까 거래가"
+    assert say_as("신고가", None) == "신고가"                      # 표가 없으면(정치) 그대로
+    assert speakable("41.3㎡ 신고가", table) == "41.3제곱미터 신고까"
+    (tmp_path / voice_mod.SCRIPT).write_text("## 자막\n\n| 1 | `00:00` | 상계주공12 신고가 | 화면 |\n", encoding="utf-8")
+    assert "신고까" in voice_mod.spoken_text(tmp_path, True, table)
+    assert "신고까" in voice_mod.spoken_text(tmp_path, False, table)
+    assert "신고가" in voice_mod.spoken_text(tmp_path, True)

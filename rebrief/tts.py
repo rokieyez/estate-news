@@ -232,6 +232,19 @@ def _speak_line(line: str) -> str:
     return re.sub(r"[ \t]{2,}", " ", s).strip()
 
 
-def speakable(text: str) -> str:
-    """읽는 말에서 TTS 가 틀리게 읽기 쉬운 기호·단위만 말로 풀어 쓴다. 줄 수는 그대로."""
-    return "\n".join(_speak_line(line) for line in (text or "").split("\n"))
+def say_as(text: str, table: dict | None) -> str:
+    """글자대로 읽히면 틀리는 낱말을 소리 나는 대로 바꾼다 — 설정 `voice.say_as` (2026-09-18 사용자 요청).
+
+    「신고가」(新高價)는 [신고까]로 읽는데 TTS 는 「신고 가」로 읽는다. 채널마다 다르게 둔다 — 정치에서는
+    「신고가 접수됐다」(申告-가)처럼 글자대로 읽어야 하는 날이 있어서다. 음성에 보낼 글만 바꾸고 자막은 그대로다
+    (글자 수가 같아 motion-studio 의 맞추기에도 영향이 없다).
+    """
+    for written, spoken in (table or {}).items():
+        text = text.replace(str(written), str(spoken))
+    return text
+
+
+def speakable(text: str, table: dict | None = None) -> str:
+    """읽는 말에서 TTS 가 틀리게 읽기 쉬운 기호·단위만 말로 풀어 쓴다. 줄 수는 그대로.
+    table 을 주면 소리 나는 대로 바꿀 낱말(`say_as`)도 바꾼다."""
+    return say_as("\n".join(_speak_line(line) for line in (text or "").split("\n")), table)
