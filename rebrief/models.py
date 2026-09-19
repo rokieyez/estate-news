@@ -188,11 +188,12 @@ class BlogPost(BaseModel):
 
 
 class CaptionLine(BaseModel):
-    """쇼츠 자막 한 줄 = 화면에 한 번에 뜨는 단위."""
+    """쇼츠 자막 한 줄 = 화면에 한 번에 뜨는 단위. 화면(씬)은 여러 줄이 함께 쓴다 — visual 은 씬 첫 줄에만."""
 
     at: str = Field(description="시작 타임코드. 예: '00:03'")
     text: str = Field(description="자막 문구. 한 줄 18자 이내로 끊을 것")
-    visual: str = Field(description="이 구간에 깔 화면 지시. 예: '서울 아파트 단지 드론샷 + 하락률 자막 카드'. 그래픽 줄은 ' + 막대: 제목 / 이름 값, 이름 값 / 출처: 기관' 처럼 영상 도구가 읽는 모양을 뒤에 붙인다")
+    visual: str = Field(description="씬의 첫 줄에만 적는 화면 지시 — 같은 씬의 나머지 줄은 빈 문자열. 모션그래픽으로 그릴 것만(스톡·촬영·사진 금지). "
+                                    "숫자·비교 씬은 '막대: 제목 / 이름 값, 이름 값 / 출처: 기관 + 덧붙일 연출' 처럼 영상 도구가 읽는 모양으로 시작한다")
 
 
 class ShortsScript(BaseModel):

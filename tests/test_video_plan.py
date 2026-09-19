@@ -359,3 +359,47 @@ def test_unread_numbers_reach_the_alert():
     line = voice_mod.unread_line(result)
     assert "G20" in line and "say_as" in line
     assert voice_mod.unread_line(voice_mod.VoiceResult(ok=True)) == ""
+
+
+def test_cut_list_groups_caption_lines_into_scenes():
+    """컷 리스트는 씬 단위다 — 영상을 motion-studio 로만 만들어서 (2026-09-19 사용자 결정).
+
+    자막 한 줄(1~2초)마다 화면이 바뀌면 쓸 수 없다. 화면 지시는 씬의 첫 줄에만 있고, 모델이 옛 버릇대로
+    줄마다 지시를 적은 날에도 3.5초가 안 된 씬은 나누지 않는다. motion-studio 는 「씬」 열대로 씬을 나눈다.
+    """
+    from rebrief.models import CaptionLine, ShortsScript
+    from rebrief.render import caption_timings, shorts_cut_csv, shorts_scenes, spoken_caption_lines
+
+    def L(at, text, visual=""):
+        return CaptionLine(at=at, text=text, visual=visual)
+
+    rows = [L("00:00", "서울 아파트값이", "큰 숫자: 서울 아파트값 / 14.56% / 1년 상승률 / 출처: 한국부동산원"),
+            L("00:01", "1년 새 14.56%"), L("00:03", "올랐습니다"),
+            L("00:04", "그런데 계약 건수는", "물음 카드 '그런데 계약은?'"), L("00:06", "오히려 줄었습니다"),
+            L("00:08", "송파구는 104건으로", "송파구 글자 등장"),                       # 앞 씬이 4초 — 새 씬
+            L("00:10", "지난달보다 86건", "막대: 줄어든 계약 / 송파구 86, 영등포구 85 / 출처: 국토교통부"),   # 2초 만의 새 지시 — 안 나눈다
+            L("00:12", "영등포구는 75건으로"), L("00:14", "85건 줄었고요")]
+    shorts = ShortsScript.model_construct(title_candidates=[], hook="", lines=rows, hashtags=[], estimated_seconds=24,
+                                          cta="다음 브리핑에서 짚어드리겠습니다.")
+    lines = spoken_caption_lines(shorts)
+    scenes = shorts_scenes(lines, caption_timings(lines, 24))
+    assert [(s["first"], s["last"]) for s in scenes] == [(0, 2), (3, 4), (5, 8), (9, len(lines) - 1)]
+    assert scenes[2]["visual"].startswith("막대:")                      # 묶인 줄 가운데 도구가 읽는 모양이 씬의 지시
+    assert scenes[3]["visual"].startswith("마무리")                     # 마무리는 늘 제 씬
+
+    table = [r.split(",") for r in shorts_cut_csv(shorts).lstrip("\ufeff").strip().split("\r\n")]
+    assert table[0][:2] == ["씬", "컷"] and table[0][-2:] == ["자막", "화면 지시"] and "쓸 그림" not in table[0]
+    assert [r[0] for r in table[1:10]] == ["1", "1", "1", "2", "2", "3", "3", "3", "3"]
+    assert table[2][-1] == "" and table[3][-1] == ""                     # 지시는 씬 첫 줄에만
+    assert table[1][6] == "4.00" and table[2][6] == ""                   # 씬 길이도 첫 줄에만
+
+
+def test_shorts_prompt_plans_scenes_for_motion_graphics_only(cfg):
+    from rebrief.prompts import build_video_user
+
+    prompt = build_video_user(cfg)
+    assert "씬 단위" in prompt and "각 씬의 첫 줄에만" in prompt and "한 씬 5~9초" in prompt
+    assert "스톡 영상" in prompt and "쓰지 않으니" in prompt
+    example = next(line for line in prompt.splitlines() if line.strip().startswith("예:"))
+    assert "스톡" not in example
+

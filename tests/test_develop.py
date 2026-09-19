@@ -78,9 +78,10 @@ def test_srt_and_cut_list(tmp_path):
                           hashtags=["#x"], estimated_seconds=8)
     csv = shorts_cut_csv(shorts, ["img-1-stat-card.png"])
     rows = csv.lstrip("﻿").strip().split("\r\n")
-    assert rows[0].startswith("컷,시작(TC)")
-    assert "00:00:00:00" in rows[1] and "img-1-stat-card.png" in rows[1]   # 그래픽 컷에만 그림
-    assert rows[2].endswith(",")                                            # 드론샷 컷은 비움
+    assert rows[0] == "씬,컷,시작(TC),끝(TC),시작(초),길이(초),씬 길이(초),자막,화면 지시"
+    assert rows[1].startswith("1,1,00:00:00:00") and rows[1].endswith(",수치 카드")
+    assert rows[2].startswith("2,2,") and rows[2].endswith(",드론샷")        # 4초 지난 뒤의 새 지시라 새 씬
+    assert "img-1-stat-card.png" not in csv                                  # 블로그 첨부 그림은 적지 않는다 (2026-09-19)
 
     longform = LongformScript(
         title_candidates=["t"], thumbnail_texts=["x"], cold_open="여는 말",

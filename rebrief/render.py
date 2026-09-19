@@ -197,10 +197,8 @@ class Renderer:
                      int(video_cfg.get("caption_max_lines", 2)))
         if srt:
             paths.append(self._write_raw(srt_name, srt))
-        # 편집 프로그램에 그대로 넣는 컷 리스트. 그림은 이미 만들어져 있으므로 파일명을 짚어 준다.
-        pictures = [p.name for p in sorted(self.out_dir.glob("img-*.png"))] or \
-                   [p.name for p in sorted(self.out_dir.glob("img-*.svg"))]
-        cuts = shorts_cut_csv(shorts, pictures, int(video_cfg.get("cut_list_fps", 30)))
+        # motion-studio 에 그대로 넣는 컷 리스트 — 씬 단위 화면 지시 (블로그 첨부 그림은 적지 않는다, 2026-09-19)
+        cuts = shorts_cut_csv(shorts, fps=int(video_cfg.get("cut_list_fps", 30)))
         if cuts:
             paths.append(self._write_raw(cuts_name, cuts))
         return paths
@@ -1564,29 +1562,60 @@ def _csv(rows: list[list[str]]) -> str:
     return "\ufeff" + buffer.getvalue()
 
 
-_GRAPHIC_WORDS = ("자막", "카드", "그래픽", "차트", "표", "수치")
+# ── 컷 리스트는 씬 단위다 (2026-09-19 사용자 결정) ─────────────────────────────────
+# 영상은 motion-studio(모션그래픽)로만 만든다. 예전 CSV 는 자막 한 줄(1~2초)마다 화면 지시가 달랐고
+# (「항공 스톡」「진행자 클로즈업」), 「쓸 그림」에 블로그 첨부 그림을 돌려 가며 적어 그 도구로는 쓸 수 없었다.
+# 이제 자막 줄을 **씬(5~9초)** 으로 묶고, 화면 지시는 씬의 첫 줄에만 적는다. motion-studio 는 「씬」 열대로 씬을 나눈다
+# (scripts/cuesheet-lib.mjs groupByScenes). 자막 줄은 그대로 한 행씩 — 그 글이 음성 맞추기의 대본이라서다.
+_SHAPE = re.compile(r"(?:^|\+\s*)(?:큰 ?숫자|숫자|막대|추세|순위|비교|흐름|목록|체크|도넛|퍼센트|연표|지도|인용|제목|카드)"
+                    r"\s*(?:\([^)]*\))?\s*[:：]")
+SCENE_MIN_SECONDS = 3.5      # 이보다 짧은 씬에는 새 화면 지시가 와도 나누지 않는다 (모델이 줄마다 지시를 적은 날의 안전망)
+HOOK_MIN_SECONDS = 1.5       # 맨 앞 훅 씬은 짧아도 된다
+
+
+def shorts_scenes(lines: list[CaptionLine], timings: list[tuple[float, float]]) -> list[dict]:
+    """자막 줄을 씬으로 묶는다 → [{first, last, start, end, visual}] (first·last 는 줄 번호, 0부터).
+
+    화면 지시가 새로 적힌 줄에서 씬이 바뀐다. 같은 지시가 되풀이되거나 비어 있으면 같은 씬이다.
+    묶인 줄의 지시 가운데 motion-studio 가 읽는 모양(「막대: …」)이 있으면 그것을 씬의 지시로 삼는다.
+    """
+    scenes: list[dict] = []
+    for i, (line, (start, end)) in enumerate(zip(lines, timings)):
+        visual = " ".join((line.visual or "").split())
+        cur = scenes[-1] if scenes else None
+        if cur is not None:
+            floor = HOOK_MIN_SECONDS if len(scenes) == 1 else SCENE_MIN_SECONDS
+            closing = visual == _CTA_VISUAL and cur["visual"] != _CTA_VISUAL        # 마무리는 늘 제 씬
+            fresh = bool(visual) and visual != cur["visual"] and cur["end"] - cur["start"] >= floor
+            if not (closing or fresh):
+                cur["last"], cur["end"] = i, end
+                if visual and (not cur["visual"] or (_SHAPE.search(visual) and not _SHAPE.search(cur["visual"]))):
+                    cur["visual"] = visual
+                continue
+        scenes.append({"first": i, "last": i, "start": start, "end": end, "visual": visual})
+    return scenes
 
 
 def shorts_cut_csv(shorts, image_files: list[str] | None = None, fps: int = 30) -> str:
-    """쇼츠 편집용 컷 리스트. 컷마다 시각·자막·화면 지시·쓸 그림을 한 줄에 담는다."""
+    """쇼츠 컷 리스트 — 씬 번호·자막 줄·씬마다의 화면 지시. image_files 는 예전 부르는 쪽을 위해 받기만 한다."""
     lines = spoken_caption_lines(shorts)
     timings = caption_timings(lines, shorts.estimated_seconds)
     if not timings:
         return ""
-    pictures = list(image_files or [])
-    used = 0
-    rows = [["컷", "시작(TC)", "끝(TC)", "시작(초)", "길이(초)", "자막", "화면 지시", "쓸 그림"]]
-    for i, (line, (start, end)) in enumerate(zip(lines, timings), start=1):
-        picture = ""
-        if pictures and any(w in (line.visual or "") for w in _GRAPHIC_WORDS):
-            picture = pictures[used % len(pictures)]
-            used += 1
+    scene_of = {}
+    for n, scene in enumerate(shorts_scenes(lines, timings), start=1):
+        for i in range(scene["first"], scene["last"] + 1):
+            scene_of[i] = (n, scene)
+    rows = [["씬", "컷", "시작(TC)", "끝(TC)", "시작(초)", "길이(초)", "씬 길이(초)", "자막", "화면 지시"]]
+    for i, (line, (start, end)) in enumerate(zip(lines, timings)):
+        n, scene = scene_of[i]
+        head = i == scene["first"]
         rows.append([
-            str(i), _timecode(start, fps), _timecode(end, fps),
+            str(n), str(i + 1), _timecode(start, fps), _timecode(end, fps),
             f"{start:.2f}", f"{end - start:.2f}",
+            f"{scene['end'] - scene['start']:.2f}" if head else "",
             " ".join((line.text or "").split()),
-            " ".join((line.visual or "").split()),
-            picture,
+            scene["visual"] if head else "",
         ])
     return _csv(rows)
 
