@@ -238,7 +238,7 @@ def _speak_line(line: str) -> str:
 
 
 # ── 숫자를 한글로 (2026-09-19) ───────────────────────────────────────────────────
-# 기본은 한자어 수(구십칠억 삼천만원 · 영 점 구칠퍼센트 · 팔월 십팔일 · 팔십사주). 고유어로 읽는 단위 앞의
+# 기본은 한자어 수(구십칠억 삼천만원 · 영 쩜 구칠퍼센트 · 팔월 십팔일 · 팔십사주). 고유어로 읽는 단위 앞의
 # 작은 수만 고유어 수(세 곳 · 두 채 · 다섯 명 · 열두 시). 이름에 붙은 수(상계주공12 · 강남3구)도 한자어로
 # 읽히고, 그렇게 읽으면 틀리는 이름(코로나19 → 코로나 일구)은 설정 voice.say_as 에 적습니다 — say_as 가 먼저 돕니다.
 # 규칙이 못 알아본 것(3:1 · 1/3 · G20 · 1-2호선)은 그대로 두고 `unread_numbers` 가 알림에 올립니다.
@@ -292,14 +292,23 @@ def native(n: int) -> str:
     return _NATIVE_TENS[n // 10] + _NATIVE_ONES[n % 10]
 
 
+def _digits(frac: str) -> str:
+    """소수점 아래 한 자리씩. 「육」은 받침 없는 소리나 ㄹ 뒤에서 「륙」 (오륙 · 칠륙) — 2026-09-19 로키즈가 듣고 바로잡음."""
+    out = ""
+    for d in frac:
+        word = _SINO[int(d)]
+        out += "륙" if word == "육" and out and out[-1] in "이사오구일칠팔륙" else word
+    return out
+
+
 def _read_number(m: re.Match) -> str:
     whole, frac = m[1].replace(",", ""), m[2]
     if len(whole) > 16:
         return m[0]                                   # 경 단위 너머는 손대지 않는다 (unread_numbers 가 알린다)
     rest = m.string[m.end():]
     tail = rest.lstrip(" ")
-    if frac:                                          # 소수점 아래는 한 자리씩 — 0.97 → 영 점 구칠
-        return f"{sino(int(whole))} 점 {''.join(_SINO[int(d)] for d in frac)}"
+    if frac:                                          # 소수점은 「쩜」, 아래는 한 자리씩 — 0.97 → 영 쩜 구칠, 14.56 → 십사 쩜 오륙
+        return f"{sino(int(whole))} 쩜 {_digits(frac)}"
     if len(whole) > 1 and whole[0] == "0":            # 007 → 공공칠
         return "".join("공" if d == "0" else _SINO[int(d)] for d in whole)
     n = int(whole)
@@ -324,9 +333,14 @@ _PARTICLE = re.compile(r"(?<=[가-힣])(은|는|을|를|과|와|으로|로)(?![�
 _PAIRS = {"은": "는", "는": "은", "을": "를", "를": "을", "과": "와", "와": "과", "으로": "로", "로": "으로"}
 
 
+_PAUSE = re.compile(r"(\d\s?(?:년|개월|달|주|일|분기|시간|분)\s?(?:새|사이|만에))\s+(?=\d)")
+
+
 def _with_particle(m: re.Match) -> str:
     read = _read_number(m)
     rest = m.string[m.end():]
+    if read != m[0] and re.match(r" ?건(?!물|설)", rest):
+        return read + "\x01"                          # 수 뒤의 「건」은 [껀] — 아래 _spell_line 이 바꾼다
     hit = _PARTICLE.match("가" + rest, 1) if read and read != m[0] and read[-1] != " " else None
     if not hit:
         return read
@@ -338,7 +352,11 @@ def _with_particle(m: re.Match) -> str:
 
 
 def _spell_line(line: str) -> str:
-    out = _NUMTOK.sub(_with_particle, line)
+    # 「건」(件)은 된소리로 읽는다 — 구백사십껀 · 계약껀수 (2026-09-19 로키즈가 듣고 바로잡음). 「사건·조건」은 건드리지 않는다
+    # 「1년 새 14.56%」처럼 기간 뒤에 수가 바로 오면 두 수가 붙어 들린다 — 「새·사이·만에」 뒤에 쉼표로 쉬게 한다 (같은 날)
+    line = _PAUSE.sub(r"\1, ", line)
+    out = _NUMTOK.sub(_with_particle, line.replace("건수", "껀수"))
+    out = re.sub(r"\x01( ?)건", r"\1껀", out).replace("\x01", "")
     # 자리표(\x00조사\x00길이) 뒤에 남은 원래 조사를 걷어 낸다
     return re.sub(r"\x00([가-힣]+)\x00(\d)([가-힣]{1,2})", lambda m: m[1] + m[3][int(m[2]):], out)
 
