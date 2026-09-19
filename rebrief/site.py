@@ -531,7 +531,9 @@ def _build_day(env, day: Path, dest: Path, cfg: Config) -> dict:
                 age_days=_age_days(day.name),
                 body_html=md_to_html(text),
                 tts=said,                          # 대본이면 「자막만 복사」 버튼
-                tts_read=speakable(said, (cfg.get("voice", {}) or {}).get("say_as")),   # 그리고 기호·단위를 풀어 쓴 글 (+ 소리 나는 대로)
+                # 그리고 음성에 보내는 글 — 기호·단위를 풀고 숫자를 한글로 (+ 소리 나는 대로)
+                tts_read=speakable(said, (cfg.get("voice", {}) or {}).get("say_as"),
+                                   bool((cfg.get("voice", {}) or {}).get("spell_numbers", True))),
                 voice=_voice_card(cfg, day) if filename == "script-shorts.md" else None,
                 meta=meta_tags(
                     site_base(cfg),

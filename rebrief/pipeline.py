@@ -382,6 +382,8 @@ def _shorts_voice(cfg: Config, renderer: Renderer, result: "RunResult | None", p
             result.voice_file = made.file
     elif result is not None and voice.api_key():
         result.warnings.append(line)          # 열쇠를 아직 안 넣은 날까지 날마다 경고를 띄우지는 않는다
+    if made.ok and not made.reused and made.unread and result is not None:
+        result.warnings.append(voice.unread_line(made))      # 못 푼 숫자는 그대로 읽혔다 — 발음 표에 적게 알린다
     return made
 
 

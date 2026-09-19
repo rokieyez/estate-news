@@ -580,7 +580,7 @@ def test_tts_text_follows_the_script_templates(cfg, tmp_path):
 
 
 def test_speakable_spells_out_symbols_tts_trips_on():
-    """TTS 가 건너뛰거나 틀리게 읽는 기호·단위만 풀어 쓰고, 숫자와 줄 수는 그대로 둔다."""
+    """TTS 가 건너뛰거나 틀리게 읽는 기호·단위를 풀어 쓴다 — 줄 수는 그대로. 숫자 풀기를 끄면(numbers=False) 숫자는 그대로."""
     from rebrief.tts import speakable
 
     cases = {
@@ -593,7 +593,7 @@ def test_speakable_spells_out_symbols_tts_trips_on():
         "KTX-이음 1-2호선 3곳": "KTX-이음 1-2호선 3곳",              # 하이픈 이름·숫자는 그대로
     }
     for src, want in cases.items():
-        assert speakable(src) == want, src
+        assert speakable(src, numbers=False) == want, src
     assert speakable("가·나\n\n다") == "가, 나\n\n다"               # 줄 수는 그대로
 
 
@@ -615,7 +615,7 @@ def test_site_script_pages_have_a_tts_copy_button(cfg, monkeypatch, tmp_path):
     longform = (day / "script-longform.html").read_text(encoding="utf-8")
     assert 'id="tts-copy"' in shorts and 'id="tts-copy"' in longform
     # 기호를 풀어 쓴 두 번째 버튼 — 쇼츠에 '-0.03%' 가 있어 생긴다
-    assert 'data-target="tts-read"' in shorts and "마이너스 0.03퍼센트" in shorts
+    assert 'data-target="tts-read"' in shorts and "마이너스 영 점 영삼퍼센트" in shorts
     assert "국토부가 전세사기 피해자 지원을 확대한다고 밝혔습니다." in longform
     assert "&lt;script&gt;x&lt;/script&gt;" in shorts and "<script>x</script>" not in shorts
     for other in ("brief.html", "sources.html"):

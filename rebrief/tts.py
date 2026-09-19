@@ -183,10 +183,11 @@ def narration(filename: str, md: str) -> str:
 
 # ── TTS 가 틀리게 읽기 쉬운 기호·단위를 풀어 쓴 글 (2026-09-13, 마무리 아이디어 3) ─────────
 #
-# 숫자 자체는 그대로 둡니다. 요즘 TTS 는 「3곳」을 「세 곳」, 「84.8」을 「팔십사 점 팔」로 문맥에
-# 맞춰 읽는데, 우리가 한글로 바꿔 넣으면 「삼 곳」 같은 틀린 읽기를 우리가 만들게 됩니다.
 # 틀리기 쉬운 것은 **기호**입니다 — ㎡ 를 건너뛰거나 「m2」로, %p 를 「퍼센트 피」로, 1~14일 의 ~ 를
-# 소리 없이, → 를 읽지 않거나 「화살표」로. 그것만 말로 풀어 씁니다.
+# 소리 없이, → 를 읽지 않거나 「화살표」로. 그것을 말로 풀어 씁니다.
+# **숫자도 한글로 풉니다 (2026-09-19 사용자 요청 — 일레븐랩스가 숫자를 엉망으로 읽었다).** 처음엔 TTS 가 문맥에
+# 맞춰 읽으리라 보고 그대로 뒀는데(9/13), 한국어 숫자는 일레븐랩스가 고쳐 읽어 주지 않습니다(그 옵션은 일본어뿐).
+# 규칙은 아래 「숫자를 한글로」 절 — 기본은 한자어 수, 「곳·채·명·살·시…」 앞의 작은 수만 고유어 수.
 # **줄은 늘리거나 줄이지 않습니다** — motion-studio 가 줄과 쉼으로 음성에 자막을 맞춥니다.
 # 자막(SRT)과 글자가 달라지므로 motion-studio 에 **대본으로 넣을 글은 「자막만 복사」** 쪽입니다.
 
@@ -211,6 +212,10 @@ _UNITS = (
     (re.compile(r"㎡|(?<=\d)\s?m²|(?<=\d)\s?m2(?![0-9A-Za-z])"), "제곱미터"),
     (re.compile(r"㎢"), "제곱킬로미터"),
     (re.compile(r"㎞|(?<=\d)\s?km(?![A-Za-z])"), "킬로미터"),
+    (re.compile(r"㎏|(?<=\d)\s?kg(?![A-Za-z])"), "킬로그램"),
+    (re.compile(r"㎝|(?<=\d)\s?cm(?![A-Za-z])"), "센티미터"),
+    (re.compile(r"㎜|(?<=\d)\s?mm(?![A-Za-z])"), "밀리미터"),
+    (re.compile(r"(?<=\d)\s?m(?![A-Za-z0-9²])"), "미터"),
     (re.compile(r"(?<![A-Za-z])vs\.?(?![A-Za-z])", re.I), "대"),
 )
 
@@ -232,19 +237,141 @@ def _speak_line(line: str) -> str:
     return re.sub(r"[ \t]{2,}", " ", s).strip()
 
 
+# ── 숫자를 한글로 (2026-09-19) ───────────────────────────────────────────────────
+# 기본은 한자어 수(구십칠억 삼천만원 · 영 점 구칠퍼센트 · 팔월 십팔일 · 팔십사주). 고유어로 읽는 단위 앞의
+# 작은 수만 고유어 수(세 곳 · 두 채 · 다섯 명 · 열두 시). 이름에 붙은 수(상계주공12 · 강남3구)도 한자어로
+# 읽히고, 그렇게 읽으면 틀리는 이름(코로나19 → 코로나 일구)은 설정 voice.say_as 에 적습니다 — say_as 가 먼저 돕니다.
+# 규칙이 못 알아본 것(3:1 · 1/3 · G20 · 1-2호선)은 그대로 두고 `unread_numbers` 가 알림에 올립니다.
+# motion-studio 의 scripts/tts-lib.mjs 에 같은 규칙이 있습니다 — 한쪽을 고치면 다른 쪽도.
+
+_SINO = "영일이삼사오육칠팔구"
+_NATIVE_ONES = ("", "한", "두", "세", "네", "다섯", "여섯", "일곱", "여덟", "아홉")
+_NATIVE_TENS = ("", "열", "스물", "서른", "마흔", "쉰", "예순", "일흔", "여든", "아흔")
+# 고유어 수로 읽는 단위 → 몇까지 고유어로 읽나 (그보다 크면 한자어 — 「구십삼 명」)
+_NATIVE_UNITS = {
+    "번째": 99, "시간": 20, "차례": 20, "가지": 20, "군데": 20, "마리": 20, "사람": 20, "필지": 20, "그루": 20,
+    "바퀴": 20, "마디": 20, "방울": 20,
+    "곳": 20, "채": 20, "명": 20, "개": 20, "건": 20, "표": 20, "석": 20, "달": 20, "줄": 20, "쌍": 20,
+    "잔": 20, "끼": 20, "칸": 20, "살": 99, "시": 12, "배": 10, "번": 10,
+}
+# 고유어 단위로 시작하지만 다른 낱말인 것 — 한자어 수로 읽는다 (5개월 · 3달러 · 1번지)
+_NOT_NATIVE = ("개월", "개년", "개국", "개소", "개사", "달러", "번지", "번호", "번길", "배럴", "배수", "배당",
+               "표준", "표본", "석유", "채권", "채널", "시장", "시즌", "시리즈", "시군", "시도", "시민", "시점",
+               "건물", "건설", "명의로", "명절")
+_UNIT_KEYS = sorted(list(_NATIVE_UNITS) + list(_NOT_NATIVE), key=len, reverse=True)
+_NUMTOK = re.compile(r"(?<![\dA-Za-z.,:/\-])(\d{1,3}(?:,\d{3})+|\d+)(?:\.(\d+))?(?![\dA-Za-z:/]|,\d|-\d|\.\d)")
+_UNREAD = re.compile(r"[A-Za-z]*\d[\dA-Za-z.,:/\-]*")
+
+
+def _sino_chunk(n: int) -> str:
+    """1~9999 → 「삼천이백오십」. 천·백·십 앞의 1 은 읽지 않는다."""
+    out = ""
+    for power, name in ((1000, "천"), (100, "백"), (10, "십"), (1, "")):
+        digit = n // power % 10
+        if digit:
+            out += ("" if digit == 1 and name else _SINO[digit]) + name
+    return out
+
+
+def sino(n: int) -> str:
+    """한자어 수 — 12345 → 「만 이천삼백사십오」, 100000000 → 「일억」."""
+    if n == 0:
+        return "영"
+    groups = []
+    for power, name in ((12, "조"), (8, "억"), (4, "만"), (0, "")):
+        chunk = n // 10 ** power % 10000
+        if chunk:
+            groups.append(("" if chunk == 1 and name == "만" else _sino_chunk(chunk)) + name)
+    return " ".join(groups)
+
+
+def native(n: int) -> str:
+    """고유어 수 (꾸밈꼴) — 3 → 「세」, 12 → 「열두」, 20 → 「스무」. 1~99 만."""
+    if n == 20:
+        return "스무"
+    return _NATIVE_TENS[n // 10] + _NATIVE_ONES[n % 10]
+
+
+def _read_number(m: re.Match) -> str:
+    whole, frac = m[1].replace(",", ""), m[2]
+    if len(whole) > 16:
+        return m[0]                                   # 경 단위 너머는 손대지 않는다 (unread_numbers 가 알린다)
+    rest = m.string[m.end():]
+    tail = rest.lstrip(" ")
+    if frac:                                          # 소수점 아래는 한 자리씩 — 0.97 → 영 점 구칠
+        return f"{sino(int(whole))} 점 {''.join(_SINO[int(d)] for d in frac)}"
+    if len(whole) > 1 and whole[0] == "0":            # 007 → 공공칠
+        return "".join("공" if d == "0" else _SINO[int(d)] for d in whole)
+    n = int(whole)
+    if tail.startswith("세대") and len(whole) == 4 and whole[1] == "0" and whole[3] == "0" and whole[2] != "0":
+        return "".join("공" if d == "0" else _SINO[int(d)] for d in whole)      # 2030세대 → 이공삼공세대
+    if tail.startswith("월") and n in (6, 10):
+        return "유" if n == 6 else "시"                # 유월 · 시월
+    if n == 1 and tail[:1] in ("만", "천", "백"):
+        return ""                                     # 1만 → 만, 1천만원 → 천만원 (1억은 「일억」)
+    unit = next((u for u in _UNIT_KEYS if tail.startswith(u)), "")
+    if unit in _NATIVE_UNITS and 1 <= n <= _NATIVE_UNITS[unit]:
+        before = m.string[:m.start()].rstrip()
+        if not (unit == "번" and before.endswith(("기호", "제"))):              # 기호 2번은 「이번」
+            word = "첫" if unit == "번째" and n == 1 else native(n)
+            return word + ("" if rest.startswith(" ") else " ")
+    return sino(n)
+
+
+# 수 바로 뒤의 조사는 우리가 읽은 소리의 받침에 맞춘다 — 「동성3는」을 「동성삼는」으로 두면 말이 걸린다.
+# 「이·가」는 맞추지 않는다 (「을지로3가」의 「가」는 조사가 아니다).
+_PARTICLE = re.compile(r"(?<=[가-힣])(은|는|을|를|과|와|으로|로)(?![가-힣])")
+_PAIRS = {"은": "는", "는": "은", "을": "를", "를": "을", "과": "와", "와": "과", "으로": "로", "로": "으로"}
+
+
+def _with_particle(m: re.Match) -> str:
+    read = _read_number(m)
+    rest = m.string[m.end():]
+    hit = _PARTICLE.match("가" + rest, 1) if read and read != m[0] and read[-1] != " " else None
+    if not hit:
+        return read
+    jong = (ord(read[-1]) - 0xAC00) % 28              # 0 = 받침 없음, 8 = ㄹ
+    particle = hit[1]
+    closed = jong != 0 and not (particle in ("으로", "로") and jong == 8)      # 「일로·칠로·팔로」
+    want = particle if (particle in ("은", "을", "과", "으로")) == closed else _PAIRS[particle]
+    return read + "\x00" + want + "\x00" + str(len(particle))
+
+
+def _spell_line(line: str) -> str:
+    out = _NUMTOK.sub(_with_particle, line)
+    # 자리표(\x00조사\x00길이) 뒤에 남은 원래 조사를 걷어 낸다
+    return re.sub(r"\x00([가-힣]+)\x00(\d)([가-힣]{1,2})", lambda m: m[1] + m[3][int(m[2]):], out)
+
+
+def spell_numbers(text: str) -> str:
+    """글 속의 숫자를 한글로 — 줄 수는 그대로. 규칙이 못 알아본 것은 그대로 남는다."""
+    return "\n".join(_spell_line(line) for line in (text or "").split("\n"))
+
+
+def unread_numbers(text: str) -> list[str]:
+    """풀어 쓴 뒤에도 남은 숫자 — 알림에 올려 사람이 voice.say_as 에 읽는 법을 적게 한다."""
+    found: list[str] = []
+    for token in _UNREAD.findall(text or ""):
+        token = token.rstrip(".,:/-")
+        if token and token not in found:
+            found.append(token)
+    return found
+
+
 def say_as(text: str, table: dict | None) -> str:
     """글자대로 읽히면 틀리는 낱말을 소리 나는 대로 바꾼다 — 설정 `voice.say_as` (2026-09-18 사용자 요청).
 
     「신고가」(新高價)는 [신고까]로 읽는데 TTS 는 「신고 가」로 읽는다. 채널마다 다르게 둔다 — 정치에서는
-    「신고가 접수됐다」(申告-가)처럼 글자대로 읽어야 하는 날이 있어서다. 음성에 보낼 글만 바꾸고 자막은 그대로다
-    (글자 수가 같아 motion-studio 의 맞추기에도 영향이 없다).
+    「신고가 접수됐다」(申告-가)처럼 글자대로 읽어야 하는 날이 있어서다. 음성에 보낼 글만 바꾸고 자막은 그대로다.
+    숫자가 든 이름의 읽는 법(「코로나19」→「코로나 일구」)도 여기 적는다 — 그래서 숫자 풀기보다 먼저 돈다.
     """
     for written, spoken in (table or {}).items():
         text = text.replace(str(written), str(spoken))
     return text
 
 
-def speakable(text: str, table: dict | None = None) -> str:
-    """읽는 말에서 TTS 가 틀리게 읽기 쉬운 기호·단위만 말로 풀어 쓴다. 줄 수는 그대로.
-    table 을 주면 소리 나는 대로 바꿀 낱말(`say_as`)도 바꾼다."""
-    return say_as("\n".join(_speak_line(line) for line in (text or "").split("\n")), table)
+def speakable(text: str, table: dict | None = None, numbers: bool = True) -> str:
+    """읽는 말에서 TTS 가 틀리게 읽기 쉬운 기호·단위를 말로 풀고 숫자를 한글로 쓴다. 줄 수는 그대로.
+    table 을 주면 소리 나는 대로 바꿀 낱말(`say_as`)을 먼저 바꾼다. numbers=False 면 숫자는 그대로 둔다."""
+    spoken = "\n".join(_speak_line(line) for line in say_as(text or "", table).split("\n"))
+    return spell_numbers(spoken) if numbers else spoken

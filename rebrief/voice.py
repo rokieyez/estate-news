@@ -27,7 +27,7 @@ from datetime import datetime
 from pathlib import Path
 
 from .config import Config
-from .tts import say_as, shorts_text, speakable
+from .tts import say_as, shorts_text, speakable, unread_numbers
 
 log = logging.getLogger(__name__)
 
@@ -57,6 +57,7 @@ class VoiceResult:
     reused: bool = False           # 같은 글·같은 목소리라 다시 부르지 않았다
     remaining: int | None = None   # 이번 달 남은 글자 수 (모르면 None)
     note: str = ""                 # 건너뛰었거나 실패한 까닭
+    unread: tuple[str, ...] = ()   # 한글로 못 푼 숫자 — 알림에 올려 voice.say_as 에 읽는 법을 적게 한다
 
 
 def _post(url: str, **kw):
@@ -117,14 +118,16 @@ def save_choice(cfg: Config, voice_id: str, name: str = "") -> Path:
     return path
 
 
-def spoken_text(out_dir: Path, spell_out: bool = True, table: dict | None = None) -> str:
-    """그날 쇼츠 대본에서 읽는 말만. 기호·단위(㎡·%p·~·→)는 말로 풀어 읽히고,
-    table(설정 voice.say_as)의 낱말은 소리 나는 대로 바꾼다 (「신고가」→「신고까」)."""
+def spoken_text(out_dir: Path, spell_out: bool = True, table: dict | None = None,
+                numbers: bool = True) -> str:
+    """그날 쇼츠 대본에서 읽는 말만. 기호·단위(㎡·%p·~·→)는 말로 풀고 숫자는 한글로 써서 읽히고
+    (「97억 3000만원」→「구십칠억 삼천만원」, 2026-09-19), table(설정 voice.say_as)의 낱말은 소리 나는 대로
+    바꾼다 (「신고가」→「신고까」). 자막·SRT 는 숫자 그대로다."""
     path = out_dir / SCRIPT
     if not path.exists():
         return ""
     text = shorts_text(path.read_text(encoding="utf-8"))
-    return speakable(text, table) if spell_out else say_as(text, table)
+    return speakable(text, table, numbers) if spell_out else say_as(text, table)
 
 
 def _fingerprint(text: str, voice_id: str, model: str, speed: float) -> str:
@@ -190,7 +193,11 @@ def make_shorts_voice(cfg: Config, out_dir: Path, filename: str, *, pick: str = 
     if not key:
         result.note = f"일레븐랩스 열쇠({KEY_ENV})가 없어 음성을 건너뛰었습니다"
         return result
-    text = spoken_text(out_dir, bool(opts.get("spell_out", True)), opts.get("say_as") or None)
+    spell = bool(opts.get("spell_out", True))
+    numbers = bool(opts.get("spell_numbers", True))
+    text = spoken_text(out_dir, spell, opts.get("say_as") or None, numbers)
+    if spell and numbers:
+        result.unread = tuple(unread_numbers(text))
     if not text:
         result.note = "쇼츠 대본에서 읽을 말을 찾지 못했습니다"
         return result
@@ -243,7 +250,7 @@ def make_shorts_voice(cfg: Config, out_dir: Path, filename: str, *, pick: str = 
     result.remaining = remaining_chars(key)
     (out_dir / SIDECAR).write_text(json.dumps({
         "file": filename, "voice_id": voice_id, "voice_name": name, "model": model, "speed": speed,
-        "chars": len(text), "mark": mark, "bytes": len(r.content),
+        "chars": len(text), "mark": mark, "bytes": len(r.content), "unread": list(result.unread),
         "made_at": datetime.now().isoformat(timespec="seconds"),
     }, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     log.info("쇼츠 음성 %s (%s · %d자)", filename, name, len(text))
@@ -258,3 +265,12 @@ def summary_line(result: VoiceResult) -> str:
     if result.reused:
         return f"쇼츠 음성은 같은 글·같은 목소리라 그대로 뒀습니다 ({result.file})"
     return f"쇼츠 음성을 만들었습니다 — {result.voice_name} · {result.chars:,}자{left}"
+
+
+def unread_line(result: VoiceResult) -> str:
+    """한글로 못 푼 숫자가 있으면 알림에 올릴 한 줄 — 없으면 빈 글."""
+    if not result.unread:
+        return ""
+    shown = " · ".join(result.unread[:5]) + (" …" if len(result.unread) > 5 else "")
+    return (f"🔢 음성에서 한글로 못 푼 숫자: {shown} — 읽는 법을 config/settings.yaml 의 voice.say_as 에 "
+            "한 줄 적으면 다음부터 그렇게 읽습니다 (예: 「G20: 지 이십」)")

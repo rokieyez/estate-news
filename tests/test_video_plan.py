@@ -155,7 +155,7 @@ def test_daily_run_reads_the_shorts_script_into_an_mp3(cfg, monkeypatch, eleven)
     assert sent["url"].endswith("/v1/text-to-speech/" + cfg.get("voice.voice_id"))
     assert sent["headers"]["xi-api-key"] == KEY
     text = sent["json"]["text"]
-    assert "3주째 하락" in text and "낙폭은 오히려 줄었습니다" in text
+    assert "삼주째 하락" in text and "낙폭은 오히려 줄었습니다" in text
     assert "자막 카드" not in text and "항공샷" not in text           # 화면 지시는 읽히지 않는다
     assert "%" not in text and "퍼센트" in text                        # 기호는 말로 풀어 읽힌다
 
@@ -309,8 +309,51 @@ def test_voice_reads_listed_words_as_they_sound(tmp_path):
     table = {"신고가": "신고까"}
     assert say_as("노원은 신고가였고 신고가 거래가", table) == "노원은 신고까였고 신고까 거래가"
     assert say_as("신고가", None) == "신고가"                      # 표가 없으면(정치) 그대로
-    assert speakable("41.3㎡ 신고가", table) == "41.3제곱미터 신고까"
+    assert speakable("41.3㎡ 신고가", table) == "사십일 점 삼제곱미터 신고까"
     (tmp_path / voice_mod.SCRIPT).write_text("## 자막\n\n| 1 | `00:00` | 상계주공12 신고가 | 화면 |\n", encoding="utf-8")
     assert "신고까" in voice_mod.spoken_text(tmp_path, True, table)
     assert "신고까" in voice_mod.spoken_text(tmp_path, False, table)
     assert "신고가" in voice_mod.spoken_text(tmp_path, True)
+
+
+def test_voice_text_spells_numbers_in_korean(tmp_path):
+    """일레븐랩스는 한국어 숫자를 엉망으로 읽는다 — 음성에 보낼 글만 한글로 풀고 자막은 숫자 그대로 (2026-09-19 사용자 요청).
+    기본은 한자어 수, 고유어로 읽는 단위 앞의 작은 수만 고유어 수. 최근 두 채널 대본에 실제로 나온 모양들이다."""
+    from rebrief.tts import speakable, unread_numbers
+
+    table = {"코로나19": "코로나 일구"}
+    cases = {
+        "신현대11차가 97억 3000만원에 거래됐습니다.": "신현대십일차가 구십칠억 삼천만원에 거래됐습니다.",
+        "3억 4천만원 올라 8억 2천만원에": "삼억 사천만원 올라 팔억 이천만원에",
+        "매매가는 0.97% 올랐고 5.8억, 21.9%": "매매가는 영 점 구칠퍼센트 올랐고 오 점 팔억, 이십일 점 구퍼센트",
+        "8월 1~18일 계약분은 1,223건→797건": "팔월 일일에서 십팔일 계약분은 천이백이십삼건에서 칠백구십칠건",
+        "84주 연속, 5개월 만에, 12분 만에 2019년": "팔십사주 연속, 오개월 만에, 십이분 만에 이천십구년",
+        "강남3구 3곳 중 2채, 5명과 93명": "강남삼구 세 곳 중 두 채, 다섯 명과 구십삼명",      # 작은 수 + 고유어 단위만 고유어 수
+        "6월 10일, 10월 3일 2시 30분, 24시간": "유월 십일, 시월 삼일 두 시 삼십분, 이십사시간",
+        "35살 1번째 기호 2번 3번 2배 1.5배": "서른다섯 살 첫 번째 기호 이번 세 번 두 배 일 점 오배",
+        "1만 2000명 1천만원 1억원 3달러 0건": "만 이천명 천만원 일억원 삼달러 영건",
+        "22대 국회 제1야당 1·2심 1인 가구 2030세대": "이십이대 국회 제일야당 일, 이심 일인 가구 이공삼공세대",
+        "동성3는 6억, 창신쌍용2는 3으로 8로 을지로3가": "동성삼은 육억, 창신쌍용이는 삼으로 팔로 을지로삼가",   # 수 뒤 조사는 읽은 소리의 받침에
+        "코로나19 신약": "코로나 일구 신약",                                                  # 읽는 법이 다른 이름은 발음 표가 먼저
+    }
+    for src, want in cases.items():
+        assert speakable(src, table) == want, src
+    assert speakable("1줄\n\n2줄") == "한 줄\n\n두 줄"                                   # 줄 수는 그대로
+    # 규칙이 못 알아본 것은 그대로 남기고 알림에 올린다
+    left = speakable("KTX-이음 1-2호선 3:1 G20 -0.03%")
+    assert left == "KTX-이음 1-2호선 3:1 G20 마이너스 영 점 영삼퍼센트"
+    assert unread_numbers(left) == ["1-2", "3:1", "G20"]
+    assert unread_numbers(speakable("97억 3000만원")) == []
+
+    from rebrief import voice as voice_mod
+    (tmp_path / voice_mod.SCRIPT).write_text("## 자막\n\n| 1 | `00:00` | 상계주공12 41.3㎡가 5.8억 | 화면 |\n", encoding="utf-8")
+    assert not any(ch.isdigit() for ch in voice_mod.spoken_text(tmp_path, True))
+    assert any(ch.isdigit() for ch in voice_mod.spoken_text(tmp_path, True, None, False))   # voice.spell_numbers: false
+
+
+def test_unread_numbers_reach_the_alert():
+    from rebrief import voice as voice_mod
+    result = voice_mod.VoiceResult(ok=True, unread=("G20", "3:1"))
+    line = voice_mod.unread_line(result)
+    assert "G20" in line and "say_as" in line
+    assert voice_mod.unread_line(voice_mod.VoiceResult(ok=True)) == ""

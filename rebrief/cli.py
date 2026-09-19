@@ -370,6 +370,8 @@ def _cmd_voice(cfg, args) -> int:
     pick = (args.voice_id or args.voice or "").strip()
     made = _shorts_voice(cfg, Renderer(cfg, out_dir, date_str), None, pick=pick, force=args.force)
     print(voice.summary_line(made))
+    if made.ok and made.unread:
+        print(voice.unread_line(made))
     if not made.ok:
         return 1
     if args.keep:
