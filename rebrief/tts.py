@@ -238,7 +238,7 @@ def _speak_line(line: str) -> str:
 
 
 # ── 숫자를 한글로 (2026-09-19) ───────────────────────────────────────────────────
-# 기본은 한자어 수(구십칠억 삼천만원 · 영 쩜 구칠퍼센트 · 팔월 십팔일 · 팔십사주). 고유어로 읽는 단위 앞의
+# 기본은 한자어 수(구십칠억 삼천만원 · 영쩜구칠퍼센트 · 팔월 십팔일 · 팔십사주). 고유어로 읽는 단위 앞의
 # 작은 수만 고유어 수(세 곳 · 두 채 · 다섯 명 · 열두 시). 이름에 붙은 수(상계주공12 · 강남3구)도 한자어로
 # 읽히고, 그렇게 읽으면 틀리는 이름(코로나19 → 코로나 일구)은 설정 voice.say_as 에 적습니다 — say_as 가 먼저 돕니다.
 # 규칙이 못 알아본 것(3:1 · 1/3 · G20 · 1-2호선)은 그대로 두고 `unread_numbers` 가 알림에 올립니다.
@@ -307,8 +307,8 @@ def _read_number(m: re.Match) -> str:
         return m[0]                                   # 경 단위 너머는 손대지 않는다 (unread_numbers 가 알린다)
     rest = m.string[m.end():]
     tail = rest.lstrip(" ")
-    if frac:                                          # 소수점은 「쩜」, 아래는 한 자리씩 — 0.97 → 영 쩜 구칠, 14.56 → 십사 쩜 오륙
-        return f"{sino(int(whole))} 쩜 {_digits(frac)}"
+    if frac:                                          # 소수점은 「쩜」, 아래는 한 자리씩 — 0.97 → 영쩜구칠, 14.56 → 십사쩜오륙
+        return f"{sino(int(whole)).replace(' ', '')}쩜{_digits(frac)}"      # 붙여 쓴다 — 띄우면 소수점 앞뒤로 뜸을 들인다
     if len(whole) > 1 and whole[0] == "0":            # 007 → 공공칠
         return "".join("공" if d == "0" else _SINO[int(d)] for d in whole)
     n = int(whole)

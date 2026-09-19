@@ -615,7 +615,7 @@ def test_site_script_pages_have_a_tts_copy_button(cfg, monkeypatch, tmp_path):
     longform = (day / "script-longform.html").read_text(encoding="utf-8")
     assert 'id="tts-copy"' in shorts and 'id="tts-copy"' in longform
     # 기호를 풀어 쓴 두 번째 버튼 — 쇼츠에 '-0.03%' 가 있어 생긴다
-    assert 'data-target="tts-read"' in shorts and "마이너스 영 쩜 영삼퍼센트" in shorts
+    assert 'data-target="tts-read"' in shorts and "마이너스 영쩜영삼퍼센트" in shorts
     assert "국토부가 전세사기 피해자 지원을 확대한다고 밝혔습니다." in longform
     assert "&lt;script&gt;x&lt;/script&gt;" in shorts and "<script>x</script>" not in shorts
     for other in ("brief.html", "sources.html"):
