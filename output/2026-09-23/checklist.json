@@ -1,0 +1,96 @@
+{
+  "date": "2026-09-23",
+  "summary": {
+    "ok": 10,
+    "warn": 2,
+    "fail": 0
+  },
+  "items": [
+    {
+      "key": "numbers",
+      "level": "warn",
+      "title": "수치 1건이 기사 원문에서 확인되지 않음",
+      "detail": "아래 '원문' 링크를 눌러 기사에서 직접 찾아보세요. 기사에 없는 값이면 글에서 빼는 게 안전합니다. [오늘의 정리 열기](brief.html)",
+      "lines": [
+        "전문가 50명, 서울 전월세 상승 전망 · 서울 전월세 동반 상승 전망 응답률 **100%** — [원문](https://www.mk.co.kr/news/realestate/12159810)"
+      ]
+    },
+    {
+      "key": "links",
+      "level": "ok",
+      "title": "출처 링크 28개 모두 정상",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "banned",
+      "level": "ok",
+      "title": "금지 표현 없음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "blog_len",
+      "level": "ok",
+      "title": "블로그 본문 1,321자",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "tags",
+      "level": "ok",
+      "title": "태그 30개",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "keyword",
+      "level": "ok",
+      "title": "대표 검색어 '서울 아파트 전월세 전망' 가 제목·첫 문단·소제목에 모두 있음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "overlap",
+      "level": "ok",
+      "title": "지난 글과 겹치는 문장 0%",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shape",
+      "level": "ok",
+      "title": "소제목 4개 · 메인 하나에 집중",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "readability",
+      "level": "ok",
+      "title": "문장·문단 길이 적당",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "photos",
+      "level": "warn",
+      "title": "직접 넣을 사진 자리 1곳",
+      "detail": "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)",
+      "lines": []
+    },
+    {
+      "key": "shorts_len",
+      "level": "ok",
+      "title": "쇼츠 발화 276자 (약 50초)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shorts_voice",
+      "level": "ok",
+      "title": "쇼츠 자막이 문장으로 이어집니다 (40%)",
+      "detail": "",
+      "lines": []
+    }
+  ]
+}
