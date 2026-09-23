@@ -1,0 +1,123 @@
+{
+  "date": "2026-09-24",
+  "summary": {
+    "ok": 10,
+    "warn": 5,
+    "fail": 0
+  },
+  "items": [
+    {
+      "key": "numbers",
+      "level": "ok",
+      "title": "수치 9건 모두 기사 원문에서 확인",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "links",
+      "level": "warn",
+      "title": "출처 링크 1개가 열리지 않음",
+      "detail": "'기사 원문' 페이지의 ⚠️ 표시를 보고 링크를 바꾸거나 빼세요. [기사 원문 열기](sources.html)",
+      "lines": [
+        "https://www.mk.co.kr/news/realestate/12159986"
+      ]
+    },
+    {
+      "key": "banned",
+      "level": "ok",
+      "title": "금지 표현 없음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "blog_len",
+      "level": "ok",
+      "title": "블로그 본문 1,350자",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "tags",
+      "level": "ok",
+      "title": "태그 30개",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "keyword",
+      "level": "ok",
+      "title": "대표 검색어 '서울 아파트 신고가' 가 제목·첫 문단·소제목에 모두 있음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "overlap",
+      "level": "ok",
+      "title": "지난 글과 겹치는 문장 0%",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shape",
+      "level": "ok",
+      "title": "소제목 4개 · 메인 하나에 집중",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "readability",
+      "level": "ok",
+      "title": "문장·문단 길이 적당",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "photos",
+      "level": "warn",
+      "title": "직접 넣을 사진 자리 1곳",
+      "detail": "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)",
+      "lines": []
+    },
+    {
+      "key": "shorts_len",
+      "level": "ok",
+      "title": "쇼츠 발화 320자 (약 58초)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shorts_voice",
+      "level": "ok",
+      "title": "쇼츠 자막이 문장으로 이어집니다 (35%)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "repeat",
+      "level": "warn",
+      "title": "'서울 곳곳 아파트 신고가' 은 7일 전에도 다뤘습니다",
+      "detail": "그대로 또 쓰면 재탕으로 보입니다. 그때와 달라진 숫자를 앞세우거나 후속 국면을 잡으세요.",
+      "lines": [
+        "2026-09-17 · 서울 곳곳 아파트 신고가"
+      ]
+    },
+    {
+      "key": "repeat",
+      "level": "warn",
+      "title": "'홍지선 국토부 장관 취임' 은 1일 전에도 다뤘습니다",
+      "detail": "그대로 또 쓰면 재탕으로 보입니다. 그때와 달라진 숫자를 앞세우거나 후속 국면을 잡으세요.",
+      "lines": [
+        "2026-09-23 · 홍지선 국토장관 취임, 3기 신도시 방문"
+      ]
+    },
+    {
+      "key": "repeat",
+      "level": "warn",
+      "title": "'홍지선 장관 3기 신도시 강조' 은 1일 전에도 다뤘습니다",
+      "detail": "그대로 또 쓰면 재탕으로 보입니다. 그때와 달라진 숫자를 앞세우거나 후속 국면을 잡으세요.",
+      "lines": [
+        "2026-09-23 · 홍지선 국토장관 취임, 3기 신도시 방문"
+      ]
+    }
+  ]
+}
