@@ -1,0 +1,151 @@
+{
+  "date": "2026-09-25",
+  "headline": "서울 집값 85주 연속 상승, 최장기록 동률",
+  "market_temperature": "서울 아파트값이 85주 연속 상승해 문정부 시절 최장 기록과 동률을 이뤘고 누적 상승률은 17.5%(더트래커 기준)로, 금리 3%대와 대출 규제에도 상승 압력이 식지 않는 뜨거운 국면이다.",
+  "issues": [
+    {
+      "title": "서울 집값 85주 연속 상승",
+      "category": "가격동향",
+      "one_liner": "서울 아파트값 85주째 상승, 문정부 최장기록과 동률",
+      "numbers": [
+        {
+          "label": "서울 아파트값 연속 상승 주수",
+          "value": "85",
+          "unit": "주",
+          "period": "2026-09-24 기준",
+          "context": "문정부 역대 최장 기록과 동률",
+          "source": "재경일보 등"
+        },
+        {
+          "label": "서울 아파트값 연속 상승 주수(다른 집계)",
+          "value": "88",
+          "unit": "주",
+          "period": "",
+          "context": "85주 집계와 차이, 기준 상이",
+          "source": "edaily.co.kr"
+        }
+      ]
+    },
+    {
+      "title": "매매가 85주 상승, 최장기록 타이",
+      "category": "가격동향",
+      "one_liner": "서울 아파트 매매가 85주째 상승, 2020년 기록과 동률",
+      "numbers": [
+        {
+          "label": "서울 아파트 매매가격 연속 상승 주수",
+          "value": "85",
+          "unit": "주",
+          "period": "",
+          "context": "2020년 역대 최장기록과 동률",
+          "source": "v.daum.net"
+        }
+      ]
+    },
+    {
+      "title": "외곽 생존매수 확산",
+      "category": "전월세·임대",
+      "one_liner": "전세 대신 매수 택하는 외곽 수요, 85주 상승 견인",
+      "numbers": []
+    },
+    {
+      "title": "강남 하락, 강북 상승",
+      "category": "지역이슈",
+      "one_liner": "강남3구 하락에도 강북 상승세로 전체 85주 유지",
+      "numbers": []
+    },
+    {
+      "title": "누적 상승률 17.5%",
+      "category": "대출·금리",
+      "one_liner": "금리 3%·대출규제에도 누적 상승률 17.5%, 문정부 2배",
+      "numbers": [
+        {
+          "label": "기준금리(추정)",
+          "value": "3",
+          "unit": "%",
+          "period": "",
+          "context": "",
+          "source": "더트래커"
+        },
+        {
+          "label": "서울 집값 누적 상승률",
+          "value": "17.5",
+          "unit": "%",
+          "period": "",
+          "context": "85주 상승 기간 누적",
+          "source": "더트래커"
+        },
+        {
+          "label": "문정부 대비 누적 상승률 배수",
+          "value": "2",
+          "unit": "배",
+          "period": "",
+          "context": "",
+          "source": "뉴시스"
+        }
+      ]
+    }
+  ],
+  "tomorrow_watch": [],
+  "datapoints": [
+    {
+      "label": "서울 아파트값 연속 상승 주수",
+      "value": "85",
+      "unit": "주",
+      "period": "2026-09-24 기준",
+      "context": "문정부 역대 최장 기록과 동률",
+      "source": "재경일보 등",
+      "issue": "서울 집값 85주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 아파트값 연속 상승 주수(다른 집계)",
+      "value": "88",
+      "unit": "주",
+      "period": "",
+      "context": "85주 집계와 차이, 기준 상이",
+      "source": "edaily.co.kr",
+      "issue": "서울 집값 85주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 아파트 매매가격 연속 상승 주수",
+      "value": "85",
+      "unit": "주",
+      "period": "",
+      "context": "2020년 역대 최장기록과 동률",
+      "source": "v.daum.net",
+      "issue": "매매가 85주 상승, 최장기록 타이",
+      "category": "가격동향"
+    },
+    {
+      "label": "기준금리(추정)",
+      "value": "3",
+      "unit": "%",
+      "period": "",
+      "context": "",
+      "source": "더트래커",
+      "issue": "누적 상승률 17.5%",
+      "category": "대출·금리"
+    },
+    {
+      "label": "서울 집값 누적 상승률",
+      "value": "17.5",
+      "unit": "%",
+      "period": "",
+      "context": "85주 상승 기간 누적",
+      "source": "더트래커",
+      "issue": "누적 상승률 17.5%",
+      "category": "대출·금리"
+    },
+    {
+      "label": "문정부 대비 누적 상승률 배수",
+      "value": "2",
+      "unit": "배",
+      "period": "",
+      "context": "",
+      "source": "뉴시스",
+      "issue": "누적 상승률 17.5%",
+      "category": "대출·금리"
+    }
+  ]
+}
