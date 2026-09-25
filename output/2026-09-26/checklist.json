@@ -1,0 +1,98 @@
+{
+  "date": "2026-09-26",
+  "summary": {
+    "ok": 9,
+    "warn": 3,
+    "fail": 0
+  },
+  "items": [
+    {
+      "key": "numbers",
+      "level": "warn",
+      "title": "수치 1건이 기사 원문에서 확인되지 않음",
+      "detail": "아래 '원문' 링크를 눌러 기사에서 직접 찾아보세요. 기사에 없는 값이면 글에서 빼는 게 안전합니다. [오늘의 정리 열기](brief.html)",
+      "lines": [
+        "오피스텔 거래 증가 · 상반기 전국 오피스텔 매매 거래량 **18035건** — [원문](https://news.google.com/rss/articles/CBMiT0FVX3lxTE1ob1ZsaVB4VlM3Qnp1NTdGc3FudWxrWnZRTmtWVGVtYndnUGZkX1hjQXEtS3pFZVVqNWdrYkgwNXhvcEtVRU5mbGtLblA2TEk?oc=5)"
+      ]
+    },
+    {
+      "key": "links",
+      "level": "ok",
+      "title": "출처 링크 14개 모두 정상",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "banned",
+      "level": "ok",
+      "title": "금지 표현 없음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "blog_len",
+      "level": "ok",
+      "title": "블로그 본문 1,343자",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "tags",
+      "level": "ok",
+      "title": "태그 30개",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "keyword",
+      "level": "ok",
+      "title": "대표 검색어 '오피스텔 매매 거래량' 가 제목·첫 문단·소제목에 모두 있음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "overlap",
+      "level": "ok",
+      "title": "지난 글과 겹치는 문장 0%",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shape",
+      "level": "ok",
+      "title": "소제목 4개 · 메인 하나에 집중",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "readability",
+      "level": "warn",
+      "title": "긴 문장 1개 — 휴대폰에서 답답해 보입니다",
+      "detail": "문장은 둘로 나누고, 문단은 두세 문장에서 끊으세요.",
+      "lines": [
+        "추석 이후 전국 8곳에서 오피스텔 5666실 분양이 예정돼 있고, 총 1855가구 규모의 청라 아크원 푸르지…"
+      ]
+    },
+    {
+      "key": "photos",
+      "level": "warn",
+      "title": "직접 넣을 사진 자리 1곳",
+      "detail": "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)",
+      "lines": []
+    },
+    {
+      "key": "shorts_len",
+      "level": "ok",
+      "title": "쇼츠 발화 266자 (약 48초)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shorts_voice",
+      "level": "ok",
+      "title": "쇼츠 자막이 문장으로 이어집니다 (40%)",
+      "detail": "",
+      "lines": []
+    }
+  ]
+}
