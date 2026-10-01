@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-10-01T01:02:01",
-  "count": 28,
+  "updated_at": "2026-10-01T06:37:50",
+  "count": 29,
   "entries": [
     {
       "date": "2026-09-07",
@@ -1180,6 +1180,29 @@
           "output_tokens": 7311,
           "cache_read_tokens": 0,
           "cache_write_tokens": 9933,
+          "usd": 0.0
+        }
+      ]
+    },
+    {
+      "date": "2026-09-01",
+      "kind": "monthly",
+      "run_at": "2026-10-01T06:37:50",
+      "model": "claude-opus-5",
+      "calls": 1,
+      "input_tokens": 2,
+      "output_tokens": 6935,
+      "cache_read_tokens": 0,
+      "cache_write_tokens": 28541,
+      "usd": 0.0,
+      "by_call": [
+        {
+          "kind": "월간 결산",
+          "model": "claude-opus-5",
+          "input_tokens": 2,
+          "output_tokens": 6935,
+          "cache_read_tokens": 0,
+          "cache_write_tokens": 28541,
           "usd": 0.0
         }
       ]
