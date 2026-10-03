@@ -1,6 +1,6 @@
 {
-  "updated_at": "2026-10-02T22:03:10",
-  "count": 305,
+  "updated_at": "2026-10-03T21:50:30",
+  "count": 310,
   "rows": [
     {
       "date": "2026-09-06",
@@ -2746,6 +2746,51 @@
       "period": "2026-10-01 등록",
       "source": "매일경제·부동산",
       "issue": "서울 외곽 아파트 신고가 속출"
+    },
+    {
+      "date": "2026-10-04",
+      "label": "기준금리",
+      "value": "3",
+      "unit": "%",
+      "period": "",
+      "source": "newsyonhap.com",
+      "issue": "금리·집값 엇박자"
+    },
+    {
+      "date": "2026-10-04",
+      "label": "다음 주 청약 접수 가구 수",
+      "value": "185",
+      "unit": "가구",
+      "period": "10월 둘째 주",
+      "source": "CBC뉴스 외",
+      "issue": "가을 분양시장 숨고르기"
+    },
+    {
+      "date": "2026-10-04",
+      "label": "다음 주 청약 접수 단지 수",
+      "value": "2",
+      "unit": "곳",
+      "period": "10월 둘째 주",
+      "source": "CBC뉴스 외",
+      "issue": "가을 분양시장 숨고르기"
+    },
+    {
+      "date": "2026-10-04",
+      "label": "서울 집값 변동률",
+      "value": "1.05",
+      "unit": "%",
+      "period": "",
+      "source": "newsyonhap.com",
+      "issue": "금리·집값 엇박자"
+    },
+    {
+      "date": "2026-10-04",
+      "label": "주택담보대출 금리",
+      "value": "4.66",
+      "unit": "%",
+      "period": "",
+      "source": "newsyonhap.com",
+      "issue": "금리·집값 엇박자"
     }
   ]
 }

@@ -1,0 +1,136 @@
+{
+  "date": "2026-10-04",
+  "headline": "서울 집값 상승세 속 매수심리는 엇갈려",
+  "market_temperature": "서울 집값은 1.05% 상승, 수도권도 병점·동탄·군포 중심으로 오름세가 이어졌으나 매수심리는 식고 강남권 관망세가 짙어지는 등 상승 지표와 심리 지표가 엇갈리는 모습이다.",
+  "issues": [
+    {
+      "title": "가을 분양시장 숨고르기",
+      "category": "청약·분양",
+      "one_liner": "추석 연휴 영향으로 다음 주 전국 2곳 185가구만 청약 접수",
+      "numbers": [
+        {
+          "label": "다음 주 청약 접수 단지 수",
+          "value": "2",
+          "unit": "곳",
+          "period": "10월 둘째 주",
+          "context": "추석 연휴 여파로 물량 감소",
+          "source": "CBC뉴스 외"
+        },
+        {
+          "label": "다음 주 청약 접수 가구 수",
+          "value": "185",
+          "unit": "가구",
+          "period": "10월 둘째 주",
+          "context": "",
+          "source": "CBC뉴스 외"
+        }
+      ]
+    },
+    {
+      "title": "비강남 집값 확산",
+      "category": "가격동향",
+      "one_liner": "전월세난이 촉발한 집값 상승이 비강남 지역으로 번지는 양상",
+      "numbers": []
+    },
+    {
+      "title": "금리·집값 엇박자",
+      "category": "대출·금리",
+      "one_liner": "기준금리 3%·주담대 4.66%에도 서울 집값은 1.05% 상승",
+      "numbers": [
+        {
+          "label": "기준금리",
+          "value": "3",
+          "unit": "%",
+          "period": "",
+          "context": "",
+          "source": "newsyonhap.com"
+        },
+        {
+          "label": "주택담보대출 금리",
+          "value": "4.66",
+          "unit": "%",
+          "period": "",
+          "context": "",
+          "source": "newsyonhap.com"
+        },
+        {
+          "label": "서울 집값 변동률",
+          "value": "1.05",
+          "unit": "%",
+          "period": "",
+          "context": "고금리 환경에서도 상승",
+          "source": "newsyonhap.com"
+        }
+      ]
+    },
+    {
+      "title": "서울 매수심리 냉각",
+      "category": "시장심리",
+      "one_liner": "집값은 오르는데 매수심리는 식고 강남권 관망세 짙어져",
+      "numbers": []
+    },
+    {
+      "title": "병점·동탄·군포 상승 주도",
+      "category": "가격동향",
+      "one_liner": "수도권 아파트값 상승 지속, 경기 병점·동탄·군포가 주도",
+      "numbers": []
+    }
+  ],
+  "tomorrow_watch": [
+    "10월 둘째 주 전국 2곳·185가구 청약 접수 진행 여부",
+    "비강남 지역 집값 확산 흐름이 이어지는지 추가 보도 확인",
+    "서울 매수심리(강남권 관망세) 변화 추이"
+  ],
+  "datapoints": [
+    {
+      "label": "다음 주 청약 접수 단지 수",
+      "value": "2",
+      "unit": "곳",
+      "period": "10월 둘째 주",
+      "context": "추석 연휴 여파로 물량 감소",
+      "source": "CBC뉴스 외",
+      "issue": "가을 분양시장 숨고르기",
+      "category": "청약·분양"
+    },
+    {
+      "label": "다음 주 청약 접수 가구 수",
+      "value": "185",
+      "unit": "가구",
+      "period": "10월 둘째 주",
+      "context": "",
+      "source": "CBC뉴스 외",
+      "issue": "가을 분양시장 숨고르기",
+      "category": "청약·분양"
+    },
+    {
+      "label": "기준금리",
+      "value": "3",
+      "unit": "%",
+      "period": "",
+      "context": "",
+      "source": "newsyonhap.com",
+      "issue": "금리·집값 엇박자",
+      "category": "대출·금리"
+    },
+    {
+      "label": "주택담보대출 금리",
+      "value": "4.66",
+      "unit": "%",
+      "period": "",
+      "context": "",
+      "source": "newsyonhap.com",
+      "issue": "금리·집값 엇박자",
+      "category": "대출·금리"
+    },
+    {
+      "label": "서울 집값 변동률",
+      "value": "1.05",
+      "unit": "%",
+      "period": "",
+      "context": "고금리 환경에서도 상승",
+      "source": "newsyonhap.com",
+      "issue": "금리·집값 엇박자",
+      "category": "대출·금리"
+    }
+  ]
+}
