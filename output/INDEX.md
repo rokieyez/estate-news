@@ -1,6 +1,6 @@
 # 산출물 목록
 
-마지막 갱신 2026-10-03 21:52 · 총 29일치
+마지막 갱신 2026-10-04 02:46 · 총 29일치
 
 | 날짜 | 브리핑 | 블로그 | 네이버 | 쇼츠 | 롱폼 | 제작메모 | 데이터 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -38,6 +38,7 @@
 
 | 주차 | 결산 | 네이버 | 데이터 |
 | --- | --- | --- | --- |
+| **2026-W40** | [결산](weekly/2026-W40/weekly.md) | [HTML](weekly/2026-W40/weekly-naver.html) | [JSON](weekly/2026-W40/data.json) |
 | **2026-W39** | [결산](weekly/2026-W39/weekly.md) | [HTML](weekly/2026-W39/weekly-naver.html) | [JSON](weekly/2026-W39/data.json) |
 | **2026-W38** | [결산](weekly/2026-W38/weekly.md) | [HTML](weekly/2026-W38/weekly-naver.html) | [JSON](weekly/2026-W38/data.json) |
 | **2026-W37** | [결산](weekly/2026-W37/weekly.md) | [HTML](weekly/2026-W37/weekly-naver.html) | [JSON](weekly/2026-W37/data.json) |
@@ -55,7 +56,7 @@
 | 기간 | 실행일 | 비용 |
 | --- | --- | --- |
 | 최근 7일 | 7일 | $0.000 (약 0원) |
-| 최근 30일 | 27일 | $2.120 (약 2,969원) |
+| 최근 30일 | 28일 | $2.120 (약 2,969원) |
 
 <details><summary>날짜별</summary>
 
