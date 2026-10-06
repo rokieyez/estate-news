@@ -1,0 +1,67 @@
+{
+  "date": "2026-10-06",
+  "collected_at": "2026-10-06T01:56:55+00:00",
+  "feeds": [
+    {
+      "id": "gnews_realestate",
+      "ok": true,
+      "count": 100,
+      "error": null
+    },
+    {
+      "id": "gnews_apt_price",
+      "ok": true,
+      "count": 36,
+      "error": null
+    },
+    {
+      "id": "gnews_jeonse",
+      "ok": true,
+      "count": 31,
+      "error": null
+    },
+    {
+      "id": "gnews_policy",
+      "ok": true,
+      "count": 25,
+      "error": null
+    },
+    {
+      "id": "gnews_supply",
+      "ok": true,
+      "count": 40,
+      "error": null
+    },
+    {
+      "id": "gnews_chungyak",
+      "ok": true,
+      "count": 11,
+      "error": null
+    },
+    {
+      "id": "gnews_loan",
+      "ok": true,
+      "count": 4,
+      "error": null
+    },
+    {
+      "id": "hankyung_realestate",
+      "ok": true,
+      "count": 50,
+      "error": null
+    },
+    {
+      "id": "mk_realestate",
+      "ok": true,
+      "count": 50,
+      "error": null
+    },
+    {
+      "id": "chosunbiz_realestate",
+      "ok": true,
+      "count": 9,
+      "error": null
+    }
+  ],
+  "articles": 247
+}

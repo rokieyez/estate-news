@@ -1,0 +1,121 @@
+{
+  "date": "2026-10-06",
+  "summary": {
+    "ok": 10,
+    "warn": 5,
+    "fail": 0
+  },
+  "items": [
+    {
+      "key": "numbers",
+      "level": "ok",
+      "title": "수치 8건 모두 기사 원문에서 확인",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "links",
+      "level": "ok",
+      "title": "출처 링크 43개 모두 정상",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "banned",
+      "level": "ok",
+      "title": "금지 표현 없음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "blog_len",
+      "level": "ok",
+      "title": "블로그 본문 1,413자",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "tags",
+      "level": "ok",
+      "title": "태그 30개",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "keyword",
+      "level": "ok",
+      "title": "대표 검색어 '노도강 재산세' 가 제목·첫 문단·소제목에 모두 있음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "overlap",
+      "level": "ok",
+      "title": "지난 글과 겹치는 문장 0%",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shape",
+      "level": "ok",
+      "title": "소제목 4개 · 메인 하나에 집중",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "readability",
+      "level": "warn",
+      "title": "긴 문장 1개 — 휴대폰에서 답답해 보입니다",
+      "detail": "문장은 둘로 나누고, 문단은 두세 문장에서 끊으세요.",
+      "lines": [
+        "서울 집값이 계속 오른다면 2030년 재산세(집을 보유하고 있을 때 매년 내는 지방세)가 지금보다 크게 뛸 …"
+      ]
+    },
+    {
+      "key": "photos",
+      "level": "warn",
+      "title": "직접 넣을 사진 자리 2곳",
+      "detail": "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)",
+      "lines": []
+    },
+    {
+      "key": "shorts_len",
+      "level": "ok",
+      "title": "쇼츠 발화 346자 (약 63초)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shorts_voice",
+      "level": "ok",
+      "title": "쇼츠 자막이 문장으로 이어집니다 (42%)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "repeat",
+      "level": "warn",
+      "title": "'서울 집값 상승시 재산세 급등 전망' 은 1일 전에도 다뤘습니다",
+      "detail": "그대로 또 쓰면 재탕으로 보입니다. 그때와 달라진 숫자를 앞세우거나 후속 국면을 잡으세요.",
+      "lines": [
+        "2026-10-05 · 노도강 재산세 급등 전망"
+      ]
+    },
+    {
+      "key": "repeat",
+      "level": "warn",
+      "title": "'서울 주요단지 재산세 54% 증가 전망' 은 1일 전에도 다뤘습니다",
+      "detail": "그대로 또 쓰면 재탕으로 보입니다. 그때와 달라진 숫자를 앞세우거나 후속 국면을 잡으세요.",
+      "lines": [
+        "2026-10-05 · 서울 주요단지 재산세 상승 전망"
+      ]
+    },
+    {
+      "key": "warn",
+      "level": "warn",
+      "title": "강서구 거래가 390건 → 0건으로 떨어졌습니다. 실제 급감일 수도 있지만 응답이 비어 왔을 가능성을 먼저 확인하세요.",
+      "detail": "",
+      "lines": []
+    }
+  ]
+}
