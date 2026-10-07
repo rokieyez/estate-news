@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>서울 아파트값 86주 상승, 10월 7일 국토부 국감 쟁점 정리</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
+  body {
+    margin: 0; padding: 0 16px 80px;
+    color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.8; font-size: 16px;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    margin: 0 -16px 20px; padding: 12px 16px;
+    background: #03c75a; color: #fff;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .bar strong { margin-right: auto; font-size: 15px; }
+  .bar button {
+    border: 0; border-radius: 6px; padding: 8px 14px;
+    background: rgba(255,255,255,.18); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .bar button:hover { background: rgba(255,255,255,.3); }
+  .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
+  .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
+  #post p { margin: 0 0 18px; }
+  #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
+  #post li { margin-bottom: 8px; }
+  #post table { border-collapse: collapse; width: 100%; margin: 0 0 20px; font-size: 15px; }
+  #post th, #post td { border: 1px solid #ddd; padding: 9px 12px; text-align: left; }
+  #post th { background: #f2f4f6; font-weight: 700; }
+  #post blockquote {
+    margin: 0 0 18px; padding: 12px 16px;
+    background: #f7f8fa; border-left: 4px solid #03c75a; color: #444;
+  }
+  #post a { color: #0068c3; }
+  .imgslot {
+    margin: 0 0 20px; padding: 22px 16px; text-align: center;
+    border: 2px dashed #c9cdd2; border-radius: 8px;
+    background: #fafbfc; color: #6b7178; font-size: 14px;
+  }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .photo-links { margin: -12px 0 20px; font-size: 13px; color: #6b7178; text-align: center; }
+  .photo-links a { color: #0068c3; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
+  .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
+  .hint {
+    max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    font-size: 14px; line-height: 1.75; color: #5f4b16;
+  }
+  .hint ol { margin: 8px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>네이버 블로그 붙여넣기</strong>
+  <button type="button" data-copy="title">제목 복사</button>
+  <button type="button" data-copy="post">본문 복사</button>
+  <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="https://blog.naver.com/rikiwiki/postwrite" target="_blank" rel="noopener">글쓰기 열기</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1 class="title" id="title">서울 아파트값 86주 상승, 10월 7일 국토부 국감 쟁점 정리</h1>
+    <div class="meta">2026-10-07 · 부동산</div>
+
+    <div id="post">
+<div class="imgslot has-file">📷 대표 이미지 — 검색 목록에 이 그림이 썸네일로 뜹니다<br><small>→ 파일 <b>img-0-cover.png</b> 을 <b>글 맨 위</b>에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-0-cover.png" alt="대표 이미지"><p style="margin:0 0 14px;font-size:14px;color:#767676">이 글은 2026년 10월 7일 기준으로 정리한 내용입니다. 실거래 수치는 2026년 8월 신고분입니다.</p><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px"><b style="font-size:15px">3줄 요약</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">서울 아파트값이 86주 연속 올라 최장 기록을 새로 썼습니다</li><li style="margin-bottom:6px">9월 28일 기준 주간 0.09% 상승, 다만 상승폭은 5주째 축소</li><li style="margin-bottom:6px">오늘 국토부 국정감사에서 공급 대책 실행 속도가 검증됩니다</li></ul></div><p>서울 아파트값 86주 상승 기록이 나왔습니다. 한국부동산원 집계로 9월 28일 기준 전주보다 <span class="hl" style="background-color:#fff59d"><strong>0.09%</strong></span> 올라, 종전 최장 기록인 85주를 넘어섰습니다.</p>
+<p>다만 상승폭은 5주 연속 줄었습니다. 오늘 10월 7일 열리는 국토교통부 국정감사(국회가 정부 기관의 업무를 따져 묻는 절차)는 이 숫자에서 출발합니다.</p>
+<div class="imgslot has-file">📷 이미지 — 서울 아파트 매매가격 주간 변동률 0.09%를 보여주는 그래프<br><small>→ 파일 <b>img-1-time-series.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-1-time-series.png" alt="서울 아파트 매매가격 주간 변동률 0.09%를 보여주는 그래프">
+<h2>서울 아파트값 86주 상승, 숫자는 이렇습니다</h2>
+<p>한국부동산원 자료에 담긴 핵심 수치만 추렸습니다.</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>수치</th>
+<th>기준</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>주간 매매가격 변동률</td>
+<td>0.09%</td>
+<td>9월 28일(9월 넷째 주)</td>
+</tr>
+<tr>
+<td>연속 상승 기간</td>
+<td>86주</td>
+<td>종전 최장 85주 초과</td>
+</tr>
+<tr>
+<td>서울 평균 전셋값</td>
+<td>6억 3,663만원</td>
+<td>8월</td>
+</tr>
+</tbody>
+</table>
+<p>눈여겨볼 부분은 두 가지가 동시에 나타난다는 점입니다. 기간으로는 역대 가장 긴 상승이지만, 주마다 오르는 폭은 다섯 주째 작아지고 있습니다.</p>
+<p>그래서 이 수치 하나로 방향을 단정하기는 어렵습니다. 상승 지속과 둔화라는 두 측면을 함께 놓고 보셔야 합니다.</p>
+<hr><h2>국감에서 공급 대책이 도마에 오르는 이유</h2>
+<p>이번 국정감사 대상 기관은 국토교통부, 행정중심복합도시건설청, 새만금개발청입니다.</p>
+<p>정부는 지난해 9·7 대책에 이어 올해 1·29 대책, 8·13 대책을 내놓으며 주택 공급 확대를 추진해 왔습니다. 이재명 대통령은 10월 5일 엑스(X)에 신임 국토부 장관과 LH공사에 "국가 명운을 걸고 조기 대량 공급에 매진하도록 지시했다"고 밝혔습니다.</p>
+<p>쟁점은 발표가 실제 착공과 입주로 이어지는 속도입니다. LH의 부채·재무부담과 조직 개편, 용산공원 부지 활용을 둘러싼 정부와 서울시의 이견(서울시는 탄천물재생센터 부지 등을 대안으로 제시)도 함께 거론됐습니다.</p>
+<div class="imgslot">📷 이미지 — 국회 국정감사가 열리는 회의장 전경</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/korea-national-assembly-hearing" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/korea%20national%20assembly%20hearing/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/korea%20national%20assembly%20hearing/" target="_blank" rel="noopener">픽사베이</a></div>
+<hr><h2>서울 아파트값 86주 상승, 전셋값은 어떤가</h2>
+<p>매매와 함께 전세도 봐야 합니다. 8월 서울 아파트 평균 전셋값은 6억 3,663만원으로 집계됐습니다(전국주택가격동향조사 기준).</p>
+<p>매매가 오르는 동안 전셋값도 함께 움직이면 실수요자의 선택지가 좁아집니다. 서울 아파트값 86주 상승이 국감의 출발점이 된 이유도 여기에 있습니다.</p>
+<div class="imgslot has-file">📷 이미지 — 8월 서울 아파트 평균 전셋값 6억3663만원을 보여주는 그래프<br><small>→ 파일 <b>img-3-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-3-stat-card.png" alt="8월 서울 아파트 평균 전셋값 6억3663만원을 보여주는 그래프">
+<hr><h2>그 밖의 오늘 소식</h2>
+<ul>
+<li>강남구, 신탁부동산 체납 재산세 <span class="hl" style="background-color:#fff59d"><strong>14억</strong></span>1,900만원 전액 징수</li>
+<li>올해 부산 아파트 1순위 청약경쟁률 <span class="hl" style="background-color:#fff59d"><strong>0.6</strong></span>대 1</li>
+<li>울산·광주·전남 아파트값 오름세 보도</li>
+</ul><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:26px 0 0"><b style="font-size:15px">그래서 나는?</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">무주택 실수요자라면, 상승폭 둔화 흐름이 이어지는지부터 확인해 보세요</li><li style="margin-bottom:6px">전세 계약을 앞뒀다면, 서울 평균 전셋값 추이를 함께 살펴볼 시점입니다</li><li style="margin-bottom:6px">지방 분양을 고민 중이라면, 해당 지역 청약 경쟁률부터 점검해 보세요</li></ul></div><div style="margin:28px 0 0;padding:16px 18px"><b>직접 센 숫자 — 2026년 8월 아파트 실거래</b><p style="margin:10px 0 0">서울 8개 구에서 신고된 매매는 <b>1506건</b>입니다. 2026년 7월 2255건과 견주면 -749건입니다.</p><p style="margin:8px 0 0;font-size:15px;color:#555555">거래가 많은 곳: 강남구 89건(-76) · 노원구 524건(-212) · 강서구 260건(-130)</p><p style="margin:10px 0 0;font-size:15px;color:#555555">강남구 전세가율(전세 보증금 ÷ 매매가)은 가운뎃값 <b>37.9%</b>입니다. 같은 단지·같은 면적 28곳을 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">서울 25개 구 가운데 거래가 가장 크게 움직인 곳: 중랑구 -61.3%(499→193건, 2026년 7월엔 묵동에 66.3% 몰렸음) · 동작구 -49.2%(238→121건)</p><p style="margin:12px 0 4px"><b>2026년 9월 계약 신고가</b></p><ul style="margin:0;padding-left:18px;font-size:15px"><li>마포구 힐스테이트마포더퍼스트 84.07㎡ — 22.9억 (이전 최고 16.9억, +35.8%, 9월 5일 계약)</li><li>노원구 시영3차(라이프)아파트 49.5㎡ — 6.5억 (이전 최고 5.4억, +20.2%, 9월 10일 계약)</li></ul><img class="preview nocopy" src="img-stats-volume.png" alt="지역별 거래 건수" style="max-width:100%;margin-top:12px"><p style="margin:6px 0 0;font-size:13px;color:#888888">→ 그림 파일 <b>img-stats-volume.png</b> 을 이 자리에 올리세요</p><p style="margin:12px 0 0;font-size:13px;color:#888888">국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다.</p></div><p style="padding:14px 16px;margin:28px 0 0"><b>여러분이 보고 계신 지역은 지금 오름세와 둔화 가운데 어느 쪽에 더 가까운가요?</b><br><span style="font-size:14px;color:#666666">댓글로 알려 주시면 다음 글에 반영하겠습니다.</span></p>
+      <p class="tags" id="tags">#부동산 #아파트 #서울아파트값 #서울아파트 #서울부동산 #아파트값 #한국부동산원 #주간아파트가격동향 #국토교통부 #국토부국정감사 #국정감사 #주택공급대책 #공급대책 #LH #용산공원 #전셋값 #서울전세 #전세시세 #청약 #청약경쟁률 #부산아파트 #부산청약 #충북청약 #울산아파트 #광주아파트 #전남아파트 #강남구 #재산세 #신탁부동산 #부돌보브리핑</p>
+    </div>
+  </div>
+
+  <div class="hint">
+    <strong>쓰는 법</strong>
+    <ol>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다.
+        네이버는 <b>지금 로그인된 계정</b>의 블로그를 엽니다 — 다른 블로그가 열리면
+        <a href="https://nid.naver.com/nidlogin.logout?returl=https%3A%2F%2Fblog.naver.com%2Frikiwiki%2Fpostwrite" target="_blank" rel="noopener">계정 바꿔 열기</a>를 누르고
+<b>rikiwiki</b> 계정으로 다시 로그인하세요. 바로 글쓰기로 갑니다.</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
+      <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
+      <li><span style="background-color:#fff59d">형광펜</span>은 오늘의 핵심 수치가 <b>처음 나온 자리</b>에만 칠합니다.
+        같은 수치가 다시 나와도 표시하지 않습니다 — 강조가 많으면 아무것도 강조가 아니니까요.
+        붙여넣으면 그대로 따라가고, 마음에 안 들면 에디터에서 지우세요.</li>
+      <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
+      <li><b>올린 뒤</b> 깃허브 → Actions → <b>발행 기록</b> 에 글 주소를 적고, 하루 이틀 뒤 같은 곳에
+        <b>조회수</b>를 적어 주세요 (date 칸에 <b>2026-10-07</b>). 이 두 숫자가 쌓여야 어떤 제목과 주제가
+        사람을 데려오는지 알 수 있습니다 — 안 적으면 아무것도 재지 못합니다.</li>
+    </ol>
+    이 안내문은 복사에 포함되지 않습니다.
+  </div>
+</div>
+
+<script>
+// 버튼이 지정한 영역만 클립보드에 담는다. 안내문과 상단 바는 복사되지 않는다.
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var node = document.getElementById(btn.dataset.copy);
+    if (!node) return;
+
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
+
+    // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
+    // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
+    var range = document.createRange();
+    range.selectNodeContents(copyNode);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    clone.remove();
+
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
+        alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
+      });
+      return;
+    }
+    flash();
+
+    function flash() {
+      var original = btn.textContent;
+      btn.textContent = "복사됨 ✓";
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1400);
+    }
+  });
+});
+</script>
+</body>
+</html>
