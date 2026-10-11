@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>이번 주 부동산: 서울 87주 연속 상승, 강남은 5주 하락</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
+  body {
+    margin: 0; padding: 0 16px 80px;
+    color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.8; font-size: 16px;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    margin: 0 -16px 20px; padding: 12px 16px;
+    background: #03c75a; color: #fff;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .bar strong { margin-right: auto; font-size: 15px; }
+  .bar button {
+    border: 0; border-radius: 6px; padding: 8px 14px;
+    background: rgba(255,255,255,.18); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .bar button:hover { background: rgba(255,255,255,.3); }
+  .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
+  .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
+  #post p { margin: 0 0 18px; }
+  #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
+  #post li { margin-bottom: 8px; }
+  #post table { border-collapse: collapse; width: 100%; margin: 0 0 20px; font-size: 15px; }
+  #post th, #post td { border: 1px solid #ddd; padding: 9px 12px; text-align: left; }
+  #post th { background: #f2f4f6; font-weight: 700; }
+  #post blockquote {
+    margin: 0 0 18px; padding: 12px 16px;
+    background: #f7f8fa; border-left: 4px solid #03c75a; color: #444;
+  }
+  #post a { color: #0068c3; }
+  .imgslot {
+    margin: 0 0 20px; padding: 22px 16px; text-align: center;
+    border: 2px dashed #c9cdd2; border-radius: 8px;
+    background: #fafbfc; color: #6b7178; font-size: 14px;
+  }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .photo-links { margin: -12px 0 20px; font-size: 13px; color: #6b7178; text-align: center; }
+  .photo-links a { color: #0068c3; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
+  .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
+  .hint {
+    max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    font-size: 14px; line-height: 1.75; color: #5f4b16;
+  }
+  .hint ol { margin: 8px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>네이버 블로그 붙여넣기</strong>
+  <button type="button" data-copy="title">제목 복사</button>
+  <button type="button" data-copy="post">본문 복사</button>
+  <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="https://blog.naver.com/rikiwiki/postwrite" target="_blank" rel="noopener">글쓰기 열기</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1 class="title" id="title">이번 주 부동산: 서울 87주 연속 상승, 강남은 5주 하락</h1>
+    <div class="meta">2026-W41 · 부동산</div>
+
+    <div id="post">
+<p style="margin:0 0 14px;font-size:14px;color:#767676">이 글은 2026년 41주차 기준으로 정리한 내용입니다.</p><p><strong>이번 주 다섯 줄</strong></p>
+<ol>
+<li>서울 아파트값 87주 연속 상승, 주간 <span class="hl" style="background-color:#fff59d">0.12%</span></li>
+<li>강남3구·용산은 5주 연속 하락, 온도차 뚜렷</li>
+<li>집값 연 10% 가정 시 2030년 재산세 <span class="hl" style="background-color:#fff59d">54%</span>↑ 전망</li>
+<li>서울 매입자금 중 증여·상속·차입 11.55%</li>
+<li>LH, 수도권 미분양 분양가 85~<span class="hl" style="background-color:#fff59d">92%</span> 매입확약</li>
+</ol>
+<p>이번 주 서울 아파트 시장은 <strong>상승 기록은 이어졌지만, 그 안에서는 지역이 갈린 한 주</strong>였습니다. 전체 지수는 87주 연속 올랐는데 강남3구와 용산은 5주 연속 내렸고, 신고가는 오히려 외곽 자치구에서 더 많이 보도됐습니다.</p>
+<h2>87주 연속 상승, 안에서는 갈렸습니다</h2>
+<p>한국부동산원 기준 서울 아파트 매매가격은 9월 28일 기준 전주 대비 0.09% 올라 86주 연속 상승했습니다. 종전 최장 기록인 85주를 넘어선 수치이고, 당시 상승폭은 5주 연속 줄어드는 흐름이었습니다.</p>
+<p>그런데 10월 첫째 주에는 변동률이 0.12%로 다시 커지면서 연속 상승 주차가 87주로 늘었습니다. 축소되던 상승폭이 한 주 만에 확대된 셈인데, 같은 기간 강남3구와 용산은 5주 연속 하락세를 이어갔습니다.</p>
+<table>
+<thead>
+<tr>
+<th>날짜</th>
+<th>지표</th>
+<th>수치</th>
+<th>출처</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>09-28 기준</td>
+<td>서울 아파트 주간 변동률</td>
+<td>0.09%(86주 연속 상승)</td>
+<td>한국부동산원</td>
+</tr>
+<tr>
+<td>10월 첫째 주</td>
+<td>서울 아파트 주간 변동률</td>
+<td>0.12%(87주 연속 상승)</td>
+<td>한국부동산원</td>
+</tr>
+<tr>
+<td>10-09</td>
+<td>강남3구 하락 기간</td>
+<td>5주 연속</td>
+<td>매일경제</td>
+</tr>
+<tr>
+<td>10-09</td>
+<td>압구정 동일 평형 호가 차이</td>
+<td>최대 40억원</td>
+<td>매일경제</td>
+</tr>
+<tr>
+<td>8월</td>
+<td>서울 아파트 평균 전셋값</td>
+<td>6억 3,663만원</td>
+<td>한국부동산원</td>
+</tr>
+</tbody>
+</table>
+<hr><h2>신고가는 외곽에서, 초고가는 강남에서</h2>
+<p>신고가 거래 보도는 주 중반부터 사흘 내내 이어졌습니다. 동작·영등포·강서·마포·은평·중랑에서 시작해 서대문·노원·강동, 다시 동대문·구로, 마지막으로 성동·광진까지 <strong>자치구가 계속 바뀌며 확산되는 모습</strong>이었습니다.</p>
+<table>
+<thead>
+<tr>
+<th>날짜(등록)</th>
+<th>단지·전용</th>
+<th>거래가</th>
+<th>비고</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10-03</td>
+<td>영등포 당산삼성래미안4차 84.94㎡</td>
+<td>22억 1,000만원</td>
+<td><span class="hl" style="background-color:#fff59d">3년</span> 내 신고가</td>
+</tr>
+<tr>
+<td>10-03</td>
+<td>마포 상암월드컵파크4단지 84.66㎡</td>
+<td>17억 5,000만원</td>
+<td>3년 신고가</td>
+</tr>
+<tr>
+<td>10-07</td>
+<td>서대문 천연뜨란채 55.82㎡</td>
+<td>12억 4,000만원</td>
+<td>3년 신고가</td>
+</tr>
+<tr>
+<td>10-08</td>
+<td>압구정 신현대12차 182.95㎡</td>
+<td>100억원</td>
+<td>실거래 등록</td>
+</tr>
+<tr>
+<td>10-09</td>
+<td>압구정 신현대12차 155.52㎡</td>
+<td>85억원</td>
+<td>실거래 등록</td>
+</tr>
+<tr>
+<td>10-11</td>
+<td>광장힐스테이트 59.99㎡</td>
+<td>24억 9,500만원</td>
+<td>3년 신고가</td>
+</tr>
+</tbody>
+</table>
+<hr><h2>재산세 전망, 전제를 꼭 보셔야 합니다</h2>
+<p>5일과 6일에 걸쳐 여러 매체가 2030년 재산세 전망을 보도했습니다. 서울 주요 단지 기준 53.5~54% 증가, 노·도·강은 76% 증가, 2030년 평균 337만원이라는 숫자였습니다.</p>
+<p>다만 이 전망의 <strong>전제는 '집값이 연 10~10.3%씩 계속 오른다'는 가정</strong>입니다. 가정이 달라지면 결과도 달라지므로, 숫자만 떼어내 받아들이기보다 전제를 함께 보시는 편이 안전합니다.</p>
+<table>
+<thead>
+<tr>
+<th>날짜</th>
+<th>항목</th>
+<th>수치</th>
+<th>출처</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>10-05~06</td>
+<td>서울 주요단지 재산세 증가율(2030)</td>
+<td>54%(일부 53.5%, 50%)</td>
+<td>세계일보·자본시장뉴스·서울경제</td>
+</tr>
+<tr>
+<td>10-05~06</td>
+<td>노도강 재산세 증가율(2030)</td>
+<td>76%</td>
+<td>ER이코노믹리뷰</td>
+</tr>
+<tr>
+<td>10-05</td>
+<td>2030년 평균 재산세</td>
+<td>337만원</td>
+<td>재경일보</td>
+</tr>
+<tr>
+<td>10-06</td>
+<td>전제가 된 연간 집값 상승률</td>
+<td>10~10.3%</td>
+<td>조선비즈·자본시장뉴스</td>
+</tr>
+</tbody>
+</table>
+<hr><h2>돈이 들어오는 경로가 바뀌었습니다</h2>
+<p>국토부 자금조달계획서 분석(2026년 1~8월, 총 71조 1,278억원)에서 눈에 띈 건 구조 변화였습니다. 증여·상속(6.44%)과 그 밖의 차입금(5.11%)을 합한 사적자금 비중이 11.55%로 2025년 6.88%보다 4.67%포인트 늘었습니다.</p>
+<p>반대로 갭투자와 연결되는 임대보증금 조달 비중은 6.51%로 2025년 14.83%에서 8.32%포인트 줄었습니다. 25개 구 중 광진구를 뺀 <strong>24개 구에서 사적자금이 임대보증금을 앞질렀는데, 2021~2025년에는 없던 현상</strong>입니다. 사적자금 비중은 용산 15.63%, 성동 15.29%, 동작 13.95% 순이었습니다.</p>
+<hr><h2>공급과 청약, 그리고 국감</h2>
+<p>공급 쪽에서는 LH가 수도권 미분양 주택을 분양가의 85~92%로 매입확약하는 방안을 내놨습니다. 2027년 말까지 토지 사용이 가능한 1만 8,000가구가 직접 대상이고, 조기 착공 시 최대 3%포인트, 내년 상반기 착공 2%포인트, 500세대 이상 대단지 1%포인트가 가산됩니다.</p>
+<p>청약은 온도차가 컸습니다. 주변보다 비싼 고분양가 단지의 경쟁률이 절반 수준으로 떨어졌다는 보도가 이틀에 걸쳐 나왔고, 부산 1순위 경쟁률은 0.6대 1에 머물렀습니다. 반면 울산·광주·전남은 오름세로 전해졌습니다.</p>
+<p>정책 쪽에서는 7일 국토부 국정감사에서 홍지선 장관이 "연말쯤 상승폭이 줄 것"이라며 수도권 착공 목표 80% 이상 달성을 자신한다고 말했고, 토지거래허가제는 "수요가 있다"며 연장 검토를 시사했습니다. 이창용 한국은행 총재는 분양가 상한제를 강남 쏠림의 배경으로 지목하며 보유세·거래세 개편을 제안했습니다.</p>
+<hr><h2>다음 주 볼 것</h2>
+<ul>
+<li>한국부동산원 주간 아파트가격동향(10월 둘째 주): 0.12%로 확대된 상승폭의 방향과 강남3구·용산 하락 지속 여부</li>
+<li>국정감사 후속으로 토지거래허가제 연장 여부가 구체화되는지</li>
+<li>LH 수도권 미분양 매입확약(1만 8,000가구, 85~92%)의 실제 참여 규모</li>
+<li>이번 주 청약을 받은 9개 단지 1,829가구의 경쟁률 결과</li>
+</ul>
+<p>※ 본 글은 공개된 보도·통계를 정리한 정보 전달 목적의 글이며, 특정 매수·매도 판단을 권유하지 않습니다.</p>
+      <p class="tags" id="tags">#부동산 #부동산뉴스 #주간부동산 #서울아파트 #아파트값 #서울집값 #매매가격동향 #한국부동산원 #신고가 #실거래가 #강남3구 #압구정 #용산 #노도강 #재산세 #보유세 #종합부동산세 #자금조달계획서 #토지거래허가제 #갭투자 #증여 #상속 #전세가격 #청약 #분양가 #미분양 #LH #국정감사 #내집마련 #부돌보브리핑</p>
+    </div>
+  </div>
+
+  <div class="hint">
+    <strong>쓰는 법</strong>
+    <ol>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다.
+        네이버는 <b>지금 로그인된 계정</b>의 블로그를 엽니다 — 다른 블로그가 열리면
+        <a href="https://nid.naver.com/nidlogin.logout?returl=https%3A%2F%2Fblog.naver.com%2Frikiwiki%2Fpostwrite" target="_blank" rel="noopener">계정 바꿔 열기</a>를 누르고
+<b>rikiwiki</b> 계정으로 다시 로그인하세요. 바로 글쓰기로 갑니다.</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
+      <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
+      <li><span style="background-color:#fff59d">형광펜</span>은 오늘의 핵심 수치가 <b>처음 나온 자리</b>에만 칠합니다.
+        같은 수치가 다시 나와도 표시하지 않습니다 — 강조가 많으면 아무것도 강조가 아니니까요.
+        붙여넣으면 그대로 따라가고, 마음에 안 들면 에디터에서 지우세요.</li>
+      <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
+      <li><b>올린 뒤</b> 깃허브 → Actions → <b>발행 기록</b> 에 글 주소를 적고, 하루 이틀 뒤 같은 곳에
+        <b>조회수</b>를 적어 주세요 (date 칸에 <b>2026-W41</b>). 이 두 숫자가 쌓여야 어떤 제목과 주제가
+        사람을 데려오는지 알 수 있습니다 — 안 적으면 아무것도 재지 못합니다.</li>
+    </ol>
+    이 안내문은 복사에 포함되지 않습니다.
+  </div>
+</div>
+
+<script>
+// 버튼이 지정한 영역만 클립보드에 담는다. 안내문과 상단 바는 복사되지 않는다.
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var node = document.getElementById(btn.dataset.copy);
+    if (!node) return;
+
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
+
+    // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
+    // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
+    var range = document.createRange();
+    range.selectNodeContents(copyNode);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    clone.remove();
+
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
+        alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
+      });
+      return;
+    }
+    flash();
+
+    function flash() {
+      var original = btn.textContent;
+      btn.textContent = "복사됨 ✓";
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1400);
+    }
+  });
+});
+</script>
+</body>
+</html>
