@@ -77,6 +77,12 @@ def api_key() -> str:
     return (os.environ.get(KEY_ENV) or "").strip()
 
 
+def auto_enabled(cfg: Config) -> bool:
+    """날마다 브리핑이 돌 때 음성까지 만들지 (voice.auto). 손으로 부르는 `voice` 명령은 상관없다."""
+    v = cfg.get("voice", {}) or {}
+    return bool(v.get("enabled", True) and v.get("auto", True))
+
+
 def options(cfg: Config) -> dict:
     """settings.yaml 의 voice 에 state/voice.json(고른 목소리)을 덮어쓴 값."""
     opts = dict(cfg.get("voice", {}) or {})

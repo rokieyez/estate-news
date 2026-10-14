@@ -32,8 +32,10 @@ class Reply:
 
 
 @pytest.fixture
-def eleven(monkeypatch):
-    """일레븐랩스 자리에 서는 가짜. 받은 요청을 calls 에 쌓는다."""
+def eleven(cfg, monkeypatch):
+    """일레븐랩스 자리에 서는 가짜. 받은 요청을 calls 에 쌓는다.
+    날마다 자동 음성은 꺼 두었지만(voice.auto, 2026-10-15) 여기 시험들은 켠 채로 만들기를 본다."""
+    cfg.settings["voice"]["auto"] = True
     calls: list[dict] = []
 
     def post(url, **kw):
@@ -403,3 +405,13 @@ def test_shorts_prompt_plans_scenes_for_motion_graphics_only(cfg):
     example = next(line for line in prompt.splitlines() if line.strip().startswith("예:"))
     assert "스톡" not in example
 
+
+
+
+def test_voice_auto_off_by_default(cfg, monkeypatch):
+    """2026-10-15: 날마다 브리핑은 열쇠가 있어도 음성을 만들지 않는다 — 손으로 부르는 voice 명령만."""
+    assert voice.auto_enabled(cfg) is False and voice.options(cfg).get("enabled", True)
+    monkeypatch.setenv(voice.KEY_ENV, KEY)
+    monkeypatch.setattr(voice, "_post", lambda *a, **k: pytest.fail("자동 음성이 꺼졌는데 일레븐랩스를 불렀다"))
+    result = _run(cfg, monkeypatch)
+    assert result.voice_file == "" and not list((cfg.output_dir / RUN_DATE).glob("*.mp3"))

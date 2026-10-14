@@ -531,7 +531,9 @@ def apply(cfg: Config, date_str: str, text: str, *, issues: list[Cluster] | None
                 made["brief"] = brief
                 keys = _load_keys(paste_dir(out_dir) / "keys.json")
                 pipe._after_video(cfg, renderer, brief, pack, date_str, made, keys)
-                made["voice"] = pipe._shorts_voice(cfg, renderer, None)     # 붙여넣은 대본도 음성까지
+                from .voice import auto_enabled
+                if auto_enabled(cfg):                    # 붙여넣은 대본도 음성까지 (voice.auto 일 때만)
+                    made["voice"] = pipe._shorts_voice(cfg, renderer, None)
                 (paste_dir(out_dir) / "pack.json").write_text(pack.model_dump_json(indent=1),
                                                                encoding="utf-8")
         except Exception as exc:                     # 검사 실패는 사람에게 돌려준다

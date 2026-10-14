@@ -304,6 +304,9 @@ blog:
 # ─────────────────────────────────────────────────────────────
 voice:
   enabled: true
+  # 날마다 브리핑이 돌 때 음성까지 만들지. 2026-10-15 로키즈: 대본을 보고 필요할 때만
+  # Actions 「쇼츠 음성」(python -m rebrief voice)으로 따로 입힌다 → false.
+  auto: false
   # 기본 목소리. 아래 voices 의 id 가운데 하나(또는 일레븐랩스 voice_id 아무거나).
   # Actions 탭 「쇼츠 음성」에서 「앞으로도 이 목소리로」를 고르면 state/voice.json 에 남고 그쪽이 이깁니다.
   voice_id: CxErO97xpQgQXYmapDKX      # Theo — 2026-09-13 커뮤니티 쇼츠에서 로키즈가 고른 목소리

@@ -301,7 +301,10 @@ def _generate_with_llm(
     _after_video(cfg, renderer, brief, pack, date_str, made, keys)
     _autofix_banned(cfg, renderer, made, issues, slot_files, result)
     # 음성은 금지 표현을 고친 **뒤에** 만든다 — 앞에서 만들면 글이 바뀐 날 두 번 읽혀 글자 수가 두 번 나간다
-    made["voice"] = _shorts_voice(cfg, renderer, result)
+    # 2026-10-15 로키즈: 날마다 자동으로 만들지 않는다(voice.auto) — 필요할 때 `voice` 명령으로
+    from .voice import auto_enabled
+    if auto_enabled(cfg):
+        made["voice"] = _shorts_voice(cfg, renderer, result)
     result.warnings.extend(generator.usage.notes)
     return made
 
