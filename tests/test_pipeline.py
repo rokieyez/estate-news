@@ -7,7 +7,8 @@ RSS 는 픽스처로, Claude 호출은 가짜 응답 객체로 대체한다.
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
+import logging
+from datetime import date, datetime, timezone
 from pathlib import Path
 
 
@@ -133,14 +134,19 @@ def test_rerender_reuses_saved_raw(cfg):
     assert result.articles >= 6
 
 
-def test_seen_store_skips_repeats(cfg):
+def test_seen_store_skips_repeats(cfg, caplog):
+    # 이력 정리(30일)·걸러내기(skip_recent_days)는 「오늘」 기준이다.
+    # 고정 날짜 RUN_DATE 로 돌리면 한 달 뒤부터 이력이 통째로 지워져 깨지므로 오늘로 돌린다.
+    today = date.today().isoformat()
     cfg.settings["run"]["skip_recent_days"] = 3
-    first = pipeline.run(cfg, run_date=RUN_DATE, use_llm=False)
-    second = pipeline.run(cfg, run_date=RUN_DATE, use_llm=False)
+    first = pipeline.run(cfg, run_date=today, use_llm=False)
+    with caplog.at_level(logging.INFO, logger="rebrief.pipeline"):
+        second = pipeline.run(cfg, run_date=today, use_llm=False)
 
     # 두 번째 실행은 같은 기사를 이미 다룬 것으로 보고 걸러야 한다.
     seen = json.loads((cfg.state_dir / "seen.json").read_text(encoding="utf-8"))
     assert seen["count"] >= first.articles
+    assert f"최근 다룬 기사 {first.articles}건 제외" in caplog.text
     assert second.articles == first.articles   # 수집량 자체는 같고
     # 걸러진 뒤 남은 게 없으면 재탕이라도 내보내므로 이슈는 여전히 생긴다
     assert second.issues >= 1
