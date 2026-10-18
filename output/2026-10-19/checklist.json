@@ -1,0 +1,110 @@
+{
+  "date": "2026-10-19",
+  "summary": {
+    "ok": 8,
+    "warn": 5,
+    "fail": 0
+  },
+  "items": [
+    {
+      "key": "numbers",
+      "level": "warn",
+      "title": "수치 4건이 기사 원문에서 확인되지 않음",
+      "detail": "아래 '원문' 링크를 눌러 기사에서 직접 찾아보세요. 기사에 없는 값이면 글에서 빼는 게 안전합니다. [오늘의 정리 열기](brief.html)",
+      "lines": [
+        "서울 집값 하향 안정 신호 · 서울 아파트 갭투자 거래 비중 **37.9→6.1%** — [원문](https://news.google.com/rss/articles/CBMiUEFVX3lxTFBFdV9wUGFUeFNJOF95VlJpVFY4R3h4VE9Cd0YwX0NDTWtLX3luckRaUm5iNjdrdEgwTHRfZkN3dUlNUGFwd3FPVWxob2s3Z3hQ?oc=5)",
+        "서울 집값 하향 안정 신호 · 서울 주택매매시장 소비심리지수 **139.9→132.5→130.8** — [원문](https://news.google.com/rss/articles/CBMiUEFVX3lxTFBFdV9wUGFUeFNJOF95VlJpVFY4R3h4VE9Cd0YwX0NDTWtLX3luckRaUm5iNjdrdEgwTHRfZkN3dUlNUGFwd3FPVWxob2s3Z3hQ?oc=5)",
+        "서울 집값 하향 안정 신호 · 수도권 아파트 입주 물량 **20만4000→13만→10만5000가구** — [원문](https://news.google.com/rss/articles/CBMiUEFVX3lxTFBFdV9wUGFUeFNJOF95VlJpVFY4R3h4VE9Cd0YwX0NDTWtLX3luckRaUm5iNjdrdEgwTHRfZkN3dUlNUGFwd3FPVWxob2s3Z3hQ?oc=5)",
+        "서울 집값 하향 안정 신호 · 3기 신도시 입주 물량 **1300→1만 이상가구** — [원문](https://news.google.com/rss/articles/CBMiUEFVX3lxTFBFdV9wUGFUeFNJOF95VlJpVFY4R3h4VE9Cd0YwX0NDTWtLX3luckRaUm5iNjdrdEgwTHRfZkN3dUlNUGFwd3FPVWxob2s3Z3hQ?oc=5)"
+      ]
+    },
+    {
+      "key": "links",
+      "level": "ok",
+      "title": "출처 링크 40개 모두 정상",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "banned",
+      "level": "ok",
+      "title": "금지 표현 없음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "blog_len",
+      "level": "ok",
+      "title": "블로그 본문 1,848자",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "tags",
+      "level": "ok",
+      "title": "태그 30개",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "keyword",
+      "level": "warn",
+      "title": "대표 검색어 '강남 아파트값 하락' 가 제목 에 없습니다",
+      "detail": "그 자리에 같은 표기로 넣어야 검색에 걸립니다. 변형이 아니라 글자 그대로.",
+      "lines": []
+    },
+    {
+      "key": "overlap",
+      "level": "ok",
+      "title": "지난 글과 겹치는 문장 0%",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shape",
+      "level": "ok",
+      "title": "소제목 4개 · 메인 하나에 집중",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "readability",
+      "level": "warn",
+      "title": "긴 문장 1개 — 휴대폰에서 답답해 보입니다",
+      "detail": "문장은 둘로 나누고, 문단은 두세 문장에서 끊으세요.",
+      "lines": [
+        "10월 17일 실거래가 시스템에 성북구 길음뉴타운경남아너스빌 114.63㎡가 11억 6,000만원, 서대문구…"
+      ]
+    },
+    {
+      "key": "photos",
+      "level": "warn",
+      "title": "직접 넣을 사진 자리 1곳",
+      "detail": "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)",
+      "lines": []
+    },
+    {
+      "key": "shorts_len",
+      "level": "ok",
+      "title": "쇼츠 발화 306자 (약 56초)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shorts_voice",
+      "level": "ok",
+      "title": "쇼츠 자막이 문장으로 이어집니다 (38%)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "repeat",
+      "level": "warn",
+      "title": "'서울 곳곳 아파트 '3년 신고가'' 은 2일 전에도 다뤘습니다",
+      "detail": "그대로 또 쓰면 재탕으로 보입니다. 그때와 달라진 숫자를 앞세우거나 후속 국면을 잡으세요.",
+      "lines": [
+        "2026-10-17 · 서울 아파트 곳곳 신고가"
+      ]
+    }
+  ]
+}
