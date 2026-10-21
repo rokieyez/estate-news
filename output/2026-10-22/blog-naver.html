@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>청주 가경 아이파크 청약 경쟁률 630대 1, 10월 22일 부돌보 브리핑</title>
+<style>
+  :root { color-scheme: light; }
+  * { box-sizing: border-box; }
+  /* 바탕색은 body 가 아니라 뒤에 깔린 고정 층(body::before)에 칠한다.
+     Chrome 은 '본문 복사' 때 글자 덩어리마다 조상(html·body 까지)의 배경색을 찾아
+     background-color 로 박아 넣는다. 그래서 body 에 회색을 칠하면 네이버에 붙였을 때
+     문단마다 연한 회색 형광펜이 깔린다 (2026-09-08 실측: 문단·제목 18곳에
+     rgb(245,246,248)). html·body·.card 를 전부 투명하게 두면 그 배경색이 사라진다.
+     .card 의 흰색도 같은 이유로 그림자·테두리로만 구분한다. */
+  html, body { background: transparent; }
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: -1; background: #f5f6f8;
+  }
+  body {
+    margin: 0; padding: 0 16px 80px;
+    color: #1a1a1a;
+    font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+    line-height: 1.8; font-size: 16px;
+  }
+  .bar {
+    position: sticky; top: 0; z-index: 10;
+    margin: 0 -16px 20px; padding: 12px 16px;
+    background: #03c75a; color: #fff;
+    display: flex; flex-wrap: wrap; gap: 8px; align-items: center;
+  }
+  .bar strong { margin-right: auto; font-size: 15px; }
+  .bar button {
+    border: 0; border-radius: 6px; padding: 8px 14px;
+    background: rgba(255,255,255,.18); color: #fff;
+    font-size: 14px; font-weight: 600; cursor: pointer;
+    font-family: inherit;
+  }
+  .bar button:hover { background: rgba(255,255,255,.3); }
+  .bar button.done { background: #fff; color: #03c75a; }
+  .bar a.write {
+    border-radius: 6px; padding: 8px 14px; background: #fff; color: #03c75a;
+    font-size: 14px; font-weight: 700; text-decoration: none;
+  }
+  @media (max-width: 560px) {
+    /* 휴대폰에서는 제목 줄을 따로 두고 버튼을 꽉 채운다 */
+    .bar { gap: 6px; }
+    .bar strong { flex-basis: 100%; margin: 0 0 4px; font-size: 14px; }
+    .bar button, .bar a.write { flex: 1 1 0; text-align: center; padding: 10px 6px; font-size: 13px; }
+    .card { padding: 22px 16px; }
+    .title { font-size: 21px; }
+  }
+  .wrap { max-width: 720px; margin: 0 auto; }
+  /* 흰 바탕 대신 테두리 — 배경을 칠하면 복사본에 흰 형광펜이 실린다 (위 설명). */
+  .card { background: transparent; border: 1px solid #e4e7ea; border-radius: 10px; padding: 32px 28px; }
+  .title { font-size: 24px; font-weight: 700; line-height: 1.45; margin: 0 0 6px; }
+  .meta { color: #888; font-size: 13px; margin-bottom: 28px; }
+  /* 구분선은 **꼭지와 꼭지 사이**에 둔다 — 둘째 소제목부터 앞에 <hr> 이 온다
+     (render.section_dividers). 예전에는 h2 의 border-top 으로 그었는데, 네이버 에디터가
+     제목의 테두리를 받지 않고 얇은 회색 선으로 바꿨다 (2026-09-08). <hr> 로 보내면
+     에디터가 제 구분선 부품으로 바꾼다. 색은 네이버에서 고를 수 없어 회색이 된다 —
+     여기 초록은 미리보기용이다. */
+  #post h2 { font-size: 20px; font-weight: 700; margin: 8px 0 16px; }
+  #post hr { border: 0; border-top: 2px solid #03c75a; margin: 56px 0 26px; }
+  #post h3 { font-size: 17px; font-weight: 700; margin: 38px 0 10px; }
+  #post p { margin: 0 0 18px; }
+  #post ul, #post ol { margin: 0 0 18px; padding-left: 22px; }
+  #post li { margin-bottom: 8px; }
+  #post table { border-collapse: collapse; width: 100%; margin: 0 0 20px; font-size: 15px; }
+  #post th, #post td { border: 1px solid #ddd; padding: 9px 12px; text-align: left; }
+  #post th { background: #f2f4f6; font-weight: 700; }
+  #post blockquote {
+    margin: 0 0 18px; padding: 12px 16px;
+    background: #f7f8fa; border-left: 4px solid #03c75a; color: #444;
+  }
+  #post a { color: #0068c3; }
+  .imgslot {
+    margin: 0 0 20px; padding: 22px 16px; text-align: center;
+    border: 2px dashed #c9cdd2; border-radius: 8px;
+    background: #fafbfc; color: #6b7178; font-size: 14px;
+  }
+  .imgslot.has-file { border-color: #03c75a; background: #f2fbf5; color: #2c6e45; }
+  .photo-links { margin: -12px 0 20px; font-size: 13px; color: #6b7178; text-align: center; }
+  .photo-links a { color: #0068c3; }
+  .imgslot small { display: block; margin-top: 6px; font-size: 13px; color: #5a6a60; }
+  .preview { display: block; max-width: 100%; height: auto; margin: -8px 0 22px; border: 1px solid #e4e7ea; border-radius: 8px; }
+  .tags { margin: 36px 0 0; color: #0068c3; font-size: 15px; word-break: keep-all; }
+  .hint {
+    max-width: 720px; margin: 20px auto 0; padding: 16px 18px;
+    background: #fff8e1; border: 1px solid #ffe082; border-radius: 8px;
+    font-size: 14px; line-height: 1.75; color: #5f4b16;
+  }
+  .hint ol { margin: 8px 0 0; padding-left: 20px; }
+</style>
+</head>
+<body>
+
+<div class="bar">
+  <strong>네이버 블로그 붙여넣기</strong>
+  <button type="button" data-copy="title">제목 복사</button>
+  <button type="button" data-copy="post">본문 복사</button>
+  <button type="button" data-copy="tags">태그 복사</button>
+  <a class="write" href="https://blog.naver.com/rikiwiki/postwrite" target="_blank" rel="noopener">글쓰기 열기</a>
+</div>
+
+<div class="wrap">
+  <div class="card">
+    <h1 class="title" id="title">청주 가경 아이파크 청약 경쟁률 630대 1, 10월 22일 부돌보 브리핑</h1>
+    <div class="meta">2026-10-22 · 부동산</div>
+
+    <div id="post">
+<div class="imgslot has-file">📷 대표 이미지 — 검색 목록에 이 그림이 썸네일로 뜹니다<br><small>→ 파일 <b>img-0-cover.png</b> 을 <b>글 맨 위</b>에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-0-cover.png" alt="대표 이미지"><p style="margin:0 0 14px;font-size:14px;color:#767676">이 글은 2026년 10월 22일 기준으로 정리한 내용입니다. 실거래 거래 건수는 2026년 9월 1~21일 계약분(신고 기한이 지난 것), 전세가율 등은 2026년 8월 신고분입니다.</p><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:0 0 22px"><b style="font-size:15px">3줄 요약</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">청주 가경 아이파크 7·8단지 청약에 수요가 대거 몰렸습니다.</li><li style="margin-bottom:6px">경쟁률 630대 1, 접수는 15만~16만 건으로 보도됐습니다.</li><li style="margin-bottom:6px">매체별 수치 차이가 있어 공식 집계 확인이 먼저입니다.</li></ul></div><p>청주 가경 아이파크 청약에 수요가 한꺼번에 몰렸습니다. 경쟁률은 630대 1로 지역 역대 최고치를 경신했다는 보도가 나왔습니다.</p>
+<p>다만 접수 건수는 매체마다 달라, 정확한 규모는 공식 집계로 다시 확인할 필요가 있습니다. 오늘은 이 소식을 중심으로 정리해 드립니다.</p>
+<div class="imgslot has-file">📷 이미지 — 청약 경쟁률 630대 1을 보여주는 숫자 그래픽<br><small>→ 파일 <b>img-1-stat-card.png</b> 을 이 자리에 올리고 상자는 지웁니다</small></div><img class="preview nocopy" src="img-1-stat-card.png" alt="청약 경쟁률 630대 1을 보여주는 숫자 그래픽">
+<h2>청주 가경 아이파크 청약, 숫자로 보면</h2>
+<p>청주 가경 아이파크 7·8단지에 신청이 대거 접수됐습니다. 충청일보와 충북일보는 경쟁률 630대 1로 지역 역대 최고라고 전했습니다.</p>
+<p>접수 건수는 매체별로 차이가 있습니다. 서울경제는 1순위 청약 15만 건으로 올해 전국 최다라고 보도했고, 충청매일은 전체 <span class="hl" style="background-color:#fff59d"><strong>16만 건</strong></span>이 몰렸다고 전했습니다.</p>
+<table>
+<thead>
+<tr>
+<th>항목</th>
+<th>수치</th>
+<th>보도 매체</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>청약 접수 건수</td>
+<td>16만건</td>
+<td>충청매일</td>
+</tr>
+<tr>
+<td>1순위 청약 접수 건수</td>
+<td>15만건</td>
+<td>서울경제</td>
+</tr>
+<tr>
+<td>청약 경쟁률</td>
+<td>630대 1</td>
+<td>충청일보·충북일보</td>
+</tr>
+</tbody>
+</table>
+<p>충북일보는 이를 전국 최대 청약접수 기록이라고 설명했습니다. 한국경제는 이 단지가 '아이파크 타운'의 마지막 분양이라고 보도했습니다.</p>
+<hr><h2>청주 가경 아이파크 청약이 뜻하는 것</h2>
+<p>지방 분양시장에서도 특정 단지로 수요가 쏠리는 흐름이 뚜렷하다는 신호로 읽힙니다. 수도권만의 이야기가 아니라는 점이 눈에 띕니다.</p>
+<p>다만 앞서 본 접수 건수가 매체별로 엇갈립니다. 여러분이 청주 가경 아이파크 청약 결과를 참고하신다면, 한국부동산원 청약홈 등 공식 집계를 기준으로 삼는 편이 안전합니다.</p>
+<p>또한 이 경쟁률이 청주 전역의 분위기를 그대로 보여주는지는 자료만으로 단정하기 어렵습니다. 특정 단지에 집중된 수요일 가능성도 함께 열어 두어야 합니다.</p>
+<div class="imgslot">📷 이미지 — 청약 접수 창구 앞에 줄을 선 사람들 모습</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/people-queue-apartment-office" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/people%20queue%20apartment%20office/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/people%20queue%20apartment%20office/" target="_blank" rel="noopener">픽사베이</a></div>
+<hr><h2>그 밖의 오늘 소식</h2>
+<ul>
+<li>규제지역(정부가 대출·세금 규제를 더 두는 지역) 확대 뒤 비규제지역 상승폭이 커진다는 보도가 나왔습니다.</li>
+<li>인천 계양신도시 첫 민간분양 '카이브 유보라' 견본주택이 23일 문을 엽니다. 전용 84~93㎡, 총 <span class="hl" style="background-color:#fff59d"><strong>1110가구</strong></span>입니다.</li>
+<li>세종은 공무원 <span class="hl" style="background-color:#fff59d"><strong>1만 명</strong></span> 유입 예고 속 신규 공급이 없어 전셋값이 먼저 움직인다는 보도가 있었습니다.</li>
+</ul>
+<div class="imgslot">📷 이미지 — 신도시 아파트 견본주택 외관 사진</div><div class="photo-links nocopy">사진 찾기: <a href="https://unsplash.com/s/photos/korea-apartment-model-house" target="_blank" rel="noopener">언스플래시</a> · <a href="https://www.pexels.com/ko-kr/search/korea%20apartment%20model%20house/" target="_blank" rel="noopener">펙셀스</a> · <a href="https://pixabay.com/ko/images/search/korea%20apartment%20model%20house/" target="_blank" rel="noopener">픽사베이</a></div>
+<p>내일은 계양신도시 카이브 유보라와 상업시설 '시간' 견본주택 개관이 예정돼 있습니다. 분양가와 청약 일정은 아직 자료에 제시되지 않아, 현장에서 확인하시는 것이 좋겠습니다.</p><div style="background-color:#f2f8ff;border-left:4px solid #256abf;padding:14px 16px;margin:26px 0 0"><b style="font-size:15px">그래서 나는?</b><ul style="margin:8px 0 0;padding-left:18px"><li style="margin-bottom:6px">청주 청약 대기자라면, 가점과 순위 조건을 먼저 점검해 보세요.</li><li style="margin-bottom:6px">계양신도시 실수요자라면, 23일 견본주택에서 분양 조건을 확인해 보세요.</li><li style="margin-bottom:6px">세종 전세 계약을 앞뒀다면, 주변 전셋값 흐름부터 살펴보세요.</li></ul></div><div style="margin:28px 0 0;padding:16px 18px"><b>직접 센 숫자 — 2026년 9월 1~21일 아파트 실거래</b><p style="margin:10px 0 0">서울 8개 구에서 계약된 매매는 <b>1255건</b>입니다. 8월 1~21일 1112건과 견주면 +143건입니다.</p><p style="margin:8px 0 0;font-size:15px;color:#555555">거래가 많은 곳: 노원구 303건(-85) · 송파구 285건(+164) · 강서구 211건(+10)</p><p style="margin:6px 0 0;font-size:13px;color:#888888">신고 기한(계약 후 30일)이 지난 21일까지 계약분끼리 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">노원구 전세가율(전세 보증금 ÷ 매매가)은 가운뎃값 <b>52.9%</b>입니다. 같은 단지·같은 면적 107곳을 견줬습니다.</p><p style="margin:10px 0 0;font-size:15px;color:#555555">서울 25개 구 가운데 거래가 가장 크게 움직인 곳: 송파구 +135.5%(121→285건, 장지동에 64.9% 몰림) · 서초구 +65.6%(61→101건, 서초동에 45.5% 몰림)</p><p style="margin:12px 0 4px"><b>2026년 9~10월 계약 신고가</b></p><ul style="margin:0;padding-left:18px;font-size:15px"><li>송파구 현대백조 31.0㎡ — 8.3억 (이전 최고 6.8억, +22.1%, 10월 7일 계약)</li><li>노원구 시영3차(라이프)아파트 49.5㎡ — 6.5억 (이전 최고 5.4억, +20.2%, 9월 10일 계약)</li></ul><img class="preview nocopy" src="img-stats-volume.png" alt="지역별 거래 건수" style="max-width:100%;margin-top:12px"><p style="margin:6px 0 0;font-size:13px;color:#888888">→ 그림 파일 <b>img-stats-volume.png</b> 을 이 자리에 올리세요</p><p style="margin:12px 0 0;font-size:13px;color:#888888">국토교통부 실거래가 신고 자료를 직접 집계했습니다. 해제(계약 취소) 신고분은 뺐습니다.</p></div><p style="padding:14px 16px;margin:28px 0 0"><b>여러분이 지금 청약을 준비하는 지역은 공급이 이어지는 곳인가요, 아니면 이번이 거의 마지막 물량인 곳인가요?</b><br><span style="font-size:14px;color:#666666">댓글로 알려 주시면 다음 글에 반영하겠습니다.</span></p>
+      <p class="tags" id="tags">#부동산 #아파트 #청약 #분양 #청주 #청주아파트 #청주가경 #가경아이파크 #아이파크타운 #청약경쟁률 #지방분양 #세종 #세종전세 #세종부동산 #전셋값 #전월세 #인천 #계양신도시 #카이브유보라 #반도건설 #민간분양 #견본주택 #모델하우스 #규제지역 #비규제지역 #풍선효과 #수도권부동산 #내집마련 #실수요자 #부돌보브리핑</p>
+    </div>
+  </div>
+
+  <div class="hint">
+    <strong>쓰는 법</strong>
+    <ol>
+      <li><b>글쓰기 열기</b> → 네이버 블로그 글쓰기 화면이 새 탭에서 열립니다.
+        네이버는 <b>지금 로그인된 계정</b>의 블로그를 엽니다 — 다른 블로그가 열리면
+        <a href="https://nid.naver.com/nidlogin.logout?returl=https%3A%2F%2Fblog.naver.com%2Frikiwiki%2Fpostwrite" target="_blank" rel="noopener">계정 바꿔 열기</a>를 누르고
+<b>rikiwiki</b> 계정으로 다시 로그인하세요. 바로 글쓰기로 갑니다.</li>
+      <li><b>제목 복사</b> → 제목 칸에 붙여넣기</li>
+      <li><b>본문 복사</b> → 본문 칸에 붙여넣기. 소제목·표·굵게가 그대로 살아납니다.</li>
+      <li>점선 상자(<span style="color:#6b7178">📷 이미지</span>) 자리에 사진을 넣고 상자는 지웁니다.
+        <b>초록 상자</b>는 자동 생성된 그림이 있는 자리입니다 — 상자에 적힌 파일명을 같은 폴더에서 찾아 올리세요.
+        미리보기 그림은 복사에 포함되지 않습니다.</li>
+      <li><span style="background-color:#fff59d">형광펜</span>은 오늘의 핵심 수치가 <b>처음 나온 자리</b>에만 칠합니다.
+        같은 수치가 다시 나와도 표시하지 않습니다 — 강조가 많으면 아무것도 강조가 아니니까요.
+        붙여넣으면 그대로 따라가고, 마음에 안 들면 에디터에서 지우세요.</li>
+      <li>맨 아래 해시태그는 그대로 두면 네이버가 태그로 인식합니다.</li>
+      <li><b>올린 뒤</b> 깃허브 → Actions → <b>발행 기록</b> 에 글 주소를 적고, 하루 이틀 뒤 같은 곳에
+        <b>조회수</b>를 적어 주세요 (date 칸에 <b>2026-10-22</b>). 이 두 숫자가 쌓여야 어떤 제목과 주제가
+        사람을 데려오는지 알 수 있습니다 — 안 적으면 아무것도 재지 못합니다.</li>
+    </ol>
+    이 안내문은 복사에 포함되지 않습니다.
+  </div>
+</div>
+
+<script>
+// 버튼이 지정한 영역만 클립보드에 담는다. 안내문과 상단 바는 복사되지 않는다.
+document.querySelectorAll("[data-copy]").forEach(function (btn) {
+  btn.addEventListener("click", function () {
+    var node = document.getElementById(btn.dataset.copy);
+    if (!node) return;
+
+    // 미리보기 이미지(.nocopy)는 빼고 복사한다. 상대 경로 <img> 가 붙여넣기에 섞이면
+    // 네이버 에디터에 깨진 그림이 생긴다. 복사용 사본을 만들어 그것만 선택한다.
+    // 사본은 언제나 body 바로 아래에 둔다 — Chrome 이 복사본에 조상의 배경색을 박아
+    // 넣으므로, 흰 .card 안에서 복사하면 문단마다 흰 형광펜이 실린다. html·body 는
+    // 투명이라 body 아래에서 복사하면 배경색이 붙지 않는다 (2026-09-08 실측).
+    var clone = node.cloneNode(true);
+    clone.querySelectorAll(".nocopy").forEach(function (el) { el.remove(); });
+    clone.style.position = "fixed"; clone.style.left = "-9999px"; clone.style.top = "0";
+    document.body.appendChild(clone);
+    var copyNode = clone;
+
+    // 서식을 살리려면 선택 영역을 만들어 복사해야 한다.
+    // execCommand 는 구식이지만 file:// 에서 서식 복사가 확실하게 되는 유일한 방법이다.
+    var range = document.createRange();
+    range.selectNodeContents(copyNode);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    var ok = false;
+    try { ok = document.execCommand("copy"); } catch (e) { ok = false; }
+    sel.removeAllRanges();
+    var plainText = copyNode.innerText;
+    clone.remove();
+
+    if (!ok && navigator.clipboard) {
+      navigator.clipboard.writeText(plainText).then(flash, function () {
+        alert("복사에 실패했습니다. 직접 드래그해서 복사해 주세요.");
+      });
+      return;
+    }
+    flash();
+
+    function flash() {
+      var original = btn.textContent;
+      btn.textContent = "복사됨 ✓";
+      btn.classList.add("done");
+      setTimeout(function () {
+        btn.textContent = original;
+        btn.classList.remove("done");
+      }, 1400);
+    }
+  });
+});
+</script>
+</body>
+</html>

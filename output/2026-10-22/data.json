@@ -1,0 +1,153 @@
+{
+  "date": "2026-10-22",
+  "headline": "풍선효과·청주청약 열풍·세종 전세불안",
+  "market_temperature": "청주 가경 아이파크 청약 경쟁률이 630대 1로 지역 역대 최고를 기록하는 등 일부 지역 청약 열기는 뜨겁지만, 전국 단위 가격지표 수치는 자료에 없어 전반적 온도를 수치로 단정하기는 어렵다.",
+  "issues": [
+    {
+      "title": "수도권 풍선효과 확산",
+      "category": "정책·규제",
+      "one_liner": "규제지역 확대 이후 비규제지역 집값 상승폭 확대 보도",
+      "numbers": []
+    },
+    {
+      "title": "청주 가경 아이파크 청약 열기",
+      "category": "청약·분양",
+      "one_liner": "7·8단지 청약에 역대급 건수·경쟁률 기록",
+      "numbers": [
+        {
+          "label": "청약 접수 건수",
+          "value": "16",
+          "unit": "만건",
+          "period": "",
+          "context": "",
+          "source": "충청매일"
+        },
+        {
+          "label": "1순위 청약 접수 건수",
+          "value": "15",
+          "unit": "만건",
+          "period": "",
+          "context": "올해 전국 최다",
+          "source": "서울경제"
+        },
+        {
+          "label": "청약 경쟁률",
+          "value": "630",
+          "unit": "대 1",
+          "period": "",
+          "context": "지역 역대 최고, 전국 최대 청약접수",
+          "source": "충청일보·충북일보"
+        }
+      ]
+    },
+    {
+      "title": "계양신도시 첫 민간분양",
+      "category": "공급·정비사업",
+      "one_liner": "반도건설 '카이브 유보라' 23일 견본주택 개관",
+      "numbers": [
+        {
+          "label": "공급 가구수",
+          "value": "1110",
+          "unit": "가구",
+          "period": "",
+          "context": "",
+          "source": "매일경제"
+        },
+        {
+          "label": "전용면적 범위",
+          "value": "84~93",
+          "unit": "㎡",
+          "period": "",
+          "context": "",
+          "source": "매일경제"
+        }
+      ]
+    },
+    {
+      "title": "세종 전셋값 상승 조짐",
+      "category": "전월세·임대",
+      "one_liner": "공무원 1만명 유입 예고에 전셋값 먼저 뛰어",
+      "numbers": [
+        {
+          "label": "세종 유입 예정 공무원 수",
+          "value": "1만",
+          "unit": "명",
+          "period": "",
+          "context": "",
+          "source": "스마트비즈·지피코리아"
+        }
+      ]
+    },
+    {
+      "title": "분양가 상승 전 청약 독려",
+      "category": "청약·분양",
+      "one_liner": "\"지금이 가장 싸다\"며 청약·정책대출 활용 조언",
+      "numbers": []
+    }
+  ],
+  "tomorrow_watch": [
+    "10월 23일 인천 계양신도시 '카이브 유보라' 및 상업시설 '시간' 견본주택 개관"
+  ],
+  "datapoints": [
+    {
+      "label": "청약 접수 건수",
+      "value": "16",
+      "unit": "만건",
+      "period": "",
+      "context": "",
+      "source": "충청매일",
+      "issue": "청주 가경 아이파크 청약 열기",
+      "category": "청약·분양"
+    },
+    {
+      "label": "1순위 청약 접수 건수",
+      "value": "15",
+      "unit": "만건",
+      "period": "",
+      "context": "올해 전국 최다",
+      "source": "서울경제",
+      "issue": "청주 가경 아이파크 청약 열기",
+      "category": "청약·분양"
+    },
+    {
+      "label": "청약 경쟁률",
+      "value": "630",
+      "unit": "대 1",
+      "period": "",
+      "context": "지역 역대 최고, 전국 최대 청약접수",
+      "source": "충청일보·충북일보",
+      "issue": "청주 가경 아이파크 청약 열기",
+      "category": "청약·분양"
+    },
+    {
+      "label": "공급 가구수",
+      "value": "1110",
+      "unit": "가구",
+      "period": "",
+      "context": "",
+      "source": "매일경제",
+      "issue": "계양신도시 첫 민간분양",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "전용면적 범위",
+      "value": "84~93",
+      "unit": "㎡",
+      "period": "",
+      "context": "",
+      "source": "매일경제",
+      "issue": "계양신도시 첫 민간분양",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "세종 유입 예정 공무원 수",
+      "value": "1만",
+      "unit": "명",
+      "period": "",
+      "context": "",
+      "source": "스마트비즈·지피코리아",
+      "issue": "세종 전셋값 상승 조짐",
+      "category": "전월세·임대"
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 {
-  "updated_at": "2026-10-21T00:18:41",
+  "updated_at": "2026-10-21T21:54:06",
   "days": {
     "2026-09-08": {
       "ok": 11,
@@ -678,6 +678,21 @@
         "claude-haiku-4-5"
       ],
       "blog_chars": 1230,
+      "issues": 5,
+      "usd": 0.0
+    },
+    "2026-10-22": {
+      "ok": 11,
+      "warn": 1,
+      "fail": 0,
+      "verified": 4,
+      "unverified": 0,
+      "no_text": 2,
+      "models": [
+        "claude-sonnet-5",
+        "claude-opus-5"
+      ],
+      "blog_chars": 1221,
       "issues": 5,
       "usd": 0.0
     }
