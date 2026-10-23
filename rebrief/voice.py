@@ -217,7 +217,7 @@ def make_shorts_voice(cfg: Config, out_dir: Path, filename: str, *, pick: str = 
     if not voice_id:
         result.note = "고른 목소리가 없습니다 (voice.voice_id)"
         return result
-    model = str(opts.get("model", "eleven_multilingual_v2") or "eleven_multilingual_v2")
+    model = str(opts.get("model", "eleven_v4_turbo") or "eleven_v4_turbo")  # 2026-10-23 기본 v4 Turbo
     speed = float(opts.get("speed", 1.0) or 1.0)
     result.voice_id, result.voice_name, result.chars = voice_id, name, len(text)
 
