@@ -1,6 +1,6 @@
 # 산출물 목록
 
-마지막 갱신 2026-10-24 23:54 · 총 50일치
+마지막 갱신 2026-10-25 01:19 · 총 50일치
 
 | 날짜 | 브리핑 | 블로그 | 네이버 | 쇼츠 | 롱폼 | 제작메모 | 데이터 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -59,6 +59,7 @@
 
 | 주차 | 결산 | 네이버 | 데이터 |
 | --- | --- | --- | --- |
+| **2026-W43** | [결산](weekly/2026-W43/weekly.md) | [HTML](weekly/2026-W43/weekly-naver.html) | [JSON](weekly/2026-W43/data.json) |
 | **2026-W42** | [결산](weekly/2026-W42/weekly.md) | [HTML](weekly/2026-W42/weekly-naver.html) | [JSON](weekly/2026-W42/data.json) |
 | **2026-W41** | [결산](weekly/2026-W41/weekly.md) | [HTML](weekly/2026-W41/weekly-naver.html) | [JSON](weekly/2026-W41/data.json) |
 | **2026-W40** | [결산](weekly/2026-W40/weekly.md) | [HTML](weekly/2026-W40/weekly-naver.html) | [JSON](weekly/2026-W40/data.json) |
