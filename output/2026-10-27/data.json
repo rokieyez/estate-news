@@ -1,0 +1,515 @@
+{
+  "date": "2026-10-27",
+  "headline": "서울 신축 쏠림·강북 집값 역대최고",
+  "market_temperature": "서울 아파트값이 89주 연속 상승(10월 셋째 주 0.13%, 전주 0.16%보다 둔화)하며 역대 최장 기록을 이어가는 동시에 강북 아파트 평균 매매가(12억194만원)가 역대 최고치를 찍었지만, 강남3구(서초 -0.32%, 강남 11주째 하락)는 약세가 지속되며 지역별 온도차가 뚜렷한 장세다.",
+  "issues": [
+    {
+      "title": "서울 신축 청약 쏠림",
+      "category": "청약·분양",
+      "one_liner": "수도권 1순위 청약자 다수가 서울 신축 분양에 집중",
+      "numbers": [
+        {
+          "label": "수도권 1순위 청약자 중 서울 신축 집중 비율(매일경제)",
+          "value": "60",
+          "unit": "%",
+          "period": "올해",
+          "context": "10명 중 6명 이상",
+          "source": "매일경제·부동산"
+        },
+        {
+          "label": "수도권 1순위 청약자 중 서울 집중 비율(코리아데일리)",
+          "value": "64",
+          "unit": "%",
+          "period": "올해",
+          "context": "",
+          "source": "코리아데일리"
+        },
+        {
+          "label": "수도권 1순위 청약자 중 서울 집중 비율(파이낸셜뉴스)",
+          "value": "63.9",
+          "unit": "%",
+          "period": "올해",
+          "context": "",
+          "source": "파이낸셜뉴스"
+        },
+        {
+          "label": "서울 공급 비중",
+          "value": "6",
+          "unit": "%",
+          "period": "",
+          "context": "수도권 전체 공급 중 서울 비중",
+          "source": "매일경제·부동산"
+        }
+      ]
+    },
+    {
+      "title": "강북 아파트값 역대 최고",
+      "category": "가격동향",
+      "one_liner": "서울 강북 14개구 평균 매매가 첫 12억원 돌파",
+      "numbers": [
+        {
+          "label": "서울 강북 아파트 평균 매매가",
+          "value": "12억194",
+          "unit": "만원",
+          "period": "",
+          "context": "역대 최고치",
+          "source": "기독일보"
+        },
+        {
+          "label": "강북 아파트 평균 매매가 반년간 상승액",
+          "value": "1억",
+          "unit": "원",
+          "period": "최근 반년",
+          "context": "",
+          "source": "서울이코노미뉴스·뉴데일리"
+        },
+        {
+          "label": "서울 전체 아파트 평균 매매가",
+          "value": "16",
+          "unit": "억원",
+          "period": "",
+          "context": "",
+          "source": "메디컬투데이"
+        },
+        {
+          "label": "강북 14개구 아파트 평균가 올해 상승률",
+          "value": "13",
+          "unit": "%",
+          "period": "올해",
+          "context": "",
+          "source": "헤럴드경제"
+        }
+      ]
+    },
+    {
+      "title": "IPARK현산 군포 재개발 수주",
+      "category": "공급·정비사업",
+      "one_liner": "IPARK현산, 군포 금정역세권1구역 4482억원 규모 수주",
+      "numbers": [
+        {
+          "label": "금정역세권1구역 공사비",
+          "value": "4482",
+          "unit": "억원",
+          "period": "",
+          "context": "",
+          "source": "매일경제·부동산"
+        },
+        {
+          "label": "시공사 선정 찬성률",
+          "value": "87.4",
+          "unit": "%",
+          "period": "",
+          "context": "조합원 381명 중 333표 찬성",
+          "source": "매일경제·부동산"
+        },
+        {
+          "label": "조성 아파트 가구수",
+          "value": "1137",
+          "unit": "가구",
+          "period": "",
+          "context": "",
+          "source": "매일경제·부동산"
+        },
+        {
+          "label": "조성 동수",
+          "value": "10",
+          "unit": "개동",
+          "period": "",
+          "context": "",
+          "source": "매일경제·부동산"
+        },
+        {
+          "label": "대지면적",
+          "value": "12만7296",
+          "unit": "㎡",
+          "period": "",
+          "context": "",
+          "source": "매일경제·부동산"
+        },
+        {
+          "label": "연면적",
+          "value": "20만7521",
+          "unit": "㎡",
+          "period": "",
+          "context": "",
+          "source": "매일경제·부동산"
+        },
+        {
+          "label": "IPARK현산 올해 누적 정비사업 수주액",
+          "value": "2조",
+          "unit": "원",
+          "period": "",
+          "context": "2조원 돌파",
+          "source": "한국경제·부동산, 조선비즈·부동산"
+        }
+      ]
+    },
+    {
+      "title": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향",
+      "one_liner": "서울 매매가 89주 연속 상승, 강남3구는 약세 지속",
+      "numbers": [
+        {
+          "label": "서울 아파트값 연속 상승 기간",
+          "value": "89",
+          "unit": "주",
+          "period": "",
+          "context": "역대 최장 상승 기록",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "서울 아파트 매매가 주간 변동률",
+          "value": "0.13",
+          "unit": "%",
+          "period": "10월 셋째 주(19일 기준)",
+          "context": "전주 0.16%에서 오름폭 축소",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "서초구 매매가 변동률",
+          "value": "-0.32",
+          "unit": "%",
+          "period": "10월 셋째 주",
+          "context": "낙폭 확대",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "강남구 하락 지속 기간",
+          "value": "11",
+          "unit": "주",
+          "period": "",
+          "context": "",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "성북·서대문구 매매가 변동률",
+          "value": "0.36",
+          "unit": "%",
+          "period": "10월 셋째 주",
+          "context": "",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "중구 매매가 변동률",
+          "value": "0.35",
+          "unit": "%",
+          "period": "10월 셋째 주",
+          "context": "",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "화성 병점구 매매가 변동률",
+          "value": "0.65",
+          "unit": "%",
+          "period": "10월 셋째 주",
+          "context": "",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "동탄구 매매가 변동률",
+          "value": "0.57",
+          "unit": "%",
+          "period": "10월 셋째 주",
+          "context": "",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "안양 동안구 매매가 변동률",
+          "value": "0.56",
+          "unit": "%",
+          "period": "10월 셋째 주",
+          "context": "",
+          "source": "한국부동산원"
+        },
+        {
+          "label": "서울 전세가 주간 변동률",
+          "value": "0.16",
+          "unit": "%",
+          "period": "10월 셋째 주",
+          "context": "전주 0.18%에서 오름폭 축소",
+          "source": "한국부동산원"
+        }
+      ]
+    },
+    {
+      "title": "3기 신도시 도로 인허가 단축",
+      "category": "정책·규제",
+      "one_liner": "3기 신도시 도로공사 국토부 직접 승인 대상 7개로 확대",
+      "numbers": [
+        {
+          "label": "국토부 직접 승인 대상 사업 수",
+          "value": "7",
+          "unit": "개",
+          "period": "",
+          "context": "",
+          "source": "전문건설신문"
+        }
+      ]
+    }
+  ],
+  "tomorrow_watch": [
+    "IPARK현대산업개발의 목동 11단지, 광명 하안주공 6·7단지, 고양능곡 3구역, 방화2구역, 숙대입구역세권 등 추가 정비사업 수주 행보 여부"
+  ],
+  "datapoints": [
+    {
+      "label": "수도권 1순위 청약자 중 서울 신축 집중 비율(매일경제)",
+      "value": "60",
+      "unit": "%",
+      "period": "올해",
+      "context": "10명 중 6명 이상",
+      "source": "매일경제·부동산",
+      "issue": "서울 신축 청약 쏠림",
+      "category": "청약·분양"
+    },
+    {
+      "label": "수도권 1순위 청약자 중 서울 집중 비율(코리아데일리)",
+      "value": "64",
+      "unit": "%",
+      "period": "올해",
+      "context": "",
+      "source": "코리아데일리",
+      "issue": "서울 신축 청약 쏠림",
+      "category": "청약·분양"
+    },
+    {
+      "label": "수도권 1순위 청약자 중 서울 집중 비율(파이낸셜뉴스)",
+      "value": "63.9",
+      "unit": "%",
+      "period": "올해",
+      "context": "",
+      "source": "파이낸셜뉴스",
+      "issue": "서울 신축 청약 쏠림",
+      "category": "청약·분양"
+    },
+    {
+      "label": "서울 공급 비중",
+      "value": "6",
+      "unit": "%",
+      "period": "",
+      "context": "수도권 전체 공급 중 서울 비중",
+      "source": "매일경제·부동산",
+      "issue": "서울 신축 청약 쏠림",
+      "category": "청약·분양"
+    },
+    {
+      "label": "서울 강북 아파트 평균 매매가",
+      "value": "12억194",
+      "unit": "만원",
+      "period": "",
+      "context": "역대 최고치",
+      "source": "기독일보",
+      "issue": "강북 아파트값 역대 최고",
+      "category": "가격동향"
+    },
+    {
+      "label": "강북 아파트 평균 매매가 반년간 상승액",
+      "value": "1억",
+      "unit": "원",
+      "period": "최근 반년",
+      "context": "",
+      "source": "서울이코노미뉴스·뉴데일리",
+      "issue": "강북 아파트값 역대 최고",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 전체 아파트 평균 매매가",
+      "value": "16",
+      "unit": "억원",
+      "period": "",
+      "context": "",
+      "source": "메디컬투데이",
+      "issue": "강북 아파트값 역대 최고",
+      "category": "가격동향"
+    },
+    {
+      "label": "강북 14개구 아파트 평균가 올해 상승률",
+      "value": "13",
+      "unit": "%",
+      "period": "올해",
+      "context": "",
+      "source": "헤럴드경제",
+      "issue": "강북 아파트값 역대 최고",
+      "category": "가격동향"
+    },
+    {
+      "label": "금정역세권1구역 공사비",
+      "value": "4482",
+      "unit": "억원",
+      "period": "",
+      "context": "",
+      "source": "매일경제·부동산",
+      "issue": "IPARK현산 군포 재개발 수주",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "시공사 선정 찬성률",
+      "value": "87.4",
+      "unit": "%",
+      "period": "",
+      "context": "조합원 381명 중 333표 찬성",
+      "source": "매일경제·부동산",
+      "issue": "IPARK현산 군포 재개발 수주",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "조성 아파트 가구수",
+      "value": "1137",
+      "unit": "가구",
+      "period": "",
+      "context": "",
+      "source": "매일경제·부동산",
+      "issue": "IPARK현산 군포 재개발 수주",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "조성 동수",
+      "value": "10",
+      "unit": "개동",
+      "period": "",
+      "context": "",
+      "source": "매일경제·부동산",
+      "issue": "IPARK현산 군포 재개발 수주",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "대지면적",
+      "value": "12만7296",
+      "unit": "㎡",
+      "period": "",
+      "context": "",
+      "source": "매일경제·부동산",
+      "issue": "IPARK현산 군포 재개발 수주",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "연면적",
+      "value": "20만7521",
+      "unit": "㎡",
+      "period": "",
+      "context": "",
+      "source": "매일경제·부동산",
+      "issue": "IPARK현산 군포 재개발 수주",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "IPARK현산 올해 누적 정비사업 수주액",
+      "value": "2조",
+      "unit": "원",
+      "period": "",
+      "context": "2조원 돌파",
+      "source": "한국경제·부동산, 조선비즈·부동산",
+      "issue": "IPARK현산 군포 재개발 수주",
+      "category": "공급·정비사업"
+    },
+    {
+      "label": "서울 아파트값 연속 상승 기간",
+      "value": "89",
+      "unit": "주",
+      "period": "",
+      "context": "역대 최장 상승 기록",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 아파트 매매가 주간 변동률",
+      "value": "0.13",
+      "unit": "%",
+      "period": "10월 셋째 주(19일 기준)",
+      "context": "전주 0.16%에서 오름폭 축소",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "서초구 매매가 변동률",
+      "value": "-0.32",
+      "unit": "%",
+      "period": "10월 셋째 주",
+      "context": "낙폭 확대",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "강남구 하락 지속 기간",
+      "value": "11",
+      "unit": "주",
+      "period": "",
+      "context": "",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "성북·서대문구 매매가 변동률",
+      "value": "0.36",
+      "unit": "%",
+      "period": "10월 셋째 주",
+      "context": "",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "중구 매매가 변동률",
+      "value": "0.35",
+      "unit": "%",
+      "period": "10월 셋째 주",
+      "context": "",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "화성 병점구 매매가 변동률",
+      "value": "0.65",
+      "unit": "%",
+      "period": "10월 셋째 주",
+      "context": "",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "동탄구 매매가 변동률",
+      "value": "0.57",
+      "unit": "%",
+      "period": "10월 셋째 주",
+      "context": "",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "안양 동안구 매매가 변동률",
+      "value": "0.56",
+      "unit": "%",
+      "period": "10월 셋째 주",
+      "context": "",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 전세가 주간 변동률",
+      "value": "0.16",
+      "unit": "%",
+      "period": "10월 셋째 주",
+      "context": "전주 0.18%에서 오름폭 축소",
+      "source": "한국부동산원",
+      "issue": "서울 아파트값 89주 연속 상승",
+      "category": "가격동향"
+    },
+    {
+      "label": "국토부 직접 승인 대상 사업 수",
+      "value": "7",
+      "unit": "개",
+      "period": "",
+      "context": "",
+      "source": "전문건설신문",
+      "issue": "3기 신도시 도로 인허가 단축",
+      "category": "정책·규제"
+    }
+  ]
+}
