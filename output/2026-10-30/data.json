@@ -1,0 +1,315 @@
+{
+  "date": "2026-10-30",
+  "headline": "서울 90주 상승 지속…강남3구는 하락 심화",
+  "market_temperature": "서울 아파트값은 90주 연속 상승세를 이어가고 있으나 주간 상승률은 0.09%(또는 0.07%)로 2주째 축소됐고, 강남·서초는 12주 연속 하락하는 등 지역별 양극화가 뚜렷하다.",
+  "issues": [
+    {
+      "title": "서울 상승폭 2주째 축소",
+      "category": "가격동향",
+      "one_liner": "서울 아파트값 상승폭 2주 연속 축소, 강남3구 낙폭 확대",
+      "numbers": [
+        {
+          "label": "서울 아파트 주간 매매가격 변동률",
+          "value": "0.09",
+          "unit": "%",
+          "period": "10월 4주",
+          "context": "2주 연속 축소",
+          "source": "에너지경제신문·NSP통신"
+        },
+        {
+          "label": "서울 아파트값 연속 상승 기간",
+          "value": "90",
+          "unit": "주",
+          "period": "~10월 4주",
+          "context": "90주 연속 상승",
+          "source": "민주신문"
+        }
+      ]
+    },
+    {
+      "title": "서울 90주 상승, 경기 상승률 2배",
+      "category": "가격동향",
+      "one_liner": "서울 90주 연속 상승, 경기 상승률이 5년 만에 서울의 2배",
+      "numbers": [
+        {
+          "label": "서울 주간 변동률",
+          "value": "0.09",
+          "unit": "%",
+          "period": "10월 4주",
+          "context": "",
+          "source": "매일경제"
+        },
+        {
+          "label": "경기 주간 변동률",
+          "value": "0.20",
+          "unit": "%",
+          "period": "10월 4주",
+          "context": "",
+          "source": "매일경제"
+        },
+        {
+          "label": "군포·영통 변동률",
+          "value": "0.58",
+          "unit": "%",
+          "period": "10월 4주",
+          "context": "",
+          "source": "매일경제"
+        },
+        {
+          "label": "기흥 변동률",
+          "value": "0.54",
+          "unit": "%",
+          "period": "10월 4주",
+          "context": "",
+          "source": "매일경제"
+        },
+        {
+          "label": "병점(비규제지역) 변동률",
+          "value": "0.44",
+          "unit": "%",
+          "period": "10월 4주",
+          "context": "",
+          "source": "매일경제"
+        }
+      ]
+    },
+    {
+      "title": "3분기 국평가 하락, 전세는 급등",
+      "category": "가격동향",
+      "one_liner": "서울 84㎡ 매매가 2.5%↓, 전세보증금 3.8%↑로 엇갈린 흐름",
+      "numbers": [
+        {
+          "label": "서울 84㎡ 평균 매매가 변동률(YoY)",
+          "value": "-2.5",
+          "unit": "%",
+          "period": "2026년 3분기",
+          "context": "",
+          "source": "매일경제"
+        },
+        {
+          "label": "서울 평균 전세보증금 변동률(YoY)",
+          "value": "3.8",
+          "unit": "%",
+          "period": "2026년 3분기",
+          "context": "",
+          "source": "매일경제"
+        },
+        {
+          "label": "서초구 84㎡ 평균 매매가",
+          "value": "29억2556만",
+          "unit": "원",
+          "period": "2026년 3분기",
+          "context": "",
+          "source": "매일경제"
+        },
+        {
+          "label": "국민평형 평균 매매가(기사 원문 표기)",
+          "value": "12억7949억",
+          "unit": "원",
+          "period": "2026년 3분기",
+          "context": "원문 표기 그대로, 단위 오류 가능성",
+          "source": "매일경제"
+        }
+      ]
+    },
+    {
+      "title": "강남·서초 12주째 하락",
+      "category": "지역이슈",
+      "one_liner": "서울 90주 상승 속 강남·서초만 12주 연속 하락",
+      "numbers": [
+        {
+          "label": "서울 아파트값 연속 상승 기간",
+          "value": "90",
+          "unit": "주",
+          "period": "",
+          "context": "",
+          "source": "세계일보"
+        },
+        {
+          "label": "강남·서초 연속 하락 기간",
+          "value": "12",
+          "unit": "주",
+          "period": "",
+          "context": "",
+          "source": "세계일보"
+        }
+      ]
+    },
+    {
+      "title": "주간 매매·전세 변동률 수치 차이",
+      "category": "가격동향",
+      "one_liner": "주간 매매 0.07%·전세 0.10% 상승, 강남3구는 하락 전환",
+      "numbers": [
+        {
+          "label": "주간 아파트 매매가격 변동률",
+          "value": "0.07",
+          "unit": "%",
+          "period": "10월 4주",
+          "context": "",
+          "source": "국토매일"
+        },
+        {
+          "label": "주간 아파트 전세가격 변동률",
+          "value": "0.10",
+          "unit": "%",
+          "period": "10월 4주",
+          "context": "",
+          "source": "국토매일"
+        }
+      ]
+    }
+  ],
+  "tomorrow_watch": [],
+  "datapoints": [
+    {
+      "label": "서울 아파트 주간 매매가격 변동률",
+      "value": "0.09",
+      "unit": "%",
+      "period": "10월 4주",
+      "context": "2주 연속 축소",
+      "source": "에너지경제신문·NSP통신",
+      "issue": "서울 상승폭 2주째 축소",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 아파트값 연속 상승 기간",
+      "value": "90",
+      "unit": "주",
+      "period": "~10월 4주",
+      "context": "90주 연속 상승",
+      "source": "민주신문",
+      "issue": "서울 상승폭 2주째 축소",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 주간 변동률",
+      "value": "0.09",
+      "unit": "%",
+      "period": "10월 4주",
+      "context": "",
+      "source": "매일경제",
+      "issue": "서울 90주 상승, 경기 상승률 2배",
+      "category": "가격동향"
+    },
+    {
+      "label": "경기 주간 변동률",
+      "value": "0.20",
+      "unit": "%",
+      "period": "10월 4주",
+      "context": "",
+      "source": "매일경제",
+      "issue": "서울 90주 상승, 경기 상승률 2배",
+      "category": "가격동향"
+    },
+    {
+      "label": "군포·영통 변동률",
+      "value": "0.58",
+      "unit": "%",
+      "period": "10월 4주",
+      "context": "",
+      "source": "매일경제",
+      "issue": "서울 90주 상승, 경기 상승률 2배",
+      "category": "가격동향"
+    },
+    {
+      "label": "기흥 변동률",
+      "value": "0.54",
+      "unit": "%",
+      "period": "10월 4주",
+      "context": "",
+      "source": "매일경제",
+      "issue": "서울 90주 상승, 경기 상승률 2배",
+      "category": "가격동향"
+    },
+    {
+      "label": "병점(비규제지역) 변동률",
+      "value": "0.44",
+      "unit": "%",
+      "period": "10월 4주",
+      "context": "",
+      "source": "매일경제",
+      "issue": "서울 90주 상승, 경기 상승률 2배",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 84㎡ 평균 매매가 변동률(YoY)",
+      "value": "-2.5",
+      "unit": "%",
+      "period": "2026년 3분기",
+      "context": "",
+      "source": "매일경제",
+      "issue": "3분기 국평가 하락, 전세는 급등",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 평균 전세보증금 변동률(YoY)",
+      "value": "3.8",
+      "unit": "%",
+      "period": "2026년 3분기",
+      "context": "",
+      "source": "매일경제",
+      "issue": "3분기 국평가 하락, 전세는 급등",
+      "category": "가격동향"
+    },
+    {
+      "label": "서초구 84㎡ 평균 매매가",
+      "value": "29억2556만",
+      "unit": "원",
+      "period": "2026년 3분기",
+      "context": "",
+      "source": "매일경제",
+      "issue": "3분기 국평가 하락, 전세는 급등",
+      "category": "가격동향"
+    },
+    {
+      "label": "국민평형 평균 매매가(기사 원문 표기)",
+      "value": "12억7949억",
+      "unit": "원",
+      "period": "2026년 3분기",
+      "context": "원문 표기 그대로, 단위 오류 가능성",
+      "source": "매일경제",
+      "issue": "3분기 국평가 하락, 전세는 급등",
+      "category": "가격동향"
+    },
+    {
+      "label": "서울 아파트값 연속 상승 기간",
+      "value": "90",
+      "unit": "주",
+      "period": "",
+      "context": "",
+      "source": "세계일보",
+      "issue": "강남·서초 12주째 하락",
+      "category": "지역이슈"
+    },
+    {
+      "label": "강남·서초 연속 하락 기간",
+      "value": "12",
+      "unit": "주",
+      "period": "",
+      "context": "",
+      "source": "세계일보",
+      "issue": "강남·서초 12주째 하락",
+      "category": "지역이슈"
+    },
+    {
+      "label": "주간 아파트 매매가격 변동률",
+      "value": "0.07",
+      "unit": "%",
+      "period": "10월 4주",
+      "context": "",
+      "source": "국토매일",
+      "issue": "주간 매매·전세 변동률 수치 차이",
+      "category": "가격동향"
+    },
+    {
+      "label": "주간 아파트 전세가격 변동률",
+      "value": "0.10",
+      "unit": "%",
+      "period": "10월 4주",
+      "context": "",
+      "source": "국토매일",
+      "issue": "주간 매매·전세 변동률 수치 차이",
+      "category": "가격동향"
+    }
+  ]
+}
