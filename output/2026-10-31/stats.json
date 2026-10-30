@@ -1,0 +1,1419 @@
+{
+  "month": "202609",
+  "month_label": "2026년 9월",
+  "before": "202608",
+  "before_label": "2026년 8월",
+  "districts": [
+    {
+      "name": "구로구",
+      "code": "11530",
+      "now": {
+        "count": 205,
+        "avg": 754409756,
+        "median": 737000000,
+        "top": {
+          "name": "동아3",
+          "dong": "신도림동",
+          "seq": "11530-132",
+          "amount": 1700000000,
+          "area": 164.82,
+          "floor": "3",
+          "date": "2026-09-13"
+        }
+      },
+      "was": {
+        "count": 205,
+        "avg": 766517073,
+        "median": 710000000,
+        "top": {
+          "name": "대림e-편한세상4",
+          "dong": "신도림동",
+          "seq": "11530-163",
+          "amount": 2350000000,
+          "area": 152.07,
+          "floor": "9",
+          "date": "2026-08-21"
+        }
+      },
+      "focus": true,
+      "change": 0,
+      "jeonse": {
+        "median": 57.2,
+        "pairs": [
+          {
+            "name": "남구로역동일센타시아",
+            "dong": "가리봉동",
+            "area": 37.31,
+            "sale": 305500000,
+            "lease": 300000000,
+            "ratio": 98.2
+          },
+          {
+            "name": "신도림 아르디에",
+            "dong": "신도림동",
+            "area": 21.74,
+            "sale": 185000000,
+            "lease": 175000000,
+            "ratio": 94.6
+          },
+          {
+            "name": "금강",
+            "dong": "오류동",
+            "area": 84.96,
+            "sale": 475000000,
+            "lease": 355000000,
+            "ratio": 74.7
+          },
+          {
+            "name": "우남퍼스트빌더센트럴",
+            "dong": "항동",
+            "area": 84.91,
+            "sale": 782500000,
+            "lease": 580000000,
+            "ratio": 74.1
+          },
+          {
+            "name": "한마을",
+            "dong": "개봉동",
+            "area": 84.57,
+            "sale": 900000000,
+            "lease": 645000000,
+            "ratio": 71.7
+          }
+        ],
+        "count": 36
+      },
+      "rent": {
+        "total": 921,
+        "monthly_count": 698,
+        "monthly_share": 75.8,
+        "renew_count": 558,
+        "jeonse_deposit": 400000000,
+        "jeonse_count": 112,
+        "rent_deposit": 50000000,
+        "rent_monthly": 500000,
+        "rent_count": 251
+      }
+    },
+    {
+      "name": "강남구",
+      "code": "11680",
+      "now": {
+        "count": 124,
+        "avg": 2880838709,
+        "median": 2857500000,
+        "top": {
+          "name": "신현대12차",
+          "dong": "압구정동",
+          "seq": "11680-426",
+          "amount": 10000000000,
+          "area": 182.95,
+          "floor": "3",
+          "date": "2026-09-23"
+        }
+      },
+      "was": {
+        "count": 94,
+        "avg": 3043968085,
+        "median": 2820000000,
+        "top": {
+          "name": "신현대11차",
+          "dong": "압구정동",
+          "seq": "11680-425",
+          "amount": 9730000000,
+          "area": 183.41,
+          "floor": "9",
+          "date": "2026-08-28"
+        }
+      },
+      "focus": true,
+      "change": 30,
+      "jeonse": {
+        "median": 34.6,
+        "pairs": [
+          {
+            "name": "테헤란아이파크",
+            "dong": "역삼동",
+            "area": 92.62,
+            "sale": 3300000000,
+            "lease": 1580000000,
+            "ratio": 47.9
+          },
+          {
+            "name": "대치삼성",
+            "dong": "대치동",
+            "area": 97.35,
+            "sale": 3350000000,
+            "lease": 1600000000,
+            "ratio": 47.8
+          },
+          {
+            "name": "래미안대치팰리스",
+            "dong": "대치동",
+            "area": 94.5,
+            "sale": 4650000000,
+            "lease": 2200000000,
+            "ratio": 47.3
+          },
+          {
+            "name": "푸른마을아파트101동~111동",
+            "dong": "일원동",
+            "area": 84.93,
+            "sale": 2366666667,
+            "lease": 1100000000,
+            "ratio": 46.5
+          },
+          {
+            "name": "개포래미안포레스트",
+            "dong": "개포동",
+            "area": 59.92,
+            "sale": 2650000000,
+            "lease": 1190000000,
+            "ratio": 44.9
+          }
+        ],
+        "count": 29
+      },
+      "rent": {
+        "total": 1246,
+        "monthly_count": 718,
+        "monthly_share": 57.6,
+        "renew_count": 657,
+        "jeonse_deposit": 900000000,
+        "jeonse_count": 219,
+        "rent_deposit": 200000000,
+        "rent_monthly": 1500000,
+        "rent_count": 370
+      }
+    },
+    {
+      "name": "영등포구",
+      "code": "11560",
+      "now": {
+        "count": 123,
+        "avg": 1455873983,
+        "median": 1365000000,
+        "top": {
+          "name": "여의도자이",
+          "dong": "여의도동",
+          "seq": "11560-1369",
+          "amount": 4990000000,
+          "area": 210.38,
+          "floor": "39",
+          "date": "2026-09-12"
+        }
+      },
+      "was": {
+        "count": 143,
+        "avg": 1365893006,
+        "median": 1270000000,
+        "top": {
+          "name": "삼부",
+          "dong": "여의도동",
+          "seq": "11560-15",
+          "amount": 5450000000,
+          "area": 177.09,
+          "floor": "15",
+          "date": "2026-08-06"
+        }
+      },
+      "focus": true,
+      "change": -20,
+      "jeonse": {
+        "median": 48.3,
+        "pairs": [
+          {
+            "name": "쌍용플래티넘S",
+            "dong": "대림동",
+            "area": 18.24,
+            "sale": 95000000,
+            "lease": 83000000,
+            "ratio": 87.4
+          },
+          {
+            "name": "영등포자이르네",
+            "dong": "대림동",
+            "area": 49.1,
+            "sale": 681666667,
+            "lease": 570000000,
+            "ratio": 83.6
+          },
+          {
+            "name": "당산디오빌",
+            "dong": "당산동5가",
+            "area": 33.09,
+            "sale": 380000000,
+            "lease": 295000000,
+            "ratio": 77.6
+          },
+          {
+            "name": "당산대우",
+            "dong": "당산동2가",
+            "area": 31.73,
+            "sale": 362833333,
+            "lease": 280000000,
+            "ratio": 77.2
+          },
+          {
+            "name": "당산푸르지오",
+            "dong": "영등포동8가",
+            "area": 114.51,
+            "sale": 1950000000,
+            "lease": 1150000000,
+            "ratio": 59.0
+          }
+        ],
+        "count": 30
+      },
+      "rent": {
+        "total": 973,
+        "monthly_count": 582,
+        "monthly_share": 59.8,
+        "renew_count": 599,
+        "jeonse_deposit": 620000000,
+        "jeonse_count": 166,
+        "rent_deposit": 100000000,
+        "rent_monthly": 700000,
+        "rent_count": 208
+      }
+    },
+    {
+      "name": "노원구",
+      "code": "11350",
+      "now": {
+        "count": 411,
+        "avg": 719302895,
+        "median": 680000000,
+        "top": {
+          "name": "동진신안",
+          "dong": "중계동",
+          "seq": "11350-105",
+          "amount": 1550000000,
+          "area": 134.74,
+          "floor": "12",
+          "date": "2026-09-03"
+        }
+      },
+      "was": {
+        "count": 533,
+        "avg": 707257035,
+        "median": 670000000,
+        "top": {
+          "name": "롯데우성",
+          "dong": "중계동",
+          "seq": "11350-110",
+          "amount": 1520000000,
+          "area": 115.26,
+          "floor": "11",
+          "date": "2026-08-13"
+        }
+      },
+      "focus": false,
+      "change": -122,
+      "jeonse": {
+        "median": 52.5,
+        "pairs": [
+          {
+            "name": "금호타운(583)",
+            "dong": "중계동",
+            "area": 84.98,
+            "sale": 650000000,
+            "lease": 610000000,
+            "ratio": 93.8
+          },
+          {
+            "name": "삼익2차아파트",
+            "dong": "공릉동",
+            "area": 54.74,
+            "sale": 460000000,
+            "lease": 400000000,
+            "ratio": 87.0
+          },
+          {
+            "name": "현대1(4차)",
+            "dong": "중계동",
+            "area": 84.99,
+            "sale": 680000000,
+            "lease": 530000000,
+            "ratio": 77.9
+          },
+          {
+            "name": "하계2현대",
+            "dong": "하계동",
+            "area": 84.9,
+            "sale": 1075000000,
+            "lease": 820000000,
+            "ratio": 76.3
+          },
+          {
+            "name": "건영2",
+            "dong": "중계동",
+            "area": 84.96,
+            "sale": 829333333,
+            "lease": 630000000,
+            "ratio": 76.0
+          }
+        ],
+        "count": 90
+      },
+      "rent": {
+        "total": 1016,
+        "monthly_count": 450,
+        "monthly_share": 44.3,
+        "renew_count": 493,
+        "jeonse_deposit": 340000000,
+        "jeonse_count": 263,
+        "rent_deposit": 32100000,
+        "rent_monthly": 900000,
+        "rent_count": 260
+      }
+    },
+    {
+      "name": "송파구",
+      "code": "11710",
+      "now": {
+        "count": 319,
+        "avg": 1185619122,
+        "median": 420000000,
+        "top": {
+          "name": "주공아파트 5단지",
+          "dong": "잠실동",
+          "seq": "11710-164",
+          "amount": 4173000000,
+          "area": 82.51,
+          "floor": "11",
+          "date": "2026-09-22"
+        }
+      },
+      "was": {
+        "count": 172,
+        "avg": 2051686046,
+        "median": 1932500000,
+        "top": {
+          "name": "주공아파트 5단지",
+          "dong": "잠실동",
+          "seq": "11710-164",
+          "amount": 4575000000,
+          "area": 82.61,
+          "floor": "9",
+          "date": "2026-08-06"
+        }
+      },
+      "focus": false,
+      "change": 147,
+      "jeonse": {
+        "median": 42.5,
+        "pairs": [
+          {
+            "name": "문정래미안",
+            "dong": "문정동",
+            "area": 120.97,
+            "sale": 1987000000,
+            "lease": 1125000000,
+            "ratio": 56.6
+          },
+          {
+            "name": "송파레미니스2단지",
+            "dong": "오금동",
+            "area": 84.82,
+            "sale": 1740000000,
+            "lease": 950000000,
+            "ratio": 54.6
+          },
+          {
+            "name": "현대(62-5)",
+            "dong": "문정동",
+            "area": 81.43,
+            "sale": 1300000000,
+            "lease": 700000000,
+            "ratio": 53.8
+          },
+          {
+            "name": "거여2단지효성아파트",
+            "dong": "거여동",
+            "area": 134.88,
+            "sale": 1750000000,
+            "lease": 930000000,
+            "ratio": 53.1
+          },
+          {
+            "name": "방이금호어울림",
+            "dong": "방이동",
+            "area": 84.3,
+            "sale": 1490000000,
+            "lease": 780000000,
+            "ratio": 52.3
+          }
+        ],
+        "count": 48
+      },
+      "rent": {
+        "total": 1082,
+        "monthly_count": 542,
+        "monthly_share": 50.1,
+        "renew_count": 530,
+        "jeonse_deposit": 800000000,
+        "jeonse_count": 245,
+        "rent_deposit": 300000000,
+        "rent_monthly": 1500000,
+        "rent_count": 307
+      }
+    },
+    {
+      "name": "서초구",
+      "code": "11650",
+      "now": {
+        "count": 126,
+        "avg": 2658444444,
+        "median": 2220000000,
+        "top": {
+          "name": "래미안원베일리",
+          "dong": "반포동",
+          "seq": "11650-5126",
+          "amount": 12000000000,
+          "area": 133.95,
+          "floor": "22",
+          "date": "2026-09-22"
+        }
+      },
+      "was": {
+        "count": 84,
+        "avg": 2505452380,
+        "median": 2100000000,
+        "top": {
+          "name": "래미안퍼스티지",
+          "dong": "반포동",
+          "seq": "11650-3559",
+          "amount": 9100000000,
+          "area": 222.76,
+          "floor": "14",
+          "date": "2026-08-14"
+        }
+      },
+      "focus": false,
+      "change": 42,
+      "jeonse": {
+        "median": 37.5,
+        "pairs": [
+          {
+            "name": "DK밸리뷰시티",
+            "dong": "서초동",
+            "area": 27.04,
+            "sale": 370000000,
+            "lease": 357000000,
+            "ratio": 96.5
+          },
+          {
+            "name": "더샵서초",
+            "dong": "서초동",
+            "area": 30.39,
+            "sale": 598000000,
+            "lease": 410000000,
+            "ratio": 68.6
+          },
+          {
+            "name": "동고",
+            "dong": "우면동",
+            "area": 77.14,
+            "sale": 1200000000,
+            "lease": 740000000,
+            "ratio": 61.7
+          },
+          {
+            "name": "호반써밋서초파크뷰(토지임대부아파트)",
+            "dong": "우면동",
+            "area": 84.95,
+            "sale": 1545000000,
+            "lease": 870000000,
+            "ratio": 56.3
+          },
+          {
+            "name": "롯데캐슬아르떼",
+            "dong": "방배동",
+            "area": 147.72,
+            "sale": 3720000000,
+            "lease": 1800000000,
+            "ratio": 48.4
+          }
+        ],
+        "count": 26
+      },
+      "rent": {
+        "total": 817,
+        "monthly_count": 412,
+        "monthly_share": 50.4,
+        "renew_count": 412,
+        "jeonse_deposit": 950000000,
+        "jeonse_count": 177,
+        "rent_deposit": 300000000,
+        "rent_monthly": 1600000,
+        "rent_count": 228
+      }
+    },
+    {
+      "name": "마포구",
+      "code": "11440",
+      "now": {
+        "count": 84,
+        "avg": 1629315476,
+        "median": 1600000000,
+        "top": {
+          "name": "롯데캐슬프레지던트",
+          "dong": "공덕동",
+          "seq": "11440-4583",
+          "amount": 3000000000,
+          "area": 191.53,
+          "floor": "30",
+          "date": "2026-09-15"
+        }
+      },
+      "was": {
+        "count": 113,
+        "avg": 1463632743,
+        "median": 1500000000,
+        "top": {
+          "name": "래미안웰스트림",
+          "dong": "현석동",
+          "seq": "11440-5559",
+          "amount": 2940000000,
+          "area": 114.98,
+          "floor": "14",
+          "date": "2026-08-24"
+        }
+      },
+      "focus": false,
+      "change": -29,
+      "jeonse": {
+        "median": 41.0,
+        "pairs": [
+          {
+            "name": "대우메트로디오빌",
+            "dong": "신공덕동",
+            "area": 49.97,
+            "sale": 855000000,
+            "lease": 530000000,
+            "ratio": 62.0
+          },
+          {
+            "name": "롯데캐슬프레지던트",
+            "dong": "공덕동",
+            "area": 191.53,
+            "sale": 3000000000,
+            "lease": 1600000000,
+            "ratio": 53.3
+          },
+          {
+            "name": "상암월드컵파크3단지",
+            "dong": "상암동",
+            "area": 84.84,
+            "sale": 1326666667,
+            "lease": 700000000,
+            "ratio": 52.8
+          },
+          {
+            "name": "힐스테이트마포더퍼스트",
+            "dong": "신수동",
+            "area": 84.07,
+            "sale": 2192500000,
+            "lease": 970000000,
+            "ratio": 44.2
+          },
+          {
+            "name": "상암월드컵파크7단지",
+            "dong": "상암동",
+            "area": 84.9,
+            "sale": 1385000000,
+            "lease": 600000000,
+            "ratio": 43.3
+          }
+        ],
+        "count": 17
+      },
+      "rent": {
+        "total": 775,
+        "monthly_count": 373,
+        "monthly_share": 48.1,
+        "renew_count": 397,
+        "jeonse_deposit": 795000000,
+        "jeonse_count": 162,
+        "rent_deposit": 100000000,
+        "rent_monthly": 1200000,
+        "rent_count": 216
+      }
+    },
+    {
+      "name": "성동구",
+      "code": "11200",
+      "now": {
+        "count": 62,
+        "avg": 1919722580,
+        "median": 1920000000,
+        "top": {
+          "name": "래미안 옥수 리버젠",
+          "dong": "옥수동",
+          "seq": "11200-2980",
+          "amount": 2900000000,
+          "area": 113.52,
+          "floor": "1",
+          "date": "2026-09-11"
+        }
+      },
+      "was": {
+        "count": 54,
+        "avg": 1890962962,
+        "median": 1727500000,
+        "top": {
+          "name": "갤러리아포레",
+          "dong": "성수동1가",
+          "seq": "11200-2923",
+          "amount": 9200000000,
+          "area": 217.86,
+          "floor": "34",
+          "date": "2026-08-12"
+        }
+      },
+      "focus": false,
+      "change": 8,
+      "jeonse": {
+        "median": 43.9,
+        "pairs": [
+          {
+            "name": "서울숲금강아미움",
+            "dong": "성수동2가",
+            "area": 80.89,
+            "sale": 1300000000,
+            "lease": 800000000,
+            "ratio": 61.5
+          },
+          {
+            "name": "센트라스",
+            "dong": "하왕십리동",
+            "area": 84.96,
+            "sale": 2426666667,
+            "lease": 1195000000,
+            "ratio": 49.2
+          },
+          {
+            "name": "옥수파크힐스101동~116동",
+            "dong": "옥수동",
+            "area": 84.64,
+            "sale": 2500000000,
+            "lease": 1200000000,
+            "ratio": 48.0
+          },
+          {
+            "name": "텐즈힐(2단지)",
+            "dong": "상왕십리동",
+            "area": 84.95,
+            "sale": 2260000000,
+            "lease": 1050000000,
+            "ratio": 46.5
+          },
+          {
+            "name": "금호자이1차",
+            "dong": "금호동2가",
+            "area": 59.98,
+            "sale": 1800000000,
+            "lease": 820000000,
+            "ratio": 45.6
+          }
+        ],
+        "count": 19
+      },
+      "rent": {
+        "total": 476,
+        "monthly_count": 235,
+        "monthly_share": 49.4,
+        "renew_count": 224,
+        "jeonse_deposit": 725000000,
+        "jeonse_count": 108,
+        "rent_deposit": 200000000,
+        "rent_monthly": 1800000,
+        "rent_count": 144
+      }
+    }
+  ],
+  "highlights": [
+    {
+      "kind": "신고가",
+      "district": "마포구",
+      "name": "영화블렌하임",
+      "dong": "망원동",
+      "area": 103.86,
+      "floor": "12",
+      "amount": 1270000000,
+      "before": 950000000,
+      "date": "2026-10-26",
+      "pct": 33.7,
+      "prior_count": 2
+    },
+    {
+      "kind": "신고가",
+      "district": "송파구",
+      "name": "현대백조",
+      "dong": "오금동",
+      "area": 31.0,
+      "floor": "4",
+      "amount": 830000000,
+      "before": 680000000,
+      "date": "2026-10-07",
+      "pct": 22.1,
+      "prior_count": 6
+    },
+    {
+      "kind": "신고가",
+      "district": "송파구",
+      "name": "송파건원여미지아파트",
+      "dong": "마천동",
+      "area": 51.76,
+      "floor": "15",
+      "amount": 980000000,
+      "before": 810000000,
+      "date": "2026-10-20",
+      "pct": 21.0,
+      "prior_count": 4
+    },
+    {
+      "kind": "신고가",
+      "district": "노원구",
+      "name": "시영3차(라이프)아파트",
+      "dong": "공릉동",
+      "area": 49.5,
+      "floor": "5",
+      "amount": 649000000,
+      "before": 540000000,
+      "date": "2026-09-10",
+      "pct": 20.2,
+      "prior_count": 3
+    },
+    {
+      "kind": "신고가",
+      "district": "구로구",
+      "name": "삼환",
+      "dong": "개봉동",
+      "area": 84.94,
+      "floor": "5",
+      "amount": 900000000,
+      "before": 750000000,
+      "date": "2026-10-03",
+      "pct": 20.0,
+      "prior_count": 3
+    }
+  ],
+  "highlights_months": [
+    "202610",
+    "202609"
+  ],
+  "highlights_label": "2026년 9~10월",
+  "highlights_short": "9~10월",
+  "highlights_asof": "2026-10-31",
+  "focus": [
+    "구로구",
+    "강남구",
+    "영등포구"
+  ],
+  "jeonse": [
+    {
+      "name": "구로구",
+      "median": 57.2,
+      "pairs": [
+        {
+          "name": "남구로역동일센타시아",
+          "dong": "가리봉동",
+          "area": 37.31,
+          "sale": 305500000,
+          "lease": 300000000,
+          "ratio": 98.2
+        },
+        {
+          "name": "신도림 아르디에",
+          "dong": "신도림동",
+          "area": 21.74,
+          "sale": 185000000,
+          "lease": 175000000,
+          "ratio": 94.6
+        },
+        {
+          "name": "금강",
+          "dong": "오류동",
+          "area": 84.96,
+          "sale": 475000000,
+          "lease": 355000000,
+          "ratio": 74.7
+        },
+        {
+          "name": "우남퍼스트빌더센트럴",
+          "dong": "항동",
+          "area": 84.91,
+          "sale": 782500000,
+          "lease": 580000000,
+          "ratio": 74.1
+        },
+        {
+          "name": "한마을",
+          "dong": "개봉동",
+          "area": 84.57,
+          "sale": 900000000,
+          "lease": 645000000,
+          "ratio": 71.7
+        }
+      ],
+      "count": 36
+    },
+    {
+      "name": "강남구",
+      "median": 34.6,
+      "pairs": [
+        {
+          "name": "테헤란아이파크",
+          "dong": "역삼동",
+          "area": 92.62,
+          "sale": 3300000000,
+          "lease": 1580000000,
+          "ratio": 47.9
+        },
+        {
+          "name": "대치삼성",
+          "dong": "대치동",
+          "area": 97.35,
+          "sale": 3350000000,
+          "lease": 1600000000,
+          "ratio": 47.8
+        },
+        {
+          "name": "래미안대치팰리스",
+          "dong": "대치동",
+          "area": 94.5,
+          "sale": 4650000000,
+          "lease": 2200000000,
+          "ratio": 47.3
+        },
+        {
+          "name": "푸른마을아파트101동~111동",
+          "dong": "일원동",
+          "area": 84.93,
+          "sale": 2366666667,
+          "lease": 1100000000,
+          "ratio": 46.5
+        },
+        {
+          "name": "개포래미안포레스트",
+          "dong": "개포동",
+          "area": 59.92,
+          "sale": 2650000000,
+          "lease": 1190000000,
+          "ratio": 44.9
+        }
+      ],
+      "count": 29
+    },
+    {
+      "name": "영등포구",
+      "median": 48.3,
+      "pairs": [
+        {
+          "name": "쌍용플래티넘S",
+          "dong": "대림동",
+          "area": 18.24,
+          "sale": 95000000,
+          "lease": 83000000,
+          "ratio": 87.4
+        },
+        {
+          "name": "영등포자이르네",
+          "dong": "대림동",
+          "area": 49.1,
+          "sale": 681666667,
+          "lease": 570000000,
+          "ratio": 83.6
+        },
+        {
+          "name": "당산디오빌",
+          "dong": "당산동5가",
+          "area": 33.09,
+          "sale": 380000000,
+          "lease": 295000000,
+          "ratio": 77.6
+        },
+        {
+          "name": "당산대우",
+          "dong": "당산동2가",
+          "area": 31.73,
+          "sale": 362833333,
+          "lease": 280000000,
+          "ratio": 77.2
+        },
+        {
+          "name": "당산푸르지오",
+          "dong": "영등포동8가",
+          "area": 114.51,
+          "sale": 1950000000,
+          "lease": 1150000000,
+          "ratio": 59.0
+        }
+      ],
+      "count": 30
+    },
+    {
+      "name": "노원구",
+      "median": 52.5,
+      "pairs": [
+        {
+          "name": "금호타운(583)",
+          "dong": "중계동",
+          "area": 84.98,
+          "sale": 650000000,
+          "lease": 610000000,
+          "ratio": 93.8
+        },
+        {
+          "name": "삼익2차아파트",
+          "dong": "공릉동",
+          "area": 54.74,
+          "sale": 460000000,
+          "lease": 400000000,
+          "ratio": 87.0
+        },
+        {
+          "name": "현대1(4차)",
+          "dong": "중계동",
+          "area": 84.99,
+          "sale": 680000000,
+          "lease": 530000000,
+          "ratio": 77.9
+        },
+        {
+          "name": "하계2현대",
+          "dong": "하계동",
+          "area": 84.9,
+          "sale": 1075000000,
+          "lease": 820000000,
+          "ratio": 76.3
+        },
+        {
+          "name": "건영2",
+          "dong": "중계동",
+          "area": 84.96,
+          "sale": 829333333,
+          "lease": 630000000,
+          "ratio": 76.0
+        }
+      ],
+      "count": 90
+    },
+    {
+      "name": "송파구",
+      "median": 42.5,
+      "pairs": [
+        {
+          "name": "문정래미안",
+          "dong": "문정동",
+          "area": 120.97,
+          "sale": 1987000000,
+          "lease": 1125000000,
+          "ratio": 56.6
+        },
+        {
+          "name": "송파레미니스2단지",
+          "dong": "오금동",
+          "area": 84.82,
+          "sale": 1740000000,
+          "lease": 950000000,
+          "ratio": 54.6
+        },
+        {
+          "name": "현대(62-5)",
+          "dong": "문정동",
+          "area": 81.43,
+          "sale": 1300000000,
+          "lease": 700000000,
+          "ratio": 53.8
+        },
+        {
+          "name": "거여2단지효성아파트",
+          "dong": "거여동",
+          "area": 134.88,
+          "sale": 1750000000,
+          "lease": 930000000,
+          "ratio": 53.1
+        },
+        {
+          "name": "방이금호어울림",
+          "dong": "방이동",
+          "area": 84.3,
+          "sale": 1490000000,
+          "lease": 780000000,
+          "ratio": 52.3
+        }
+      ],
+      "count": 48
+    },
+    {
+      "name": "서초구",
+      "median": 37.5,
+      "pairs": [
+        {
+          "name": "DK밸리뷰시티",
+          "dong": "서초동",
+          "area": 27.04,
+          "sale": 370000000,
+          "lease": 357000000,
+          "ratio": 96.5
+        },
+        {
+          "name": "더샵서초",
+          "dong": "서초동",
+          "area": 30.39,
+          "sale": 598000000,
+          "lease": 410000000,
+          "ratio": 68.6
+        },
+        {
+          "name": "동고",
+          "dong": "우면동",
+          "area": 77.14,
+          "sale": 1200000000,
+          "lease": 740000000,
+          "ratio": 61.7
+        },
+        {
+          "name": "호반써밋서초파크뷰(토지임대부아파트)",
+          "dong": "우면동",
+          "area": 84.95,
+          "sale": 1545000000,
+          "lease": 870000000,
+          "ratio": 56.3
+        },
+        {
+          "name": "롯데캐슬아르떼",
+          "dong": "방배동",
+          "area": 147.72,
+          "sale": 3720000000,
+          "lease": 1800000000,
+          "ratio": 48.4
+        }
+      ],
+      "count": 26
+    },
+    {
+      "name": "마포구",
+      "median": 41.0,
+      "pairs": [
+        {
+          "name": "대우메트로디오빌",
+          "dong": "신공덕동",
+          "area": 49.97,
+          "sale": 855000000,
+          "lease": 530000000,
+          "ratio": 62.0
+        },
+        {
+          "name": "롯데캐슬프레지던트",
+          "dong": "공덕동",
+          "area": 191.53,
+          "sale": 3000000000,
+          "lease": 1600000000,
+          "ratio": 53.3
+        },
+        {
+          "name": "상암월드컵파크3단지",
+          "dong": "상암동",
+          "area": 84.84,
+          "sale": 1326666667,
+          "lease": 700000000,
+          "ratio": 52.8
+        },
+        {
+          "name": "힐스테이트마포더퍼스트",
+          "dong": "신수동",
+          "area": 84.07,
+          "sale": 2192500000,
+          "lease": 970000000,
+          "ratio": 44.2
+        },
+        {
+          "name": "상암월드컵파크7단지",
+          "dong": "상암동",
+          "area": 84.9,
+          "sale": 1385000000,
+          "lease": 600000000,
+          "ratio": 43.3
+        }
+      ],
+      "count": 17
+    },
+    {
+      "name": "성동구",
+      "median": 43.9,
+      "pairs": [
+        {
+          "name": "서울숲금강아미움",
+          "dong": "성수동2가",
+          "area": 80.89,
+          "sale": 1300000000,
+          "lease": 800000000,
+          "ratio": 61.5
+        },
+        {
+          "name": "센트라스",
+          "dong": "하왕십리동",
+          "area": 84.96,
+          "sale": 2426666667,
+          "lease": 1195000000,
+          "ratio": 49.2
+        },
+        {
+          "name": "옥수파크힐스101동~116동",
+          "dong": "옥수동",
+          "area": 84.64,
+          "sale": 2500000000,
+          "lease": 1200000000,
+          "ratio": 48.0
+        },
+        {
+          "name": "텐즈힐(2단지)",
+          "dong": "상왕십리동",
+          "area": 84.95,
+          "sale": 2260000000,
+          "lease": 1050000000,
+          "ratio": 46.5
+        },
+        {
+          "name": "금호자이1차",
+          "dong": "금호동2가",
+          "area": 59.98,
+          "sale": 1800000000,
+          "lease": 820000000,
+          "ratio": 45.6
+        }
+      ],
+      "count": 19
+    }
+  ],
+  "rent": [
+    {
+      "name": "구로구",
+      "total": 921,
+      "monthly_count": 698,
+      "monthly_share": 75.8,
+      "renew_count": 558,
+      "jeonse_deposit": 400000000,
+      "jeonse_count": 112,
+      "rent_deposit": 50000000,
+      "rent_monthly": 500000,
+      "rent_count": 251
+    },
+    {
+      "name": "강남구",
+      "total": 1246,
+      "monthly_count": 718,
+      "monthly_share": 57.6,
+      "renew_count": 657,
+      "jeonse_deposit": 900000000,
+      "jeonse_count": 219,
+      "rent_deposit": 200000000,
+      "rent_monthly": 1500000,
+      "rent_count": 370
+    },
+    {
+      "name": "영등포구",
+      "total": 973,
+      "monthly_count": 582,
+      "monthly_share": 59.8,
+      "renew_count": 599,
+      "jeonse_deposit": 620000000,
+      "jeonse_count": 166,
+      "rent_deposit": 100000000,
+      "rent_monthly": 700000,
+      "rent_count": 208
+    },
+    {
+      "name": "노원구",
+      "total": 1016,
+      "monthly_count": 450,
+      "monthly_share": 44.3,
+      "renew_count": 493,
+      "jeonse_deposit": 340000000,
+      "jeonse_count": 263,
+      "rent_deposit": 32100000,
+      "rent_monthly": 900000,
+      "rent_count": 260
+    },
+    {
+      "name": "송파구",
+      "total": 1082,
+      "monthly_count": 542,
+      "monthly_share": 50.1,
+      "renew_count": 530,
+      "jeonse_deposit": 800000000,
+      "jeonse_count": 245,
+      "rent_deposit": 300000000,
+      "rent_monthly": 1500000,
+      "rent_count": 307
+    },
+    {
+      "name": "서초구",
+      "total": 817,
+      "monthly_count": 412,
+      "monthly_share": 50.4,
+      "renew_count": 412,
+      "jeonse_deposit": 950000000,
+      "jeonse_count": 177,
+      "rent_deposit": 300000000,
+      "rent_monthly": 1600000,
+      "rent_count": 228
+    },
+    {
+      "name": "마포구",
+      "total": 775,
+      "monthly_count": 373,
+      "monthly_share": 48.1,
+      "renew_count": 397,
+      "jeonse_deposit": 795000000,
+      "jeonse_count": 162,
+      "rent_deposit": 100000000,
+      "rent_monthly": 1200000,
+      "rent_count": 216
+    },
+    {
+      "name": "성동구",
+      "total": 476,
+      "monthly_count": 235,
+      "monthly_share": 49.4,
+      "renew_count": 224,
+      "jeonse_deposit": 725000000,
+      "jeonse_count": 108,
+      "rent_deposit": 200000000,
+      "rent_monthly": 1800000,
+      "rent_count": 144
+    }
+  ],
+  "sizes": [
+    {
+      "band": "소형",
+      "count": 761,
+      "share": 52.3,
+      "avg": 816935335,
+      "was_share": 48.2,
+      "share_change": 4.1
+    },
+    {
+      "band": "중형",
+      "count": 501,
+      "share": 34.5,
+      "avg": 1614778443,
+      "was_share": 37.8,
+      "share_change": -3.3
+    },
+    {
+      "band": "중대형",
+      "count": 134,
+      "share": 9.2,
+      "avg": 2259097014,
+      "was_share": 11.1,
+      "share_change": -1.9
+    },
+    {
+      "band": "대형",
+      "count": 58,
+      "share": 4.0,
+      "avg": 3831637931,
+      "was_share": 2.9,
+      "share_change": 1.1
+    }
+  ],
+  "map": {
+    "종로구": 34,
+    "중구": 36,
+    "용산구": 41,
+    "성동구": 62,
+    "광진구": 45,
+    "동대문구": 114,
+    "중랑구": 141,
+    "성북구": 177,
+    "강북구": 78,
+    "도봉구": 216,
+    "노원구": 411,
+    "은평구": 204,
+    "서대문구": 105,
+    "마포구": 84,
+    "양천구": 97,
+    "강서구": 257,
+    "구로구": 205,
+    "금천구": 85,
+    "영등포구": 123,
+    "동작구": 81,
+    "관악구": 115,
+    "서초구": 126,
+    "강남구": 124,
+    "송파구": 319,
+    "강동구": 146
+  },
+  "map_jeonse": {
+    "종로구": 53.3,
+    "중구": 45.4,
+    "용산구": 30.9,
+    "성동구": 43.9,
+    "광진구": 45.0,
+    "동대문구": 50.2,
+    "중랑구": 59.0,
+    "성북구": 55.6,
+    "강북구": 59.9,
+    "도봉구": 58.0,
+    "노원구": 52.5,
+    "은평구": 54.2,
+    "서대문구": 52.5,
+    "마포구": 41.0,
+    "양천구": 45.6,
+    "강서구": 50.4,
+    "구로구": 57.2,
+    "금천구": 65.5,
+    "영등포구": 48.3,
+    "동작구": 40.0,
+    "관악구": 55.3,
+    "서초구": 37.5,
+    "강남구": 34.6,
+    "송파구": 42.5,
+    "강동구": 45.9
+  },
+  "swings": [
+    {
+      "name": "송파구",
+      "now": 319,
+      "before": 172,
+      "pct": 85.5,
+      "hotspot": {
+        "dong": "장지동",
+        "count": 189,
+        "share": 59.2,
+        "when": "now"
+      }
+    },
+    {
+      "name": "서초구",
+      "now": 126,
+      "before": 84,
+      "pct": 50.0,
+      "hotspot": null
+    },
+    {
+      "name": "동작구",
+      "now": 81,
+      "before": 124,
+      "pct": -34.7,
+      "hotspot": null
+    },
+    {
+      "name": "강남구",
+      "now": 124,
+      "before": 94,
+      "pct": 31.9,
+      "hotspot": null
+    }
+  ],
+  "volume": {},
+  "warnings": [],
+  "history_months": 6,
+  "total": 1454,
+  "total_before": 1398
+}
