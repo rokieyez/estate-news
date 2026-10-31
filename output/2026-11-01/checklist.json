@@ -1,0 +1,100 @@
+{
+  "date": "2026-11-01",
+  "summary": {
+    "ok": 8,
+    "warn": 4,
+    "fail": 0
+  },
+  "items": [
+    {
+      "key": "numbers",
+      "level": "warn",
+      "title": "수치 2건이 기사 원문에서 확인되지 않음",
+      "detail": "아래 '원문' 링크를 눌러 기사에서 직접 찾아보세요. 기사에 없는 값이면 글에서 빼는 게 안전합니다. [오늘의 정리 열기](brief.html)",
+      "lines": [
+        "분당 주민, 강남 아파트로 이동 · 올해 1~9월 서울 집합건물 매입 경기·인천 거주자 수 **24993명** — [원문](https://www.mk.co.kr/news/realestate/12192394)",
+        "분당 주민, 강남 아파트로 이동 · 분당 주민의 강남3구 매입 비중 **589명(35.5%)** — [원문](https://www.mk.co.kr/news/realestate/12192394)"
+      ]
+    },
+    {
+      "key": "links",
+      "level": "ok",
+      "title": "출처 링크 14개 모두 정상",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "banned",
+      "level": "ok",
+      "title": "금지 표현 없음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "blog_len",
+      "level": "ok",
+      "title": "블로그 본문 1,262자",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "tags",
+      "level": "ok",
+      "title": "태그 30개",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "keyword",
+      "level": "ok",
+      "title": "대표 검색어 '분당 아파트값 상승률' 가 제목·첫 문단·소제목에 모두 있음",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "overlap",
+      "level": "ok",
+      "title": "지난 글과 겹치는 문장 0%",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shape",
+      "level": "ok",
+      "title": "소제목 4개 · 메인 하나에 집중",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "readability",
+      "level": "warn",
+      "title": "긴 문장 2개 — 휴대폰에서 답답해 보입니다",
+      "detail": "문장은 둘로 나누고, 문단은 두세 문장에서 끊으세요.",
+      "lines": [
+        "대법원 등기정보광장을 보면 올해 1~9월 서울 집합건물(아파트·연립처럼 한 건물을 여러 사람이 나눠 소유하는…",
+        "고양 덕양구 주민(1407명)은 은평구·강서구, 남양주시(1369명)는 노원구·강동구, 하남시(1098명)는…"
+      ]
+    },
+    {
+      "key": "photos",
+      "level": "warn",
+      "title": "직접 넣을 사진 자리 1곳",
+      "detail": "'네이버 블로그 글' 페이지의 점선 상자 아래 '사진 찾기' 링크를 쓰세요. [네이버 블로그 글 열기](blog-naver.html)",
+      "lines": []
+    },
+    {
+      "key": "shorts_len",
+      "level": "ok",
+      "title": "쇼츠 발화 301자 (약 55초)",
+      "detail": "",
+      "lines": []
+    },
+    {
+      "key": "shorts_voice",
+      "level": "warn",
+      "title": "쇼츠 자막이 제목 나열처럼 읽힙니다 — 문장으로 끝나는 컷이 24%",
+      "detail": "예: 분당 집값이 / 1년 새 22.3% / 전국에서 가장 많이 → 종결어미로 맺는 문장으로 고치세요.",
+      "lines": []
+    }
+  ]
+}
